@@ -243,6 +243,9 @@ Exit criteria:
 
 ## 5. Приоритетный backlog на ближайший инкремент
 
+Детализированный технический backlog уровня 1 story point вынесен в `TECH_BACKLOG_1SP.md`.
+Промт цели для последовательной реализации под Codex Spark 5.3 вынесен в `CODEX_SPARK_5_3_GOAL.md`.
+
 P0:
 
 - описать доменную модель: Tenant, User, Role, Campaign, DebtorRecord, CallAttempt, CallResult, ScriptVersion, ComplianceDecision, TelephonyConnection, UsageEvent;
@@ -314,7 +317,42 @@ Commercial:
 - Риск экономики: публичная цена конкурентов не равна полному COGS; маржу надо считать на реальных CDR и vendor costs.
 - Риск enterprise-продаж: без SSO, RBAC, audit log, retention и ИБ-документации крупный клиент не пройдёт закупку.
 
-## 8. Рекомендация по следующему шагу
+## 8. Статус технологического roadmap на 16.08.2026
+
+Оценка ниже основана на текущих артефактах репозитория и `TECH_BACKLOG_1SP.md`, а не на предположениях о внешней готовности команды.
+
+### 8.1. Что уже закрыто
+
+- Сформирован backend-контур MVP Lab: стек, базовая структура сервера, тестовый контур, Prisma-схема и tenant-scoped доменная модель.
+- Реализованы базовые API для кампаний, импорта базы, compliance check, sandbox-звонка, журнала звонков, QA-разметки, версий сценария, usage ledger и telephony connections.
+- Появились ключевые control-механизмы: tenant context, RBAC v0, AuditLog, compliance decision log, автопауза, usage events и отчёт кампании из реальных событий.
+- Прототип `prototype.html` частично привязан к backend: отчёт кампании теперь читает реальные данные через API вместо демо-метрик.
+
+### 8.2. Чего ещё критически не хватает
+
+- Нет целостного пользовательского контура MVP: список кампаний, мастер создания, launch readiness, review queue, карточка звонка и QA-проход существуют как прототип, но не собраны в один API-backed flow.
+- Compliance engine пока покрывает только базовые правила; отсутствуют suppression list, third-party disclosure guard, holiday/contact-frequency logic и полноценный handoff policy.
+- Нет call orchestrator со state machine, полноценной записи transcript/extraction pipeline и regression/golden-set контура для AI-сценариев.
+- Enterprise-ready блок остаётся в основном на уровне документов и заготовок: SSO, billing, integrations, SLA/monitoring и self-service exports не доведены до рабочего состояния.
+
+### 8.3. Качественная оценка по этапам
+
+- Этап 0. Discovery и подготовка пилота: `35%`.
+  Уже есть продуктовый контур и часть технических решений, но в репозитории пока нет подтверждённого legal-safe call-flow, baseline-метрик, выбранного пилотного сегмента и формализованных hard gates для live traffic.
+- Этап 1. MVP Lab: `65%`.
+  Сильнее всего продвинут backend, данные, auditability и sandbox voice flow. Основной недостающий кусок здесь теперь не только backend, а операторский UX и end-to-end flow от создания кампании до review и отчёта.
+- Этап 2. Controlled Pilot: `10%`.
+  Есть технические заделы под QA, отчётность и автопаузу, но ещё нет live-процессов, holdout/control, ежедневного review-ритма и сверки результатов с платежными данными.
+- Этап 3. Production SaaS v1: `20%`.
+  Есть фундамент под multi-tenant, RBAC, audit и usage, но production-контур для нескольких клиентов пока не собран.
+- Этап 4. Scale и enterprise: `5%`.
+  Есть только отдельные подготовительные decision/doc-артефакты; масштабирование, multi-provider и enterprise package ещё фактически не начаты.
+
+### 8.4. Вывод по текущей готовности
+
+Технический backlog текущей волны почти закрыт: в `TECH_BACKLOG_1SP.md` завершены `63` задачи по состоянию на 16 августа 2026 года. Но по самому roadmap проект ещё не “почти готов”: он находится между поздним MVP Lab и ранней подготовкой к Controlled Pilot. Главный разрыв сместился с backend-фундамента на продуктовый пользовательский контур, операционные сценарии и compliance-first UX.
+
+## 9. Рекомендация по следующему шагу
 
 Не начинать с полного SaaS. Ближайший правильный шаг — MVP Lab для одного сегмента и одного клиента:
 

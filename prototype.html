@@ -72,7 +72,7 @@
         </section>
       </div>
 
-      <section class="campaign-shell" id="campaignWorkspace">
+      <section class="campaign-shell" id="campaignWorkspace" data-tenant-id="11111111-1111-1111-1111-111111111111" data-campaign-id="11111111-1111-1111-1111-111111111112" data-campaign-name="Просрочка 1–7 дней · Займы">
         <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span class="tag run" id="campaignStatus">работает</span></p></div></div><div class="head-actions"><button class="btn" data-camp-tab-link="settings">Перенастроить</button><button class="btn" id="pauseCampaign">Поставить на паузу</button></div></div>
         <div class="campaign-tabs" aria-label="Разделы кампании"><button class="active" data-camp-tab="overview">Обзор</button><button data-camp-tab="base">База</button><button data-camp-tab="scenario">Сценарий</button><button data-camp-tab="phone">Телефония</button><button data-camp-tab="launch">Запуск</button><button data-camp-tab="calls">Звонки</button><button data-camp-tab="report">Отчёт</button><button data-camp-tab="settings">Настройки</button></div>
 
@@ -88,7 +88,7 @@
 
         <div class="campaign-view" data-camp-view="calls"><div class="page-head"><div><h1>Звонки кампании</h1><p>Журнал звонков фильтруется только по выбранной кампании.</p></div><button class="btn">Выгрузить журнал</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Время</th><th>Должник</th><th>Длительность</th><th>Исход</th><th>Извлечено</th><th>Проверка</th></tr></thead><tbody><tr data-test-dialog><td>16:38</td><td>Иван С. · FL-883104</td><td>02:41</td><td><span class="tag run">обещание и перевод</span></td><td>8 000 ₽ · 21.08</td><td><span class="tag run">готово</span></td></tr><tr><td>16:36</td><td>Мария В. · FL-883090</td><td>01:18</td><td><span class="tag info">перевод оператору</span></td><td>вопрос по долгу</td><td><span class="tag run">готово</span></td></tr><tr><td>16:33</td><td>Сергей М. · FL-883061</td><td>00:00</td><td><span class="tag draft">нет ответа</span></td><td>—</td><td><span class="tag run">готово</span></td></tr></tbody></table></div></div></div>
 
-        <div class="campaign-view" data-camp-view="report"><div class="page-head"><div><h1>Отчёт кампании</h1><p>Результаты, стоимость и качество только по кампании «Просрочка 1–7 дней · Займы».</p></div><button class="btn">Выгрузить отчёт</button></div><div class="notice warn" style="margin-bottom:16px">Показатели демонстрационные. Обещание платежа не является фактической оплатой; эффект требует контрольной группы.</div><div class="panel"><div class="panel-head"><div class="panel-title">Воронка кампании</div><span class="tag info">демо</span></div><div class="panel-body funnel"><div><small>База</small><b>10 000</b></div><div><small>Допущено</small><b>8 740</b></div><div><small>Ответили</small><b>4 284</b></div><div><small>Успешный диалог</small><b>3 084</b></div><div><small>Обещание</small><b>1 172</b></div><div><small>Исполнено</small><b>Данных нет</b></div></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Исходы звонков</div></div><div class="table-wrap"><table style="min-width:520px"><thead><tr><th>Исход</th><th class="num">Количество</th><th class="num">Доля</th></tr></thead><tbody><tr><td>Обещание платежа</td><td class="num">1 172</td><td class="num">38,0%</td></tr><tr><td>Перевод оператору</td><td class="num">284</td><td class="num">9,2%</td></tr><tr><td>Отказ</td><td class="num">496</td><td class="num">16,1%</td></tr></tbody></table></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Стоимость</div></div><div class="panel-body grid g2"><div class="metric info"><small>Минут соединения</small><strong>14 688</strong></div><div class="metric info"><small>Стоимость диалога</small><strong>23,03 ₽</strong></div><div class="metric info"><small>Стоимость обещания</small><strong>60,63 ₽</strong></div><div class="metric warn"><small>Стоимость оплаты</small><strong style="font-size:16px">Данных недостаточно</strong></div></div></div></div></div>
+        <div class="campaign-view" data-camp-view="report"><div class="page-head"><div><h1>Отчёт кампании</h1><p>Результаты и метрики по кампании «<span id="reportCampaignName">Просрочка 1–7 дней · Займы</span>».</p></div><button class="btn">Выгрузить отчёт</button></div><div class="notice" id="reportNotice" style="margin-bottom:16px">Загрузка отчёта…</div><div class="panel"><div class="panel-head"><div class="panel-title">Воронка кампании</div><span class="tag" id="reportTag">загрузка</span></div><div class="panel-body funnel" id="reportFunnel"><div><small>База</small><b id="reportTotalRecords">—</b></div><div><small>Звонки запущены</small><b id="reportAttemptedCalls">—</b></div><div><small>Завершено</small><b id="reportCompletedCalls">—</b></div><div><small>Блокировано compliance</small><b id="reportBlockedCalls">—</b></div><div><small>Обещания</small><b id="reportPtpCount">—</b></div><div><small>Исполнено</small><b>—</b></div></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Исходы звонков</div></div><div class="table-wrap"><table style="min-width:520px"><thead><tr><th>Исход</th><th class="num">Количество</th><th class="num">Доля</th></tr></thead><tbody id="reportOutcomes"><tr><td>Обещание платежа</td><td class="num" id="reportOutcomePtpCount">—</td><td class="num" id="reportOutcomePtpShare">—</td></tr><tr><td>Завершено</td><td class="num" id="reportOutcomeCompletedCount">—</td><td class="num" id="reportOutcomeCompletedShare">—</td></tr><tr><td>Блокировано</td><td class="num" id="reportOutcomeBlockedCount">—</td><td class="num" id="reportOutcomeBlockedShare">—</td></tr></tbody></table></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Стоимость</div></div><div class="panel-body grid g2"><div class="metric info"><small>Минут соединения</small><strong id="reportMinutes">—</strong></div><div class="metric info"><small>Стоимость диалога</small><strong id="reportCostPerCall">—</strong></div><div class="metric info"><small>Стоимость обещания</small><strong id="reportCostPerPtp">—</strong></div><div class="metric warn"><small>Стоимость оплаты</small><strong style="font-size:16px">Данных недостаточно</strong></div></div></div></div></div>
 
         <div class="campaign-view" data-camp-view="settings"><div class="page-head"><div><h1>Настройки кампании</h1><p>Параметры можно менять здесь. Критичные изменения создают новую версию и требуют повторной проверки.</p></div><button class="btn primary" id="saveCampaignSettings">Сохранить изменения</button></div><div class="panel"><div class="panel-body"><div class="settings-block"><h3>Основное</h3><div class="form-grid"><div class="field"><label>Название</label><input value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Часовой пояс</label><select><option>По адресу должника</option><option>Москва</option></select></div></div></div><div class="settings-block"><h3>Расписание и попытки</h3><div class="form-grid"><div class="field"><label>Будни</label><input value="08:30–20:30"></div><div class="field"><label>Выходные</label><input value="09:30–19:30"></div><div class="field"><label>Попыток на запись</label><input type="number" value="3"></div><div class="field"><label>Интервал повтора</label><select><option>Не ранее следующего дня</option></select></div></div></div><div class="notice danger">Изменение сегмента, сценария, телефонии или расписания поставит кампанию на паузу до повторной проверки.</div></div></div></div>
       </section>
@@ -114,12 +114,134 @@
 (()=>{
   const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];let toastTimer,wizardStep=1,baseLoaded=false;
   const screenNames={home:'Главная',campaigns:'Кампании',sources:'Источники данных',telephony:'Телефония',scripts:'Сценарии'};
+  const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
+
+  function formatMetric(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num.toLocaleString('ru-RU') : '—';
+  }
+
+  function formatShare(part, total) {
+    const partNum = Number(part);
+    const totalNum = Number(total);
+    if (!Number.isFinite(partNum) || !Number.isFinite(totalNum) || totalNum <= 0) {
+      return '—';
+    }
+    return `${Math.min(100, Math.max(0, (partNum / totalNum) * 100)).toFixed(1)}%`;
+  }
+
+  function getCampaignContext() {
+    const workspace = q('#campaignWorkspace');
+    if (!workspace) {
+      return null;
+    }
+    return {
+      tenantId: workspace.dataset.tenantId || '',
+      campaignId: workspace.dataset.campaignId || '',
+      campaignName: workspace.dataset.campaignName || ''
+    };
+  }
+
+  async function loadCampaignReport() {
+    const context = getCampaignContext();
+    if (!context || !context.tenantId || !context.campaignId) {
+      q('#reportCampaignName').textContent = context?.campaignName || 'Кампания';
+      q('#reportNotice').className = 'notice warn';
+      q('#reportNotice').textContent = 'API отчёта недоступен: контекст кампании не найден.';
+      q('#reportTag').className = 'tag warn';
+      q('#reportTag').textContent = 'ошибка';
+      q('#reportTotalRecords').textContent = '—';
+      q('#reportAttemptedCalls').textContent = '—';
+      q('#reportCompletedCalls').textContent = '—';
+      q('#reportBlockedCalls').textContent = '—';
+      q('#reportPtpCount').textContent = '—';
+      q('#reportOutcomePtpCount').textContent = '—';
+      q('#reportOutcomePtpShare').textContent = '—';
+      q('#reportOutcomeCompletedCount').textContent = '—';
+      q('#reportOutcomeCompletedShare').textContent = '—';
+      q('#reportOutcomeBlockedCount').textContent = '—';
+      q('#reportOutcomeBlockedShare').textContent = '—';
+      q('#reportMinutes').textContent = 'н/д';
+      q('#reportCostPerCall').textContent = 'н/д';
+      q('#reportCostPerPtp').textContent = 'н/д';
+      return;
+    }
+
+    q('#reportCampaignName').textContent = context.campaignName || 'Кампания';
+    q('#reportNotice').className = 'notice';
+    q('#reportNotice').textContent = 'Загрузка данных отчёта…';
+    q('#reportTag').className = 'tag warn';
+    q('#reportTag').textContent = 'загрузка';
+
+    try {
+      const response = await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/report`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const body = await response.json();
+      const totalRecords = Number(body.totalRecords);
+      const attemptedCalls = Number(body.attemptedCalls);
+      const completedCalls = Number(body.completedCalls);
+      const blockedCalls = Number(body.blockedCalls);
+      const ptpCount = Number(body.ptpCount);
+
+      q('#reportNotice').className = 'notice';
+      q('#reportNotice').textContent = 'Отчёт сформирован из реальных событий кампании.';
+      q('#reportTag').className = 'tag info';
+      q('#reportTag').textContent = 'live';
+
+      q('#reportTotalRecords').textContent = formatMetric(totalRecords);
+      q('#reportAttemptedCalls').textContent = formatMetric(attemptedCalls);
+      q('#reportCompletedCalls').textContent = formatMetric(completedCalls);
+      q('#reportBlockedCalls').textContent = formatMetric(blockedCalls);
+      q('#reportPtpCount').textContent = formatMetric(ptpCount);
+
+      q('#reportOutcomePtpCount').textContent = formatMetric(ptpCount);
+      q('#reportOutcomeCompletedCount').textContent = formatMetric(completedCalls);
+      q('#reportOutcomeBlockedCount').textContent = formatMetric(blockedCalls);
+      q('#reportOutcomePtpShare').textContent = formatShare(ptpCount, attemptedCalls);
+      q('#reportOutcomeCompletedShare').textContent = formatShare(completedCalls, attemptedCalls);
+      q('#reportOutcomeBlockedShare').textContent = formatShare(blockedCalls, attemptedCalls);
+
+      q('#reportMinutes').textContent = 'н/д';
+      q('#reportCostPerCall').textContent = 'н/д';
+      q('#reportCostPerPtp').textContent = 'н/д';
+    } catch (error) {
+      q('#reportNotice').className = 'notice warn';
+      q('#reportNotice').textContent = `API отчёта недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`;
+      q('#reportTag').className = 'tag warn';
+      q('#reportTag').textContent = 'ошибка';
+      q('#reportTotalRecords').textContent = '—';
+      q('#reportAttemptedCalls').textContent = '—';
+      q('#reportCompletedCalls').textContent = '—';
+      q('#reportBlockedCalls').textContent = '—';
+      q('#reportPtpCount').textContent = '—';
+      q('#reportOutcomePtpCount').textContent = '—';
+      q('#reportOutcomePtpShare').textContent = '—';
+      q('#reportOutcomeCompletedCount').textContent = '—';
+      q('#reportOutcomeCompletedShare').textContent = '—';
+      q('#reportOutcomeBlockedCount').textContent = '—';
+      q('#reportOutcomeBlockedShare').textContent = '—';
+      q('#reportMinutes').textContent = '—';
+      q('#reportCostPerCall').textContent = '—';
+      q('#reportCostPerPtp').textContent = '—';
+    }
+  }
   function toast(title,text){q('#toastTitle').textContent=title;q('#toastText').textContent=text;q('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>q('#toast').classList.remove('show'),2800)}
   function closeAll(){qa('.modal.open,.drawer.open').forEach(x=>x.classList.remove('open'));q('#overlay').classList.remove('open');qa('.modal').forEach(x=>x.setAttribute('aria-hidden','true'))}
   function openLayer(el){closeAll();el.classList.add('open');el.setAttribute?.('aria-hidden','false');q('#overlay').classList.add('open')}
   function showScreen(id){q('#campaignWorkspace').classList.remove('active');q('#globalScreens').style.display='block';qa('.screen').forEach(s=>s.classList.toggle('active',s.id===id));qa('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));q('#crumb').textContent=screenNames[id]||'Кампании';window.scrollTo(0,0)}
   qa('[data-screen]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.screen)));qa('[data-screen-link]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.screenLink)));
-  function showCampaignTab(id){qa('[data-camp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.campTab===id));qa('[data-camp-view]').forEach(v=>v.classList.toggle('active',v.dataset.campView===id));window.scrollTo(0,0)}
+  function showCampaignTab(id){
+    qa('[data-camp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.campTab===id));
+    qa('[data-camp-view]').forEach(v=>v.classList.toggle('active',v.dataset.campView===id));
+    window.scrollTo(0,0);
+    if (id === 'report') {
+      void loadCampaignReport();
+    }
+  }
   function openCampaign(tab='overview'){q('#globalScreens').style.display='none';q('#campaignWorkspace').classList.add('active');qa('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen==='campaigns'));q('#crumb').textContent='Кампания';showCampaignTab(tab)}
   qa('[data-open-campaign]').forEach(b=>b.addEventListener('click',()=>openCampaign(b.dataset.openCampaign)));qa('[data-camp-tab]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTab)));qa('[data-camp-tab-link]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTabLink)));q('#backCampaigns').addEventListener('click',()=>showScreen('campaigns'));
   function renderWizard(){qa('[data-wstep]').forEach(b=>{const n=+b.dataset.wstep;b.classList.toggle('active',n===wizardStep);b.classList.toggle('done',n<wizardStep)});qa('[data-wpane]').forEach(p=>p.classList.toggle('active',+p.dataset.wpane===wizardStep));q('#wizardBack').style.visibility=wizardStep===1?'hidden':'visible';q('#wizardNext').style.display=wizardStep===5?'none':'inline-flex';q('#wizardCreate').style.display=wizardStep===5?'inline-flex':'none'}

@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  active
+  suspended
+  blocked
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+enum CampaignStatus {
+  draft
+  review
+  ready
+  running
+  auto_paused
+  completed
+  archived
+}
+
+enum DebtStatus {
+  active
+  closed
+  disputed
+  bankruptcy
+  contact_forbidden
+}
+
+enum ConsentStatus {
+  pending
+  given
+  revoked
+}
+
+enum ScriptStatus {
+  draft
+  active
+  archived
+}
+
+enum ComplianceDecisionStatus {
+  allow
+  block
+}
+
+enum TelephonyMode {
+  sandbox
+  production
+}
+
+enum TelephonyStatus {
+  active
+  disabled
+  invalid
+}
+
+enum CallAttemptStatus {
+  initiated
+  queued
+  ringing
+  answered
+  failed
+  completed
+  no_answer
+  blocked
+}
+
+enum CallResultOutcome {
+  not_called
+  no_answer
+  callback_requested
+  wrong_number
+  ptp_created
+  handoff
+  dispute
+  blocked
+  error
+}
+
+enum CallResultQaStatus {
+  not_reviewed
+  approved
+  flagged
+}
+
+enum UsageEventType {
+  call_started
+  call_completed
+  call_failed
+  handoff
+  transcript_generated
+}
+
+model Tenant {
+  id        String       @id @default(uuid())
+  name      String
+  status    TenantStatus @default(active)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  users     User[]
+  roles     Role[]
+  campaigns Campaign[]
+  debtors   DebtorRecord[]
+  scripts   ScriptVersion[]
+  complianceDecisions ComplianceDecision[]
+  telephonyConnections TelephonyConnection[]
+  callAttempts CallAttempt[]
+  callResults CallResult[]
+  usageEvents UsageEvent[]
+  auditLogs AuditLog[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+}
+
+model User {
+  id        String     @id @default(uuid())
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  email     String
+  name      String
+  status    UserStatus @default(active)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  campaigns Campaign[]      @relation("CampaignCreator")
+  scripts   ScriptVersion[] @relation("ScriptCreator")
+  auditLogs AuditLog[]
+
+  @@unique([tenantId, email])
+}
+
+model Campaign {
+  id              String         @id @default(uuid())
+  tenantId        String
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  status          CampaignStatus @default(draft)
+  timezone        String
+  createdByUserId String
+  createdBy       User           @relation("CampaignCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  debtors             DebtorRecord[]
+  scripts             ScriptVersion[]
+  complianceDecisions ComplianceDecision[]
+  callAttempts        CallAttempt[]
+  usageEvents         UsageEvent[]
+}
+
+model DebtorRecord {
+  id            String        @id @default(uuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId    String
+  campaign      Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  externalId    String
+  phone         String
+  timezone      String
+  debtAmount    Decimal
+  debtStatus    DebtStatus    @default(active)
+  consentStatus ConsentStatus @default(pending)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  complianceDecisions ComplianceDecision[]
+  callAttempts        CallAttempt[]
+
+  @@unique([tenantId, campaignId, externalId])
+}
+
+model ScriptVersion {
+  id              String       @id @default(uuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId      String
+  campaign        Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  version         Int
+  status          ScriptStatus @default(draft)
+  content         String
+  createdByUserId String
+  createdBy       User         @relation("ScriptCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now())
+
+  @@unique([campaignId, version])
+}
+
+model ComplianceDecision {
+  id            String                   @id @default(uuid())
+  tenantId      String
+  tenant        Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId    String
+  campaign      Campaign                 @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  debtorRecordId String
+  debtorRecord  DebtorRecord            @relation(fields: [debtorRecordId], references: [id], onDelete: Cascade)
+  decision      ComplianceDecisionStatus @default(allow)
+  reasonCode    String
+  reasonText    String
+  ruleVersion   String
+  checkedAt     DateTime
+}
+
+model TelephonyConnection {
+  id          String           @id @default(uuid())
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider    String
+  mode        TelephonyMode
+  status      TelephonyStatus
+  displayName String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  callAttempts CallAttempt[]
+}
+
+model CallAttempt {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId            String
+  campaign              Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  debtorRecordId        String
+  debtorRecord          DebtorRecord      @relation(fields: [debtorRecordId], references: [id], onDelete: Cascade)
+  telephonyConnectionId String
+  telephonyConnection   TelephonyConnection @relation(fields: [telephonyConnectionId], references: [id], onDelete: Restrict)
+  status                CallAttemptStatus  @default(initiated)
+  providerCallId        String
+  startedAt             DateTime
+  endedAt               DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  callResult            CallResult?
+}
+
+model CallResult {
+  id            String            @id @default(uuid())
+  tenantId      String
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callAttemptId String            @unique
+  callAttempt   CallAttempt       @relation(fields: [callAttemptId], references: [id], onDelete: Cascade)
+  outcome       CallResultOutcome
+  qaStatus      CallResultQaStatus @default(not_reviewed)
+  ptpAmount     Decimal?
+  ptpDate       DateTime?
+  reason        String?
+  transcriptUrl  String?
+  recordingUrl   String?
+  createdAt     DateTime          @default(now())
+}
+
+model UsageEvent {
+  id           String        @id @default(uuid())
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId   String
+  campaign     Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  eventType    UsageEventType
+  quantity     Decimal
+  unit         String
+  sourceId     String        @unique
+  occurredAt   DateTime
+  createdAt    DateTime      @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([userId])
+}

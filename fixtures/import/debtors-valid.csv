@@ -1,0 +1,4 @@
+externalId,phone,timezone,debtAmount,debtStatus,consentStatus
+AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given
+CD-1002,+7 903 222 11 22,Asia/Yekaterinburg,5600,active,pending
+EF-1003,+1 415 555 0199,America/Los_Angeles,250.75,disputed,pending
