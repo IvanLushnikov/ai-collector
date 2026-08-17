@@ -45,3 +45,40 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given,Иванов И.�
     expect(() => parseDebtorImportCsv('   \n\r\n')).toThrowError(/EMPTY_CSV/);
   });
 });
+
+describe('parseDebtorImportXlsx', () => {
+  it('parses the same fields as CSV without evaluating formulas', async () => {
+    const { parseDebtorImportXlsx } = await import('../../src/import/xlsx-parser.js');
+    const { buildDebtorXlsx } = await import('./xlsx-fixture.js');
+    const buffer = buildDebtorXlsx([
+      ['externalId', 'phone', 'timezone', 'debtAmount', 'debtStatus', 'consentStatus'],
+      ['AB-1001', '+7 (950) 123-45-67', 'Europe/Moscow', '15320.50', 'active', 'given']
+    ]);
+
+    expect(parseDebtorImportXlsx(buffer).rows[0]).toMatchObject({
+      externalId: 'AB-1001',
+      phone: '+7 (950) 123-45-67',
+      timezone: 'Europe/Moscow',
+      debtAmount: '15320.50',
+      debtStatus: 'active',
+      consentStatus: 'given'
+    });
+  });
+
+  it('rejects an empty sheet', async () => {
+    const { parseDebtorImportXlsx } = await import('../../src/import/xlsx-parser.js');
+    const { buildDebtorXlsx } = await import('./xlsx-fixture.js');
+    expect(() => parseDebtorImportXlsx(buildDebtorXlsx([]))).toThrowError(/EMPTY_XLSX/);
+  });
+
+  it('keeps a stored formula string without evaluating it', async () => {
+    const { parseDebtorImportXlsx } = await import('../../src/import/xlsx-parser.js');
+    const { buildDebtorXlsx } = await import('./xlsx-fixture.js');
+    const buffer = buildDebtorXlsx([
+      ['externalId', 'phone', 'timezone', 'debtAmount', 'debtStatus', 'consentStatus'],
+      ['AB-1001', '+79501234567', 'Europe/Moscow', '=A1+1', 'active', 'given']
+    ]);
+
+    expect(parseDebtorImportXlsx(buffer).rows[0]?.debtAmount).toBe('=A1+1');
+  });
+});

@@ -1,0 +1,6 @@
+{
+  "id": "low-confidence",
+  "title": "Low confidence / unintelligible speech",
+  "userText": "…",
+  "expected": { "outcome": "handoff", "state": "handoff" }
+}

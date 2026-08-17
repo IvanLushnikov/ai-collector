@@ -23,7 +23,7 @@ export const normalizePhone = (rawPhone: string): PhoneNormalizeResult => {
     return {
       error: {
         code: 'INVALID_PHONE_FORMAT',
-        message: 'Phone is empty'
+        message: 'Укажите телефон. Добавьте номер в международном формате, например +7…'
       }
     };
   }
@@ -33,7 +33,7 @@ export const normalizePhone = (rawPhone: string): PhoneNormalizeResult => {
     return {
       error: {
         code: 'INVALID_PHONE_FORMAT',
-        message: 'Phone is empty'
+        message: 'Укажите телефон. Добавьте номер в международном формате, например +7…'
       }
     };
   }
@@ -48,7 +48,7 @@ export const normalizePhone = (rawPhone: string): PhoneNormalizeResult => {
     return {
       error: {
         code: 'INVALID_PHONE_FORMAT',
-        message: 'Phone contains invalid characters'
+        message: 'Телефон содержит недопустимые символы. Оставьте цифры и, при необходимости, плюс.'
       }
     };
   }
@@ -58,7 +58,7 @@ export const normalizePhone = (rawPhone: string): PhoneNormalizeResult => {
     return {
       error: {
         code: 'INVALID_PHONE_FORMAT',
-        message: 'Phone number length is invalid for E.164'
+        message: 'Длина телефона не подходит. Укажите номер от 7 до 15 цифр.'
       }
     };
   }

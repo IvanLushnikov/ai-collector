@@ -47,15 +47,12 @@ AI Collector — это прототип продукта для compliance-firs
 
 1. Клонируйте репозиторий.
 2. Откройте `index.html` или `prototype.html` в браузере для просмотра текущих прототипов.
-3. При запуске backend-части, согласно решению (`docs/decisions/0001-backend-stack.md`), ожидаемый локальный порядок будет:
+3. Backend:
    - `cp .env.example .env`
-   - `docker compose up -d`
+   - `docker compose up -d` — PostgreSQL 16 (`DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_collector`) и Redis (`REDIS_URL=redis://127.0.0.1:6379`), без секретов в git
    - `npm install`
-   - `npm run db:migrate`
-   - `npm run db:seed`
    - `npm run dev`
-
-> Примечание: в этой итерации backend файлы проекта только начинают формироваться по backlog-задачам.
+   - тесты: `npm run test` (без живого Postgres/Redis)
 
 ## Рекомендуемый рабочий цикл на итерации
 
@@ -83,6 +80,7 @@ AI Collector — это прототип продукта для compliance-firs
 ## API документация MVP (route-level)
 
 - [Telephony API](./docs/telephony-api.md)
+- [Provider Credentials API](./docs/provider-credentials-api.md)
 - [Calls API](./docs/calls-api.md)
 - [Campaigns API](./docs/campaigns-api.md)
 - [Compliance API](./docs/compliance-api.md)

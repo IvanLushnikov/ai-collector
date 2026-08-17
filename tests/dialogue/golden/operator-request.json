@@ -1,0 +1,6 @@
+{
+  "id": "operator-request",
+  "title": "Borrower asks for an operator",
+  "userText": "соедините с оператором",
+  "expected": { "outcome": "handoff", "state": "handoff" }
+}

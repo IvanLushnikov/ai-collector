@@ -96,6 +96,12 @@ export type VoiceProviderCapabilities = {
 - Провайдер может быть подменён fake/sandbox реализацией на этапе MVP.
 - Любые сетевые вызовы провайдера не должны выполняться в unit-тестах core-роутов.
 
+## Sandbox vs live
+
+- Sandbox: `SandboxVoiceProvider`, `mode=sandbox`, `sandboxPass=true`, marking/recording/handoff = false. Маршрут `POST .../calls/sandbox`.
+- Live: production connection + `probeCapabilities()` с marking+recording+handoff. Маршрут `POST .../calls/live` **ещё не реализован**; контракт в `docs/calls-api.md`.
+- **Вендорский робот не используется.** Exolve Robots / Mango voice robot не заменяют compliance engine, state machine и audit. Адаптер — только telephony (start/status/hangup/probe/transfer), не диалог.
+
 ## Multi-provider extension pattern (v0)
 
 Документ расширяет текущий adapter контракт для добавления второго провайдера без изменений API оркестрации звонков.
@@ -140,7 +146,7 @@ export type VoiceProviderCapabilities = {
 
 1. Реализовать адаптер второго провайдера по одному интерфейсу.
 2. Добавить нормализатор статусов (`mapVendorStatus`) без влияния на маршруты.
-3. Подключить в `providerResolver` и добавить switch/конфиг.
+3. Подключить в `src/telephony/voice-provider/resolver.ts`: известные имена (`sandbox`) резолвятся в адаптер; неизвестные бросают `UnknownVoiceProviderError` без fallback на live.
 4. Добавить тесты на контракт (status mapping + basic happy path).
 5. Отключить/включить через конфиг без изменения API call flow.
 

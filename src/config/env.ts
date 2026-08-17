@@ -3,7 +3,11 @@ import { z } from 'zod';
 
 loadEnv();
 
-const schema = z.object({
+export const TEST_CREDENTIALS_ENCRYPTION_KEY = 'a'.repeat(64);
+
+const hex32 = z.string().regex(/^[0-9a-fA-F]{64}$/, 'CREDENTIALS_ENCRYPTION_KEY must be 32 bytes hex');
+
+export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
@@ -12,7 +16,53 @@ const schema = z.object({
   CORS_ORIGINS: z.string().default('*'),
   BILLING_CONNECTED_MINUTE_RATE_RUB: z.coerce.number().positive('BILLING_CONNECTED_MINUTE_RATE_RUB must be a positive number').default(1.2),
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive('API_RATE_LIMIT_MAX_REQUESTS must be a positive integer').default(120),
-  API_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive('API_RATE_LIMIT_WINDOW_MS must be a positive integer').default(60000)
-});
+  API_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive('API_RATE_LIMIT_WINDOW_MS must be a positive integer').default(60000),
+  LIVE_CALLS_ENABLED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
+  REDIS_URL: z.string().default('redis://127.0.0.1:6379'),
+  SANDBOX_CALLS_QUEUE_ENABLED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
+  CREDENTIALS_ENCRYPTION_KEY: z.string().optional(),
+  YANDEX_SPEECHKIT_API_KEY: z.string().optional().default(''),
+  YANDEXGPT_API_KEY: z.string().optional().default(''),
+  GIGACHAT_API_KEY: z.string().optional().default(''),
+  YANDEX_FOLDER_ID: z.string().optional().default('')
+}).superRefine((value, ctx) => {
+  if (value.NODE_ENV === 'production') {
+    const parsed = hex32.safeParse(value.CREDENTIALS_ENCRYPTION_KEY ?? '');
+    if (!parsed.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CREDENTIALS_ENCRYPTION_KEY'],
+        message: 'CREDENTIALS_ENCRYPTION_KEY is required in production (32-byte hex)'
+      });
+    }
+    return;
+  }
 
-export const env = schema.parse(process.env);
+  if (value.CREDENTIALS_ENCRYPTION_KEY && value.CREDENTIALS_ENCRYPTION_KEY.length > 0) {
+    const parsed = hex32.safeParse(value.CREDENTIALS_ENCRYPTION_KEY);
+    if (!parsed.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CREDENTIALS_ENCRYPTION_KEY'],
+        message: 'CREDENTIALS_ENCRYPTION_KEY must be 32 bytes hex'
+      });
+    }
+  }
+}).transform((value) => ({
+  ...value,
+  CREDENTIALS_ENCRYPTION_KEY: value.CREDENTIALS_ENCRYPTION_KEY
+    && value.CREDENTIALS_ENCRYPTION_KEY.length > 0
+    ? value.CREDENTIALS_ENCRYPTION_KEY
+    : value.NODE_ENV === 'test'
+      ? TEST_CREDENTIALS_ENCRYPTION_KEY
+      : value.CREDENTIALS_ENCRYPTION_KEY ?? ''
+}));
+
+export type AppEnv = z.infer<typeof envSchema>;
+
+export const parseEnv = (source: NodeJS.ProcessEnv = process.env): AppEnv => envSchema.parse(source);
+
+export const env = parseEnv();
+
+export const isLiveCallsEnabled = (config: Pick<AppEnv, 'LIVE_CALLS_ENABLED'> = env): boolean =>
+  config.LIVE_CALLS_ENABLED === true;

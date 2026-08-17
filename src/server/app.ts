@@ -1,5 +1,6 @@
 import { fastify, FastifyInstance } from 'fastify';
 import { env } from '../config/env.js';
+import { serializeUnknownError } from '../logging/logger.js';
 import { registerCampaignRoutes } from '../routes/campaigns.js';
 import { registerComplianceRoutes } from '../routes/compliance.js';
 import { registerCallRoutes } from '../routes/calls.js';
@@ -9,11 +10,16 @@ import { registerReportRoutes } from '../routes/reports.js';
 import { registerUsageRoutes } from '../routes/usage.js';
 import { registerTelephonyRoutes } from '../routes/telephony.js';
 import { registerTenantRoutes } from '../routes/tenants.js';
+import { registerProviderCredentialRoutes } from '../routes/provider-credentials.js';
 import { prisma } from '../db/client.js';
 import { tenantContextMiddleware } from './middleware/tenant-context.js';
 import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
+import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
+import { MangoVoiceProvider } from '../telephony/mango/index.js';
+import { createVoiceProviderResolver, type VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
+import { createPrismaCredentialSecretStore } from '../secrets/credential-store.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -56,12 +62,24 @@ type CampaignDependencies = {
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
   };
+  providerCredential?: {
+    create?: (args: any) => Promise<unknown>;
+    findMany?: (args: any) => Promise<unknown>;
+    findFirst?: (args: any) => Promise<unknown>;
+    findUnique?: (args: any) => Promise<unknown>;
+    update?: (args: any) => Promise<unknown>;
+  };
+  secretStore?: import('../secrets/credential-store.js').CredentialSecretStore;
+  speechProbe?: import('../speech/credentials/probe.js').SpeechCredentialProbe;
+  dek?: Buffer;
   complianceDecision?: {
     count?: (args: any) => Promise<number>;
     create?: (args: any) => Promise<unknown>;
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
+  voiceProviderResolver?: VoiceProviderResolver;
+  sandboxCallsQueueEnabled?: boolean;
 };
 
 const createRateLimitAuditEntry = async (
@@ -246,7 +264,13 @@ type TenantDependencies = CampaignDependencies & {
 
 export const createApp = (dependencies: AppDependencies = {}): FastifyInstance => {
   const app = fastify({
-    logger: env.NODE_ENV === 'development'
+    logger: env.NODE_ENV === 'test'
+      ? false
+      : {
+        serializers: {
+          err: serializeUnknownError
+        }
+      }
   });
 
   const campaignStore = dependencies.campaignStore ?? prisma;
@@ -289,13 +313,27 @@ export const createApp = (dependencies: AppDependencies = {}): FastifyInstance =
 
   registerCampaignRoutes(app, campaignStore);
   registerComplianceRoutes(app, campaignStore as CampaignStoreWithComplianceRouteDeps);
-  registerCallRoutes(app, campaignStore as AppCallDependencies);
+  registerCallRoutes(app, {
+    ...(campaignStore as AppCallDependencies),
+    voiceProviderResolver: (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
+      sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
+      mango: new MangoVoiceProvider()
+    })
+  });
   registerQaRoutes(app, campaignStore as AppQaDependencies);
   registerScriptRoutes(app, campaignStore as AppScriptDependencies);
   registerReportRoutes(app, campaignStore as CampaignStoreWithReportRouteDeps);
   registerUsageRoutes(app, campaignStore as CampaignStoreWithUsageRouteDeps);
   registerTelephonyRoutes(app, campaignStore as TelephonyDependencies);
   registerTenantRoutes(app, campaignStore as TenantDependencies);
+  registerProviderCredentialRoutes(app, {
+    ...(campaignStore as any),
+    providerCredential: (campaignStore as any).providerCredential ?? prisma.providerCredential,
+    secretStore: (campaignStore as any).secretStore ?? createPrismaCredentialSecretStore(prisma),
+    dek: (campaignStore as any).dek,
+    speechProbe: (campaignStore as any).speechProbe,
+    platformEnv: (campaignStore as any).platformEnv
+  });
 
   return app;
 };

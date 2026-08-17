@@ -42,6 +42,16 @@
   - `storageBillingUnit(storageEstimates)`.
 - Каждый mapper должен оставаться tenant/campaign scoped и аудируемым.
 
+## Speech units (v0/v1 заметка)
+
+- Новые `UsageEventType`: `asr_units`, `tts_units`, `llm_units`.
+- Поле `credentialMode`: `platform` | `byok` | `fake` (sandbox default `fake`).
+- Mapper `sumPlatformSpeechUnits` / `isPlatformBillableUsage`:
+  - `credentialMode=byok` **не** входит в platform invoice;
+  - `credentialMode=platform` суммируется отдельно от connected minutes;
+  - `fake` sandbox speech (когда появится) тоже не входит в platform speech sum.
+- Connected minutes по-прежнему считаются из `call_completed` / unit=`minute` и не смешиваются со speech units.
+
 ## План готовности к v1 billing
 
 1. **v0 (текущий этап):** единицы, привязанные к `UsageEvent` + `CallResult`, с ручной валидацией mapping.

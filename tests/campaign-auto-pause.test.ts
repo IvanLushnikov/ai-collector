@@ -118,4 +118,21 @@ describe('CampaignAutoPauseService', () => {
     expect(store.campaign.update).not.toHaveBeenCalled();
     expect(store.auditLog.create).not.toHaveBeenCalled();
   });
+
+  it('pauses a running campaign when live recording evidence is missing', async () => {
+    const store = makeStore();
+    const service = new CampaignAutoPauseService(store);
+
+    const result = await service.pauseCampaign({
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      campaignId: 'campaign-1',
+      reasonCode: 'recording_failed',
+      reasonText: 'Answered live call has no recording or transcript URL',
+      triggeredByUserId: 'user-1'
+    });
+
+    expect(result.reasonCode).toBe('recording_failed');
+    expect(result.status).toBe('auto_paused');
+    expect(store.campaign.update).toHaveBeenCalledOnce();
+  });
 });

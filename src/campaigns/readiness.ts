@@ -1,3 +1,10 @@
+import { isProductionTelephonyProbeConfirmed } from '../domain/telephony-connection/index.js';
+import { isHandoffDestinationConfigured } from '../domain/handoff-destination/index.js';
+import type { ProviderCredential } from '../domain/provider-credential/index.js';
+import { env } from '../config/env.js';
+import { areSpeechCredentialsReady } from '../speech/credentials/assert-ready.js';
+import type { PlatformSpeechEnv } from '../speech/credentials/resolve.js';
+
 export type CampaignReadinessReason = {
   source: string;
   reasonCode: string;
@@ -26,6 +33,10 @@ export type CampaignReadinessDependencies = {
   telephonyConnection?: {
     findUnique?: (args: unknown) => Promise<unknown>;
   };
+  providerCredential?: {
+    findMany?: (args: unknown) => Promise<unknown>;
+  };
+  platformEnv?: PlatformSpeechEnv;
   complianceDecision?: {
     count?: (args: unknown) => Promise<number>;
     findMany?: (args: unknown) => Promise<unknown>;
@@ -56,6 +67,11 @@ type TelephonyConnectionRecord = {
   mode: string;
   status: string;
   updatedAt: string;
+  lastProbeAt?: string | Date | null;
+  probeMarking?: boolean | null;
+  probeRecording?: boolean | null;
+  probeHandoff?: boolean | null;
+  handoffNumber?: string | null;
 };
 
 const findTenantTelephonyConnection = async (
@@ -74,10 +90,15 @@ const findTenantTelephonyConnection = async (
   return connection;
 };
 
+export type CampaignReadinessOptions = {
+  channel?: 'sandbox' | 'live';
+};
+
 export const evaluateCampaignReadiness = async (
   deps: CampaignReadinessDependencies,
   campaign: CampaignReadinessCampaign,
-  tenantId: string
+  tenantId: string,
+  options: CampaignReadinessOptions = {}
 ): Promise<CampaignReadinessSummary> => {
   const [rawDebtorCount, rawScriptVersions, selectedTelephonyConnection, complianceBlocks, rawComplianceReasons, tenant] = await Promise.all([
     (deps.debtorRecord?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0)),
@@ -135,7 +156,14 @@ export const evaluateCampaignReadiness = async (
   const readinessLastUpdatedAt = Math.max(
     campaignUpdatedAt,
     ...scriptVersions.map((scriptVersion) => Date.parse(scriptVersion.updatedAt)),
-    ...telephonyConnections.map((connection) => Date.parse(connection.updatedAt))
+    ...telephonyConnections.map((connection) => Date.parse(connection.updatedAt)),
+    ...telephonyConnections.flatMap((connection) => {
+      if (!connection.lastProbeAt) {
+        return [];
+      }
+      const lastProbeAt = Date.parse(String(connection.lastProbeAt));
+      return Number.isNaN(lastProbeAt) ? [] : [lastProbeAt];
+    })
   );
 
   const reasons: CampaignReadinessReason[] = [];
@@ -157,14 +185,42 @@ export const evaluateCampaignReadiness = async (
     });
   }
 
+  const skipProductionGates = options.channel === 'sandbox';
+
   if (activeProductionTelephonyConnections.length === 0) {
-    reasons.push({
-      source: 'telephony',
-      reasonCode: 'PRODUCTION_TELEPHONY_MISSING',
-      reasonText: 'No active production telephony connection is configured',
-      nextAction: 'Add or activate a production telephony connection'
-    });
-  } else {
+    if (!skipProductionGates) {
+      reasons.push({
+        source: 'telephony',
+        reasonCode: 'PRODUCTION_TELEPHONY_MISSING',
+        reasonText: 'No active production telephony connection is configured',
+        nextAction: 'Add or activate a production telephony connection'
+      });
+    }
+  } else if (!skipProductionGates) {
+    const unconfirmedProbe = activeProductionTelephonyConnections.find(
+      (connection) => !isProductionTelephonyProbeConfirmed(connection)
+    );
+    if (unconfirmedProbe) {
+      reasons.push({
+        source: 'telephony',
+        reasonCode: 'TELEPHONY_PROBE_INCOMPLETE',
+        reasonText: 'Production telephony probe has not confirmed marking, recording and handoff',
+        nextAction: 'Run a production probe that confirms marking, recording and handoff; sandboxPass is not live marking'
+      });
+    }
+
+    const missingHandoff = activeProductionTelephonyConnections.find(
+      (connection) => !isHandoffDestinationConfigured({ number: connection.handoffNumber ?? '' })
+    );
+    if (missingHandoff) {
+      reasons.push({
+        source: 'telephony',
+        reasonCode: 'HANDOFF_UNAVAILABLE_BLOCK',
+        reasonText: 'Production telephony has no operator queue destination',
+        nextAction: 'Set a handoff number or SIP queue on the production connection'
+      });
+    }
+
     const legalBasisStatus = (tenant as { legalBasisStatus?: string } | null)?.legalBasisStatus ?? 'pending';
     if (legalBasisStatus !== 'confirmed') {
       reasons.push({
@@ -172,6 +228,30 @@ export const evaluateCampaignReadiness = async (
         reasonCode: 'LEGAL_BASIS_NOT_CONFIRMED',
         reasonText: 'Production telephony requires a confirmed legal basis for automatic dialing',
         nextAction: 'Keep sandbox until legal basis is confirmed by an admin path'
+      });
+    }
+  }
+
+  if (!skipProductionGates) {
+    const speechRows = ((await (deps.providerCredential?.findMany?.({
+      where: { tenantId }
+    }) ?? Promise.resolve([]))) ?? []) as ProviderCredential[];
+    const platformEnv = deps.platformEnv ?? {
+      YANDEX_SPEECHKIT_API_KEY: env.YANDEX_SPEECHKIT_API_KEY,
+      YANDEXGPT_API_KEY: env.YANDEXGPT_API_KEY,
+      GIGACHAT_API_KEY: env.GIGACHAT_API_KEY,
+      YANDEX_FOLDER_ID: env.YANDEX_FOLDER_ID
+    };
+    if (!areSpeechCredentialsReady({
+      tenantId,
+      credentials: speechRows,
+      env: platformEnv
+    })) {
+      reasons.push({
+        source: 'speech',
+        reasonCode: 'SPEECH_CREDENTIALS_NOT_READY',
+        reasonText: 'Speech and model credentials are not ready',
+        nextAction: 'Connect speech credentials in integrations'
       });
     }
   }

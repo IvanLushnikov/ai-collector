@@ -11,6 +11,8 @@ type TelephonyDependencies = {
   };
   telephonyConnection: {
     create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+    findUnique?: (args: { where: { id: string } }) => Promise<unknown>;
+    update?: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<unknown>;
     findMany?: (args: {
       where: { tenantId: string };
       orderBy?: { createdAt: 'asc' | 'desc' };
@@ -25,6 +27,15 @@ type TelephonyDependencies = {
       };
     }) => Promise<unknown>;
   };
+  campaign?: {
+    findMany?: (args: {
+      where: {
+        tenantId: string;
+        telephonyConnectionId: string;
+        status: { in: string[] };
+      };
+    }) => Promise<unknown>;
+  };
   auditLog?: {
     create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
   };
@@ -34,11 +45,24 @@ const tenantSchema = z.object({
   tenantId: z.string().uuid()
 });
 
+const telephonyConnectionParamsSchema = z.object({
+  tenantId: z.string().uuid(),
+  connectionId: z.string().uuid()
+});
+
 const telephonyConnectionSchema = z.object({
   provider: z.string().min(1),
   mode: z.enum(['sandbox', 'production']),
   status: z.enum(['active', 'disabled', 'invalid']).default('active'),
   displayName: z.string().min(1)
+});
+
+const telephonyConnectionUpdateSchema = z.object({
+  provider: z.string().min(1).optional(),
+  displayName: z.string().min(1).optional(),
+  status: z.enum(['active', 'disabled', 'invalid']).optional()
+}).refine((value) => Object.values(value).some((field) => field !== undefined), {
+  message: 'At least one field is required'
 });
 
 type TelephonyConnectionRow = {
@@ -177,4 +201,100 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
       updatedAt: connection.updatedAt
     });
   });
+
+  app.patch(
+    '/tenants/:tenantId/telephony-connections/:connectionId',
+    { preValidation: roleMiddleware(['owner', 'integration_admin']) },
+    async (request, reply) => {
+      const params = telephonyConnectionParamsSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: params.error.issues
+        });
+      }
+
+      const payload = telephonyConnectionUpdateSchema.safeParse(request.body ?? {});
+      if (!payload.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: payload.error.issues
+        });
+      }
+
+      const tenant = await deps.tenant.findUnique({
+        where: { id: params.data.tenantId }
+      });
+      if (!tenant) {
+        return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
+      }
+
+      const connection = await deps.telephonyConnection.findUnique?.({
+        where: { id: params.data.connectionId }
+      }) as TelephonyConnectionRow | null | undefined;
+
+      if (!connection || connection.tenantId !== params.data.tenantId) {
+        return reply.code(404).send({ error: 'TELEPHONY_CONNECTION_NOT_FOUND' });
+      }
+
+      const nextProvider = payload.data.provider;
+      if (nextProvider && nextProvider !== connection.provider) {
+        const lockedCampaigns = (await (deps.campaign?.findMany?.({
+          where: {
+            tenantId: params.data.tenantId,
+            telephonyConnectionId: connection.id,
+            status: { in: ['running', 'auto_paused'] }
+          }
+        }) ?? Promise.resolve([]))) as Array<{ id: string }>;
+
+        if (lockedCampaigns.length > 0) {
+          return reply.code(409).send({ error: 'TELEPHONY_PROVIDER_LOCKED' });
+        }
+      }
+
+      const actor = await deps.user.findFirst({
+        where: {
+          tenantId: params.data.tenantId,
+          isActive: true,
+          status: 'active'
+        }
+      }) as { id: string } | null;
+      if (!actor) {
+        return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
+      }
+
+      const updated = (await deps.telephonyConnection.update?.({
+        where: { id: connection.id },
+        data: payload.data
+      })) as TelephonyConnectionRow;
+
+      await deps.auditLog?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          userId: actor.id,
+          action: 'telephony_connection.updated',
+          entityType: 'telephonyConnection',
+          entityId: updated.id,
+          metadata: {
+            provider: updated.provider,
+            mode: updated.mode,
+            status: updated.status,
+            sourceRoute: '/tenants/:tenantId/telephony-connections/:connectionId',
+            tenantId: params.data.tenantId
+          }
+        }
+      });
+
+      return reply.code(200).send({
+        id: updated.id,
+        tenantId: updated.tenantId,
+        provider: updated.provider,
+        mode: updated.mode,
+        status: updated.status,
+        displayName: updated.displayName,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt
+      });
+    }
+  );
 };

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
+import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
@@ -141,7 +142,10 @@ const findTenantTelephonyConnection = async (
 };
 
 const campaignDebtorImportSchema = z.object({
-  csvContent: z.string().min(1)
+  csvContent: z.string().min(1).optional(),
+  xlsxBase64: z.string().min(1).optional()
+}).refine((value) => Boolean(value.csvContent || value.xlsxBase64), {
+  message: 'csvContent or xlsxBase64 is required'
 });
 
 const tenantCampaignAuditLogSchema = z.object({
@@ -1348,7 +1352,18 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
     let parsedRows;
     try {
-      parsedRows = parseDebtorImportCsv(payload.data.csvContent);
+      if (payload.data.xlsxBase64) {
+        const buffer = Buffer.from(payload.data.xlsxBase64, 'base64');
+        if (buffer.length > MAX_DEBTOR_IMPORT_BYTES) {
+          return reply.code(400).send({ error: 'IMPORT_TOO_LARGE' });
+        }
+        parsedRows = parseDebtorImportXlsx(buffer);
+      } else {
+        if ((payload.data.csvContent?.length ?? 0) > MAX_DEBTOR_IMPORT_BYTES) {
+          return reply.code(400).send({ error: 'IMPORT_TOO_LARGE' });
+        }
+        parsedRows = parseDebtorImportCsv(payload.data.csvContent ?? '');
+      }
     } catch (error) {
       return reply.code(400).send({
         error: 'INVALID_CSV',

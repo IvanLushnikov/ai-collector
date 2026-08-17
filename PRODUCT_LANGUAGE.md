@@ -59,6 +59,25 @@
 | Call marking / CNAM | маркировка (звонков) | call marking | |
 | CDR | статусы звонка / журнал звонков | CDR | |
 
+## Речь и модель
+
+| Внутренний термин | Пользовательский термин | Не использовать | Комментарий |
+|---|---|---|---|
+| ProviderCredential / speech stack | речь и модель | BYOK, ASR, TTS, LLM, API key | Раздел интеграций, не внутри кампании |
+| capability `asr` | распознавание речи | ASR, speech-to-text | Карточка 1 |
+| capability `tts` | голос | TTS, синтез | Карточка 2 |
+| capability `llm` | модель диалога | LLM, GPT, нейросеть | Карточка 3 |
+| mode `byok` | свой ключ | BYOK, bring your own | После сохранения: «ключ ···XXXX» |
+| mode `platform` | ключ платформы | platform key | |
+| status `inactive` / нет записи | не настроено | inactive | |
+| status `pending_probe` | не проверено | pending_probe | |
+| status `active` | подключено | active | Вместе с режимом: «свой ключ» / «ключ платформы» |
+| status `invalid` | ошибка подключения | invalid, probe failed | |
+| status `disabled` | отключено | disabled | |
+| probe | проверить подключение | probe, ping | Кнопка в модалке |
+| `folderId` | каталог | folderId, folder | Только для Yandex |
+| `SPEECH_CREDENTIAL_MISSING` / `SPEECH_CREDENTIALS_NOT_READY` | Речь и модель не готовы. Подключите ключи в разделе интеграций. | SPEECH_CREDENTIAL_* | Только статус на готовности кампании, без формы ключа |
+
 ## Сценарий и звонок
 
 | Внутренний термин | Пользовательский термин | Не использовать | Комментарий |
@@ -67,11 +86,18 @@
 | Voice agent / AI agent | ИИ-агент / голосовой ИИ | AI agent, бот (в compliance-контексте) | В речи агента — «автоматизированный интеллектуальный агент» (ФЗ‑230) |
 | CallAttempt | звонок | call attempt | Журнал звонков |
 | CallResult | результат звонка / исход | call result | |
-| Handoff | перевод оператору | handoff, transfer | |
+| Handoff | перевод оператору | handoff, transfer, передача оператору | |
 | PTP | обещание платежа | PTP, promise to pay | Аббревиатуру PTP — только во внутренних дашбордах |
 | Transcript | расшифровка / текст разговора | transcript | |
 | Recording | запись (разговора) | recording | |
-| Test call | тестовый звонок | test call | |
+| Test call | проверка соединения / тестовый звонок | test call | Тест не запускает кампанию |
+| Open reason CTA | Открыть причину | Перенастроить (как главный CTA при автопаузе) | Ведёт на вкладку «Запуск» |
+| Eligible / admitted | допущено к звонку | eligible | Не путать с «принято в базу» |
+| Import accepted | принято в базу | допущено (на импорте) | Eligibility — только перед звонком |
+| Manual pause | Приостановить кампанию | Пауза | С подтверждением |
+| Campaign completed | завершена | stopped, остановлена как отдельный enum | Stop в UI = `completed` |
+| Report role selector | демонстрация прав | Роль для принятия решений | Не смена должности |
+| Recording status | Запись хранится / Записи нет | Скачать запись (sandbox://) | Плеера в v1 нет |
 
 ## Compliance и ограничения
 
@@ -101,7 +127,7 @@
 |---|---|---|---|
 | `index.html` vs `prototype.html` | AI-коллектор vs ИИ-коллектор | ИИ-коллектор в пользовательском кабинете | зафиксировано, не меняли |
 | `index.html` навигация | Overview, CJM, Compliance | допустимо для decision dashboard | не пользовательский кабинет |
-| Backend import errors (`src/import/*`) | английские сообщения | русские сообщения с next step | исправить при выводе ошибок в UI |
+| Backend import errors (`src/import/*`) | русские сообщения с next step | код ошибки API остаётся английским | исправлено в T-214 |
 | API errors (`VALIDATION_ERROR`, …) | код на английском | код для API + русский `message` для UI | по мере появления UI-слоя |
 
 ## Быстрые замены при ревью copy

@@ -1,0 +1,6 @@
+{
+  "id": "third-party",
+  "title": "Third person answers",
+  "userText": "это не он, я жена",
+  "expected": { "outcome": "handoff", "state": "handoff" }
+}

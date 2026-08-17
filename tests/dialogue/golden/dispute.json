@@ -1,0 +1,6 @@
+{
+  "id": "dispute",
+  "title": "Debt dispute",
+  "userText": "я этот долг не признаю",
+  "expected": { "outcome": "dispute", "state": "handoff" }
+}

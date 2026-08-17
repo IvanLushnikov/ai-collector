@@ -17,6 +17,8 @@ export interface CallAttempt {
   scriptVersionId?: string | null;
   status: CallAttemptStatus;
   providerCallId: string;
+  identityVerified?: boolean;
+  identityVerifiedAt?: Date | null;
   startedAt: Date;
   endedAt?: Date;
   createdAt: Date;

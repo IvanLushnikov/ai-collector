@@ -15,6 +15,7 @@ export interface Campaign {
   timezone: string;
   createdByUserId: string;
   telephonyConnectionId: string | null;
+  dailyCallCap?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

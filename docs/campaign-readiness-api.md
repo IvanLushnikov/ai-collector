@@ -65,10 +65,16 @@
 ```
 
 - `reasons` — массив объектов с причинами, которые блокируют или поясняют статус запуска:
-  - `source` (`debtors` | `script` | `telephony` | `compliance` | `campaign` | `legal`)
-  - `reasonCode` (`DEBTORS_MISSING`, `SCRIPT_NOT_READY`, `PRODUCTION_TELEPHONY_MISSING`, `LEGAL_BASIS_NOT_CONFIRMED`, `COMPLIANCE_BLOCKS_DETECTED`, `CAMPAIGN_STATUS_INVALID`)
+  - `source` (`debtors` | `script` | `telephony` | `compliance` | `campaign` | `legal` | `speech`)
+  - `reasonCode` (`DEBTORS_MISSING`, `SCRIPT_NOT_READY`, `PRODUCTION_TELEPHONY_MISSING`, `TELEPHONY_PROBE_INCOMPLETE`, `HANDOFF_UNAVAILABLE_BLOCK`, `LEGAL_BASIS_NOT_CONFIRMED`, `SPEECH_CREDENTIALS_NOT_READY`, `COMPLIANCE_BLOCKS_DETECTED`, `CAMPAIGN_STATUS_INVALID`)
   - `reasonText` (`string`)
   - `nextAction` (`string`)
+
+- `TELEPHONY_PROBE_INCOMPLETE` — для `TelephonyConnection.mode=production`: нет `lastProbeAt` или probe не подтвердил сразу `marking`, `recording` и `handoff`. `sandboxPass` не считается live-маркировкой. Sandbox-соединение этот код не получает.
+
+- `SPEECH_CREDENTIALS_NOT_READY` — для production-ready: нет `status=active` BYOK и нет platform env на `asr`/`tts`/`llm`. Sandbox/fake канал этот код не получает.
+
+- `HANDOFF_UNAVAILABLE_BLOCK` — для production-соединения нет номера/SIP очереди оператора. Sandbox без очереди допустим.
 
 - `complianceReasons` — список последних блокирующих записей `ComplianceDecision` в порядке `checkedAt desc`.
 - `readinessState` — `ready`/`blocked`/`stale`.

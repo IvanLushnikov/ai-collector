@@ -54,4 +54,16 @@ describe('prototype campaign workspace', () => {
       'settings'
     ]);
   });
+
+  it('shows speech and model cards without vendor jargon in titles', () => {
+    expect(prototypeHtml).toContain('id="speech"');
+    expect(prototypeHtml).toContain('Распознавание речи');
+    expect(prototypeHtml).toContain('Модель диалога');
+    expect(prototypeHtml).toContain('Речь и модель не готовы. Подключите ключи в разделе интеграций.');
+    const speechSection = prototypeHtml.match(/<section class="screen" id="speech">[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect(speechSection).not.toMatch(/\bBYOK\b/);
+    expect(speechSection).not.toMatch(/\bASR\b/);
+    expect(speechSection).not.toMatch(/\bTTS\b/);
+    expect(speechSection).not.toMatch(/\bLLM\b/);
+  });
 });

@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { isLockedDisclosureContent, serializeScriptContent } from '../domain/script-version/index.js';
 
 type ScriptDependencies = {
   tenant: {
@@ -28,7 +29,7 @@ const tenantCampaignScriptsSchema = z.object({
 });
 
 const createScriptSchema = z.object({
-  content: z.string().min(1)
+  content: z.unknown()
 });
 
 export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependencies): void => {
@@ -89,10 +90,12 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
     }
 
     const payload = createScriptSchema.safeParse(request.body);
-    if (!payload.success) {
+    if (!payload.success || !isLockedDisclosureContent(payload.data.content)) {
       return reply.code(400).send({
         error: 'VALIDATION_ERROR',
-        issues: payload.error.issues
+        issues: payload.success
+          ? [{ path: ['content'], message: 'agentName, agentId and creditorName are required' }]
+          : payload.error.issues
       });
     }
 
@@ -138,7 +141,7 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
         tenantId: params.data.tenantId,
         campaignId: params.data.campaignId,
         version: (previousScript?.version ?? 0) + 1,
-        content: payload.data.content,
+        content: serializeScriptContent(payload.data.content),
         createdByUserId: actor.id
       }
     }) as {

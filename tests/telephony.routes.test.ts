@@ -29,6 +29,29 @@ type AppStore = {
       createdAt: string;
       updatedAt: string;
     }>;
+    findUnique?: (query: { where: { id: string } }) => Promise<{
+      id: string;
+      tenantId: string;
+      provider: string;
+      mode: string;
+      status: string;
+      displayName: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null>;
+    update?: (payload: {
+      where: { id: string };
+      data: Record<string, unknown>;
+    }) => Promise<{
+      id: string;
+      tenantId: string;
+      provider: string;
+      mode: string;
+      status: string;
+      displayName: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
     findMany: (query: {
       where: { tenantId: string };
       orderBy?: { createdAt: 'asc' | 'desc' };
@@ -53,6 +76,15 @@ type AppStore = {
         updatedAt: string;
       }>
     >;
+  };
+  campaign?: {
+    findMany?: (query: {
+      where: {
+        tenantId: string;
+        telephonyConnectionId: string;
+        status: { in: string[] };
+      };
+    }) => Promise<Array<{ id: string; status: string }>>;
   };
   auditLog?: {
     create: (payload: {
@@ -427,6 +459,155 @@ describe('POST /tenants/:tenantId/telephony-connections', () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+});
+
+describe('PATCH /tenants/:tenantId/telephony-connections/:connectionId', () => {
+  const connectionId = '33333333-3333-3333-3333-333333333333';
+
+  const makeStore = (overrides: Partial<AppStore> = {}): AppStore => ({
+    tenant: {
+      findUnique: vi.fn(async (query: { where: { id: string } }) => {
+        if (query.where.id === '11111111-1111-1111-1111-111111111111') {
+          return { id: query.where.id };
+        }
+
+        return null;
+      })
+    },
+    user: {
+      findFirst: vi.fn(async () => ({
+        id: 'operator-user-id'
+      }))
+    },
+    telephonyConnection: {
+      create: vi.fn(),
+      findMany: vi.fn(async () => []),
+      findUnique: vi.fn(async (query: { where: { id: string } }) => {
+        if (query.where.id !== connectionId) {
+          return null;
+        }
+
+        return {
+          id: connectionId,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          provider: 'sandbox',
+          mode: 'sandbox',
+          status: 'active',
+          displayName: 'Sandbox dialer',
+          createdAt: '2026-08-16T10:00:00.000Z',
+          updatedAt: '2026-08-16T10:00:00.000Z'
+        };
+      }),
+      update: vi.fn(async (payload) => ({
+        id: payload.where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        provider: String(payload.data.provider ?? 'sandbox'),
+        mode: 'sandbox',
+        status: 'active',
+        displayName: String(payload.data.displayName ?? 'Sandbox dialer'),
+        createdAt: '2026-08-16T10:00:00.000Z',
+        updatedAt: '2026-08-16T11:00:00.000Z'
+      }))
+    },
+    campaign: {
+      findMany: vi.fn(async () => [])
+    },
+    auditLog: {
+      create: vi.fn(async () => ({}))
+    },
+    ...overrides
+  });
+
+  it('rejects provider change when a running campaign uses the connection', async () => {
+    const appStore = makeStore({
+      campaign: {
+        findMany: vi.fn(async () => [{ id: 'campaign-running', status: 'running' }])
+      }
+    });
+    const app = createApp({ campaignStore: appStore as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/tenants/11111111-1111-1111-1111-111111111111/telephony-connections/${connectionId}`,
+      headers: {
+        'x-user-role': 'owner'
+      },
+      payload: {
+        provider: 'exolve'
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'TELEPHONY_PROVIDER_LOCKED' });
+    expect(appStore.telephonyConnection.update).not.toHaveBeenCalled();
+    expect(appStore.auditLog?.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('rejects provider change when an auto_paused campaign uses the connection', async () => {
+    const appStore = makeStore({
+      campaign: {
+        findMany: vi.fn(async () => [{ id: 'campaign-paused', status: 'auto_paused' }])
+      }
+    });
+    const app = createApp({ campaignStore: appStore as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/tenants/11111111-1111-1111-1111-111111111111/telephony-connections/${connectionId}`,
+      headers: {
+        'x-user-role': 'integration_admin'
+      },
+      payload: {
+        provider: 'exolve'
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'TELEPHONY_PROVIDER_LOCKED' });
+    expect(appStore.telephonyConnection.update).not.toHaveBeenCalled();
+    expect(appStore.auditLog?.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('updates provider when no running campaign uses the connection', async () => {
+    const appStore = makeStore();
+    const app = createApp({ campaignStore: appStore as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/tenants/11111111-1111-1111-1111-111111111111/telephony-connections/${connectionId}`,
+      headers: {
+        'x-user-role': 'owner'
+      },
+      payload: {
+        provider: 'exolve'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().provider).toBe('exolve');
+    expect(appStore.telephonyConnection.update).toHaveBeenCalledWith({
+      where: { id: connectionId },
+      data: { provider: 'exolve' }
+    });
+    expect(appStore.auditLog?.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'telephony_connection.updated',
+        entityId: connectionId,
+        metadata: expect.objectContaining({
+          provider: 'exolve'
+        })
+      })
+    });
 
     await app.close();
   });

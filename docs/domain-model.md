@@ -20,6 +20,7 @@
   - 1:N `ScriptVersion`
   - 1:N `TelephonyConnection`
   - 1:N `UsageEvent`
+  - 1:N `ProviderCredential`
 
 ### User
 
@@ -225,9 +226,45 @@
 - Lab mapping: `creditorKey` = `tenantId`, `obligationId` = `DebtorRecord.externalId`.
 - Лимит 1/2/8 — продуктовый cap, не юридический факт до memo.
 
+### ProviderCredential
+
+- Назначение: tenant-scoped подключение ASR/TTS/LLM (BYOK или platform). Секрета в этой сущности нет.
+- Поля:
+  - `id` (UUID, PK)
+  - `tenantId` (FK -> Tenant, required)
+  - `capability` (enum: `asr`, `tts`, `llm`)
+  - `provider` (enum: `yandex_speechkit`, `yandexgpt`, `gigachat`)
+  - `mode` (enum: `platform`, `byok`)
+  - `status` (enum: `inactive`, `pending_probe`, `active`, `invalid`, `disabled`)
+  - `displayName` (string)
+  - `secretHint` (string, nullable; последние 4 символа; для `platform` — null)
+  - `metadata` (JSON, только не-секреты: `folderId`, `modelId`)
+  - `lastProbedAt` (timestamp, nullable)
+  - `lastProbeResult` (enum: `ok`, `failed`, nullable)
+  - `createdAt` / `updatedAt`
+- Уникальность: `(tenantId, capability)`.
+- Связи:
+  - N:1 `Tenant`
+  - 1:1 `CredentialSecret`
+- API list/GET **не** возвращает ciphertext, nonce, authTag и plaintext ключа.
+
+### CredentialSecret
+
+- Назначение: envelope-encrypted секрет к `ProviderCredential`. Не входит в публичную модель API.
+- Поля:
+  - `id` (UUID, PK)
+  - `tenantId` (FK -> Tenant)
+  - `providerCredentialId` (UUID unique FK, onDelete Cascade)
+  - `ciphertext` (bytes)
+  - `nonce` (bytes, 12)
+  - `authTag` (bytes, 16)
+  - `keyVersion` (int, default 1)
+  - `createdAt` / `updatedAt`
+- Ciphertext не отдаётся API.
+
 ## Базовые связи (обновлённый контур)
 
-- Tenant → Users, Campaigns, DebtorRecords, ScriptVersions, TelephonyConnections, UsageEvents.
+- Tenant → Users, Campaigns, DebtorRecords, ScriptVersions, TelephonyConnections, UsageEvents, ProviderCredentials.
 - Campaign → DebtorRecords, CallAttempts, ComplianceDecisions, ScriptVersions, UsageEvents.
 - DebtorRecord → CallAttempts, ComplianceDecisions.
 - CallAttempt → CallResult, ComplianceDecisions, UsageEvents.
@@ -246,6 +283,9 @@ erDiagram
     TENANT ||--o{ COMPLIANCE_DECISION : has
     TENANT ||--o{ CALL_ATTEMPT : owns
     TENANT ||--o{ CALL_RESULT : owns
+
+    TENANT ||--o{ PROVIDER_CREDENTIAL : has
+    PROVIDER_CREDENTIAL ||--|| CREDENTIAL_SECRET : encrypts
 
     USER ||--o{ CAMPAIGN : creates
     USER }|--|| ROLE : has

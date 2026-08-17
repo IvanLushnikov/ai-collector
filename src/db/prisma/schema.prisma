@@ -54,6 +54,12 @@ enum ScriptStatus {
   archived
 }
 
+enum PromptStatus {
+  draft
+  active
+  archived
+}
+
 enum ComplianceDecisionStatus {
   allow
   block
@@ -105,12 +111,51 @@ enum UsageEventType {
   call_failed
   handoff
   transcript_generated
+  asr_units
+  tts_units
+  llm_units
+}
+
+enum UsageCredentialMode {
+  platform
+  byok
+  fake
 }
 
 enum FrequencyBucket {
   day
   week
   month
+}
+
+enum SpeechCapability {
+  asr
+  tts
+  llm
+}
+
+enum SpeechProvider {
+  yandex_speechkit
+  yandexgpt
+  gigachat
+}
+
+enum CredentialMode {
+  platform
+  byok
+}
+
+enum CredentialStatus {
+  inactive
+  pending_probe
+  active
+  invalid
+  disabled
+}
+
+enum ProbeResult {
+  ok
+  failed
 }
 
 model Tenant {
@@ -127,6 +172,7 @@ model Tenant {
   campaigns Campaign[]
   debtors   DebtorRecord[]
   scripts   ScriptVersion[]
+  promptVersions PromptVersion[]
   complianceDecisions ComplianceDecision[]
   telephonyConnections TelephonyConnection[]
   callAttempts CallAttempt[]
@@ -135,6 +181,9 @@ model Tenant {
   auditLogs AuditLog[]
   frequencyLedgers FrequencyLedger[]
   suppressionEntries SuppressionEntry[]
+  providerCredentials ProviderCredential[]
+  credentialSecrets CredentialSecret[]
+  webhookInboxEvents WebhookInboxEvent[]
 }
 
 model Role {
@@ -181,11 +230,13 @@ model Campaign {
   createdBy       User           @relation("CampaignCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   telephonyConnectionId String?
   telephonyConnection   TelephonyConnection? @relation(fields: [telephonyConnectionId], references: [id], onDelete: SetNull)
+  dailyCallCap    Int?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   debtors             DebtorRecord[]
   scripts             ScriptVersion[]
+  promptVersions      PromptVersion[]
   complianceDecisions ComplianceDecision[]
   callAttempts        CallAttempt[]
   usageEvents         UsageEvent[]
@@ -228,6 +279,25 @@ model ScriptVersion {
   createdAt       DateTime     @default(now())
 
   callAttempts    CallAttempt[]
+  promptVersions  PromptVersion[]
+
+  @@unique([campaignId, version])
+}
+
+model PromptVersion {
+  id              String       @id @default(uuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId      String
+  campaign        Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  scriptVersionId String?
+  scriptVersion   ScriptVersion? @relation(fields: [scriptVersionId], references: [id], onDelete: SetNull)
+  version         Int
+  status          PromptStatus @default(draft)
+  content         String
+  contentHash     String
+  modelId         String
+  createdAt       DateTime     @default(now())
 
   @@unique([campaignId, version])
 }
@@ -248,15 +318,22 @@ model ComplianceDecision {
 }
 
 model TelephonyConnection {
-  id          String           @id @default(uuid())
-  tenantId    String
-  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  provider    String
-  mode        TelephonyMode
-  status      TelephonyStatus
-  displayName String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id             String           @id @default(uuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider       String
+  mode           TelephonyMode
+  status         TelephonyStatus
+  displayName    String
+  lastProbeAt    DateTime?
+  probeMarking   Boolean          @default(false)
+  probeRecording Boolean          @default(false)
+  probeHandoff   Boolean          @default(false)
+  handoffNumber  String?
+  handoffWindowStart String?
+  handoffWindowEnd String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   campaigns    Campaign[]
   callAttempts CallAttempt[]
@@ -276,6 +353,8 @@ model CallAttempt {
   scriptVersion         ScriptVersion?      @relation(fields: [scriptVersionId], references: [id], onDelete: Restrict)
   status                CallAttemptStatus  @default(initiated)
   providerCallId        String
+  identityVerified      Boolean           @default(false)
+  identityVerifiedAt    DateTime?
   startedAt             DateTime
   endedAt               DateTime?
   createdAt             DateTime          @default(now())
@@ -310,6 +389,7 @@ model UsageEvent {
   quantity     Decimal
   unit         String
   sourceId     String        @unique
+  credentialMode UsageCredentialMode @default(fake)
   occurredAt   DateTime
   createdAt    DateTime      @default(now())
 }
@@ -356,4 +436,49 @@ model SuppressionEntry {
 
   @@index([tenantId, phone])
   @@index([tenantId, externalId])
+}
+
+model ProviderCredential {
+  id              String            @id @default(uuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  capability      SpeechCapability
+  provider        SpeechProvider
+  mode            CredentialMode
+  status          CredentialStatus  @default(inactive)
+  displayName     String
+  secretHint      String?
+  metadata        Json              @default("{}")
+  lastProbedAt    DateTime?
+  lastProbeResult ProbeResult?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  secret          CredentialSecret?
+
+  @@unique([tenantId, capability])
+}
+
+model CredentialSecret {
+  id                   String             @id @default(uuid())
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  providerCredentialId String             @unique
+  providerCredential   ProviderCredential @relation(fields: [providerCredentialId], references: [id], onDelete: Cascade)
+  ciphertext           Bytes
+  nonce                Bytes
+  authTag              Bytes
+  keyVersion           Int                @default(1)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model WebhookInboxEvent {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sourceSystem String
+  eventId      String
+  createdAt    DateTime @default(now())
+
+  @@unique([tenantId, sourceSystem, eventId])
 }

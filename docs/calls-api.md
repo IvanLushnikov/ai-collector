@@ -7,6 +7,7 @@
 - Tenant isolation: все пути начинаются с `tenantId` и выполняют проверку существования tenant.
 - Важно: sandbox-вызов перед стартом всегда проходит через compliance engine.
 - По каждому звонку фиксируются `CallAttempt`, `CallResult`, `ComplianceDecision` (если включён compliance-log), `UsageEvent` (для sandbox-старта).
+- `identityVerified` на попытке по умолчанию `false`. Sandbox не ставит true, пока нет state machine.
 - Роли доступа (через `X-User-Role`):
   - sandbox start: `owner`, `collection_manager`, `operator`.
   - список/карточка звонков: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
@@ -71,8 +72,12 @@
   - `FORBIDDEN` для роли без доступа (для `sandbox start`: разрешены только `owner`, `collection_manager`, `operator`)
   - `COMPLIANCE_BLOCK` (`allowed: false`, список `reasons`, список `rules`)
 - `409`:
-  - `CAMPAIGN_NOT_READY` (readiness `blocked` или `stale`)
+  - `CAMPAIGN_NOT_READY` (readiness `blocked` или `stale`; для sandbox-канала production/probe/legalBasis не требуются)
   - `SCRIPT_VERSION_MISSING` (нет активной версии сценария)
+  - `SANDBOX_CONNECTION_REQUIRED` (выбранное соединение `mode=production`)
+- `422`:
+  - `NO_ACTIVE_USER_FOR_TENANT`
+  - `UNKNOWN_VOICE_PROVIDER`
 - `404`:
   - `TENANT_NOT_FOUND`
   - `CAMPAIGN_NOT_FOUND`
@@ -83,6 +88,69 @@
 - `owner`
 - `collection_manager`
 - `operator`
+
+## Sandbox vs live
+
+| | Sandbox `POST .../calls/sandbox` | Live `POST .../calls/live` (ещё не реализован) |
+|---|---|---|
+| Соединение | только `TelephonyConnection.mode=sandbox` | только `mode=production` |
+| Провайдер | `sandbox` через `VoiceProviderResolver`; неизвестный → `UNKNOWN_VOICE_PROVIDER` | live-адаптер (Exolve/Mango), без fallback на sandbox |
+| Маркировка | `sandboxPass` не считается live | probe `marking+recording+handoff`, иначе readiness `TELEPHONY_PROBE_INCOMPLETE` |
+| Legal basis | не требуется | `Tenant.legalBasisStatus=confirmed` |
+| Compliance | тот же engine до старта | тот же engine + rulebook live gates |
+| Feature-flag | не нужен | `LIVE_CALLS_ENABLED=true` (T-148); иначе старт запрещён |
+| Вендорский робот | не используется | **не используется**: диалог — наш state machine / LLM, не Exolve Robots / Mango NLU |
+
+## POST: Запустить live-звонок (контракт, без кода маршрута)
+
+`POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live`
+
+Маршрут в этой версии **не реализуется**. Ниже — fail-closed контракт для следующих задач.
+
+### Назначение
+
+Боевой исходящий вызов через `VoiceProviderAdapter` выбранного production-соединения. Вендорский голосовой робот не является мозгом продукта (ADR 0003).
+
+### Права доступа (планируемые)
+
+- `owner`
+- `collection_manager`
+
+Оператор не стартует live из этого API в v1.
+
+### Fail-closed условия (из rulebook v1 и ADR 0003)
+
+Старт **не** происходит (без `CallAttempt`), если любое из:
+
+1. `LIVE_CALLS_ENABLED` не `true`.
+2. Нет/не то tenant или кампания.
+3. Readiness `blocked` или `stale` (`channel: 'live'`): нет debtors, нет active script, нет active production connection, `TELEPHONY_PROBE_INCOMPLETE`, `LEGAL_BASIS_NOT_CONFIRMED`, compliance blocks, неверный статус кампании.
+4. Соединение не `mode=production` или не принадлежит tenant.
+5. Probe не подтвердил marking, recording и handoff (`sandboxPass` недостаточен).
+6. `legalBasisStatus ≠ confirmed`.
+7. Pre-dial compliance `block` (окно, consent, debt, frequency, suppression).
+8. Нет активной `ScriptVersion` с locked disclosure.
+9. Провайдер неизвестен резолверу или адаптер `not configured`.
+10. Нет доступного handoff-контура (когда live transfer обязателен) — до появления destination остаётся блоком готовности, не обход.
+
+После ответа live-звонка обязательны recording URL и transcript; их отсутствие — автопауза `recording_failed` (T-193), не тема этого контракта.
+
+### Тело запроса (черновик)
+
+```json
+{
+  "telephonyConnectionId": "uuid"
+}
+```
+
+Игнорируется, если у кампании уже задано `Campaign.telephonyConnectionId`.
+
+### Ошибки (черновик)
+
+- `403` `LIVE_CALLS_DISABLED` — флаг выключен
+- `409` `CAMPAIGN_NOT_READY` / `PRODUCTION_CONNECTION_REQUIRED` / `TELEPHONY_PROBE_INCOMPLETE`
+- `403` `COMPLIANCE_BLOCK`
+- `422` `UNKNOWN_VOICE_PROVIDER`
 
 ## GET: Список звонков кампании
 
@@ -143,6 +211,8 @@
     "status": "completed",
     "telephonyConnectionId": "uuid",
     "scriptVersionId": "uuid",
+    "identityVerified": false,
+    "identityVerifiedAt": null,
     "providerCallId": "string",
     "startedAt": "ISO-8601",
     "endedAt": "ISO-8601",

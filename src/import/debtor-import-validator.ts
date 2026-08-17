@@ -21,6 +21,18 @@ export type DebtorImportValidationResult = {
   errors: DebtorImportValidationError[];
 };
 
+const fieldLabels: Record<string, string> = {
+  externalId: 'номер клиента',
+  phone: 'телефон',
+  timezone: 'часовой пояс',
+  debtAmount: 'сумма долга',
+  debtStatus: 'статус долга',
+  consentStatus: 'статус согласия'
+};
+
+const labelList = (fields: readonly string[]): string =>
+  fields.map((field) => fieldLabels[field] ?? field).join(', ');
+
 const isEmpty = (value: unknown): boolean => {
   return typeof value !== 'string' || value.trim().length === 0;
 };
@@ -40,7 +52,7 @@ export const validateDebtorImportRows = (rows: DebtorImportRawRow[]): DebtorImpo
     errors.push({
       row: 1,
       field: 'header',
-      message: `Missing required columns: ${missingColumns.join(', ')}`
+      message: `Не удалось загрузить базу. Добавьте столбцы: ${labelList(missingColumns)}.`
     });
 
     return {
@@ -59,7 +71,7 @@ export const validateDebtorImportRows = (rows: DebtorImportRawRow[]): DebtorImpo
         rowErrors.push({
           row: rowNumber,
           field,
-          message: `Required field ${field} is missing`
+          message: `Не хватает поля «${fieldLabels[field] ?? field}». Заполните его в строке и загрузите файл снова.`
         });
       }
     });
@@ -84,7 +96,7 @@ export const validateDebtorImportRows = (rows: DebtorImportRawRow[]): DebtorImpo
       errors.push({
         row: rowNumber,
         field: 'externalId',
-        message: `Duplicate externalId ${externalId}`
+        message: `Номер клиента ${externalId} уже есть в файле. Оставьте одну строку.`
       });
       return false;
     }

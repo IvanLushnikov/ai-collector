@@ -24,7 +24,7 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given`;
     expect(result.errors[0]).toEqual({
       row: 1,
       field: 'header',
-      message: 'Missing required columns: timezone, debtAmount, debtStatus, consentStatus'
+      message: 'Не удалось загрузить базу. Добавьте столбцы: часовой пояс, сумма долга, статус долга, статус согласия.'
     });
     expect(result.errors[0].row).toBe(1);
   });
@@ -38,7 +38,7 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given`;
     expect(result.errors[0]).toEqual({
       row: 2,
       field: 'phone',
-      message: 'Required field phone is missing'
+      message: 'Не хватает поля «телефон». Заполните его в строке и загрузите файл снова.'
     });
     expect(result.validRows).toHaveLength(0);
   });
@@ -52,7 +52,7 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given`;
     expect(result.errors[0]).toEqual({
       row: 2,
       field: 'phone',
-      message: 'Phone number length is invalid for E.164'
+      message: 'Длина телефона не подходит. Укажите номер от 7 до 15 цифр.'
     });
     expect(result.validRows).toHaveLength(0);
   });
@@ -79,7 +79,7 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given`;
     expect(result.errors[0]).toEqual({
       row: 3,
       field: 'externalId',
-      message: 'Duplicate externalId AB-1001'
+      message: 'Номер клиента AB-1001 уже есть в файле. Оставьте одну строку.'
     });
     expect(result.validRows).toHaveLength(1);
     expect(result.validRows[0].externalId).toBe('AB-1001');

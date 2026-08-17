@@ -24,6 +24,18 @@ import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import { maskSensitiveFields } from '../logging/mask.js';
+import {
+  createVoiceProviderResolver,
+  UnknownVoiceProviderError,
+  type VoiceProviderResolver
+} from '../telephony/voice-provider/resolver.js';
+import { shouldEnqueueSandboxCall } from '../jobs/sandbox-enqueue.js';
+import { canRunSandboxStartJob } from '../jobs/worker.js';
+import { createSandboxStartJob } from '../jobs/queue.js';
+import { isLiveCallsEnabled } from '../config/env.js';
+import { assertSpeechCredentialsReady } from '../speech/credentials/assert-ready.js';
+import { shouldAutoPauseForMissingEvidence } from '../calls/evidence-guard.js';
+import { isPilotCapReached } from '../domain/campaign/pilot-cap.js';
 
 type CallDependencies = {
   tenant: {
@@ -68,8 +80,10 @@ type CallDependencies = {
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
+  voiceProviderResolver?: VoiceProviderResolver;
   frequencyLedger?: FrequencyLedgerRepository;
   suppressionLookup?: SuppressionLookup;
+  sandboxCallsQueueEnabled?: boolean;
 };
 
 const tenantCampaignDebtorCallSchema = z.object({
@@ -191,9 +205,44 @@ const createUsageEvent = async (
       quantity: 1,
       unit: 'call',
       sourceId: data.sourceId,
-      occurredAt: new Date()
+      occurredAt: new Date(),
+      credentialMode: 'fake'
     }
   });
+};
+
+export const guardLiveSpeechCredentialsIfEnabled = async (
+  input: Parameters<typeof assertSpeechCredentialsReady>[0]
+): Promise<void> => {
+  if (!isLiveCallsEnabled()) {
+    return;
+  }
+  await assertSpeechCredentialsReady(input);
+};
+
+export const evaluateLiveCallGuards = (input: {
+  answered: boolean;
+  recordingUrl?: string | null;
+  transcriptUrl?: string | null;
+  dailyCallCap?: number | null;
+  startedToday: number;
+}): { missingEvidence: boolean; pilotCapReached: boolean } => {
+  if (!isLiveCallsEnabled()) {
+    return { missingEvidence: false, pilotCapReached: false };
+  }
+  return {
+    missingEvidence: shouldAutoPauseForMissingEvidence({
+      channel: 'live',
+      answered: input.answered,
+      recordingUrl: input.recordingUrl,
+      transcriptUrl: input.transcriptUrl
+    }),
+    pilotCapReached: isPilotCapReached({
+      channel: 'live',
+      dailyCallCap: input.dailyCallCap,
+      startedToday: input.startedToday
+    })
+  };
 };
 
 const createAuditEvent = async (
@@ -298,7 +347,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         updatedAt: campaign.updatedAt ?? new Date(0).toISOString(),
         telephonyConnectionId: campaign.telephonyConnectionId
       },
-      params.data.tenantId
+      params.data.tenantId,
+      { channel: 'sandbox' }
     );
 
     if (readiness.blocked || readiness.stale) {
@@ -399,7 +449,49 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       return reply.code(409).send({ error: 'SCRIPT_VERSION_MISSING' });
     }
 
-    const provider = deps.voiceProvider ?? defaultVoiceProvider;
+    if (shouldEnqueueSandboxCall(deps.sandboxCallsQueueEnabled)) {
+      if (!canRunSandboxStartJob(campaign.status ?? 'draft')) {
+        return reply.code(409).send({ error: 'CAMPAIGN_JOB_BLOCKED' });
+      }
+
+      return reply.code(202).send({
+        queued: true,
+        job: createSandboxStartJob({
+          tenantId: params.data.tenantId,
+          campaignId: params.data.campaignId,
+          debtorRecordId: params.data.debtorRecordId,
+          campaignStatus: campaign.status ?? 'draft'
+        })
+      });
+    }
+
+    const telephonyConnection = campaign.telephonyConnectionId
+      ? await deps.telephonyConnection?.findUnique?.({
+          where: { id: campaign.telephonyConnectionId }
+        }) as { provider?: string; mode?: string } | null
+      : null;
+
+    if (telephonyConnection?.mode === 'production') {
+      return reply.code(409).send({ error: 'SANDBOX_CONNECTION_REQUIRED' });
+    }
+
+    const resolver = deps.voiceProviderResolver ?? createVoiceProviderResolver({
+      sandbox: deps.voiceProvider ?? defaultVoiceProvider
+    });
+
+    let provider: VoiceProviderAdapter;
+    try {
+      provider = resolver.resolve(telephonyConnection?.provider ?? 'sandbox');
+    } catch (error) {
+      if (error instanceof UnknownVoiceProviderError) {
+        return reply.code(422).send({
+          error: 'UNKNOWN_VOICE_PROVIDER',
+          provider: error.provider
+        });
+      }
+      throw error;
+    }
+
     const providerCall = await provider.startCall({
       tenantId: params.data.tenantId,
       campaignId: params.data.campaignId,
@@ -423,17 +515,15 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         scriptVersionId: activeScript.id,
         status: mapVoiceStatusToCallAttemptStatus(providerCall.status),
         providerCallId: providerCall.providerCallId,
+        identityVerified: false,
+        identityVerifiedAt: null,
         startedAt: new Date(),
         endedAt: isTerminalCallStatus(providerCall.status) ? new Date() : undefined
       }
     });
 
     const callAttemptId = (created as { id: string }).id;
-    const telephonyMode = campaign.telephonyConnectionId
-      ? ((await deps.telephonyConnection?.findUnique?.({
-          where: { id: campaign.telephonyConnectionId }
-        })) as { mode?: string } | null)?.mode
-      : 'sandbox';
+    const telephonyMode = telephonyConnection?.mode ?? 'sandbox';
 
     if (
       deps.frequencyLedger
@@ -658,6 +748,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       scriptVersionId?: string | null;
       status: string;
       providerCallId: string;
+      identityVerified?: boolean;
+      identityVerifiedAt?: string | Date | null;
       startedAt: string | Date;
       endedAt: string | Date | null;
       createdAt: string | Date;
@@ -723,6 +815,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         telephonyConnectionId: attempt.telephonyConnectionId,
         scriptVersionId: attempt.scriptVersionId ?? null,
         providerCallId: attempt.providerCallId,
+        identityVerified: attempt.identityVerified === true,
+        identityVerifiedAt: attempt.identityVerifiedAt ?? null,
         startedAt: attempt.startedAt,
         endedAt: attempt.endedAt ?? null,
         createdAt: attempt.createdAt,

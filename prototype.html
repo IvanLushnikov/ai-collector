@@ -31,6 +31,9 @@
       <button class="active" data-screen="home">Главная</button>
       <button data-screen="campaigns">Кампании</button>
       <button data-screen="sources">Источники</button>
+      <button data-screen="telephony">Интеграции</button>
+      <button data-screen="speech">Речь и модель</button>
+      <button data-screen="scripts">Сценарии</button>
       <button data-screen="reviewQueue">Очередь проверок</button>
       <button data-screen="auditLog">Журнал действий</button>
     </nav>
@@ -42,18 +45,18 @@
       <div id="globalScreens">
         <section class="screen active" id="home">
           <div class="page-head"><div><h1>Главная</h1><p>Кампании, очереди и последние действия по обзвону.</p></div></div>
-          <div class="panel"><div class="panel-head"><div><div class="panel-title">Последние кампании</div><div class="panel-sub">Отчёт и настройки открываются внутри кампании</div></div><button class="btn small" data-screen-link="campaigns">Все кампании</button></div><div class="table-wrap"><table><thead><tr><th>Кампания</th><th>Статус</th><th>Прогресс</th><th>Успешные диалоги</th><th>Обещания</th><th>Действия</th></tr></thead><tbody><tr><td><b>Просрочка 1–7 дней · Займы</b><br><span class="panel-sub">14 августа · 10 000 записей</span></td><td><span class="tag run">работает</span></td><td>68%</td><td>3 084</td><td>1 172</td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Открыть</button><button class="btn small" data-open-campaign="report">Отчёт</button></div></td></tr><tr><td><b>Просрочка 8–30 дней · Рассрочка</b><br><span class="panel-sub">14 августа · 4 200 записей</span></td><td><span class="tag warn">автопауза</span></td><td>47%</td><td>714</td><td>284</td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Открыть</button><button class="btn small" data-open-campaign="settings">Перенастроить</button></div></td></tr></tbody></table></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title">Последние кампании</div><div class="panel-sub">Отчёт и настройки открываются внутри кампании</div></div><button class="btn small" data-screen-link="campaigns">Все кампании</button></div><div class="table-wrap"><table><thead><tr><th>Кампания</th><th>Статус</th><th>Риск / причина</th><th>Прогресс</th><th>Действия</th></tr></thead><tbody><tr><td><b>Просрочка 1–7 дней · Займы</b><br><span class="panel-sub">14 августа · 10 000 записей</span></td><td><span class="tag run">работает</span></td><td>—</td><td>68%</td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Открыть</button><button class="btn small" data-open-campaign="report">Отчёт</button></div></td></tr><tr><td><b>Просрочка 8–30 дней · Рассрочка</b><br><span class="panel-sub">14 августа · 4 200 записей</span></td><td><span class="tag warn">автопауза</span></td><td>Нет записи разговора</td><td>47%</td><td><div class="row-actions"><button class="btn small" data-open-campaign="launch">Открыть причину</button></div></td></tr></tbody></table></div></div>
         </section>
 
         <section class="screen" id="campaigns">
           <div class="page-head"><div><h1>Кампании</h1><p>Список кампаний организации: статус, база и текущий результат.</p></div><button class="btn primary" data-open-wizard>+ Создать кампанию</button></div>
-          <div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Работают</small><strong>2</strong><span>сейчас</span></div><div class="metric warn"><small>Требуют внимания</small><strong>1</strong><span>очередь операторов</span></div><div class="metric ok"><small>Завершены</small><strong>12</strong><span>в августе</span></div><div class="metric info"><small>Черновики</small><strong>3</strong><span>не запущены</span></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Все кампании</div><div class="head-actions"><select class="btn"><option>Все статусы</option><option>Работает</option><option>Черновик</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Кампания</th><th>База</th><th>Сценарий</th><th>Телефония</th><th>Статус</th><th>Действия</th></tr></thead><tbody><tr><td><b>Просрочка 1–7 дней · Займы</b><br><span class="panel-sub">создана 14 августа</span></td><td>10 000</td><td>Мягкое взыскание 1.7</td><td>МТС Exolve · готово</td><td><span class="tag run">работает</span></td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Управление</button><button class="btn small" data-open-campaign="report">Отчёт</button></div></td></tr><tr><td><b>Просрочка 8–30 дней · Рассрочка</b></td><td>4 200</td><td>Работа с возражениями 2.1</td><td>МТС Exolve · готово</td><td><span class="tag warn">автопауза</span></td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Управление</button><button class="btn small" data-open-campaign="settings">Перенастроить</button></div></td></tr><tr><td><b>Повторный обзвон · Москва</b></td><td>не загружена</td><td>не выбран</td><td>не выбрана</td><td><span class="tag draft">черновик</span></td><td><button class="btn small" data-open-wizard>Продолжить настройку</button></td></tr></tbody></table></div></div>
+          <div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Работают</small><strong>2</strong><span>демо</span></div><div class="metric warn"><small>Требуют внимания</small><strong>1</strong><span>демо</span></div><div class="metric ok"><small>Завершены</small><strong>12</strong><span>демо</span></div><div class="metric info"><small>Черновики</small><strong>3</strong><span>демо</span></div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title">Все кампании</div><div class="head-actions"><select class="btn" id="campaignsStatusFilter"><option>Все статусы</option><option>Работает</option><option>Автопауза</option><option>Черновик</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Кампания</th><th>База</th><th>Сценарий</th><th>Телефония</th><th>Статус</th><th>Риск / причина</th><th>Действия</th></tr></thead><tbody><tr><td><b>Просрочка 1–7 дней · Займы</b><br><span class="panel-sub">создана 14 августа</span></td><td>10 000</td><td>Мягкое взыскание 1.7</td><td>МТС Exolve · готово</td><td><span class="tag run">работает</span></td><td>—</td><td><div class="row-actions"><button class="btn small" data-open-campaign="overview">Управление</button><button class="btn small" data-open-campaign="report">Отчёт</button></div></td></tr><tr><td><b>Просрочка 8–30 дней · Рассрочка</b></td><td>4 200</td><td>Работа с возражениями 2.1</td><td>МТС Exolve · готово</td><td><span class="tag warn">автопауза</span></td><td>Нет записи разговора</td><td><div class="row-actions"><button class="btn small" data-open-campaign="launch">Открыть причину</button></div></td></tr><tr><td><b>Повторный обзвон · Москва</b></td><td>не загружена</td><td>не выбран</td><td>не выбрана</td><td><span class="tag draft">черновик</span></td><td>—</td><td><button class="btn small" data-open-wizard>Продолжить настройку</button></td></tr></tbody></table></div></div>
         </section>
 
         <section class="screen" id="sources">
           <div class="page-head"><div><h1>Источники данных</h1><p>Загружайте базы должников вручную или подключайте учётную систему. Сама база назначается конкретной кампании.</p></div><button class="btn primary" data-open-wizard-step="2">Загрузить базу</button></div>
-          <div class="grid g3"><div class="source-card"><div class="card-top"><h3>Загрузка файла</h3><span class="tag run">готово</span></div><p>CSV или XLSX, проверка полей, дублей и обязательных значений.</p><button class="btn small" data-open-wizard-step="2">Загрузить новый файл</button></div><div class="source-card"><div class="card-top"><h3>Система взыскания</h3><span class="tag run">подключена</span></div><p>Получение обязательств и запись результатов через защищённый интерфейс обмена.</p><button class="btn small">Настроить обмен</button></div><div class="source-card"><div class="card-top"><h3>Защищённая папка</h3><span class="tag warn">не настроена</span></div><p>Регулярный обмен файлами по расписанию и журнал загрузок.</p><button class="btn small">Подключить</button></div></div>
+          <div class="grid g3"><div class="source-card"><div class="card-top"><h3>Загрузка файла</h3><span class="tag run">готово</span></div><p>CSV или XLSX, проверка полей, дублей и обязательных значений.</p><button class="btn small" data-open-wizard-step="2">Загрузить новый файл</button></div><div class="source-card"><div class="card-top"><h3>Система взыскания</h3><span class="tag draft">не в этом релизе</span></div><p>Обмен с учётной системой появится позже. Сейчас база загружается файлом.</p><button class="btn small" disabled>Настроить обмен</button></div><div class="source-card"><div class="card-top"><h3>Защищённая папка</h3><span class="tag draft">не в этом релизе</span></div><p>Регулярный обмен файлами по расписанию не входит в этот релиз.</p><button class="btn small" disabled>Подключить</button></div></div>
           <div class="panel" style="margin-top:16px"><div class="panel-head"><div class="panel-title">Последние загрузки</div></div><div class="table-wrap"><table><thead><tr><th>Файл</th><th>Кампания</th><th>Записей</th><th>Исключено</th><th>Статус</th></tr></thead><tbody><tr><td>займы_14_08.csv</td><td>Просрочка 1–7 дней · Займы</td><td>10 000</td><td>1 260</td><td><span class="tag run">проверено</span></td></tr><tr><td>рассрочка_14_08.xlsx</td><td>Просрочка 8–30 дней</td><td>4 200</td><td>696</td><td><span class="tag run">проверено</span></td></tr></tbody></table></div></div>
         </section>
 
@@ -63,16 +66,25 @@
           <div class="panel" style="margin-top:16px"><div class="panel-head"><div class="panel-title">Проверка готовности телефонии</div></div><div class="panel-body readiness"><div class="ready-row"><div class="ready-icon">✓</div><div><b>Исходящий номер подтверждён</b><small>номер закреплён за организацией</small></div><span class="tag run">готово</span></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Маркировка бизнес-звонков</b><small>«ФинЛиния» · категория «Финансы»</small></div><span class="tag run">готово</span></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Статусы и записи звонков</b><small>события успешно сопоставляются с кампанией</small></div><span class="tag run">готово</span></div></div></div>
         </section>
 
+        <section class="screen" id="speech">
+          <div class="page-head"><div><h1>Речь и модель</h1><p>Подключите распознавание речи, голос и модель диалога. Ключ после сохранения не показывается целиком.</p></div></div>
+          <div class="grid g3">
+            <div class="provider" data-speech-card="asr"><div class="card-top"><h3>Распознавание речи</h3><span class="tag draft" data-speech-status>не настроено</span></div><p>Как система слышит клиента во время звонка.</p><div class="provider-meta"><div><small>Поставщик</small><b>Yandex SpeechKit</b></div><div><small>Ключ</small><b data-speech-hint>—</b></div></div><div class="card-actions"><button class="btn small" data-open-speech="asr">Настроить</button></div></div>
+            <div class="provider" data-speech-card="tts"><div class="card-top"><h3>Голос</h3><span class="tag run" data-speech-status>ключ платформы</span></div><p>Голос, которым ИИ-агент отвечает клиенту.</p><div class="provider-meta"><div><small>Поставщик</small><b>Yandex SpeechKit</b></div><div><small>Ключ</small><b data-speech-hint>ключ платформы</b></div></div><div class="card-actions"><button class="btn small" data-open-speech="tts">Настроить</button></div></div>
+            <div class="provider" data-speech-card="llm"><div class="card-top"><h3>Модель диалога</h3><span class="tag warn" data-speech-status>ошибка подключения</span></div><p>Как система ведёт разговор и выбирает следующий шаг.</p><div class="provider-meta"><div><small>Поставщик</small><b>YandexGPT</b></div><div><small>Ключ</small><b data-speech-hint>ключ ···4242</b></div></div><div class="card-actions"><button class="btn small" data-open-speech="llm">Настроить</button></div></div>
+          </div>
+        </section>
+
         <section class="screen" id="scripts">
           <div class="page-head"><div><h1>Библиотека сценариев</h1><p>Шаблоны можно переиспользовать, но голос, логика и ограничения настраиваются внутри кампании.</p></div><button class="btn primary">+ Новый сценарий</button></div>
-          <div class="grid g3"><div class="script-card"><div class="card-top"><h3>Мягкое взыскание</h3><span class="tag run">опубликован</span></div><p>Просрочка 1–7 дней. Информирование, причина неоплаты и обещание платежа.</p><div class="card-actions"><button class="btn small" data-open-campaign="scenario">Использовать в кампании</button><button class="btn small" data-test-dialog>Прослушать</button></div></div><div class="script-card"><div class="card-top"><h3>Работа с возражениями</h3><span class="tag run">опубликован</span></div><p>Просрочка 8–30 дней. Спор по долгу, трудная ситуация и перевод специалисту.</p><button class="btn small" data-open-campaign="scenario">Использовать в кампании</button></div><div class="script-card"><div class="card-top"><h3>Короткое информирование</h3><span class="tag draft">черновик</span></div><p>Короткий звонок без предложения графика или реструктуризации.</p><button class="btn small">Продолжить редактирование</button></div></div>
+          <div class="grid g3"><div class="script-card"><div class="card-top"><h3>Мягкое взыскание</h3><span class="tag run">опубликован</span></div><p>Просрочка 1–7 дней. Информирование, причина неоплаты и обещание платежа.</p><div class="card-actions"><button class="btn small" data-open-campaign="scenario">Использовать в кампании</button><button class="btn small" data-test-dialog>Тестовый диалог</button></div></div><div class="script-card"><div class="card-top"><h3>Работа с возражениями</h3><span class="tag run">опубликован</span></div><p>Просрочка 8–30 дней. Спор по долгу, трудная ситуация и перевод специалисту.</p><button class="btn small" data-open-campaign="scenario">Использовать в кампании</button></div><div class="script-card"><div class="card-top"><h3>Короткое информирование</h3><span class="tag draft">черновик</span></div><p>Короткий звонок без предложения графика или реструктуризации.</p><button class="btn small">Продолжить редактирование</button></div></div>
         </section>
 
   <section class="screen" id="reviewQueue">
         <div class="page-head"><div><h1>Очередь проверок</h1><p>Звонки и записи, которые нужно разобрать вручную.</p></div><button class="btn" data-open-campaign="review">Открыть проверки кампании</button></div>
-          <div class="panel"><div class="panel-body">
-            <p class="panel-sub">По каждой задаче видны причина, связанный должник и что сделать дальше.</p>
-          </div></div>
+          <div class="review-toolbar"><div class="review-filters"><label for="reviewQueueStatusFilter">Статус:</label><select id="reviewQueueStatusFilter"><option value="open">Открытые и ожидающие решения</option><option value="all">Все</option><option value="approved">Подтверждено</option><option value="escalated">Эскалация</option><option value="rejected">Отклонено</option><option value="requeued">Возвращено</option></select><label for="reviewQueuePriorityFilter">Приоритет:</label><select id="reviewQueuePriorityFilter"><option value="all">Все</option><option value="critical">Критический</option><option value="high">Высокий</option><option value="normal">Обычный</option></select><label for="reviewQueueSourceFilter">Источник:</label><select id="reviewQueueSourceFilter"><option value="all">Все</option><option value="compliance_engine">Проверка ограничений</option><option value="handoff_engine">Передача специалисту</option></select><label for="reviewQueueTypeFilter">Тип:</label><select id="reviewQueueTypeFilter"><option value="all">Все</option><option value="qa">Контроль качества</option><option value="compliance">Ограничения</option></select></div></div>
+          <div class="review-metrics"><div class="review-metric"><small>Открыто</small><b id="reviewMetricOpen">—</b><span>в очереди</span></div><div class="review-metric"><small>Требуют внимания</small><b id="reviewMetricBlock">—</b><span>высокий приоритет</span></div><div class="review-metric"><small>Старше 30 мин</small><b id="reviewMetricOld">—</b><span>ожидают решения</span></div><div class="review-metric"><small>Среднее время ожидания</small><b id="reviewMetricAge">—</b><span>мин с момента появления</span></div></div>
+          <div class="panel"><div class="table-wrap panel-body"><table><thead><tr><th>Время</th><th>Источник</th><th>Тип</th><th>Приоритет</th><th>Должник / запись</th><th>Срок</th><th>Сигнал</th><th>Действие</th><th>Решение</th></tr></thead><tbody class="review-queue-body" id="reviewQueueBody"></tbody></table></div><div id="reviewQueueEmpty" class="empty" hidden><b>Нет элементов</b>Очередь обработана или не сформирована на выбранный фильтр.</div></div>
         </section>
 
         <section class="screen" id="auditLog">
@@ -90,23 +102,23 @@
       </div>
 
       <section class="campaign-shell" id="campaignWorkspace" data-tenant-id="11111111-1111-1111-1111-111111111111" data-campaign-id="11111111-1111-1111-1111-111111111112" data-campaign-name="Просрочка 1–7 дней · Займы">
-        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span class="tag run" id="campaignStatus">работает</span></p></div></div><div class="head-actions"><button class="btn" data-camp-tab-link="settings">Перенастроить</button><button class="btn" id="pauseCampaign">Пауза</button><button class="btn success" id="resumeCampaign" style="display:none">Снять паузу</button><button class="btn" id="stopCampaign">Остановить кампанию</button></div></div>
+        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span class="tag run" id="campaignStatus">работает</span></p></div></div><div class="head-actions"><button class="btn primary" id="openPauseReason" data-camp-tab-link="launch" style="display:none">Открыть причину</button><button class="btn" data-camp-tab-link="settings" id="campaignSettingsButton">Перенастроить</button><button class="btn" id="pauseCampaign">Приостановить кампанию</button><button class="btn success" id="resumeCampaign" style="display:none">Продолжить обзвон</button><button class="btn" id="stopCampaign">Остановить кампанию</button></div></div>
         <div class="campaign-tabs" aria-label="Разделы кампании"><button class="active" data-camp-tab="overview">Обзор</button><button data-camp-tab="base">База</button><button data-camp-tab="scenario">Сценарий</button><button data-camp-tab="phone">Телефония</button><button data-camp-tab="launch">Запуск</button><button data-camp-tab="calls">Звонки</button><button data-camp-tab="review">Проверка</button><button data-camp-tab="report">Отчёт</button><button data-camp-tab="settings">Настройки</button></div>
 
-        <div class="campaign-view active" data-camp-view="overview"><div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Обработано</small><strong id="campaignOverviewProcessedValue">—</strong><span id="campaignOverviewProcessedSub">из —</span></div><div class="metric ok"><small>Успешные диалоги</small><strong id="campaignOverviewCompletedValue">—</strong><span id="campaignOverviewCompletedSub">нет обработанных вызовов</span></div><div class="metric warn"><small>Обещания платежа</small><strong id="campaignOverviewPtpValue">—</strong><span id="campaignOverviewPtpSub">нет данных</span></div><div class="metric info"><small>Стоимость диалога</small><strong id="campaignOverviewCostValue">н/д</strong><span id="campaignOverviewCostSub">не рассчитывалась</span></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Готовность кампании</div></div><div class="panel-body readiness"><div class="ready-row"><div class="ready-icon">✓</div><div><b>База загружена</b><small>8 740 записей допущено</small></div><button class="btn small" data-camp-tab-link="base">Открыть</button></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Телефония готова</b><small>МТС Exolve · маркировка включена</small></div><button class="btn small" data-camp-tab-link="phone">Открыть</button></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Сценарий опубликован</b><small>Мягкое взыскание 1.7</small></div><button class="btn small" data-camp-tab-link="scenario">Изменить</button></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Проверки пройдены</b><small>184 проверки · тестовый звонок успешен</small></div><button class="btn small" data-camp-tab-link="launch">Открыть</button></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Последние действия</div></div><div class="panel-body activity" id="campaignActivityLog"><div class="activity-row"><time>16:42</time><span class="dot"></span><p>Система: Обновлён отчёт кампании.</p></div><div class="activity-row"><time>16:35</time><span class="dot"></span><p>Проверка ограничений: Записано обещание платежа на 8 000 ₽.</p></div><div class="activity-row"><time>15:58</time><span class="dot"></span><p>Оператор: Загружены изменения списка исключений.</p></div></div></div></div></div>
+        <div class="campaign-view active" data-camp-view="overview"><div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Обработано</small><strong id="campaignOverviewProcessedValue">—</strong><span id="campaignOverviewProcessedSub">из —</span></div><div class="metric ok"><small>Успешные диалоги</small><strong id="campaignOverviewCompletedValue">—</strong><span id="campaignOverviewCompletedSub">нет обработанных вызовов</span></div><div class="metric warn"><small>Обещания платежа</small><strong id="campaignOverviewPtpValue">—</strong><span id="campaignOverviewPtpSub">нет данных</span></div><div class="metric info"><small>Стоимость диалога</small><strong id="campaignOverviewCostValue">н/д</strong><span id="campaignOverviewCostSub">не рассчитывалась</span></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Готовность кампании</div></div><div class="panel-body readiness"><div class="ready-row"><div class="ready-icon" id="overviewReadyBaseIcon">?</div><div><b>База</b><small id="overviewReadyBaseText">Не проверено</small></div><button class="btn small" data-camp-tab-link="base">Открыть</button></div><div class="ready-row"><div class="ready-icon" id="overviewReadyPhoneIcon">?</div><div><b>Телефония</b><small id="overviewReadyPhoneText">Не проверено</small></div><button class="btn small" data-camp-tab-link="phone">Открыть</button></div><div class="ready-row"><div class="ready-icon" id="overviewReadyScriptIcon">?</div><div><b>Сценарий</b><small id="overviewReadyScriptText">Не проверено</small></div><button class="btn small" data-camp-tab-link="scenario">Изменить</button></div><div class="ready-row"><div class="ready-icon warn">!</div><div><b>Речь и модель</b><small>Речь и модель не готовы. Подключите ключи в разделе интеграций.</small></div><button class="btn small" data-screen-link="speech">Открыть</button></div><div class="ready-row"><div class="ready-icon" id="overviewReadyChecksIcon">?</div><div><b>Проверки</b><small id="overviewReadyChecksText">Не проверено</small></div><button class="btn small" data-camp-tab-link="launch">Открыть</button></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Последние действия</div></div><div class="panel-body activity" id="campaignActivityLog"><div class="activity-row"><time>16:42</time><span class="dot"></span><p>Система: Обновлён отчёт кампании.</p></div></div></div></div></div>
 
-        <div class="campaign-view" data-camp-view="base"><div class="page-head"><div><h1>База кампании</h1><p>Источник, качество данных, сопоставление полей и исключения.</p></div><button class="btn primary" data-open-wizard-step="2">Заменить или дополнить базу</button></div><div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Загружено</small><strong>10 000</strong><span>записей</span></div><div class="metric ok"><small>Допущено</small><strong>8 740</strong><span>87,4%</span></div><div class="metric warn"><small>Исключено</small><strong>1 260</strong><span>правила и ошибки</span></div><div class="metric info"><small>Дубли</small><strong>84</strong><span>объединены</span></div></div><div class="panel"><div class="panel-head"><div><div class="panel-title">займы_14_08.csv</div><div class="panel-sub">загружен Анной Котовой · 14 августа 09:12</div></div><span class="tag run">проверено</span></div><div class="table-wrap"><table><thead><tr><th>Поле файла</th><th>Поле системы</th><th>Заполнено</th><th>Проверка</th></tr></thead><tbody><tr><td>client_id</td><td>Номер клиента</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>phone</td><td>Телефон</td><td>99,8%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_amount</td><td>Сумма долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>days_overdue</td><td>Дней просрочки</td><td>100%</td><td><span class="tag run">готово</span></td></tr></tbody></table></div></div></div>
+        <div class="campaign-view" data-camp-view="base"><div class="page-head"><div><h1>База кампании</h1><p>Источник, качество данных, сопоставление полей и исключения. Допуск к звонку выполняется отдельно — перед каждым звонком.</p></div><button class="btn primary" data-open-wizard-step="2">Заменить или дополнить базу</button></div><div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Загружено</small><strong>10 000</strong><span>записей</span></div><div class="metric ok"><small>Принято в базу</small><strong>8 740</strong><span>87,4%</span></div><div class="metric warn"><small>Ошибки файла</small><strong>176</strong><span>строки с ошибками</span></div><div class="metric warn"><small>Правила исключений</small><strong>1 084</strong><span>не ошибки загрузки</span></div></div><div class="panel"><div class="panel-head"><div><div class="panel-title">займы_14_08.csv</div><div class="panel-sub">загружен Анной Котовой · 14 августа 09:12</div></div><span class="tag run">проверено</span></div><div class="notice" style="margin:12px">Допуск к звонку не равен приёму в базу: перед звонком система ещё проверит ограничения.</div><div class="table-wrap"><table><thead><tr><th>Поле файла</th><th>Поле системы</th><th>Заполнено</th><th>Проверка</th></tr></thead><tbody><tr><td>client_id</td><td>Номер клиента</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>phone</td><td>Телефон</td><td>99,8%</td><td><span class="tag run">готово</span></td></tr><tr><td>timezone</td><td>Часовой пояс</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_amount</td><td>Сумма долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_status</td><td>Статус долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>consent_status</td><td>Статус согласия</td><td>100%</td><td><span class="tag run">готово</span></td></tr></tbody></table></div></div></div>
 
         <div class="campaign-view" data-camp-view="scenario"><div class="page-head"><div><h1>Сценарий кампании</h1><p>Настройте голос, содержание разговора и условия перевода именно для этой кампании.</p></div><div class="head-actions"><button class="btn" data-test-dialog>Тестовый диалог</button><button class="btn primary" id="saveScenario">Сохранить новую версию</button></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Основные настройки</div><span class="tag run">версия 1.7</span></div><div class="panel-body form-grid"><div class="field full"><label>Шаблон</label><select><option>Мягкое взыскание</option><option>Работа с возражениями</option><option>Короткое информирование</option></select></div><div class="field"><label>Голос</label><select><option>Анна · нейтральный</option><option>Михаил · спокойный</option></select></div><div class="field"><label>Темп речи</label><select><option>Обычный</option><option>Медленный</option></select></div><div class="field full"><label>Первая фраза</label><textarea>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния».</textarea></div><div class="field"><label>Максимальная длительность</label><select><option>4 минуты</option><option>6 минут</option></select></div><div class="field"><label>Перевод оператору</label><select><option>По первому запросу</option></select></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Логика разговора</div></div><div class="panel-body"><div class="script-flow"><div class="flow-node"><small>Шаг 1</small><b>Представиться</b><p>Сообщить кредитора и факт автоматизации.</p></div><div class="flow-node"><small>Шаг 2</small><b>Проверить личность</b><p>Не раскрывать долг до подтверждения.</p></div><div class="flow-node"><small>Шаг 3</small><b>Сообщить долг</b><p>Только данные учётной системы.</p></div><div class="flow-node"><small>Шаг 4</small><b>Зафиксировать ответ</b><p>Причина, дата и сумма обещания.</p></div><div class="flow-node"><small>Шаг 5</small><b>Завершить</b><p>Повторить итог или перевести оператору.</p></div></div><div class="notice warn" style="margin-top:15px">Запрещены давление, угрозы, выдуманные последствия и раскрытие долга третьим лицам.</div></div></div></div></div>
 
         <div class="campaign-view" data-camp-view="phone"><div class="page-head"><div><h1>Телефония кампании</h1><p>Выберите готовое соединение и задайте нагрузку для этой кампании.</p></div><button class="btn" data-open-phone>Подключить другое соединение</button></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Выбранное соединение</div><span class="tag run" id="campaignPhoneStatus">готово</span></div><div class="panel-body form-grid"><div class="field full"><label>Поставщик</label><select><option>МТС Exolve · Основной контур</option><option>Mango Office · Резервный</option></select></div><div class="field"><label>Исходящий номер</label><select><option>+7 495 •••-42-18</option></select></div><div class="field"><label>Одновременных звонков</label><input value="45"></div><div class="field"><label>Маркировка</label><input value="ФинЛиния · Финансы" readonly></div><div class="field"><label>Ожидание оператора</label><select><option>Остановка при 40 секундах</option></select></div><div class="field full"><button class="btn" data-phone-test>Проверить соединение</button></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Что проверяет система</div></div><div class="panel-body readiness"><div class="ready-row"><div class="ready-icon">✓</div><div><b>Набор номера</b><small>тестовый вызов установлен</small></div></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Статусы звонка</b><small>занято, нет ответа, соединение, завершение</small></div></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Запись и длительность</b><small>сопоставлены с номером звонка</small></div></div><div class="ready-row"><div class="ready-icon">✓</div><div><b>Маркировка</b><small>название отображается корректно</small></div></div></div></div></div></div>
 
-                <div class="campaign-view" data-camp-view="launch"><div class="page-head"><div><h1>Проверка и запуск</h1><p>Запуск доступен только после прохождения обязательных проверок.</p></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Проверка готовности</div></div><div class="panel-body"><div class="wizard-state state-empty" id="campaignLaunchReadinessPanel"><span class="status-pill state-empty" id="campaignLaunchReadinessBadge">Не проверено</span><div><b>Итог проверки</b><small id="campaignLaunchReadinessText">Проверка ещё не запускалась.</small><ul class="state-reasons" id="campaignLaunchReadinessReasons"></ul></div></div><div class="notice" id="campaignLaunchReadinessNotice" style="margin-top:12px">Задайте параметры, базу, телефонию и сценарий для запуска.</div><div class="checklist" style="margin-top:12px"><div class="checkitem"><b>Основные параметры</b><span class="status-pill state-empty" id="campaignLaunchParamsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchParamsReason" hidden></ul></div><div class="checkitem"><b>База должников</b><span class="status-pill state-empty" id="campaignLaunchBaseStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchBaseReason" hidden></ul></div><div class="checkitem"><b>Телефония и маркировка</b><span class="status-pill state-empty" id="campaignLaunchPhoneStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchPhoneReason" hidden></ul></div><div class="checkitem"><b>Сценарий и ограничения</b><span class="status-pill state-empty" id="campaignLaunchScriptStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchScriptReason" hidden></ul></div><div class="checkitem"><b>Лимиты и время</b><span class="status-pill state-ready" id="campaignLaunchLimitsStatus">Применены</span><ul class="checkitem-reasons" id="campaignLaunchLimitsReason" hidden></ul></div></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Тестовый звонок</div></div><div class="panel-body"><div class="field"><label>Номер для теста</label><input value="+7 912 000-00-00"></div><button class="btn" id="runTestCall" style="margin-top:12px">Позвонить и проверить</button><div class="notice" id="testCallResult" style="margin-top:14px">Последняя проверка: успешно · 14 августа 09:24</div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><button class="btn success" id="launchCampaign" disabled>Запустить тестовый обзвон</button></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Состояние кампании</div></div><div class="panel-body"><div class="notice" id="campaignRuntimeNotice">Кампания в рабочем режиме. Риск-событий нет.</div><div id="safeResumePanel" style="display:none;margin-top:14px"><div class="notice warn">Проверьте причину остановки и подтвердите, что можно продолжать.</div><div class="field" style="margin-top:12px"><label>Событие</label><input id="safeResumeEvent" value="" readonly></div><div class="field" style="margin-top:12px"><label>Причина автопаузы</label><input id="safeResumeReason" value="" readonly></div><div class="field" style="margin-top:12px"><label>Что произошло</label><input id="safeResumeImpact" value="" readonly></div><div class="checklist" style="margin-top:8px"><label class="checkitem"><input type="checkbox" id="safeResumeChecklistReason"><span><b>Причина риска подтверждена и устранена</b><small>Проверено решение по ограничениям и основание последней остановки.</small></span></label><label class="checkitem"><input type="checkbox" id="safeResumeChecklistReview"><span><b>Критические задачи на проверку закрыты</b><small>Нет открытых «критичных» и «высоких» элементов по этой кампании.</small></span></label><label class="checkitem"><input type="checkbox" id="safeResumeChecklistOwner"><span><b>Ручное подтверждение</b><small>Ответственный подтвердил, что обзвон можно продолжить.</small></span></label></div><div class="panel-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn success" id="confirmSafeResume" disabled>Подтвердить возобновление</button><button class="btn" id="cancelSafeResume">Отменить</button></div></div></div></div></div></div><div class="campaign-view" data-camp-view="calls"><div class="page-head"><div><h1>Звонки кампании</h1><p>Журнал звонков фильтруется только по выбранной кампании.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button><div id="callsDataSourceState" style="margin-top:10px;display:none"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div></div><div id="callsNotice" class="notice" style="margin-bottom:12px"></div><div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание</option><option value="transferred">Передача оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select><label for="callQaFilter">Проверка:</label><select id="callQaFilter"><option value="all">Все</option><option value="not_reviewed">Не проверено</option><option value="approved">Принято</option><option value="flagged">Требует проверки</option></select><label class="inline-label" for="callNeedsQaOnly"><input type="checkbox" id="callNeedsQaOnly"> Только непроверенные</label></div></div><div class="call-metrics"><div class="call-metric"><b id="callMetricTotal">—</b><small id="callMetricTotalSub">в журнале кампании</small></div><div class="call-metric"><b id="callMetricReview">—</b><small>ждут проверки</small></div><div class="call-metric"><b id="callMetricAvgDuration">—</b><small>средняя длительность</small></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Время</th><th>Должник</th><th>Исход</th><th>Источник исхода</th><th>Проверка ограничений</th><th>Длительность</th><th>Проверка</th><th>Действия</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Список звонков пуст</b>Сейчас в кампании нет звонков или применённый фильтр скрывает результаты.</div></div></div>
-        <div class="campaign-view" data-camp-view="review"><div class="page-head"><div><h1>Проверки кампании</h1><p>Только эта кампания. Остальные задачи — в общей очереди проверок.</p><div class="panel-sub" id="campaignReviewScope"></div></div><button class="btn" id="refreshReviewQueue">Обновить список</button></div><div class="review-toolbar"><div class="review-filters"><label for="reviewQueueStatusFilter">Статус:</label><select id="reviewQueueStatusFilter"><option value="open">Открытые и ожидающие решения</option><option value="all">Все</option><option value="approved">Подтверждено</option><option value="escalated">Эскалация</option><option value="rejected">Отклонено</option><option value="requeued">Возвращено</option></select><label for="reviewQueuePriorityFilter">Приоритет:</label><select id="reviewQueuePriorityFilter"><option value="all">Все</option><option value="critical">Критический</option><option value="high">Высокий</option><option value="normal">Обычный</option></select><label for="reviewQueueSourceFilter">Источник:</label><select id="reviewQueueSourceFilter"><option value="all">Все</option><option value="compliance_engine">Проверка ограничений</option><option value="handoff_engine">Передача специалисту</option><option value="manual_override">Оператор</option></select><label for="reviewQueueTypeFilter">Тип:</label><select id="reviewQueueTypeFilter"><option value="all">Все</option><option value="compliance_block">Блок ограничения</option><option value="handoff_transfer">Передача специалисту</option><option value="legal_review">Юр. проверка</option></select></div></div><div class="review-metrics"><div class="review-metric"><small>Открыто</small><b id="reviewMetricOpen">—</b><span>в очереди</span></div><div class="review-metric"><small>Требуют блокировки</small><b id="reviewMetricBlock">—</b><span>для остановки кампании</span></div><div class="review-metric"><small>Старше 30 мин</small><b id="reviewMetricOld">—</b><span>ожидают решения</span></div><div class="review-metric"><small>Среднее время ожидания</small><b id="reviewMetricAge">—</b><span>мин с момента появления</span></div></div><div class="panel"><div class="table-wrap panel-body"><table><thead><tr><th>Время</th><th>Источник</th><th>Тип</th><th>Приоритет</th><th>Должник / запись</th><th>Срок</th><th>Сигнал</th><th>Действие</th><th>Решение</th></tr></thead><tbody id="reviewQueueBody"></tbody></table></div><div id="reviewQueueEmpty" class="empty" hidden><b>Нет элементов</b>Очередь обработана или не сформирована на выбранный фильтр.</div></div></div>
+                <div class="campaign-view" data-camp-view="launch"><div class="page-head"><div><h1>Проверка и запуск</h1><p>Запуск доступен только после прохождения обязательных проверок.</p></div></div><div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Проверка готовности</div></div><div class="panel-body"><div class="wizard-state state-empty" id="campaignLaunchReadinessPanel"><span class="status-pill state-empty" id="campaignLaunchReadinessBadge">Не проверено</span><div><b>Итог проверки</b><small id="campaignLaunchReadinessText">Проверка ещё не запускалась.</small><ul class="state-reasons" id="campaignLaunchReadinessReasons"></ul><div id="campaignLaunchBlockingGroup"><b>Блокирует запуск</b><ul id="campaignLaunchBlockingReasons"></ul></div><div id="campaignLaunchWarningGroup"><b>Предупреждение</b><ul id="campaignLaunchWarningReasons"></ul></div></div></div><div class="notice" id="campaignLaunchReadinessNotice" style="margin-top:12px">Задайте параметры, базу, телефонию и сценарий для запуска.</div><div class="checklist" style="margin-top:12px"><div class="checkitem"><b>Основные параметры</b><span class="status-pill state-empty" id="campaignLaunchParamsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchParamsReason" hidden></ul></div><div class="checkitem"><b>База должников</b><span class="status-pill state-empty" id="campaignLaunchBaseStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchBaseReason" hidden></ul></div><div class="checkitem"><b>Телефония и маркировка</b><span class="status-pill state-empty" id="campaignLaunchPhoneStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchPhoneReason" hidden></ul></div><div class="checkitem"><b>Сценарий и ограничения</b><span class="status-pill state-empty" id="campaignLaunchScriptStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchScriptReason" hidden></ul></div><div class="checkitem"><b>Речь и модель</b><span class="status-pill state-blocked" id="campaignLaunchSpeechStatus">Не готово</span><ul class="checkitem-reasons" id="campaignLaunchSpeechReason"><li>Речь и модель не готовы. Подключите ключи в разделе интеграций.</li></ul></div><div class="checkitem"><b>Лимиты и время</b><span class="status-pill state-ready" id="campaignLaunchLimitsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="campaignLaunchLimitsReason" hidden></ul></div></div></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Тестовый звонок</div></div><div class="panel-body"><div class="field"><label>Номер для теста</label><input value="+7 912 000-00-00"></div><button class="btn" id="runTestCall" style="margin-top:12px">Проверить соединение</button><div class="notice" id="testCallResult" style="margin-top:14px">Последняя проверка: успешно · 14 августа 09:24</div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><button class="btn success" id="launchCampaign" disabled>Запустить тестовый обзвон</button></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Состояние кампании</div></div><div class="panel-body"><div class="notice" id="campaignRuntimeNotice">Статус кампании ещё не проверен.</div><div id="safeResumePanel" style="display:none;margin-top:14px"><div class="notice warn">Проверьте причину остановки и подтвердите, что можно продолжать.</div><div class="field" style="margin-top:12px"><label>Событие</label><input id="safeResumeEvent" value="" readonly></div><div class="field" style="margin-top:12px"><label>Причина автопаузы</label><input id="safeResumeReason" value="" readonly></div><div class="field" style="margin-top:12px"><label>Что произошло</label><input id="safeResumeImpact" value="" readonly></div><div class="checklist" style="margin-top:8px"><label class="checkitem"><input type="checkbox" id="safeResumeChecklistReason"><span><b>Причина риска подтверждена и устранена</b><small>Проверено решение по ограничениям и основание последней остановки.</small></span></label><label class="checkitem"><input type="checkbox" id="safeResumeChecklistReview"><span><b>Критические задачи на проверку закрыты</b><small>Нет открытых «критичных» и «высоких» элементов по этой кампании.</small></span></label><label class="checkitem"><input type="checkbox" id="safeResumeChecklistOwner"><span><b>Ручное подтверждение</b><small>Ответственный подтвердил, что обзвон можно продолжить.</small></span></label></div><div class="panel-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn success" id="confirmSafeResume" disabled>Подтвердить возобновление</button><button class="btn" id="cancelSafeResume">Отменить</button></div></div></div></div></div></div><div class="campaign-view" data-camp-view="calls"><div class="page-head"><div><h1>Звонки кампании</h1><p>Журнал звонков фильтруется только по выбранной кампании.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button><div id="callsDataSourceState" style="margin-top:10px;display:none"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div></div><div id="callsNotice" class="notice" style="margin-bottom:12px"></div><div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select><label for="callQaFilter">Проверка:</label><select id="callQaFilter"><option value="all">Все</option><option value="not_reviewed">Не проверено</option><option value="approved">Принято</option><option value="flagged">Требует проверки</option></select><label class="inline-label" for="callNeedsQaOnly"><input type="checkbox" id="callNeedsQaOnly"> Только непроверенные</label></div></div><div class="call-metrics"><div class="call-metric"><b id="callMetricTotal">—</b><small id="callMetricTotalSub">в журнале кампании</small></div><div class="call-metric"><b id="callMetricReview">—</b><small>ждут проверки</small></div><div class="call-metric"><b id="callMetricAvgDuration">—</b><small>средняя длительность</small></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Время</th><th>Должник</th><th>Статус попытки</th><th>Исход</th><th>Решение</th><th>Проверка</th><th>Источник</th><th>Действия</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Список звонков пуст</b>Сейчас в кампании нет звонков или применённый фильтр скрывает результаты.</div></div></div>
+        <div class="campaign-view" data-camp-view="review"><div class="page-head"><div><h1>Проверки кампании</h1><p>Только эта кампания. Остальные задачи — в общей очереди проверок.</p><div class="panel-sub" id="campaignReviewScope"></div></div><button class="btn" id="refreshReviewQueue">Обновить список</button></div><div class="panel"><div class="table-wrap panel-body"><table><thead><tr><th>Время</th><th>Источник</th><th>Тип</th><th>Приоритет</th><th>Должник / запись</th><th>Срок</th><th>Сигнал</th><th>Действие</th><th>Решение</th></tr></thead><tbody class="review-queue-body" id="reviewCampaignBody"></tbody></table></div><div id="reviewCampaignEmpty" class="empty" hidden><b>Нет элементов</b>Очередь обработана или не сформирована на выбранный фильтр.</div></div></div>
 
-        <div class="campaign-view" data-camp-view="report"><div class="page-head"><div><h1>Отчёт кампании</h1><p>Результаты и метрики по кампании «<span id="reportCampaignName">Просрочка 1–7 дней · Займы</span>».</p></div><button class="btn">Выгрузить отчёт</button></div><div class="notice" id="reportNotice" style="margin-bottom:16px">Загрузка отчёта…</div><div class="report-toolbar" hidden><div><div><b>Роль для принятия решений:</b> <select id="reportRoleSelector" class="report-role-select"><option value="collection_manager">Менеджер кампании</option><option value="supervisor">Руководитель взыскания</option><option value="compliance_officer">Compliance officer</option></select></div></div><div><small id="reportRoleHint" class="panel-sub"></small></div></div><div class="panel" id="reportPanelOperational" data-report-roles="collection_manager,supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Операционные метрики</div><span class="tag" id="reportTag">загрузка</span></div><div class="panel-body"><div class="funnel" id="reportFunnel"><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="all"><small>База</small><b id="reportTotalRecords">—</b><span class="report-kpi-subline">все загруженные записи для запуска</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="all"><small>Звонки запущены</small><b id="reportAttemptedCalls">—</b><span class="report-kpi-subline">переход к журналу звонков</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="all"><small>Завершено</small><b id="reportCompletedCalls">—</b><span class="report-kpi-subline">перейти к завершённым звонкам</span></button><button class="report-kpi-link" data-report-drill="compliance-review" data-review-priority="all" data-review-status="open"><small>Открытые риск-события</small><b id="reportOpenReviewCount">—</b><span class="report-kpi-subline">открыть очередь проверок</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="ptp_created"><small>Обещания</small><b id="reportPtpCount">—</b><span class="report-kpi-subline">просмотреть только обещания</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="blocked"><small>Блокировано</small><b id="reportBlockedCalls">—</b><span class="report-kpi-subline">открыть заблокированные звонки</span></button></div></div></div><div class="grid g2"><div class="panel" id="reportPanelBusiness" data-report-roles="collection_manager,supervisor"><div class="panel-head"><div class="panel-title">Исходы и качество</div></div><div class="panel-body"><div class="table-wrap"><table style="min-width:520px"><thead><tr><th>Исход</th><th class="num">Количество</th><th class="num">Доля</th><th>Детали</th></tr></thead><tbody id="reportOutcomes"><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="ptp_created">Обещание платежа</button></td><td class="num" id="reportOutcomePtpCount">—</td><td class="num" id="reportOutcomePtpShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="ptp_created">детально</button></td></tr><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="all">Завершено</button></td><td class="num" id="reportOutcomeCompletedCount">—</td><td class="num" id="reportOutcomeCompletedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="all">детально</button></td></tr><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">Блокировано</button></td><td class="num" id="reportOutcomeBlockedCount">—</td><td class="num" id="reportOutcomeBlockedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">детально</button></td></tr><tr><td>Отмечены как проблема</td><td class="num" id="reportQaFlaggedCount">—</td><td class="num" id="reportQaFlaggedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-qa="flagged">детально</button></td></tr><tr><td>Ждут проверки</td><td class="num" id="reportQaReviewCount">—</td><td class="num" id="reportQaReviewShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-qa="not_reviewed">детально</button></td></tr></tbody></table></div></div></div><div class="panel" id="reportPanelCompliance" data-report-roles="supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Ограничения и риски</div></div><div class="panel-body report-metric-block"><div class="report-metric-group" id="reportComplianceCriticalBlock"><small>В очереди риска</small><strong id="reportReviewOpen">—</strong><div class="report-kpi-subline">критические + высокие статусы: <span id="reportReviewCritical">—</span></div></div><div class="report-metric-group"><small>Необходимо вручную проверить</small><strong id="reportReviewOpenAction">—</strong><button class="report-link" data-report-drill="review" data-review-status="open">открыть проверки</button></div><div class="report-metric-group"><small>Заблокировано ограничениями</small><strong id="reportComplianceBlocks">—</strong><button class="report-link" data-report-drill="review" data-review-status="open" data-review-priority="critical">показать критические проверки</button><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">показать звонки</button></div><div class="report-metric-group"><small>Открыто для эскалации</small><strong id="reportReviewEscalated">—</strong><button class="report-link" data-report-drill="review" data-review-status="escalated">показать</button></div></div></div></div><div class="panel" id="reportPanelCost" data-report-roles="collection_manager,supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Стоимость</div></div><div class="panel-body grid g2"><div class="metric info"><small>Минут соединения</small><strong id="reportMinutes">—</strong></div><div class="metric info"><small>Стоимость диалога</small><strong id="reportCostPerCall">—</strong></div><div class="metric info"><small>Стоимость обещания</small><strong id="reportCostPerPtp">—</strong></div><div class="metric warn"><small>Стоимость оплаты</small><strong style="font-size:16px">Данных недостаточно</strong></div></div></div></div>
+        <div class="campaign-view" data-camp-view="report"><div class="page-head"><div><h1>Отчёт кампании</h1><p>Результаты и метрики по кампании «<span id="reportCampaignName">Просрочка 1–7 дней · Займы</span>».</p></div><button class="btn">Выгрузить отчёт</button></div><div class="notice" id="reportNotice" style="margin-bottom:16px">Загрузка отчёта…</div><div class="report-toolbar" hidden><div><div><b>Демонстрация прав:</b> <select id="reportRoleSelector" class="report-role-select"><option value="collection_manager">Менеджер кампании</option><option value="supervisor">Руководитель взыскания</option><option value="compliance_officer">Специалист по ограничениям</option></select></div></div><div><small id="reportRoleHint" class="panel-sub">Показывает, какие блоки отчёта видит выбранная роль. Это не смена должности.</small></div></div><div class="panel" id="reportPanelOperational" data-report-roles="collection_manager,supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Операционные метрики</div><span class="tag" id="reportTag">загрузка</span></div><div class="panel-body"><div class="funnel" id="reportFunnel"><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="all"><small>База</small><b id="reportTotalRecords">—</b><span class="report-kpi-subline">все загруженные записи для запуска</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="all"><small>Звонки запущены</small><b id="reportAttemptedCalls">—</b><span class="report-kpi-subline">переход к журналу звонков</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="completed"><small>Завершено</small><b id="reportCompletedCalls">—</b><span class="report-kpi-subline">завершённые попытки, не все исходы</span></button><button class="report-kpi-link" data-report-drill="compliance-review" data-review-priority="all" data-review-status="open"><small>Открытые риск-события</small><b id="reportOpenReviewCount">—</b><span class="report-kpi-subline">открыть очередь проверок</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="ptp_created"><small>Обещания</small><b id="reportPtpCount">—</b><span class="report-kpi-subline">просмотреть только обещания</span></button><button class="report-kpi-link" data-report-drill="calls" data-report-outcome="blocked"><small>Блокировано</small><b id="reportBlockedCalls">—</b><span class="report-kpi-subline">открыть заблокированные звонки</span></button></div></div></div><div class="grid g2"><div class="panel" id="reportPanelBusiness" data-report-roles="collection_manager,supervisor"><div class="panel-head"><div class="panel-title">Исходы и качество</div></div><div class="panel-body"><div class="table-wrap"><table style="min-width:520px"><thead><tr><th>Исход</th><th class="num">Количество</th><th class="num">Доля</th><th>Детали</th></tr></thead><tbody id="reportOutcomes"><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="ptp_created">Обещание платежа</button></td><td class="num" id="reportOutcomePtpCount">—</td><td class="num" id="reportOutcomePtpShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="ptp_created">детально</button></td></tr><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="completed">Завершено</button></td><td class="num" id="reportOutcomeCompletedCount">—</td><td class="num" id="reportOutcomeCompletedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="completed">детально</button></td></tr><tr><td><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">Блокировано</button></td><td class="num" id="reportOutcomeBlockedCount">—</td><td class="num" id="reportOutcomeBlockedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">детально</button></td></tr><tr><td>Отмечены как проблема</td><td class="num" id="reportQaFlaggedCount">—</td><td class="num" id="reportQaFlaggedShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-qa="flagged">детально</button></td></tr><tr><td>Ждут проверки</td><td class="num" id="reportQaReviewCount">—</td><td class="num" id="reportQaReviewShare">—</td><td><button class="report-link" data-report-drill="calls" data-report-qa="not_reviewed">детально</button></td></tr></tbody></table></div></div></div><div class="panel" id="reportPanelCompliance" data-report-roles="supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Ограничения и риски</div></div><div class="panel-body report-metric-block"><div class="report-metric-group" id="reportComplianceCriticalBlock"><small>В очереди риска</small><strong id="reportReviewOpen">—</strong><div class="report-kpi-subline">критические + высокие статусы: <span id="reportReviewCritical">—</span></div></div><div class="report-metric-group"><small>Необходимо вручную проверить</small><strong id="reportReviewOpenAction">—</strong><button class="report-link" data-report-drill="review" data-review-status="open">открыть проверки</button></div><div class="report-metric-group"><small>Заблокировано ограничениями</small><strong id="reportComplianceBlocks">—</strong><button class="report-link" data-report-drill="review" data-review-status="open" data-review-priority="critical">показать критические проверки</button><button class="report-link" data-report-drill="calls" data-report-outcome="blocked">показать звонки</button></div><div class="report-metric-group"><small>Открыто для эскалации</small><strong id="reportReviewEscalated">—</strong><button class="report-link" data-report-drill="review" data-review-status="escalated">показать</button></div></div></div></div><div class="panel" id="reportPanelCost" data-report-roles="collection_manager,supervisor,compliance_officer"><div class="panel-head"><div class="panel-title">Стоимость</div></div><div class="panel-body grid g2"><div class="metric info"><small>Минут соединения</small><strong id="reportMinutes">—</strong></div><div class="metric info"><small>Стоимость диалога</small><strong id="reportCostPerCall">—</strong></div><div class="metric info"><small>Стоимость обещания</small><strong id="reportCostPerPtp">—</strong></div><div class="metric warn"><small>Стоимость оплаты</small><strong style="font-size:16px">Данных недостаточно</strong></div></div></div></div>
 
-        <div class="campaign-view" data-camp-view="settings"><div class="page-head"><div><h1>Настройки кампании</h1><p>Параметры можно менять здесь. Критичные изменения создают новую версию и требуют повторной проверки.</p></div><button class="btn primary" id="saveCampaignSettings">Сохранить изменения</button></div><div class="panel"><div class="panel-body"><div class="settings-block"><h3>Основное</h3><div class="form-grid"><div class="field"><label>Название</label><input value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Часовой пояс</label><select><option>По адресу должника</option><option>Москва</option></select></div></div></div><div class="settings-block"><h3>Расписание и попытки</h3><div class="form-grid"><div class="field"><label>Будни</label><input value="08:30–20:30"></div><div class="field"><label>Выходные</label><input value="09:30–19:30"></div><div class="field"><label>Попыток на запись</label><input type="number" value="3"></div><div class="field"><label>Интервал повтора</label><select><option>Не ранее следующего дня</option></select></div></div></div><div class="notice danger">Изменение сегмента, сценария, телефонии или расписания поставит кампанию на паузу до повторной проверки.</div></div></div></div>
+        <div class="campaign-view" data-camp-view="settings"><div class="page-head"><div><h1>Настройки кампании</h1><p>Параметры можно менять здесь. Критичные изменения создают новую версию и требуют повторной проверки.</p></div><button class="btn primary" id="saveCampaignSettings">Сохранить изменения</button></div><div class="panel"><div class="panel-body"><div class="settings-block"><h3>Основное</h3><div class="form-grid"><div class="field"><label>Название</label><input value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Часовой пояс</label><select><option>По адресу должника</option><option>Москва</option></select></div></div></div><div class="settings-block"><h3>Расписание и попытки</h3><div class="form-grid"><div class="field"><label>Будни</label><input value="08:30–20:30" id="settingsWeekdays"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div><div class="field"><label>Выходные</label><input value="09:30–19:30" id="settingsWeekends"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div><div class="field"><label>Попыток на запись</label><input type="number" value="3"></div><div class="field"><label>Интервал повтора</label><select><option>Не ранее следующего дня</option></select></div></div></div><div class="notice danger">Изменение сегмента, сценария, телефонии или расписания поставит кампанию на паузу до повторной проверки.</div></div></div></div>
       </section>
     </main>
   </div>
@@ -114,19 +126,22 @@
 
 <div class="overlay" id="overlay"></div>
 <div class="modal" id="campaignWizard" aria-hidden="true"><div class="modal-head"><div><h2>Создание кампании</h2><p>Все обязательные настройки собраны в одном процессе.</p></div><button class="close" data-close>×</button></div><div class="modal-body"><div class="wizard-nav"><button class="wizard-step-btn active" data-wstep="1">1. Кампания</button><button class="wizard-step-btn" data-wstep="2">2. База должников</button><button class="wizard-step-btn" data-wstep="3">3. Телефония</button><button class="wizard-step-btn" data-wstep="4">4. Сценарий</button><button class="wizard-step-btn" data-wstep="5">5. Проверка</button></div><div class="wizard-content">
-  <div class="wizard-pane active" data-wpane="1"><h3>Основные параметры</h3><p>Название, продукт и сегмент кампании.</p><div class="wizard-state state-empty" id="campaignStatePanel"><span class="status-pill state-empty" id="campaignStateBadge">Не выполнено</span><div><b>Состояние параметров</b><small id="campaignStateText">Заполните параметры кампании, чтобы перейти к следующим шагам.</small><ul class="state-reasons" id="campaignStateReasons"></ul></div></div><div class="form-grid"><div class="field full"><label>Название кампании</label><input id="wizardName" value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select id="wizardProduct"><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select id="wizardSegment"><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Время в будни</label><input id="wizardWeekdays" value="08:30–20:30"></div><div class="field"><label>Время в выходные</label><input id="wizardWeekends" value="09:30–19:30"></div></div></div>
-  <div class="wizard-pane" data-wpane="2"><h3>Загрузка базы должников</h3><p>Поддерживаются CSV и XLSX. Система проверит обязательные поля и исключения.</p><div class="wizard-state state-empty" id="baseStatePanel"><span class="status-pill state-empty" id="baseStateBadge">Не запущено</span><div><b>Статус импорта</b><small id="baseStateText">Файл базы не выбран. Для проверки запускайте шаг импорта после загрузки.</small><ul class="state-reasons" id="baseStateReasons"></ul></div></div><div class="dropzone"><b id="uploadTitle">Перетащите файл сюда</b><p id="uploadText">До 100 МБ · телефон, номер клиента, сумма и срок просрочки</p><input id="baseFile" type="file" accept=".csv,.xlsx" hidden><button class="btn" id="chooseFile">Выбрать файл</button> <button class="btn" id="loadDemoBase">Загрузить пример</button></div><div id="mappingBlock" style="display:none;margin-top:18px"><div class="notice">Найдено 10 000 записей. 8 740 будут допущены после исключений.</div><div class="mapping"><span>client_id</span><b>→</b><select><option>Номер клиента</option></select></div><div class="mapping"><span>phone</span><b>→</b><select><option>Телефон</option></select></div><div class="mapping"><span>debt_amount</span><b>→</b><select><option>Сумма долга</option></select></div><div class="mapping"><span>days_overdue</span><b>→</b><select><option>Дней просрочки</option></select></div></div></div>
+  <div class="wizard-pane active" data-wpane="1"><h3>Основные параметры</h3><p>Название, продукт и сегмент кампании.</p><div class="wizard-state state-empty" id="campaignStatePanel"><span class="status-pill state-empty" id="campaignStateBadge">Не выполнено</span><div><b>Состояние параметров</b><small id="campaignStateText">Заполните параметры кампании, чтобы перейти к следующим шагам.</small><ul class="state-reasons" id="campaignStateReasons"></ul></div></div><div class="form-grid"><div class="field full"><label>Название кампании</label><input id="wizardName" value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select id="wizardProduct"><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select id="wizardSegment"><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Время в будни</label><input id="wizardWeekdays" value="08:30–20:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div><div class="field"><label>Время в выходные</label><input id="wizardWeekends" value="09:30–19:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div></div></div>
+  <div class="wizard-pane" data-wpane="2"><h3>Загрузка базы должников</h3><p>Поддерживаются CSV и XLSX. Система проверит обязательные поля и исключения.</p><div class="wizard-state state-empty" id="baseStatePanel"><span class="status-pill state-empty" id="baseStateBadge">Не запущено</span><div><b>Статус импорта</b><small id="baseStateText">Файл базы не выбран. Для проверки запускайте шаг импорта после загрузки.</small><ul class="state-reasons" id="baseStateReasons"></ul></div></div><div class="dropzone"><b id="uploadTitle">Перетащите файл сюда</b><p id="uploadText">До 100 МБ · телефон, номер клиента, сумма и срок просрочки</p><input id="baseFile" type="file" accept=".csv,.xlsx" hidden><button class="btn" id="chooseFile">Выбрать файл</button> <button class="btn" id="loadDemoBase">Загрузить пример</button></div><div id="mappingBlock" style="display:none;margin-top:18px"><div class="notice" id="importReportNotice">Пример базы: найдено 10 000, готовы 8 740, исправить 1 176, дубли 84. Это пример, не боевой импорт.</div><div class="grid g4" id="importReportCounts" style="margin:12px 0"><div class="metric info"><small>Найдено</small><strong id="importFoundCount">10 000</strong></div><div class="metric ok"><small>Готовы</small><strong id="importReadyCount">8 740</strong></div><div class="metric warn"><small>Исправить</small><strong id="importFixCount">1 176</strong></div><div class="metric info"><small>Дубли</small><strong id="importDupCount">84</strong></div></div><ul class="state-reasons" id="importRowReasons"><li>Строка 12: нет часового пояса</li><li>Строка 41: дубль номера клиента</li></ul><div class="mapping"><span>client_id</span><b>→</b><select><option>Номер клиента</option></select></div><div class="mapping"><span>phone</span><b>→</b><select><option>Телефон</option></select></div><div class="mapping"><span>timezone</span><b>→</b><select><option>Часовой пояс</option></select></div><div class="mapping"><span>debt_amount</span><b>→</b><select><option>Сумма долга</option></select></div><div class="mapping"><span>debt_status</span><b>→</b><select><option>Статус долга</option></select></div><div class="mapping"><span>consent_status</span><b>→</b><select><option>Статус согласия</option></select></div><div class="row-actions" style="margin-top:12px"><button class="btn primary" id="importContinueAccepted">Продолжить с принятыми записями</button><button class="btn" id="importFixFile">Исправить файл</button></div></div></div>
   <div class="wizard-pane" data-wpane="3"><h3>Телефония</h3><p>Выберите подключённый контур или добавьте новый.</p><div class="wizard-state state-empty" id="telephonyStatePanel"><span class="status-pill state-empty" id="telephonyStateBadge">Не проверено</span><div><b>Статус соединения</b><small id="telephonyStateText">Укажите поставщика, затем выполните тестовый звонок для подтверждения.</small><ul class="state-reasons" id="telephonyStateReasons"></ul></div></div><div class="grid g2"><button class="provider selected" data-select-provider><div class="card-top"><h3>МТС Exolve</h3><span class="tag run">готово</span></div><p>+7 495 •••-42-18 · маркировка включена · 100 линий</p></button><button class="provider" data-select-provider><div class="card-top"><h3>Mango Office</h3><span class="tag draft">подключить</span></div><p>Потребуется адрес голосового шлюза, учётные данные и тестовый звонок.</p></button></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Одновременных звонков</label><input value="45"></div><div class="field"><label>Остановка при ожидании оператора</label><select><option>40 секунд</option></select></div></div><button class="btn" data-phone-test style="margin-top:14px">Проверить соединение</button></div>
   <div class="wizard-pane" data-wpane="4"><h3>Сценарий диалога</h3><p>Выберите шаблон. После создания его можно настроить внутри кампании.</p><div class="wizard-state state-empty" id="scriptStatePanel"><span class="status-pill state-empty" id="scriptStateBadge">Не проверено</span><div><b>Проверка сценария</b><small id="scriptStateText">Сценарий выбран, но ещё не прошёл валидацию.</small><ul class="state-reasons" id="scriptStateReasons"></ul></div></div><div class="grid g3"><button class="script-card selected" data-select-script data-script-check="ready"><h3>Мягкое взыскание</h3><p>Информирование, причина неоплаты и обещание платежа.</p></button><button class="script-card" data-select-script data-script-check="partial"><h3>Работа с возражениями</h3><p>Спор по долгу и сложная жизненная ситуация.</p></button><button class="script-card" data-select-script data-script-check="review"><h3>Короткий звонок</h3><p>Только информирование и следующий шаг.</p></button></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Голос</label><select><option>Анна · нейтральный</option><option>Михаил · спокойный</option></select></div><div class="field"><label>Перевод оператору</label><select><option>По первому запросу</option></select></div></div><button class="btn" data-test-dialog style="margin-top:14px">Проверить диалог</button></div>
-  <div class="wizard-pane" data-wpane="5"><h3>Проверка перед запуском</h3><p>Проверьте базу, телефонию, сценарий и ограничения перед тестовым обзвоном.</p><div class="checklist"><div class="checkitem"><b>Основные параметры</b><span class="status-pill state-empty" id="readinessParamsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessParamsReason" hidden></ul></div><div class="checkitem"><b>База должников</b><span class="status-pill state-empty" id="readinessBaseStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessBaseReason" hidden></ul></div><div class="checkitem"><b>Телефония и маркировка</b><span class="status-pill state-empty" id="readinessPhoneStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessPhoneReason" hidden></ul></div><div class="checkitem"><b>Сценарий и ограничения</b><span class="status-pill state-empty" id="readinessScriptStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessScriptReason" hidden></ul></div><div class="checkitem"><b>Лимиты контактов и время</b><span class="status-pill state-ready" id="readinessLimitsStatus">Применены</span><ul class="checkitem-reasons" id="readinessLimitsReason" hidden></ul></div></div><div class="wizard-state state-empty" id="launchControlPanel"><span class="status-pill state-empty" id="launchStateBadge">Не проверено</span><div><b>Контролируемый запуск</b><small id="launchStateText">Запустите все шаги проверки перед формированием запуска.</small><ul class="state-reasons" id="launchStateReasons"></ul></div></div><div class="notice" id="wizardReadinessNotice" style="margin-top:16px">Кампания будет создана как черновик. Перед рабочим запуском повторите проверку готовности.</div><div class="wizard-actions" id="wizardReadinessActions" style="display:none"><button class="btn" id="wizardRetryChecks">Повторить проверки</button><button class="btn" id="wizardDraftMode">Сохранить черновик и продолжить позже</button><button class="btn primary" id="wizardControlledLaunch" disabled>Запустить тестовый обзвон</button><button class="btn" id="wizardRequestApproval" style="display:none">Запросить подтверждение запуска</button></div></div>
+  <div class="wizard-pane" data-wpane="5"><h3>Проверка перед запуском</h3><p>Проверьте базу, телефонию, сценарий и ограничения перед тестовым обзвоном.</p><div class="checklist"><div class="checkitem"><b>Основные параметры</b><span class="status-pill state-empty" id="readinessParamsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessParamsReason" hidden></ul></div><div class="checkitem"><b>База должников</b><span class="status-pill state-empty" id="readinessBaseStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessBaseReason" hidden></ul></div><div class="checkitem"><b>Телефония и маркировка</b><span class="status-pill state-empty" id="readinessPhoneStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessPhoneReason" hidden></ul></div><div class="checkitem"><b>Сценарий и ограничения</b><span class="status-pill state-empty" id="readinessScriptStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessScriptReason" hidden></ul></div><div class="checkitem"><b>Речь и модель</b><span class="status-pill state-blocked" id="readinessSpeechStatus">Не готово</span><ul class="checkitem-reasons" id="readinessSpeechReason"><li>Речь и модель не готовы. Подключите ключи в разделе интеграций.</li></ul></div><div class="checkitem"><b>Лимиты контактов и время</b><span class="status-pill state-ready" id="readinessLimitsStatus">Нужна проверка</span><ul class="checkitem-reasons" id="readinessLimitsReason" hidden></ul></div></div><div class="wizard-state state-empty" id="launchControlPanel"><span class="status-pill state-empty" id="launchStateBadge">Не проверено</span><div><b>Контролируемый запуск</b><small id="launchStateText">Запустите все шаги проверки перед формированием запуска.</small><ul class="state-reasons" id="launchStateReasons"></ul><div id="wizardBlockingGroup"><b>Блокирует запуск</b><ul id="wizardBlockingReasons"></ul></div><div id="wizardWarningGroup"><b>Предупреждение</b><ul id="wizardWarningReasons"></ul></div></div></div><div class="notice" id="wizardReadinessNotice" style="margin-top:16px">Кампания будет создана как черновик. Перед рабочим запуском повторите проверку готовности.</div><div class="wizard-actions" id="wizardReadinessActions" style="display:none"><button class="btn" id="wizardRetryChecks">Повторить проверки</button><button class="btn" id="wizardDraftMode">Сохранить черновик и продолжить позже</button><button class="btn primary" id="wizardControlledLaunch" disabled>Запустить тестовый обзвон</button><button class="btn" id="wizardRequestApproval" style="display:none">Запросить подтверждение запуска</button></div></div>
 </div></div><div class="modal-foot"><button class="btn" data-close>Сохранить черновик</button><div class="foot-right"><button class="btn" id="wizardBack">Назад</button><button class="btn primary" id="wizardNext">Далее</button><button class="btn success" id="wizardCreate" style="display:none">Создать кампанию</button></div></div></div>
 
 <div class="modal" id="phoneModal" aria-hidden="true"><div class="modal-head"><div><h2>Подключение телефонии</h2><p>Проверим набор, статусы, запись и маркировку.</p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"><div class="wizard-content"><div class="form-grid"><div class="field full"><label>Поставщик</label><select><option>МТС Exolve</option><option>Mango Office</option><option>Собственная АТС</option></select></div><div class="field"><label>Адрес голосового шлюза</label><input value="sip.example.ru"></div><div class="field"><label>Исходящий номер</label><input value="+7 495 000-00-00"></div><div class="field"><label>Учётная запись</label><input value="collector_main"></div><div class="field"><label>Пароль</label><input type="password" placeholder="Введите пароль"></div><div class="field"><label>Количество линий</label><input type="number" value="20"></div><div class="field"><label>Маркировка</label><input value="ФинЛиния · Финансы"></div></div><div class="notice" id="phoneConnectResult" style="margin-top:16px">Заполните данные и выполните тестовый звонок.</div></div></div><div class="modal-foot"><button class="btn" data-close>Отмена</button><div class="foot-right"><button class="btn" id="testPhoneConnection">Проверить соединение</button><button class="btn primary" id="savePhone" disabled>Сохранить</button></div></div></div>
 
-<aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
-<aside class="drawer" id="reviewDrawer"><div class="drawer-head"><div><h2 id="reviewDrawerTitle">Задача на проверку</h2><span class="panel-sub" id="reviewDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="review-detail"><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Контекст и источник</div><div id="reviewDrawerCall">—</div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Причина и основание</div><div id="reviewDrawerReason"></div><div id="reviewDrawerEvidence"></div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Решение по ограничениям</div><div class="review-events" id="reviewDrawerComplianceLog"></div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Технические события</div><div class="review-events" id="reviewDrawerEvents"></div></div><div class="row-actions"><button class="btn success" id="approveReviewItem">Подтвердить</button><button class="btn" id="rejectReviewItem">Отклонить</button><button class="btn" id="escalateReviewItem">Эскалация</button><button class="btn" id="requeueReviewItem">Вернуть в очередь</button></div></div></aside>
+<div class="modal" id="speechModal" aria-hidden="true"><div class="modal-head"><div><h2 id="speechModalTitle">Подключение речи и модели</h2><p>Ключ хранится у вас. После сохранения показываются только последние знаки.</p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"><div class="wizard-content"><div class="form-grid"><div class="field full"><label>Поставщик</label><select id="speechProvider"><option value="yandex_speechkit">Yandex SpeechKit</option><option value="yandexgpt">YandexGPT</option><option value="gigachat">GigaChat</option></select></div><div class="field full"><label>Ключ подключения</label><input id="speechApiKey" type="password" autocomplete="off" placeholder="Введите ключ"></div><div class="field full"><label>Каталог</label><input id="speechFolder" placeholder="Укажите каталог для Yandex"></div></div><div class="notice" id="speechConnectResult" style="margin-top:16px">Заполните данные и проверьте подключение.</div></div></div><div class="modal-foot"><button class="btn" data-close>Отмена</button><div class="foot-right"><button class="btn" id="testSpeechConnection">Проверить подключение</button><button class="btn primary" id="saveSpeech">Сохранить</button></div></div></div>
 
-      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Карточка звонка</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход и статус</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Решение по ограничениям</div><div id="callCardCompliance"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Основание</div><div id="callCardEvidence">—</div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка и запись</div><div class="call-transcript" id="callCardTranscript">—</div><div style="margin-top:10px"><a id="callCardRecording" href="#" target="_blank" rel="noreferrer">Скачать запись</a> · <a id="callCardTimelineSource" href="#">История событий</a></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Таймлайн звонка</div><div class="call-timeline" id="callCardTimeline"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Проверка качества</div><div id="callCardQaHint" class="panel-sub" style="margin-bottom:10px">Быстрый QA доступен в таблице, полная проверка — в этой карточке.</div><div class="call-qa-status" style="margin-bottom:10px"><small style="color:var(--muted);font-size:12px">Текущий статус:</small><span id="callCardQaStatusLabel"></span></div><div class="row-actions"><button class="btn success" data-call-qa="approved">Принять</button><button class="btn" data-call-qa="flagged">Отметить проблему</button><button class="btn" data-call-qa="not_reviewed">Снять оценку</button></div></div></div></div></aside>
+<aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
+<aside class="drawer" id="reviewDrawer"><div class="drawer-head"><div><h2 id="reviewDrawerTitle">Задача на проверку</h2><span class="panel-sub" id="reviewDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="review-detail"><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Контекст и источник</div><div id="reviewDrawerCall">—</div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Причина и основание</div><div id="reviewDrawerReason"></div><div id="reviewDrawerEvidence"></div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Решение по ограничениям</div><div class="review-events" id="reviewDrawerComplianceLog"></div></div><div class="review-detail-block"><div class="panel-title" style="margin-bottom:8px">Технические события</div><div class="review-events" id="reviewDrawerEvents"></div></div><div class="row-actions"><button class="btn success" id="approveReviewItem">Подтвердить разбор</button><button class="btn" id="rejectReviewItem">Отклонить</button><button class="btn" id="escalateReviewItem">Передать дальше</button><button class="btn" id="requeueReviewItem">Оставить в очереди</button></div></div></aside>
+
+      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Карточка звонка</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход и статус</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Решение по ограничениям</div><div id="callCardCompliance"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Основание</div><div id="callCardEvidence">—</div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка и запись</div><div class="call-transcript" id="callCardTranscript">—</div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><details><summary>Технические события</summary><div class="call-timeline" id="callCardTimeline"></div></details></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Проверка качества</div><div id="callCardQaHint" class="panel-sub" style="margin-bottom:10px">Быстрый QA доступен в таблице, полная проверка — в этой карточке.</div><div class="call-qa-status" style="margin-bottom:10px"><small style="color:var(--muted);font-size:12px">Текущий статус:</small><span id="callCardQaStatusLabel"></span></div><div class="row-actions"><button class="btn success" data-call-qa="approved">Принять</button><button class="btn" data-call-qa="flagged">Отметить проблему</button><button class="btn" data-call-qa="not_reviewed">Снять оценку</button></div></div></div></div></aside>
+<div class="modal" id="confirmActionModal" aria-hidden="true"><div class="modal-head"><div><h2 id="confirmActionTitle">Подтверждение</h2><p id="confirmActionText"></p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"></div><div class="modal-foot"><button class="btn" data-close id="confirmActionCancel">Отмена</button><div class="foot-right"><button class="btn primary" id="confirmActionOk">Подтвердить</button></div></div></div>
 <div class="toast" id="toast"><b id="toastTitle">Готово</b><span id="toastText">Изменения сохранены</span></div>
 
 <script>
@@ -544,7 +559,7 @@
     {time:'16:35', actor:'compliance_engine', text:'Записано обещание платежа на 8 000 ₽.'},
     {time:'15:58', actor:'operator', text:'Загружены изменения списка исключений.'}
   ];
-  const screenNames={home:'Главная',campaigns:'Кампании',sources:'Источники данных',telephony:'Телефония',scripts:'Сценарии',reviewQueue:'Очередь проверок',auditLog:'Журнал действий'};
+  const screenNames={home:'Главная',campaigns:'Кампании',sources:'Источники данных',telephony:'Интеграции',speech:'Речь и модель',scripts:'Сценарии',reviewQueue:'Очередь проверок',auditLog:'Журнал действий'};
   const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
   const reportRoleMeta={
     collection_manager:{
@@ -581,7 +596,7 @@
       requiredBy:'collection_manager',
       requiredByLabel:'Менеджер кампании',
       requiredUntil:'16:50',
-      nextStep:'Снять автоматическую паузу после устранения нарушения по временному окну.',
+      nextStep:'Проверьте событие. Возобновление — на вкладке «Запуск» после чеклиста.',
       callId:'call-883104',
       callOutcome:'обещание и перевод',
       complianceDecision:{
@@ -649,8 +664,8 @@
       id:'RQ-1003',
       status:'escalated',
       priority:'normal',
-      source:'manual_override',
-      type:'legal_review',
+      source:'compliance_engine',
+      type:'compliance',
       requiredAction:'pause_campaign',
       createdAt:'16:20',
       ageMinutes:43,
@@ -658,7 +673,7 @@
       campaignId:'11111111-1111-1111-1111-111111111112',
       debtor:'Сергей М. · FL-883061',
       requiredBy:'compliance_officer',
-      requiredByLabel:'Compliance officer',
+      requiredByLabel:'Специалист по ограничениям',
       requiredUntil:'Не позднее 17:45',
       nextStep:'Подтвердить законность повторной коммуникации и назначить follow-up.',
       callId:'call-883061',
@@ -676,10 +691,10 @@
       ],
       technicalEvents:[
         {time:'16:20:12', type:'Call attempt', details:'Первая попытка: no answer'},
-        {time:'16:20:13', type:'Compliance event', details:'manual_override запрошен оператором'}
+        {time:'16:20:13', type:'Compliance event', details:'задача передана специалисту по ограничениям'}
       ],
       complianceLog:[
-        {time:'16:20:12', actor:'operator', action:'manual_override_requested', text:'Переадресация на юриста для проверки дублей и consent-источника.'},
+        {time:'16:20:12', actor:'operator', action:'review.opened', text:'Задача передана специалисту по ограничениям.'},
         {time:'16:21:00', actor:'compliance_officer', action:'decision.created', text:'Нужна юридическая проверка источника контакта.'}
       ]
     }
@@ -687,15 +702,18 @@
   const reviewStateFilters={status:'open',priority:'all',source:'all',type:'all',campaignId:''};
   const reviewPriorityMeta={critical:{label:'Критический',pill:'state-blocked'},high:{label:'Высокий',pill:'state-review'},normal:{label:'Обычный',pill:'state-ready'}};
   const reviewStatusMeta={open:{label:'Ожидает решения',pill:'state-awaiting'},approved:{label:'Подтверждено',pill:'state-ready'},rejected:{label:'Отклонено',pill:'state-blocked'},escalated:{label:'Эскалация',pill:'state-review'},requeued:{label:'На повтор',pill:'state-awaiting'}};
-  const reviewSourceMeta={compliance_engine:{label:'Проверка ограничений',pill:'state-review'},handoff_engine:{label:'Передача специалисту',pill:'state-empty'},manual_override:{label:'Оператор',pill:'state-empty'}};
-  const reviewTypeMeta={compliance_block:{label:'Блок ограничения',pill:'state-blocked'},handoff_transfer:{label:'Передача специалисту',pill:'state-awaiting'},legal_review:{label:'Юр. проверка',pill:'state-review'}};
+  const reviewSourceMeta={compliance_engine:{label:'Проверка ограничений',pill:'state-review'},handoff_engine:{label:'Передача специалисту',pill:'state-empty'}};
+  const reviewTypeMeta={qa:{label:'Контроль качества',pill:'state-awaiting'},compliance:{label:'Ограничения',pill:'state-blocked'},compliance_block:{label:'Ограничения',pill:'state-blocked'},handoff_transfer:{label:'Передача специалисту',pill:'state-awaiting'}};
   const reviewActionMeta={pause_campaign:{label:'Остановить кампанию',pill:'state-blocked'},confirm_identity:{label:'Подтвердить личность',pill:'state-awaiting'},review_manually:{label:'Подтвердить вручную',pill:'state-ready'}};
   const callOutcomeMeta={
     ptp_created:{label:'Обещание платежа',pill:'state-ready'},
-    transferred:{label:'Передача оператору',pill:'state-awaiting'},
+    handoff:{label:'Перевод оператору',pill:'state-awaiting'},
     no_answer:{label:'Нет ответа',pill:'state-empty'},
+    callback_requested:{label:'Перезвонить',pill:'state-awaiting'},
+    dispute:{label:'Спор',pill:'state-review'},
     unknown:{label:'Исход неизвестен',pill:'state-empty'},
-    blocked:{label:'Заблокирован',pill:'state-blocked'}
+    blocked:{label:'Заблокирован',pill:'state-blocked'},
+    completed:{label:'Завершён',pill:'state-ready'}
   };
   const callQaStatusMeta={
     not_reviewed:{label:'Не проверено',pill:'state-awaiting'},
@@ -714,6 +732,8 @@
       outcomeSource:'provider-call:ptp_created:sandbox-call',
       complianceDecision:{decision:'allow',reasonCode:'ALLOW',reasonText:'Соглашение + проверка согласия в норме'},
       transcript:'AI: Здравствуйте. Я автоматизированный агент ООО МКК «ФинЛиния». Назовите, пожалуйста, последние 2 цифры года рождения.\nКлиент: 87. Смогу оплатить 8 000 после зарплаты 21.08.\nAI: Подтверждаю. Сроки оплати понятны, пришлите подтверждение.',
+      identityVerified:false,
+      sourceBadge:'демо',
       recordingUrl:'sandbox://recordings/call-883104.mp3',
       qaStatus:'approved',
       complianceTimeline:[
@@ -730,10 +750,10 @@
       durationSec:78,
       debtor:'Мария В. · FL-883090',
       phone:'+7 (495) 883-09-90',
-      outcome:'transferred',
-      outcomeSource:'provider-call:transferred:sandbox-call',
-      complianceDecision:{decision:'review_required',reasonCode:'CONSENT_LOW_CONFIDENCE',reasonText:'Слабая уверенность по воле согласия'},
-      transcript:'AI: Добрый день, я представитель банка.\nКлиент: могу ли я оплатить позже?\nAI: Передаю на специалиста.',
+      outcome:'handoff',
+      outcomeSource:'provider-call:handoff:sandbox-call',
+      complianceDecision:{decision:'block',reasonCode:'CONSENT_LOW_CONFIDENCE',reasonText:'Согласие не подтверждено'},
+      transcript:'AI: Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Марией?\nКлиент: могу ли я оплатить позже?\nAI: Передаю на специалиста.',
       recordingUrl:null,
       qaStatus:'not_reviewed',
       complianceTimeline:[
@@ -863,7 +883,7 @@
       }
     }
     if (callItem.outcomeSource) {
-      evidence.push(`Источник исхода: ${callItem.outcomeSource}`);
+      evidence.push(`Как получен результат: ${callItem.outcomeSource}`);
     }
     return normalizeEvidenceItems(evidence);
   }
@@ -1916,7 +1936,9 @@
       (priorityValue === 'all' || item.priority === priorityValue)
     );
     const tbody=q('#reviewQueueBody');
+    const campaignBody=q('#reviewCampaignBody');
     const empty=q('#reviewQueueEmpty');
+    const campaignEmpty=q('#reviewCampaignEmpty');
     const metricOpen=q('#reviewMetricOpen');
     const metricBlock=q('#reviewMetricBlock');
     const metricOld=q('#reviewMetricOld');
@@ -1926,16 +1948,20 @@
       return;
     }
 
-    tbody.textContent='';
-    for (const item of filtered) {
-      const tr=document.createElement('tr');
-      const priorityMeta=reviewPriorityMeta[item.priority] || reviewPriorityMeta.normal;
-      const statusMeta=reviewStatusMeta[item.status] || reviewStatusMeta.open;
-      const sourceMeta=reviewSourceMeta[item.source] || {label:item.source,pill:'state-empty'};
-      const typeMeta=reviewTypeMeta[item.type] || {label:item.type,pill:'state-empty'};
-      const actionMeta=reviewActionMeta[item.requiredAction] || {label:item.requiredAction,pill:'state-awaiting'};
-      const campaignMeta = reviewStateFilters.campaignId ? '' : `<div style="font-size:12px;color:var(--muted)">${item.campaign || 'Кампания'}</div>`;
-      tr.innerHTML=`
+    const fillBody=(target)=>{
+      if (!target) {
+        return;
+      }
+      target.textContent='';
+      for (const item of filtered) {
+        const tr=document.createElement('tr');
+        const priorityMeta=reviewPriorityMeta[item.priority] || reviewPriorityMeta.normal;
+        const statusMeta=reviewStatusMeta[item.status] || reviewStatusMeta.open;
+        const sourceMeta=reviewSourceMeta[item.source] || {label:item.source,pill:'state-empty'};
+        const typeMeta=reviewTypeMeta[item.type] || {label:item.type,pill:'state-empty'};
+        const actionMeta=reviewActionMeta[item.requiredAction] || {label:item.requiredAction,pill:'state-awaiting'};
+        const campaignMeta = reviewStateFilters.campaignId ? '' : `<div style="font-size:12px;color:var(--muted)">${item.campaign || 'Кампания'}</div>`;
+        tr.innerHTML=`
         <td>${item.createdAt}</td>
         <td><span class="tag ${sourceMeta.pill}">${sourceMeta.label}</span></td>
         <td><span class="tag ${typeMeta.pill}">${typeMeta.label}</span></td>
@@ -1954,8 +1980,11 @@
         </td>
         <td><span class="tag ${statusMeta.pill}">${statusMeta.label}</span></td>
       `;
-      tbody.appendChild(tr);
-    }
+        target.appendChild(tr);
+      }
+    };
+    fillBody(tbody);
+    fillBody(campaignBody);
 
     const totalOpen=campaignScopeReviewItems.filter((item)=>item.status==='open').length;
     const requireBlock=campaignScopeReviewItems.filter((item)=>item.status==='open' && (item.priority==='critical' || item.priority==='high')).length;
@@ -1966,6 +1995,9 @@
     metricOld.textContent=String(oldItems);
     metricAge.textContent=filtered.length ? `${avgAge} мин` : '—';
     empty.hidden = filtered.length > 0;
+    if (campaignEmpty) {
+      campaignEmpty.hidden = filtered.length > 0;
+    }
   }
 
   function openReviewItem(itemId) {
@@ -2086,7 +2118,7 @@
       return complianceReasonValue === 'all' || reason === complianceReasonValue;
     });
 
-    const filtered=reasonedCards.filter((item)=> (outcomeValue==='all' || item.outcome===outcomeValue)
+    const filtered=reasonedCards.filter((item)=> (outcomeValue==='completed' ? item.status==='completed' : (outcomeValue==='all' || item.outcome===outcomeValue))
       && (qaValue==='all' || item.qaStatus===qaValue)
       && (!needsQaOnly || item.qaStatus !== 'approved'));
 
@@ -2097,11 +2129,11 @@
       tr.innerHTML=`
         <td>${item.startedAt}</td>
         <td><b>${item.debtor}</b><div style="font-size:12px;color:var(--muted)">${item.phone}</div></td>
+        <td>${formatCallStatusLabel(item.status)}</td>
         <td><span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span></td>
-        <td><small style="display:block;color:var(--muted)">${item.outcomeSource}</small></td>
-        <td><span class="tag ${item.complianceDecision?.decision === 'allow' ? 'state-ready' : 'state-review'}">${item.complianceDecision?.decision || 'no decision'}</span></td>
-        <td>${formatDuration(item.durationSec)}</td>
+        <td><span class="tag ${item.complianceDecision?.decision === 'allow' ? 'state-ready' : 'state-review'}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
         <td><span class="tag ${qaMeta.pill}">${qaMeta.label}</span></td>
+        <td><span class="tag warn">${item.sourceBadge || (item.dataSource === 'api' ? 'live' : 'демо')}</span></td>
         <td>
           <div class="row-actions">
             <button class="btn small" data-call-action="open" data-call-id="${item.id}">Карточка</button>
@@ -2179,7 +2211,8 @@
       : 'time, status, outcome, debtor, qa, transcript, compliance';
     q('#callCardResult').innerHTML=`
       <b>Исход:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
-      <b>Статус:</b> ${formatCallStatusLabel(displayItem.status)}<br/>
+      <b>Статус попытки:</b> ${formatCallStatusLabel(displayItem.status)}<br/>
+      <b>Личность:</b> ${displayItem.identityVerified ? 'подтверждена' : 'не подтверждена'}<br/>
       <b>Длительность:</b> ${formatDuration(displayItem.durationSec)}
     `;
     if (isLimitedApiCall) {
@@ -2199,22 +2232,13 @@
     q('#callCardTranscript').textContent = isLimitedApiCall
       ? (displayItem.transcript || 'Расшифровка пока недоступна.')
       : (displayItem.transcript || 'Расшифровка недоступна.');
-    const recording=q('#callCardRecording');
+    const recording=q('#callCardRecordingStatus');
     if (recording) {
-      const canDownload=Boolean(displayItem.recordingUrl) && !isLimitedApiCall;
-      recording.href = displayItem.recordingUrl || '#';
-      recording.textContent = canDownload ? 'Скачать запись' : 'Запись недоступна';
-      recording.style.pointerEvents = canDownload ? 'auto' : 'none';
-      recording.style.opacity = canDownload ? '1' : '0.65';
-    }
-    const timelineLink=q('#callCardTimelineSource');
-    if (timelineLink) {
-      const timeline = displayItem.complianceTimeline || [];
-      timelineLink.textContent = isLimitedApiCall ? 'История событий недоступна' : `История событий (${timeline.length})`;
-      timelineLink.href = '#';
-      timelineLink.dataset.callId = isLimitedApiCall ? '' : displayItem.callAttemptId || '';
-      timelineLink.style.pointerEvents = !isLimitedApiCall && item.callAttemptId ? 'auto' : 'none';
-      timelineLink.style.opacity = !isLimitedApiCall && item.callAttemptId ? '1' : '0.65';
+      const stored=Boolean(displayItem.recordingUrl) && !String(displayItem.recordingUrl).startsWith('sandbox://');
+      recording.textContent = stored ? 'Запись хранится' : (displayItem.recordingUrl ? 'Запись хранится' : 'Записи нет');
+      if (String(displayItem.recordingUrl || '').startsWith('sandbox://')) {
+        recording.textContent = 'Запись хранится';
+      }
     }
     q('#callCardQaStatusLabel').innerHTML=`<span class="tag ${callQaStatusMeta[displayItem.qaStatus]?.pill || 'state-empty'}">${callQaStatusMeta[displayItem.qaStatus]?.label || displayItem.qaStatus}</span>`;
 
@@ -2279,8 +2303,8 @@
     if (campaignLifecycle.status === 'manual_paused') {
       return {className:'tag warn', label:'пауза вручную'};
     }
-    if (campaignLifecycle.status === 'stopped') {
-      return {className:'tag draft', label:'остановлена'};
+    if (campaignLifecycle.status === 'completed') {
+      return {className:'tag draft', label:'завершена'};
     }
     return {className:'tag run', label:'работает'};
   }
@@ -2307,7 +2331,9 @@
 
     safePanel.style.display='none';
     notice.className='notice';
-    notice.textContent='Кампания в рабочем режиме. Риск-событий нет.';
+    notice.textContent=campaignLifecycle.status === 'running'
+      ? 'Кампания работает. Следите за очередью проверок.'
+      : 'Статус кампании ещё не проверен.';
   }
 
   function setCampaignState(nextStatus, options={}) {
@@ -2335,35 +2361,47 @@
     const resumeButton=q('#resumeCampaign');
     const simulateAutoPauseButton=q('#simulateAutoPause');
     const stopButton=q('#stopCampaign');
+    const settingsButton=q('#campaignSettingsButton');
+    const openReasonButton=q('#openPauseReason');
     if (pauseButton) {
       pauseButton.style.display = nextStatus === 'running' ? 'inline-flex' : 'none';
-      pauseButton.disabled = nextStatus === 'stopped';
+      pauseButton.disabled = nextStatus === 'completed';
     }
     if (resumeButton) {
       resumeButton.style.display = nextStatus === 'manual_paused' || nextStatus === 'auto_paused' ? 'inline-flex' : 'none';
       if (nextStatus === 'manual_paused') {
-        resumeButton.textContent='Снять паузу';
+        resumeButton.textContent='Продолжить обзвон';
       }
       if (nextStatus === 'auto_paused') {
         resumeButton.textContent='Возобновить после проверки';
       }
     }
+    if (openReasonButton) {
+      openReasonButton.style.display = nextStatus === 'auto_paused' ? 'inline-flex' : 'none';
+    }
+    if (settingsButton) {
+      settingsButton.style.display = nextStatus === 'auto_paused' ? 'none' : 'inline-flex';
+    }
     if (simulateAutoPauseButton) {
-      simulateAutoPauseButton.style.display = nextStatus === 'stopped' ? 'none' : 'inline-flex';
+      simulateAutoPauseButton.style.display = nextStatus === 'completed' ? 'none' : 'inline-flex';
     }
     if (stopButton) {
-      stopButton.style.display = nextStatus === 'stopped' ? 'none' : 'inline-flex';
+      stopButton.style.display = nextStatus === 'completed' ? 'none' : 'inline-flex';
       stopButton.disabled = false;
     }
 
     if (nextStatus === 'running' && prevStatus === 'manual_paused') {
-      addCampaignActivity(`manual resume выполнен (${options.actor || 'operator'}).`, options.actor || 'operator');
+      addCampaignActivity('Кампания продолжена после ручной паузы.', options.actor || 'operator');
     } else if (nextStatus === 'running' && prevStatus === 'auto_paused' && options.safeResumeChecked) {
-      addCampaignActivity(`safe-resume выполнен (${options.actor || 'compliance_owner'}) event=${campaignLifecycle.autoPauseEvent || 'compliance.blocked.auto_pause'}; reason=${campaignLifecycle.autoPauseReason}; impact=${campaignLifecycle.autoPauseImpact};`, 'compliance_officer');
+      addCampaignActivity('Кампания возобновлена после проверки.', 'compliance_officer');
     } else if (nextStatus === 'auto_paused') {
-      addCampaignActivity(`campaign state: ${prevStatus} → ${nextStatus}` + (options.reason ? `. ${options.reason}` : ''), options.actor || 'system');
+      addCampaignActivity('Кампания приостановлена системой.' + (options.reason ? ` ${options.reason}` : ''), options.actor || 'system');
+    } else if (nextStatus === 'completed') {
+      addCampaignActivity('Кампания остановлена. Для продолжения нужен новый запуск.', options.actor || 'operator');
+    } else if (nextStatus === 'manual_paused') {
+      addCampaignActivity('Кампания приостановлена. Новые звонки не создаются.', options.actor || 'operator');
     } else {
-      addCampaignActivity(`campaign state: ${prevStatus} → ${nextStatus}` + (options.reason ? `. ${options.reason}` : ''), options.actor || 'system');
+      addCampaignActivity('Статус кампании обновлён.', options.actor || 'system');
     }
 
     qa('[id^="safeResumeChecklist"]').forEach((checkbox)=>{
@@ -2419,24 +2457,8 @@
     item.status=decision;
     item.ageMinutes=0;
     renderReviewQueue();
-    toast('Решение сохранено', 'Задача обновлена.');
-    if (decision === 'approved') {
-      setCampaignState('running',{actor:'compliance_officer',reason:`Review item ${itemId} approved`});
-    } else if (decision === 'rejected') {
-      setCampaignState('manual_paused',{actor:'compliance_officer',reason:`Review item ${itemId} rejected`});
-    } else if (decision === 'escalated') {
-      setCampaignState('auto_paused',{
-        actor:'compliance_officer',
-        autoPauseReason:'review escalation',
-        autoPauseImpact:'Нужна дополнительная валидация по инциденту в compliance/QA',
-        autoPauseEvent:'compliance.review.escalated',
-        reason:`Review item ${itemId} escalated`
-      });
-    } else {
-      toast('Возвращено в очередь', 'Задачу нужно разобрать ещё раз.');
-    }
+    toast('Решение сохранено', 'Задача обновлена. Возобновление кампании — на вкладке «Запуск».');
     closeAll();
-    showScreen('reviewQueue');
   }
 
 	function updateWizardReadiness() {
@@ -2632,7 +2654,7 @@
 	  setCheckItem('readinessBaseStatus','readinessBaseReason',readinessDisplayState(wizardStepStates.base.status),wizardStepStates.base.status==='ready' ? [`Принято ${wizardStepStates.base.accepted.toLocaleString('ru-RU')} из ${wizardStepStates.base.total.toLocaleString('ru-RU')} записей.`] : (wizardStepStates.base.reasons.length ? wizardStepStates.base.reasons : ['Импорт не завершён или требует ручной корректировки.']));
 	  setCheckItem('readinessPhoneStatus','readinessPhoneReason',readinessDisplayState(wizardStepStates.telephony.status),wizardStepStates.telephony.status==='ready' ? ['Телефония выбрана и подтверждена тестовым звонком.'] : (wizardStepStates.telephony.reasons.length ? wizardStepStates.telephony.reasons : ['Перед запуском выполните тестовый звонок.']));
 	  setCheckItem('readinessScriptStatus','readinessScriptReason',readinessDisplayState(wizardStepStates.script.status),wizardStepStates.script.status==='ready' ? ['Сценарий валиден для текущего запуска.'] : (wizardStepStates.script.reasons.length ? wizardStepStates.script.reasons : ['Проверьте сценарий: ограничения и перевод оператору.']));
-	  setCheckItem('readinessLimitsStatus','readinessLimitsReason','ready',['Будни и выходные из шага кампании применены как ограничение времени.']);
+	  setCheckItem('readinessLimitsStatus','readinessLimitsReason', apiReadiness && apiReadiness.status==='ready' ? 'ready' : 'needs_check', apiReadiness && apiReadiness.status==='ready' ? ['Лимиты подтверждены проверкой готовности.'] : ['Нужна проверка: лимиты берутся из ответа готовности.']);
 
 		  const notice=q('#wizardReadinessNotice');
 		  const actions=q('#wizardReadinessActions');
@@ -2809,10 +2831,10 @@ function syncCampaignLaunchReadinessPanel(launchState='needs_check', launchText=
 	  setCheckItem(
 	    'campaignLaunchLimitsStatus',
 	    'campaignLaunchLimitsReason',
-	    'ready',
-	    [
-	      `Будни: ${wizardStepStates.campaign.weekdays || 'не заданы'}, выходные: ${wizardStepStates.campaign.weekends || 'не заданы'}`
-	    ]
+	    readinessSummary && canRun ? 'ready' : 'needs_check',
+	    readinessSummary && canRun
+	      ? ['Лимиты подтверждены проверкой готовности.']
+	      : ['Нужна проверка: лимиты берутся из ответа готовности.']
 	  );
 
   if (launchNotice) {
@@ -2821,6 +2843,25 @@ function syncCampaignLaunchReadinessPanel(launchState='needs_check', launchText=
   }
   if (launchButton) {
     launchButton.disabled=!canRun;
+  }
+  const blockingList=q('#campaignLaunchBlockingReasons');
+  const warningList=q('#campaignLaunchWarningReasons');
+  const reasons=readinessSummary ? (readinessSummary.details || []) : reasonItems;
+  if (blockingList) {
+    blockingList.textContent='';
+    for (const item of (canRun ? [] : reasons)) {
+      const li=document.createElement('li');
+      li.textContent=item;
+      blockingList.appendChild(li);
+    }
+  }
+  if (warningList) {
+    warningList.textContent='';
+    if (effectiveState === 'stale' || effectiveState === 'needs_check') {
+      const li=document.createElement('li');
+      li.textContent=summaryText;
+      warningList.appendChild(li);
+    }
   }
 }
 
@@ -2966,6 +3007,15 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       syncCampaignLaunchReadinessPanel();
       return;
     }
+    if (id === 'review') {
+      applyReportReviewFilters({
+        status: 'open',
+        priority: 'all',
+        campaignId: q('#campaignWorkspace')?.dataset.campaignId || ''
+      });
+      renderReviewQueue();
+      return;
+    }
     if (id === 'overview') {
       await refreshCampaignReadinessSummary();
       syncCampaignOverviewReadinessPanel();
@@ -2984,17 +3034,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       renderCallsTable();
       return;
     }
-    if (id === 'review') {
-      const context = getCampaignContext();
-      const reviewState = getReportDrilldownFromUrl();
-      applyReportReviewFilters({
-        status: reviewState.reviewStatus,
-        priority: reviewState.reviewPriority,
-        campaignId: context?.campaignId || ''
-      });
-      renderReviewQueue();
-      return;
-    }
+    if (id === 'settings') {
   }
   renderReviewQueue();
   renderCallsTable();
@@ -3055,6 +3095,12 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
 	  qa('[data-wpane]').forEach(p=>p.classList.toggle('active',+p.dataset.wpane===wizardStep));
 	  q('#wizardBack').style.visibility=wizardStep===1?'hidden':'visible';
 	  q('#wizardNext').style.display=wizardStep===5?'none':'inline-flex';
+	  if (wizardStep===1) {
+	    const blocked=['empty','loading','error'].includes(wizardStepStates.campaign.status);
+	    q('#wizardNext').disabled=blocked;
+	  } else {
+	    q('#wizardNext').disabled=false;
+	  }
 	  q('#wizardCreate').style.display=wizardStep===5?'inline-flex':'none';
 	  updateWizardReadiness();
 	  if (wizardStep === 5) {
@@ -3063,7 +3109,16 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
 	}
 
 	function openWizard(step=1){wizardStep=step;evaluateCampaignStepState();setWizardTelephonyByProvider();setWizardStepForScript();renderWizard();openLayer(q('#campaignWizard'))}
-  qa('[data-open-wizard]').forEach(b=>b.addEventListener('click',()=>openWizard(1)));qa('[data-open-wizard-step]').forEach(b=>b.addEventListener('click',()=>openWizard(+b.dataset.openWizardStep)));qa('[data-wstep]').forEach(b=>b.addEventListener('click',()=>{wizardStep=+b.dataset.wstep;renderWizard()}));q('#wizardNext').addEventListener('click',()=>{wizardStep=Math.min(5,wizardStep+1);renderWizard()});q('#wizardBack').addEventListener('click',()=>{wizardStep=Math.max(1,wizardStep-1);renderWizard()});
+  qa('[data-open-wizard]').forEach(b=>b.addEventListener('click',()=>openWizard(1)));qa('[data-open-wizard-step]').forEach(b=>b.addEventListener('click',()=>openWizard(+b.dataset.openWizardStep)));qa('[data-wstep]').forEach(b=>b.addEventListener('click',()=>{wizardStep=+b.dataset.wstep;renderWizard()}));q('#wizardNext').addEventListener('click',()=>{
+    if (wizardStep===1) {
+      evaluateCampaignStepState();
+      if (['empty','loading','error'].includes(wizardStepStates.campaign.status)) {
+        return;
+      }
+    }
+    wizardStep=Math.min(5,wizardStep+1);
+    renderWizard();
+  });q('#wizardBack').addEventListener('click',()=>{wizardStep=Math.max(1,wizardStep-1);renderWizard()});
   function baseReady(name='пример_базы.csv'){
     q('#uploadTitle').textContent=name;
     const backendResponse = wizardBackendSim.import.fromFile(name);
@@ -3123,14 +3178,38 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       syncCampaignLaunchReadinessPanel();
       return;
     }
-    closeAll();
-    openCampaign('launch');
-    setCampaignState('running',{actor:'operator',reason:'controlled launch подтверждён'});
-    toast('Controlled launch активирован','Кампания запущена в ограниченном режиме наблюдения до первого окна контроля.');
+    openConfirmLaunch();
   });
   q('#wizardRequestApproval').addEventListener('click',()=>{closeAll();openCampaign('overview');setCampaignState('manual_paused',{actor:'operator',reason:'требуется утверждение перед запуском'});toast('Запрос отправлен','Запрос на тестовый обзвон передан ответственному.');});
   q('#wizardCreate').addEventListener('click',()=>{closeAll();openCampaign('overview');setCampaignState('manual_paused',{actor:'operator',reason:'черновик кампании сохранён'});toast('Кампания создана','Проверьте настройки внутри кампании и запросите рабочий запуск.');});
   qa('[data-open-phone]').forEach(b=>b.addEventListener('click',()=>openLayer(q('#phoneModal'))));
+  qa('[data-open-speech]').forEach(b=>b.addEventListener('click',()=>{
+    const kind=b.getAttribute('data-open-speech');
+    const titles={asr:'Распознавание речи',tts:'Голос',llm:'Модель диалога'};
+    q('#speechModalTitle').textContent=titles[kind]||'Речь и модель';
+    q('#speechApiKey').value='';
+    q('#speechConnectResult').textContent='Заполните данные и проверьте подключение.';
+    openLayer(q('#speechModal'));
+  }));
+  q('#testSpeechConnection').addEventListener('click',()=>{
+    const key=q('#speechApiKey').value.trim();
+    q('#speechConnectResult').className=key?'notice':'notice warn';
+    q('#speechConnectResult').textContent=key?'Подключение проверено. Можно сохранить.':'Укажите ключ подключения.';
+  });
+  q('#saveSpeech').addEventListener('click',()=>{
+    const key=q('#speechApiKey').value.trim();
+    const hint=key.length>=4?('ключ ···'+key.slice(-4)):'ключ ···****';
+    const card=q('[data-speech-card="asr"]')||q('[data-speech-card]');
+    if(card){
+      const status=card.querySelector('[data-speech-status]');
+      const hintEl=card.querySelector('[data-speech-hint]');
+      if(status){status.className='tag run';status.textContent='свой ключ';}
+      if(hintEl){hintEl.textContent=hint;}
+    }
+    q('#speechApiKey').value='';
+    closeAll();
+    toast('Подключение сохранено', hint+'. Полный ключ больше не показывается.');
+  });
   q('#testPhoneConnection').addEventListener('click',()=>{q('#phoneConnectResult').className='notice';q('#phoneConnectResult').textContent='Соединение установлено. Набор, статусы и запись проверены.';q('#savePhone').disabled=false;toast('Телефония проверена','Тестовый звонок завершён успешно.')});
   q('#savePhone').addEventListener('click',()=>{closeAll();toast('Телефония подключена','Новое соединение доступно для выбора в кампаниях.')});
   qa('[data-phone-test]').forEach((b)=>b.addEventListener('click',()=> {
@@ -3159,7 +3238,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   }));
   qa('#safeResumeChecklistReason, #safeResumeChecklistReview, #safeResumeChecklistOwner').forEach((checkbox)=>{checkbox?.addEventListener('change',evaluateSafeResumeChecklist)});
   q('#confirmSafeResume').addEventListener('click',()=>{if (campaignLifecycle.status !== 'auto_paused') { return; }evaluateSafeResumeChecklist();if (q('#confirmSafeResume')?.disabled) {toast('Недостаточно подтверждений','Подтвердите все пункты проверки.'); return;}setCampaignState('running',{actor:'compliance_owner',safeResumeChecked:true,autoPauseReason:campaignLifecycle.autoPauseReason,autoPauseImpact:campaignLifecycle.autoPauseImpact,autoPauseEvent:campaignLifecycle.autoPauseEvent,reason:'safe-resume подтверждён'});closeAll();openCampaign('launch');toast('Кампании разрешено продолжить','Безопасное возобновление завершено.');});
-  q('#cancelSafeResume').addEventListener('click',()=>{if (campaignLifecycle.status === 'auto_paused') {addCampaignActivity(`safe-resume cancelled by operator; event=${campaignLifecycle.autoPauseEvent}; reason=${campaignLifecycle.autoPauseReason}`,'operator');}setCampaignState('auto_paused',{actor:'operator',autoPauseReason:campaignLifecycle.autoPauseReason,autoPauseImpact:campaignLifecycle.autoPauseImpact,autoPauseEvent:campaignLifecycle.autoPauseEvent,reason:'safe-resume отклонён оператором'});closeAll();openCampaign('launch');});
+  q('#cancelSafeResume').addEventListener('click',()=>{if (campaignLifecycle.status === 'auto_paused') {addCampaignActivity('Проверка возобновления отменена.','operator');}setCampaignState('auto_paused',{actor:'operator',autoPauseReason:campaignLifecycle.autoPauseReason,autoPauseImpact:campaignLifecycle.autoPauseImpact,autoPauseEvent:campaignLifecycle.autoPauseEvent,reason:'возобновление отменено'});closeAll();openCampaign('launch');});
   qa('[data-test-dialog]').forEach((b)=>{
     b.addEventListener('click',()=>{
       const selected=q('.script-card.selected');
@@ -3176,7 +3255,42 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     });
   });
   q('#saveScenario').addEventListener('click',()=>toast('Версия сценария сохранена','Перед публикацией будут повторно выполнены обязательные проверки.'));
-  q('#runTestCall').addEventListener('click',()=>{q('#testCallResult').textContent='Идёт тестовый звонок…';setTimeout(()=>{q('#testCallResult').textContent='Проверка успешна: соединение, представление агента, запись и результат получены.';setCampaignState('running',{actor:'operator',reason:'тестовый звонок выполнен'});toast('Тестовый звонок завершён','Кампания готова к запуску.')},900)});
+  let pendingConfirm=null;
+  function openConfirm(title,text,okLabel,onOk){
+    q('#confirmActionTitle').textContent=title;
+    q('#confirmActionText').textContent=text;
+    q('#confirmActionOk').textContent=okLabel;
+    pendingConfirm=onOk;
+    openLayer(q('#confirmActionModal'));
+  }
+  function openConfirmLaunch(){
+    const name=q('#campaignWorkspace')?.dataset.campaignName || q('#wizardName')?.value || 'Кампания';
+    const readiness=campaignReadinessSummaryState.summary?.readinessState || wizardStepStates.readiness?.status || 'не проверено';
+    openConfirm(
+      'Запустить кампанию?',
+      `«${name}». Готовность: ${readiness}. Режим: песочница. Лимит дня не задан. Новые звонки начнут создаваться в пределах проверки готовности. При риске кампания уйдёт в автопаузу. Боевой обзвон без ограничений не запускается.`,
+      'Запустить в песочнице',
+      ()=>{
+        closeAll();
+        openCampaign('launch');
+        setCampaignState('running',{actor:'operator',reason:'controlled launch подтверждён'});
+        toast('Кампания запущена','Новые звонки создаются в песочнице в пределах проверки готовности.');
+      }
+    );
+  }
+  q('#confirmActionOk')?.addEventListener('click',()=>{
+    const fn=pendingConfirm;
+    pendingConfirm=null;
+    if (fn) fn();
+  });
+  q('#runTestCall').addEventListener('click',()=>{
+    const number=q('#runTestCall')?.closest('.panel-body')?.querySelector('input')?.value || '';
+    q('#testCallResult').textContent='Идёт проверка соединения…';
+    setTimeout(()=>{
+      q('#testCallResult').textContent=`Проверка соединения завершена. Номер: ${number || 'не указан'}. Итог: соединение установлено. Кампания не запущена.`;
+      toast('Проверка соединения','Кампания не переведена в работу.');
+    },900);
+  });
   q('#launchCampaign').addEventListener('click',async()=>{
     const launchButton=q('#launchCampaign');
     if (!launchButton || launchButton.disabled) {
@@ -3195,10 +3309,20 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       syncCampaignLaunchReadinessPanel();
       return;
     }
-    setCampaignState('running',{actor:'operator',reason:'controlled launch подтверждён'});
-    toast('Кампания запущена','Первые звонки появятся в журнале кампании.');
+    openConfirmLaunch();
   });
-  q('#pauseCampaign').addEventListener('click',()=>{setCampaignState('manual_paused',{actor:'operator',reason:'manual pause requested',pausedBy:'operator'});toast('Кампания приостановлена','Пока ручная пауза активна, новые звонки не создаются.');});
+  q('#pauseCampaign').addEventListener('click',()=>{
+    const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+    openConfirm(
+      'Приостановить кампанию?',
+      `Приостановить «${name}»? Новые звонки не создаются.`,
+      'Приостановить кампанию',
+      ()=>{
+        setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
+        toast('Кампания приостановлена','Новые звонки не создаются.');
+      }
+    );
+  });
   q('#resumeCampaign').addEventListener('click',()=>{
     if (campaignLifecycle.status === 'manual_paused') {
       setCampaignState('running',{actor:'operator',reason:'manual resume'});
@@ -3213,7 +3337,18 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     }
   });
   q('#simulateAutoPause')?.addEventListener('click',()=>{setCampaignState('auto_paused',{actor:'compliance_engine',autoPauseReason:'compliance.blocked.auto_pause: time_window_violation',autoPauseImpact:'Событие по политике time_window_violation',autoPauseEvent:'compliance.blocked.auto_pause'});toast('Кампания приостановлена','Новые звонки не запускаются. Проверьте причину перед возобновлением.');});
-  q('#stopCampaign').addEventListener('click',()=>{setCampaignState('stopped',{actor:'operator',reason:'campaign stopped by operator'});toast('Кампания остановлена','Новые звонки не начнутся. Для продолжения нужен новый запуск.');});
+  q('#stopCampaign').addEventListener('click',()=>{
+    const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+    openConfirm(
+      'Остановить кампанию?',
+      `Остановить «${name}»? Для продолжения нужен новый запуск.`,
+      'Остановить кампанию',
+      ()=>{
+        setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
+        toast('Кампания завершена','Новые звонки не начнутся. Для продолжения нужен новый запуск.');
+      }
+    );
+  });
   q('#saveCampaignSettings').addEventListener('click',()=>{setCampaignState('manual_paused',{actor:'operator',reason:'campaign settings saved during review'});toast('Настройки сохранены','Кампания поставлена на ручную паузу до повторной проверки.')});
   q('.search input').addEventListener('keydown',e=>{if(e.key==='Enter'){showScreen('campaigns');toast('Поиск выполнен',e.target.value?`Показаны кампании по запросу «${e.target.value}».`:'Показаны все кампании.')}});
   document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const text=b.textContent.trim();if(text==='Помощь')toast('Помощь по запуску','Последовательно настройте базу, телефонию, сценарий и выполните тестовый звонок.');if(text==='Настроить обмен')toast('Настройка обмена','Укажите адрес системы, способ авторизации, расписание и сопоставление полей.');if(text==='Подключить'&&!b.hasAttribute('data-open-phone'))toast('Источник будет подключён','Следующий шаг — реквизиты защищённой папки и тестовая загрузка.');if(text==='Продолжить редактирование'||text==='+ Новый сценарий')openCampaign('scenario');if(text==='Настроить'&&b.closest('.provider'))openLayer(q('#phoneModal'));if(text.includes('Выгрузить'))toast('Файл подготовлен','Демонстрационная выгрузка сформирована без персональных данных.');if(text==='Продолжить настройку')openWizard(1)});

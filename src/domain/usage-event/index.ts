@@ -3,7 +3,12 @@ export type UsageEventType =
   | 'call_completed'
   | 'call_failed'
   | 'handoff'
-  | 'transcript_generated';
+  | 'transcript_generated'
+  | 'asr_units'
+  | 'tts_units'
+  | 'llm_units';
+
+export type UsageCredentialMode = 'platform' | 'byok' | 'fake';
 
 export interface UsageEvent {
   id: string;
@@ -13,6 +18,7 @@ export interface UsageEvent {
   quantity: number;
   unit: string;
   sourceId: string;
+  credentialMode: UsageCredentialMode;
   occurredAt: Date;
   createdAt: Date;
 }

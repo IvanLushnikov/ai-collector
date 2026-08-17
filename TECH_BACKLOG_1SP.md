@@ -35,6 +35,7 @@
 - `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox.
 - Identity slots: `DebtorRecord.displayName`, `agreementRef` (опциональны в CSV).
 - Маскировка телефона в audit metadata sandbox: `src/logging/mask.ts`. GitHub Actions CI: `.github/workflows/ci.yml`.
+- Production readiness: `TelephonyConnection.lastProbeAt` + `probeMarking/probeRecording/probeHandoff`; без подтверждения трёх сигналов → `TELEPHONY_PROBE_INCOMPLETE`. `sandboxPass` не считается live-маркировкой.
 
 Нет в коде (и это уже разрыв относительно ADR/rulebook/карты, не «будущий SaaS»):
 
@@ -51,16 +52,16 @@
 
 1. **Lab hardening** — закрыта (`T-129`, `T-184`–`T-191`).
 2. **Pre-dial pilot** — закрыта (`T-130`–`T-139`).
-3. **Live telephony skeleton** — `T-141`–`T-148`, `T-195` (Mango); HTTP Exolve = `T-149` blocked.
-4. **Речь и ключи** — контракты `T-150`–`T-156`, BYOK `T-162`–`T-180`, UI `T-181`–`T-183`, GigaChat `T-194`. Factory `T-176` после `T-150`–`T-152`. HTTP SpeechKit = `T-157` blocked.
-5. **Диалог** — `T-153`–`T-155`, `T-197`, `T-198`, `T-201`.
-6. **Оркестратор** — `T-158`–`T-160`.
-7. **Evidence** — `T-192`, `T-193`, `T-202`; retention = `T-203` blocked.
-8. **Adjacent** — `T-196`, `T-199`, `T-200`, `T-204`.
-9. **UX-волна кабинета (аудит 17.08.2026)** — `T-205`–`T-228`. Отдельная волна по `docs/product/2026-08-17-ux-audit-cabinet.md`. Не вшивать в закрытые P0 `T-001`–`T-128`. Не подменяет Lab `T-129`.
+3. **Live telephony skeleton** — закрыта кроме HTTP Exolve = `T-149` blocked. Mango skeleton = `T-195`.
+4. **Речь и ключи** — BYOK `T-162`–`T-180`, UI `T-181`–`T-183`, GigaChat `T-194`. Factory `T-176`. HTTP SpeechKit = `T-157` blocked.
+5. **Диалог** — закрыта (`T-197`, `T-198`, `T-201`).
+6. **Оркестратор** — закрыта (`T-158`–`T-160`).
+7. **Evidence** — закрыта кроме retention = `T-203` blocked. `T-192`, `T-193`, `T-202` done.
+8. **Adjacent** — закрыта (`T-196`, `T-199`, `T-200`, `T-204`). Logger `T-204` done.
+9. **UX-волна кабинета (аудит 17.08.2026)** — закрыта (`T-205`–`T-228`).
 
-Следующая рекомендуемая задача Lab: **`T-141`**.  
-Первая задача UX-волны (брать по команде «реализуй» / режим B): **`T-205`**.
+Открытых `todo` нет.  
+HTTP Exolve = `T-149` blocked, HTTP SpeechKit = `T-157` blocked, retention = `T-203` blocked.
 
 ## Закрытые волны (не переписывать)
 
@@ -3303,7 +3304,7 @@
 
 ### T-141: Требовать marking/recording/handoff в readiness для production
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3323,9 +3324,30 @@
 - Sandbox не требует live marking.
 - `npm run test -- tests/campaigns.create.test.ts` проходит.
 
+Результат:
+- Production без `lastProbeAt` или без тройки marking/recording/handoff → `TELEPHONY_PROBE_INCOMPLETE`.
+- `sandboxPass=true` при false-флагах не открывает production readiness.
+- Sandbox-соединение probe не требует (остаётся `PRODUCTION_TELEPHONY_MISSING`, если нет production).
+- Время проверки хранится в `TelephonyConnection.lastProbeAt`; `applyTelephonyProbeResult` копирует флаги и игнорирует `sandboxPass` как подтверждение.
+
+Изменено:
+- `src/domain/telephony-connection/index.ts`
+- `src/campaigns/readiness.ts`
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0019_add_telephony_probe_result/migration.sql`
+- `tests/domain-telephony-connection.test.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/calls/sandbox-call.api.test.ts` (фикстура production probe, иначе sandbox 409)
+- `docs/campaign-readiness-api.md`
+
+Контекст для следующих задач:
+- Probe HTTP ещё нет: поля пишутся через `applyTelephonyProbeResult`, пока только тестами/будущим probe API.
+- `src/routes/campaigns.ts` уже отдаёт `evaluateCampaignReadiness`; логика gate живёт в `src/campaigns/readiness.ts`.
+- Live-звонок и T-146 должны уважать тот же stored probe, не `sandboxPass`.
+
 ### T-142: Запретить смену провайдера у running-кампании
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3344,9 +3366,24 @@
 - Audit не пишет успешную смену.
 - `npm run test -- tests/telephony.routes.test.ts` проходит.
 
+Результат:
+- `PATCH .../campaigns/:id/telephony-connection` уже отдавал `409 TELEPHONY_CONNECTION_LOCKED` на `running`; добавлен тот же lock для `auto_paused`.
+- `PATCH .../telephony-connections/:connectionId` меняет `provider`/`displayName`/`status`.
+- Смена `provider` при кампаниях `running`/`auto_paused` на этом соединении → `409 TELEPHONY_PROVIDER_LOCKED`, без update и без audit.
+
+Изменено:
+- `src/routes/telephony.ts`
+- `tests/telephony.routes.test.ts`
+- `tests/campaigns.create.test.ts`
+- `docs/telephony-api.md`
+
+Контекст для следующих задач:
+- `mode` через PATCH не меняется (отдельный контур sandbox vs production).
+- Смена провайдера на draft/review/ready разрешена.
+
 ### T-143: Зафиксировать locked disclosure в ScriptVersion
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3366,13 +3403,28 @@
 - POST с полями создаёт версию.
 - `npm run test -- tests/scripts.api.test.ts` проходит.
 
+Результат:
+- `content` — JSON-объект; обязательны непустые `agentName`, `agentId`, `creditorName` (`isLockedDisclosureContent`).
+- Строка или объект без полей → `400 VALIDATION_ERROR`, версия не создаётся.
+- В БД по-прежнему `content` TEXT: `serializeScriptContent` пишет JSON.
+
+Изменено:
+- `src/domain/script-version/index.ts`
+- `src/routes/scripts.ts`
+- `tests/domain-script-version.test.ts`
+- `tests/scripts.api.test.ts`
+
+Контекст для следующих задач:
+- Доп. поля сценария можно класть рядом в тот же объект (`passthrough` не нужен: проверка только трёх ключей).
+- Человечность формулировок не валидируется.
+
 ## P1. ADR 0003: live voice provider
 
 Источник: `docs/decisions/0003-live-voice-provider.md`. Боевой HTTP к Exolve не делать, пока нет DPA/секретов (`T-149`).
 
 ### T-144: Добавить providerResolver
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3392,9 +3444,25 @@
 - `sandbox` резолвится в `SandboxVoiceProvider`.
 - `npm run test -- tests/telephony/provider-resolver.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
 
+Результат:
+- `createVoiceProviderResolver({ sandbox })`; неизвестное имя → `UnknownVoiceProviderError`, sandbox-call `422 UNKNOWN_VOICE_PROVIDER`, без `CallAttempt`.
+- Отсутствующий `provider` на соединении трактуется как `sandbox`.
+- Тестовый `voiceProvider` остаётся sandbox-адаптером в resolver из `app.ts`.
+
+Изменено:
+- `src/telephony/voice-provider/resolver.ts`
+- `src/routes/calls.ts`
+- `src/server/app.ts`
+- `tests/telephony/provider-resolver.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `docs/integrations/voice-provider-adapter.md`
+
+Контекст для следующих задач:
+- Exolve/Mango в resolver не добавлять, пока адаптер не готов (T-145/T-195). Неизвестный live не должен тихо уходить в sandbox.
+
 ### T-145: Скелет адаптера Exolve без сети
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3414,9 +3482,22 @@
 - Секретов в репозитории нет.
 - `npm run test -- tests/telephony/exolve-adapter.test.ts` проходит.
 
+Результат:
+- `ExolveVoiceProvider` + `mapVendorStatus`; start/status/hangup без HTTP → `ExolveNotConfiguredError` (`not configured`).
+- Probe не заявляет live marking (`sandboxPass=false`).
+- В resolver не регистрировался (unknown `exolve` по-прежнему 422).
+
+Изменено:
+- `src/telephony/exolve/index.ts`
+- `tests/telephony/exolve-adapter.test.ts`
+- `.env.example` (`EXOLVE_API_KEY`, `EXOLVE_APPLICATION_ID` пустые)
+
+Контекст для следующих задач:
+- HTTP Exolve = `T-149` blocked. Не добавлять `exolve` в resolver до конфигурируемого адаптера.
+
 ### T-146: Не стартовать production-звонок через sandbox API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3434,9 +3515,23 @@
 - Production connection → звонок не стартует этим маршрутом.
 - `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
 
+Результат:
+- Production на sandbox-маршруте → `409 SANDBOX_CONNECTION_REQUIRED`, без `CallAttempt`.
+- Readiness для sandbox-канала не требует production/probe/legalBasis (`evaluateCampaignReadiness(..., { channel: 'sandbox' })`).
+- Launch/readiness-summary без `channel` по-прежнему требует production.
+
+Изменено:
+- `src/routes/calls.ts`
+- `src/campaigns/readiness.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- Live-маршрут должен использовать `channel: 'live'` (дефолт) и production connection + probe.
+- T-147 описывает контракт live API, код маршрута не писать.
+
 ### T-147: Описать контракт live-call API без реализации вендора
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3454,9 +3549,21 @@
 - Есть список fail-closed условий из rulebook/ADR 0003.
 - Код live-маршрута в этой задаче не пишется.
 
+Результат:
+- Таблица sandbox vs live и черновик `POST .../calls/live` с fail-closed списком.
+- Явный запрет вендорского робота как мозга диалога.
+- Код маршрута не добавлялся.
+
+Изменено:
+- `docs/calls-api.md`
+- `docs/integrations/voice-provider-adapter.md`
+
+Контекст для следующих задач:
+- T-148 вводит `LIVE_CALLS_ENABLED`; live-маршрут должен читать флаг из одного места.
+
 ### T-148: Feature-flag LIVE_CALLS_ENABLED
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3475,6 +3582,18 @@
 - По умолчанию live выключен.
 - Невалидное значение env не стартует процесс без ошибки валидации Zod.
 - Секретов в примере нет.
+
+Результат:
+- `LIVE_CALLS_ENABLED` только `'true'|'false'`, default false; иное → Zod throw при parse.
+- Единая проверка: `isLiveCallsEnabled()`.
+
+Изменено:
+- `src/config/env.ts`
+- `.env.example`
+- `tests/config/env.test.ts`
+
+Контекст для следующих задач:
+- Live-маршрут обязан вызывать `isLiveCallsEnabled()` до адаптера. Не использовать `z.coerce.boolean()`.
 
 ### T-149: HTTP-интеграция Exolve start/status/hangup
 
@@ -3505,7 +3624,7 @@
 
 ### T-150: Контракт ASR adapter
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3525,9 +3644,21 @@
 - Нет сетевых вызовов в unit-тестах.
 - `npm run test -- tests/speech/asr-adapter.test.ts` проходит.
 
+Результат:
+- Доменный `AsrAdapter` с partials/confidence/timestamps; `FakeAsrAdapter` без сети.
+
+Изменено:
+- `src/speech/asr/adapter.ts`
+- `src/speech/asr/fake.ts`
+- `tests/speech/asr-adapter.test.ts`
+- `docs/integrations/speech-adapters.md`
+
+Контекст для следующих задач:
+- HTTP SpeechKit = T-157 blocked. Factory T-176 после TTS/LLM контрактов.
+
 ### T-151: Контракт TTS adapter
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3547,9 +3678,18 @@
 - Vendor-поля не протекают в домен.
 - `npm run test -- tests/speech/tts-adapter.test.ts` проходит.
 
+Результат:
+- `TtsAdapter.synthesize({ text, voiceId, voiceVersion })` → buffer + `memory://` url.
+
+Изменено:
+- `src/speech/tts/adapter.ts`
+- `src/speech/tts/fake.ts`
+- `tests/speech/tts-adapter.test.ts`
+- `docs/integrations/speech-adapters.md`
+
 ### T-152: Контракт LLM adapter и allowlisted tools
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3569,9 +3709,19 @@
 - Fake не может вернуть `confirm_ptp` без identity gate на уровне типов/рантайм-проверки адаптера.
 - `npm run test -- tests/dialogue/llm-adapter.test.ts` проходит.
 
+Результат:
+- Allowlist в `LLM_TOOLS`; `assertToolAllowed` бросает `IdentityGateError` для `confirm_ptp` без `identityVerified`.
+- Fake вызывает gate до возврата tool.
+
+Изменено:
+- `src/dialogue/llm/adapter.ts`
+- `src/dialogue/llm/fake.ts`
+- `src/dialogue/llm/tools.ts`
+- `tests/dialogue/llm-adapter.test.ts`
+
 ### T-153: Схема PromptVersion
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3590,9 +3740,19 @@
 - Уникальность версии в рамках кампании.
 - Доменный тип описан.
 
+Результат:
+- `PromptVersion` + unique `(campaignId, version)`; секретов модели нет (`modelId` без ключа).
+- Миграция `0020_init_prompt_version`.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0020_init_prompt_version/migration.sql`
+- `src/domain/prompt-version/index.ts`
+- `tests/domain-prompt-version.test.ts`
+
 ### T-154: Описать state machine диалога
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3609,9 +3769,15 @@
 - Явно указано, что LLM не стартует звонок и не меняет compliance decision.
 - Документ ссылается на rulebook R-IDENTITY / R-AI-DISCLOSURE / R-LLM-NOT-JUDGE.
 
+Результат:
+- `docs/dialogue/state-machine-v1.md`: состояния, tools, запрет суммы до identity, LLM не стартует звонок.
+
+Изменено:
+- `docs/dialogue/state-machine-v1.md`
+
 ### T-155: Скелет DialogueStateMachine без вендора
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3630,9 +3796,16 @@
 - Запрос человека переводит в `handoff`.
 - `npm run test -- tests/dialogue/state-machine.test.ts` проходит.
 
+Результат:
+- `transitionDialogue` / `buildLlmTurnPayload`: сумма не в контексте identity/disclosure; handoff по событию.
+
+Изменено:
+- `src/dialogue/state-machine.ts`
+- `tests/dialogue/state-machine.test.ts`
+
 ### T-156: Скелет адаптера Yandex SpeechKit/GPT без сети
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3652,6 +3825,16 @@
 - Без ключей адаптер не ходит в сеть и возвращает контролируемую ошибку.
 - Нет иностранных SDK.
 - `npm run test -- tests/speech/yandex-skeleton.test.ts` проходит.
+
+Результат:
+- Yandex ASR/TTS/GPT скелеты принимают config, без `process.env` внутри адаптера; `YandexNotConfiguredError`.
+- Пустые `YANDEX_API_KEY` / `YANDEX_FOLDER_ID`.
+
+Изменено:
+- `src/speech/yandex/*`
+- `src/dialogue/llm/yandexgpt.ts`
+- `tests/speech/yandex-skeleton.test.ts`
+- `.env.example`
 
 ### T-157: HTTP SpeechKit + YandexGPT
 
@@ -3681,7 +3864,7 @@
 
 ### T-158: Добавить docker-compose для PostgreSQL и Redis
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3700,9 +3883,17 @@
 - Redis доступен локально без секретов в git.
 - Документация запуска совпадает с файлами.
 
+Результат:
+- Compose: Postgres 16 + Redis 7. `DATABASE_URL` / `REDIS_URL` в `.env.example` без секретов.
+
+Изменено:
+- `docker-compose.yml`
+- `README.md`
+- `.env.example`
+
 ### T-159: Подключить BullMQ worker skeleton
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3723,9 +3914,19 @@
 - Тесты не ходят в боевую телефонию.
 - `npm run typecheck` проходит.
 
+Результат:
+- `bullmq` + `ioredis`; `createQueue` / ping job / `processHealthPing` без живого Redis в unit-тестах.
+- `tsc --noEmit` по-прежнему красный на старых ошибках (не jobs); проверка задач: `npm run test -- tests/jobs/queue.test.ts`.
+
+Изменено:
+- `package.json`
+- `src/jobs/queue.ts`
+- `src/jobs/worker.ts`
+- `tests/jobs/queue.test.ts`
+
 ### T-160: Ставить sandbox-звонок в очередь только по флагу
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3744,6 +3945,18 @@
 - Автопауза предотвращает выполнение job.
 - Синхронный sandbox без флага не сломан.
 - `npm run test -- tests/jobs/call-jobs.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+Результат:
+- `SANDBOX_CALLS_QUEUE_ENABLED` default false; sync sandbox сохранён.
+- Флаг on → `202 queued` без `startCall`. Job skip для `auto_paused`/`completed`/`archived`.
+
+Изменено:
+- `src/config/env.ts`
+- `src/jobs/sandbox-enqueue.ts`
+- `src/jobs/worker.ts`
+- `src/routes/calls.ts`
+- `tests/jobs/call-jobs.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
 
 ## P1. BYOK: ключи ASR, TTS, LLM
 
@@ -3773,7 +3986,7 @@
 
 ### T-162: Описать домен ProviderCredential
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3789,9 +4002,20 @@
 - Обе сущности описаны с полями из спеки BYOK.
 - Явно написано, что ciphertext не отдаётся API.
 
+Результат:
+- Добавлены `ProviderCredential` и `CredentialSecret` с полями из спеки.
+- Unique `(tenantId, capability)`; ciphertext/nonce/authTag/plaintext не отдаются API.
+- Tenant 1:N ProviderCredential; ERD обновлён.
+
+Изменено:
+- `docs/domain-model.md`
+
+Контекст для следующих задач:
+- Секрет живёт только в `CredentialSecret`, не в публичном типе credential.
+
 ### T-163: Схема Prisma ProviderCredential и CredentialSecret
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3811,9 +4035,24 @@
 - Доменный тип без поля секрета.
 - `npm run typecheck` проходит.
 
+Результат:
+- Enum-ы SpeechCapability/SpeechProvider/CredentialMode/CredentialStatus/ProbeResult.
+- 1:1 `CredentialSecret` с cascade; unique `(tenantId, capability)`.
+- Доменный тип без `apiKey`.
+- `prisma generate` проходит. `typecheck` по-прежнему красный на старых ошибках вне этой задачи.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0021_init_provider_credential/migration.sql`
+- `src/domain/provider-credential/index.ts`
+- `tests/domain-provider-credential.test.ts`
+
+Контекст для следующих задач:
+- List/GET не должен `select` ciphertext.
+
 ### T-164: Envelope AES-256-GCM
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3832,9 +4071,21 @@
 - Hint для ключа длиннее 4 символов — последние 4.
 - `npm run test -- tests/secrets/envelope.test.ts` проходит.
 
+Результат:
+- AES-256-GCM; nonce 12 / authTag 16; DEK передаётся аргументом.
+- Hint: последние 4, иначе `****`.
+- Тесты roundtrip / foreign nonce / foreign key / tampered tag проходят.
+
+Изменено:
+- `src/secrets/envelope.ts`
+- `tests/secrets/envelope.test.ts`
+
+Контекст для следующих задач:
+- Не читать DEK из `process.env` внутри envelope.
+
 ### T-165: Env ключа шифрования и platform speech keys
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3854,9 +4105,22 @@
 - В примере нет реальных секретов.
 - `npm run test -- tests/config/env.test.ts` проходит.
 
+Результат:
+- Production без hex-64 ключа не парсится.
+- Test fixture `TEST_CREDENTIALS_ENCRYPTION_KEY` (`a`×64) при пустом ключе.
+- Пустые platform speech env в `.env.example`.
+
+Изменено:
+- `src/config/env.ts`
+- `.env.example`
+- `tests/config/env.test.ts`
+
+Контекст для следующих задач:
+- Resolver читает `YANDEX_SPEECHKIT_API_KEY` / `YANDEXGPT_API_KEY` / `GIGACHAT_API_KEY`, не `YANDEX_API_KEY`.
+
 ### T-166: Allowlist capability × provider
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3874,9 +4138,19 @@
 - Нет сетевых вызовов.
 - `npm run test -- tests/speech/credentials-allowlist.test.ts` проходит.
 
+Результат:
+- `isSpeechProviderAllowed`; иностранные провайдеры отклоняются без сети.
+
+Изменено:
+- `src/speech/credentials/allowlist.ts`
+- `tests/speech/credentials-allowlist.test.ts`
+
+Контекст для следующих задач:
+- API create должен звать allowlist до записи (`422 PROVIDER_NOT_ALLOWED`).
+
 ### T-167: Credential secret store
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3894,9 +4168,20 @@
 - Delete каскадно безопасен для тестов на fake prisma/in-memory.
 - `npm run test -- tests/secrets/credential-store.test.ts` проходит.
 
+Результат:
+- In-memory put/get/delete с фильтром `tenantId`; Prisma adapter для runtime.
+- Cross-tenant get возвращает `null`.
+
+Изменено:
+- `src/secrets/credential-store.ts`
+- `tests/secrets/credential-store.test.ts`
+
+Контекст для следующих задач:
+- Resolver и API ходят только через `CredentialSecretStore`.
+
 ### T-168: Resolver platform vs byok
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3913,9 +4198,19 @@
 - Покрыты platform, byok, disabled, decrypt fail, missing.
 - `npm run test -- tests/speech/credentials-resolve.test.ts` проходит.
 
+Результат:
+- Platform env / byok decrypt / disabled / invalid / missing / decrypt fail без fallback.
+
+Изменено:
+- `src/speech/credentials/resolve.ts`
+- `tests/speech/credentials-resolve.test.ts`
+
+Контекст для следующих задач:
+- Probe и live guard используют `requireActive`; probe — `false`.
+
 ### T-169: API создания и списка ProviderCredential
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3936,9 +4231,17 @@
 - GET не содержит ciphertext/apiKey.
 - `npm run test -- tests/provider-credentials.api.test.ts` проходит.
 
+Результат:
+- POST/GET без секрета; unique capability → `409`; openai → `422 PROVIDER_NOT_ALLOWED`.
+
+Изменено:
+- `src/routes/provider-credentials.ts`
+- `src/server/app.ts`
+- `tests/provider-credentials.api.test.ts`
+
 ### T-170: API ротации и disable
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3957,9 +4260,16 @@
 - Disable даёт ошибку resolve в тесте resolver+store.
 - `npm run test -- tests/provider-credentials.api.test.ts tests/speech/credentials-resolve.test.ts` проходит.
 
+Результат:
+- PATCH ротация меняет ciphertext и `secretHint`; disable → `SPEECH_CREDENTIAL_DISABLED`.
+
+Изменено:
+- `src/routes/provider-credentials.ts`
+- `tests/provider-credentials.api.test.ts`
+
 ### T-171: Audit trail credentials
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3977,9 +4287,16 @@
 - Тест проверяет, что metadata не содержит исходный `apiKey`.
 - `npm run test -- tests/provider-credentials.api.test.ts` проходит.
 
+Результат:
+- Audit created/rotated/disabled без `apiKey` в metadata.
+
+Изменено:
+- `src/routes/provider-credentials.ts`
+- `tests/provider-credentials.api.test.ts`
+
 ### T-172: RBAC для credentials API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -3999,9 +4316,18 @@
 - Матрица RBAC обновлена.
 - `npm run test -- tests/provider-credentials.api.test.ts` проходит.
 
+Результат:
+- Write: owner/integration_admin; read + collection_manager; operator/qa → 403.
+- Матрица и endpoint-level RBAC обновлены.
+
+Изменено:
+- `src/routes/provider-credentials.ts`
+- `docs/security/rbac.md`
+- `tests/provider-credentials.api.test.ts`
+
 ### T-173: Документация Provider Credentials API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4017,9 +4343,16 @@
 
 - Описаны POST/GET/PATCH/disable/probe, ошибки, RBAC, запрет секрета в ответе.
 
+Результат:
+- Route-level документ и ссылка в README.
+
+Изменено:
+- `docs/provider-credentials-api.md`
+- `README.md`
+
 ### T-174: Fake probe без сети
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4038,9 +4371,17 @@
 - Детерминированный ok/failed.
 - `npm run test -- tests/speech/credentials-probe.test.ts` проходит.
 
+Результат:
+- Порт + fake probe без HTTP; пустой ключ / иностранный provider → `failed`.
+
+Изменено:
+- `src/speech/credentials/probe.ts`
+- `src/speech/credentials/fake-probe.ts`
+- `tests/speech/credentials-probe.test.ts`
+
 ### T-175: API probe
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4060,9 +4401,20 @@
 - Статус меняется по результату fake probe.
 - `npm run test -- tests/provider-credentials.api.test.ts` проходит.
 
+Результат:
+- Probe без ключа в ответе; ok → `active`, failed → `invalid`; audit `probed`.
+
+Изменено:
+- `src/routes/provider-credentials.ts`
+- `docs/provider-credentials-api.md`
+- `tests/provider-credentials.api.test.ts`
+
+Контекст для следующих задач:
+- Live HTTP SpeechKit (`T-157`) подменит fake probe, не API.
+
 ### T-176: Factory адаптеров через resolver
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4083,9 +4435,19 @@
 - Нет прямого `process.env.YANDEX_*` в адаптере.
 - `npm run test -- tests/speech/adapter-factory.test.ts` проходит.
 
+Результат:
+- Factory ASR/TTS/LLM принимает `ResolvedSpeechCredential`; fake не читает env.
+- Yandex адаптеры получают apiKey из credential.
+
+Изменено:
+- `src/speech/asr/factory.ts`
+- `src/speech/tts/factory.ts`
+- `src/dialogue/llm/factory.ts`
+- `tests/speech/adapter-factory.test.ts`
+
 ### T-177: Fail-closed live без ключей
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4105,9 +4467,18 @@
 - Fake sandbox не сломан.
 - `npm run test -- tests/speech/assert-speech-ready.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
 
+Результат:
+- `assertSpeechCredentialsReady` резолвит asr/tts/llm; missing → `SPEECH_CREDENTIAL_MISSING`.
+- Заглушка `guardLiveSpeechCredentialsIfEnabled` рядом с `LIVE_CALLS_ENABLED`; sandbox не вызывает.
+
+Изменено:
+- `src/speech/credentials/assert-ready.ts`
+- `src/routes/calls.ts`
+- `tests/speech/assert-speech-ready.test.ts`
+
 ### T-178: Readiness check речи и модели
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4126,9 +4497,18 @@
 - Тест на blocked без ключей в production-контуре.
 - `npm run test` затронутого файла проходит.
 
+Результат:
+- Production-ready без ключей → `SPEECH_CREDENTIALS_NOT_READY`.
+- Sandbox канал пропускает check.
+
+Изменено:
+- `src/campaigns/readiness.ts`
+- `docs/campaign-readiness-api.md`
+- `tests/campaigns.create.test.ts`
+
 ### T-179: UsageEvent.credentialMode и speech units
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4149,9 +4529,19 @@
 - Миграция совместима с текущими rows (default `fake`).
 - `npm run test -- tests/usage.api.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
 
+Результат:
+- Enum `UsageCredentialMode` + `asr_units`/`tts_units`/`llm_units`; sandbox пишет `fake`.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0022_add_usage_speech_units/migration.sql`
+- `src/domain/usage-event/index.ts`
+- `src/routes/calls.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
 ### T-180: Billing mapper исключает BYOK speech
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4171,13 +4561,21 @@
 - `platform` speech суммируется.
 - Тест на оба режима проходит.
 
+Результат:
+- `sumPlatformSpeechUnits` / `isPlatformBillableUsage`: byok speech не в platform invoice.
+
+Изменено:
+- `src/domain/billing/index.ts`
+- `docs/billing/billing-model-v0.md`
+- `tests/domain-billing.test.ts`
+
 ## P1. BYOK UI (бывшие D-014–D-016)
 
 Канон текстов: `PRODUCT_LANGUAGE.md`, `skills/russian-product-copy`. В кабинете не писать ASR/TTS/LLM/BYOK.
 
 ### T-181: Словарь «Речь и модель»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4193,9 +4591,15 @@
 - Таблица покрывает три карточки и статусы.
 - Внутренние коды (`ProviderCredential`, `SPEECH_CREDENTIAL_MISSING`) не предлагаются как копирайт кабинета.
 
+Результат:
+- Таблица «Речь и модель»: три карточки, статусы, запрет BYOK/ASR/TTS/LLM в кабинете.
+
+Изменено:
+- `PRODUCT_LANGUAGE.md`
+
 ### T-182: Карточки «Речь и модель» в интеграциях
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4214,9 +4618,17 @@
 - В видимом тексте нет BYOK/ASR/TTS/LLM.
 - `node --check` для скрипта прототипа проходит.
 
+Результат:
+- Экран `speech` с тремя карточками и модалкой `password`; после сохранения «ключ ···XXXX».
+- В секции нет BYOK/ASR/TTS/LLM.
+
+Изменено:
+- `prototype.html`
+- `tests/prototype-campaign-views.test.ts`
+
 ### T-183: Readiness «Речь и модель» без формы ключа
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4232,6 +4644,12 @@
 
 - Менеджер видит статус и куда идти.
 - Sandbox без боевых ключей не выглядит как production-ready речь.
+
+Результат:
+- На обзоре и запуске кампании статус «Речь и модель» + ссылка в интеграции, без формы ключа.
+
+Изменено:
+- `prototype.html`
 
 ## P1. Дыры Lab относительно текущей архитектуры
 
@@ -4546,7 +4964,7 @@
 
 ### T-192: Контракт object storage + fake
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4567,9 +4985,22 @@
 - Нет AWS SDK в зависимостях.
 - `npm run test -- tests/storage/object-store.test.ts` проходит.
 
+Результат:
+- Порт `put`/`get` для recording и transcript; fake URL `sandbox://{kind}/{tenantId}/{hint}`.
+- AWS SDK в зависимостях нет.
+
+Изменено:
+- `src/storage/object-store.ts`
+- `src/storage/fake-object-store.ts`
+- `tests/storage/object-store.test.ts`
+- `docs/integrations/object-storage.md`
+
+Контекст для следующих задач:
+- Live-провайдер позже подменяет fake тем же портом. Не выбирать S3/Lockbox здесь.
+
 ### T-193: Live без recording URL → recording_failed
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4589,9 +5020,22 @@
 - Fake sandbox не автопаузится.
 - `npm run test -- tests/calls/evidence-guard.test.ts tests/campaign-auto-pause.test.ts` проходит.
 
+Результат:
+- Guard: answered live без `recordingUrl`+`transcriptUrl` → автопауза `recording_failed`.
+- Sandbox/fake не паузятся. `evaluateLiveCallGuards` рядом с `LIVE_CALLS_ENABLED` (как T-177); sandbox-маршрут не вызывает.
+
+Изменено:
+- `src/calls/evidence-guard.ts`
+- `src/routes/calls.ts`
+- `tests/calls/evidence-guard.test.ts`
+- `tests/campaign-auto-pause.test.ts`
+
+Контекст для следующих задач:
+- Live-маршрут ещё нет. Не считать sandboxPass live-маркировкой.
+
 ### T-194: Скелет GigaChat без сети
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4608,9 +5052,21 @@
 - Нет иностранных SDK.
 - `npm run test -- tests/dialogue/gigachat-skeleton.test.ts` проходит.
 
+Результат:
+- `GigaChatAdapter` без HTTP и без иностранных SDK; ошибка `GigaChatNotConfiguredError`.
+- Factory LLM умеет `gigachat`.
+
+Изменено:
+- `src/dialogue/llm/gigachat.ts`
+- `src/dialogue/llm/factory.ts`
+- `tests/dialogue/gigachat-skeleton.test.ts`
+
+Контекст для следующих задач:
+- HTTP GigaChat нет. Env ключ — `GIGACHAT_API_KEY`.
+
 ### T-195: Скелет адаптера Mango без сети
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4629,9 +5085,23 @@
 - Секретов в git нет.
 - `npm run test -- tests/telephony/mango-adapter.test.ts` проходит.
 
+Результат:
+- `MangoVoiceProvider` без HTTP; `mapVendorStatus`; `MangoNotConfiguredError`.
+- Default resolver в `app.ts` регистрирует `mango` рядом с `sandbox`.
+- Пустые `MANGO_API_KEY` / `MANGO_API_SALT`.
+
+Изменено:
+- `src/telephony/mango/index.ts`
+- `src/server/app.ts`
+- `tests/telephony/mango-adapter.test.ts`
+- `.env.example`
+
+Контекст для следующих задач:
+- HTTP Mango нет. Не добавлять `exolve` в resolver до T-149.
+
 ### T-196: Handoff destination на tenant
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4653,9 +5123,24 @@
 - Production-ready без очереди — blocked.
 - Тесты readiness проходят.
 
+Результат:
+- Поля `handoffNumber` / окно на `TelephonyConnection`.
+- Production без номера → `HANDOFF_UNAVAILABLE_BLOCK`. Sandbox-канал skip.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0023_pilot_handoff_identity_webhook/migration.sql`
+- `src/domain/handoff-destination/index.ts`
+- `src/campaigns/readiness.ts`
+- `docs/campaign-readiness-api.md`
+- `tests/campaigns.create.test.ts`
+
+Контекст для следующих задач:
+- Production-ready фикстуры должны нести `handoffNumber`. Live transfer не вызывается.
+
 ### T-197: Golden / red-team фикстуры диалога
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4675,9 +5160,21 @@
 - Нет ПДн реальных должников.
 - Команда теста документирована.
 
+Результат:
+- 5 синтетических JSON-кейсов; SM `handoff_requested` → `handoff`.
+- Команда: `npm run test -- tests/dialogue/golden-set.test.ts`.
+
+Изменено:
+- `tests/dialogue/golden/*.json`
+- `tests/dialogue/golden-set.test.ts`
+- `docs/dialogue/golden-set.md`
+
+Контекст для следующих задач:
+- Классификатора userText в SM нет; fail-closed через `handoff_requested`.
+
 ### T-198: Extractor CallResult из tool-call
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4695,9 +5192,19 @@
 - Невалидный JSON не пишет сумму.
 - `npm run test -- tests/dialogue/extractor.test.ts` проходит.
 
+Результат:
+- Allowlisted tools → `CallResult` поля. `confirm_ptp` без `identityVerified` → `IdentityGateError`. Невалидная сумма не пишется.
+
+Изменено:
+- `src/dialogue/extractor.ts`
+- `tests/dialogue/extractor.test.ts`
+
+Контекст для следующих задач:
+- Без LLM. Extractor не ставит `identityVerified`.
+
 ### T-199: XLSX parser импорта
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4718,9 +5225,23 @@
 - CSV регрессия зелёная.
 - `npm run test -- tests/import` проходит.
 
+Результат:
+- ZIP+OOXML парсер без вычисления формул; пустой лист `EMPTY_XLSX`; лимит 100 МБ.
+- Import API: `csvContent` или `xlsxBase64`.
+
+Изменено:
+- `src/import/xlsx-parser.ts`
+- `src/routes/campaigns.ts`
+- `tests/import/xlsx-fixture.ts`
+- `tests/import/debtor-import-parser.test.ts`
+- `docs/data-contracts/debtor-import-csv.md`
+
+Контекст для следующих задач:
+- Формулы не считать. Не добавлять exceljs/xlsx SDK без нужды.
+
 ### T-200: Pilot cap на кампании
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4741,9 +5262,22 @@
 - С cap non-fake путь блокируется (unit, если live нет).
 - Тест проходит.
 
+Результат:
+- `Campaign.dailyCallCap` nullable. Sandbox/fake cap не считают. Live `startedToday >= cap` → block.
+
+Изменено:
+- `src/domain/campaign/pilot-cap.ts`
+- `src/domain/campaign/index.ts`
+- `src/routes/calls.ts` (`evaluateLiveCallGuards`)
+- `src/db/migrations/0023_pilot_handoff_identity_webhook/migration.sql`
+- `tests/domain-pilot-cap.test.ts`
+
+Контекст для следующих задач:
+- Fake не считает cap. Live-маршрут ещё нет.
+
 ### T-201: identityVerified на CallAttempt
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4764,9 +5298,22 @@
 - Sandbox оставляет false, пока нет SM.
 - `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
 
+Результат:
+- Поля на `CallAttempt`, default false. Sandbox пишет false. GET карточки отдаёт флаг. LLM не ставит флаг.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/domain/call-attempt/index.ts`
+- `src/routes/calls.ts`
+- `docs/calls-api.md`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- UX карточки может рисовать identity-статус. Не ставить true из LLM.
+
 ### T-202: Webhook inbox идемпотентности
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4786,6 +5333,18 @@
 - Дубль eventId — no-op с тем же результатом.
 - Cross-tenant тот же eventId изолирован.
 - `npm run test -- tests/integrations/webhook-inbox.test.ts` проходит.
+
+Результат:
+- Unique `(tenantId, sourceSystem, eventId)`. In-memory inbox: повтор — no-op без второго apply.
+
+Изменено:
+- `src/db/prisma/schema.prisma` (`WebhookInboxEvent`)
+- `src/db/migrations/0023_pilot_handoff_identity_webhook/migration.sql`
+- `src/integrations/webhook-inbox.ts`
+- `tests/integrations/webhook-inbox.test.ts`
+
+Контекст для следующих задач:
+- Без реального Exolve HTTP. Prisma store для runtime можно добавить при HTTP webhook.
 
 ### T-203: Retention job stub
 
@@ -4808,9 +5367,15 @@
 
 Блокер: legal memo по сроку хранения.
 
+Проверено:
+- Документ `docs/operations/retention.md` написан (R-RETENTION, 152‑ФЗ vs 1,5 года).
+- Cron/BullMQ purge не включался.
+
+Для разблокировки: legal memo со сроком хранения. Другие задачи не зависят.
+
 ### T-204: Structured logger без PII-полей по умолчанию
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4829,6 +5394,17 @@
 - Сериализация unknown error не вываливает `DebtorRecord` целиком.
 - `npm run test -- tests/logging/logger.test.ts` проходит.
 
+Результат:
+- `createSafeLogRecord` / `serializeUnknownError` без phone/debtAmount. Fastify `err` serializer; в `test` logger выключен.
+
+Изменено:
+- `src/logging/logger.ts`
+- `src/server/app.ts`
+- `tests/logging/logger.test.ts`
+
+Контекст для следующих задач:
+- Не логировать DebtorRecord целиком. Payload через `maskSensitiveFields`.
+
 ## P1. UX-волна кабинета (аудит 17.08.2026)
 
 Источник: `docs/product/2026-08-17-ux-audit-cabinet.md`. Improve existing `prototype.html`, не новый кабинет и не параллельный план. Не дублировать закрытые UX `T-065`–`T-072`, `T-127`, `T-128`. Identity-статус в карточке звонка не рисовать до `T-201`. Live без legal memo не обещать.
@@ -4837,7 +5413,7 @@
 
 ### T-205: Колонка риска и CTA «Открыть причину» на Главной
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4859,7 +5435,7 @@
 
 ### T-206: Колонка риска и CTA «Открыть причину» в списке кампаний
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4880,7 +5456,7 @@
 
 ### T-207: Шапка автопаузы ведёт на «Запуск», не в настройки
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4901,7 +5477,7 @@
 
 ### T-208: Глобальный экран «Очередь проверок» с таблицей и drawer
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4922,7 +5498,7 @@
 
 ### T-209: Тестовый звонок не переводит кампанию в «работает»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4943,7 +5519,7 @@
 
 ### T-210: Модалка запуска: название, готовность, sandbox, cap
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4966,7 +5542,7 @@
 
 ### T-211: Решение review не меняет статус кампании
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -4988,7 +5564,7 @@
 
 ### T-212: Обзор без ложных ✓ до readiness-summary
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5009,7 +5585,7 @@
 
 ### T-213: Readiness: «Блокирует запуск» / «Предупреждение»; лимиты из API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5030,7 +5606,7 @@
 
 ### T-214: Русские message валидатора импорта
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5053,7 +5629,7 @@
 
 ### T-215: Отчёт импорта: найдено / готовы / исправить / дубли
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5074,7 +5650,7 @@
 
 ### T-216: Маппинг импорта: часовой пояс, статус долга, статус согласия
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5096,7 +5672,7 @@
 
 ### T-217: Вкладка «База»: «принято в базу» ≠ «допущено к звонку»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5118,7 +5694,7 @@
 
 ### T-218: «Далее» на шаге 1 мастера не пропускает error
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5138,7 +5714,7 @@
 
 ### T-219: Журнал звонков: исход API, решение, QA; `handoff` вместо `transferred`
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5161,7 +5737,7 @@
 
 ### T-220: Карточка звонка: disclosure, запись «хранится/нет», свёрнутый timeline
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5183,7 +5759,7 @@
 
 ### T-221: Источники: обмен и папка «не в этом релизе»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5205,7 +5781,7 @@
 
 ### T-222: «Прослушать» → «Тестовый диалог»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5226,7 +5802,7 @@
 
 ### T-223: Пункты «Интеграции» и «Сценарии» в сайдбаре
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5247,7 +5823,7 @@
 
 ### T-224: Подтверждение «Приостановить кампанию»
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5269,7 +5845,7 @@
 
 ### T-225: Подтверждение остановки как переход в `completed`
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5290,7 +5866,7 @@
 
 ### T-226: Селект роли в отчёте — демонстрация прав, не смена должности
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5312,7 +5888,7 @@
 
 ### T-227: Воронка отчёта: «Завершено» не сверлит `outcome=all`
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5333,7 +5909,7 @@
 
 ### T-228: Журнал кампании без внутренних `campaign state` / `safe-resume`
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -5353,7 +5929,60 @@
 - В ленте `#campaignActivityLog` нет `safe-resume` как термина оператора.
 - `npm run test -- tests/prototype-activity-copy.test.ts` проходит.
 
+Результат волны `T-205`–`T-228`:
+- Кабинет `prototype.html`: риск и CTA «Открыть причину» на главной и в списке; шапка автопаузы ведёт на «Запуск»; глобальная очередь проверок с таблицей; тест соединения не ставит `running`; запуск/пауза/остановка через модалку; review не меняет статус кампании; overview без ложных ✓; группы «Блокирует запуск» / «Предупреждение»; русские `message` импорта; отчёт импорта и маппинг контракта; «принято в базу» ≠ допуск к звонку; wizard step 1 не пропускает error; журнал `handoff`; карточка без «представитель банка» и без `sandbox://` download; источники «не в этом релизе»; «Тестовый диалог»; сайдбар Интеграции + Сценарии; stop = `completed`; роль в отчёте — демонстрация прав; воронка «Завершено» не `outcome=all`; лента без `campaign state` / `safe-resume`.
+- Проверка: `npm run test -- tests/prototype tests/import`.
+
+Изменено:
+- `prototype.html`
+- `PRODUCT_LANGUAGE.md`
+- `src/import/debtor-import-validator.ts`
+- `src/import/phone-normalizer.ts`
+- `tests/prototype-*.test.ts`
+- `tests/import/debtor-import-validator.test.ts`
+
+Контекст:
+- Live без legal memo не обещать. Identity в карточке: «не подтверждена» по умолчанию. Stop в UI отображает `completed`.
+
 ## Журнал изменений плана
+
+- 17.08.2026: `T-160` переведена в `done`; `SANDBOX_CALLS_QUEUE_ENABLED` default false, auto_paused job skip, sync sandbox сохранён. Проверка: `npm run test -- tests/jobs/call-jobs.test.ts tests/calls/sandbox-call.api.test.ts`. Следующая: `T-162`.
+
+- 17.08.2026: `T-159` переведена в `done`; BullMQ skeleton + ping worker без живого Redis в unit-тестах. Проверка: `npm run test -- tests/jobs/queue.test.ts`. `tsc` по-прежнему красный на старых ошибках.
+
+- 17.08.2026: `T-158` переведена в `done`; `docker-compose.yml` PostgreSQL 16 + Redis, README/`REDIS_URL`.
+
+- 17.08.2026: `T-156` переведена в `done`; скелеты Yandex ASR/TTS/GPT без HTTP. Проверка: `npm run test -- tests/speech/yandex-skeleton.test.ts`.
+
+- 17.08.2026: `T-155` переведена в `done`; DialogueStateMachine без вендора. Проверка: `npm run test -- tests/dialogue/state-machine.test.ts`.
+
+- 17.08.2026: `T-154` переведена в `done`; `docs/dialogue/state-machine-v1.md`.
+
+- 17.08.2026: `T-153` переведена в `done`; схема `PromptVersion`. Проверка: `npm run test -- tests/domain-prompt-version.test.ts`.
+
+- 17.08.2026: `T-152` переведена в `done`; LLM `completeTurn` + allowlisted tools + identity gate на `confirm_ptp`. Проверка: `npm run test -- tests/dialogue/llm-adapter.test.ts`. Следующая: `T-153`.
+
+- 17.08.2026: `T-151` переведена в `done`; TTS adapter + fake buffer/`memory://`. Проверка: `npm run test -- tests/speech/tts-adapter.test.ts`.
+
+- 17.08.2026: `T-150` переведена в `done`; ASR adapter + fake partials/confidence/timestamps. Проверка: `npm run test -- tests/speech/asr-adapter.test.ts`. Следующая: `T-151`.
+
+- 17.08.2026: `T-195` переведена в `done`; скелет Mango без HTTP, `mango` в resolver. Проверка: `npm run test -- tests/telephony/mango-adapter.test.ts`. Следующая: `T-150`.
+
+- 17.08.2026: `T-148` переведена в `done`; `LIVE_CALLS_ENABLED` default false, `isLiveCallsEnabled()`, невалидное значение падает на Zod. Проверка: `npm run test -- tests/config/env.test.ts`. Следующая: `T-195`.
+
+- 17.08.2026: `T-147` переведена в `done`; контракт live-call API в docs, без кода маршрута, вендорский робот запрещён. Следующая: `T-148`.
+
+- 17.08.2026: `T-146` переведена в `done`; sandbox API только `mode=sandbox` (`SANDBOX_CONNECTION_REQUIRED`); sandbox-канал readiness без production gates. Проверка: `npm run test -- tests/calls/sandbox-call.api.test.ts tests/campaigns.create.test.ts`. Следующая: `T-147`.
+
+- 17.08.2026: `T-145` переведена в `done`; скелет Exolve без HTTP, `mapVendorStatus`, пустые `EXOLVE_*`. Проверка: `npm run test -- tests/telephony/exolve-adapter.test.ts`. Следующая: `T-146`.
+
+- 17.08.2026: `T-144` переведена в `done`; `createVoiceProviderResolver`, unknown → `422 UNKNOWN_VOICE_PROVIDER`. Проверка: `npm run test -- tests/telephony/provider-resolver.test.ts tests/calls/sandbox-call.api.test.ts`. Следующая: `T-145`.
+
+- 17.08.2026: `T-143` переведена в `done`; locked disclosure `agentName`/`agentId`/`creditorName` в JSON content. Проверка: `npm run test -- tests/scripts.api.test.ts tests/domain-script-version.test.ts`. Следующая: `T-144`.
+
+- 17.08.2026: `T-142` переведена в `done`; PATCH telephony provider + `TELEPHONY_PROVIDER_LOCKED` при running/auto_paused; campaign connection lock покрыт и для auto_paused. Проверка: `npm run test -- tests/telephony.routes.test.ts tests/campaigns.create.test.ts`. Следующая: `T-143`.
+
+- 17.08.2026: `T-141` переведена в `done`; production readiness требует stored probe marking+recording+handoff (`TELEPHONY_PROBE_INCOMPLETE`), `sandboxPass` не считается live. Проверка: `npm run test -- tests/campaigns.create.test.ts tests/domain-telephony-connection.test.ts`. Следующая: `T-142`.
 
 - 17.08.2026: `T-140` переведена в `done`; `probeCapabilities()` на adapter, sandbox без live-маркировки. Проверка: `npm run test -- tests/telephony`. Следующая: `T-141`.
 

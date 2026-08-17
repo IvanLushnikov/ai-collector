@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/server/app.js';
+import { serializeScriptContent } from '../src/domain/script-version/index.js';
+
+const lockedDisclosureContent = {
+  agentName: 'Anna',
+  agentId: 'agent-1',
+  creditorName: 'Example Bank'
+};
+const serializedLockedDisclosure = serializeScriptContent(lockedDisclosureContent);
 
 type AppStore = {
   user: {
@@ -111,7 +119,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Hello script'
+        content: lockedDisclosureContent
       }
     });
 
@@ -122,7 +130,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       campaignId: '22222222-2222-2222-2222-222222222222',
       version: 1,
       status: 'draft',
-      content: 'Hello script',
+      content: serializedLockedDisclosure,
       createdByUserId: 'user-1'
     });
 
@@ -131,7 +139,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
         tenantId: '11111111-1111-1111-1111-111111111111',
         campaignId: '22222222-2222-2222-2222-222222222222',
         version: 1,
-        content: 'Hello script',
+        content: serializedLockedDisclosure,
         createdByUserId: 'user-1'
       }
     });
@@ -148,6 +156,29 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
         entityId: 'script-1'
       })
     });
+
+    await app.close();
+  });
+
+  it('returns VALIDATION_ERROR when locked disclosure fields are missing', async () => {
+    const appStore = makeStore();
+
+    const app = createApp({
+      campaignStore: appStore
+    });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      payload: {
+        content: 'Hello script'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('VALIDATION_ERROR');
+    expect(appStore.scriptVersion.create).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -351,7 +382,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Second version'
+        content: lockedDisclosureContent
       }
     });
 
@@ -396,7 +427,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Live rewrite'
+        content: lockedDisclosureContent
       }
     });
 
@@ -440,7 +471,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Review rewrite'
+        content: lockedDisclosureContent
       }
     });
 
@@ -504,7 +535,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Hello script'
+        content: lockedDisclosureContent
       }
     });
 
@@ -532,7 +563,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       method: 'POST',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
-        content: 'Hello script'
+        content: lockedDisclosureContent
       }
     });
 

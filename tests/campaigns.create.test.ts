@@ -1,6 +1,16 @@
 import { expect, it, describe, vi } from 'vitest';
 import { createApp } from '../src/server/app.js';
 
+const confirmedProductionProbe = {
+  lastProbeAt: new Date('2026-08-16T07:00:00.000Z').toISOString(),
+  probeMarking: true,
+  probeRecording: true,
+  probeHandoff: true,
+  handoffNumber: '+74951234567',
+  handoffWindowStart: '09:00',
+  handoffWindowEnd: '18:00'
+};
+
 const makeCampaignStore = () => ({
   tenant: {
     findUnique: vi.fn(async (query: { where: { id: string } }) => {
@@ -76,6 +86,7 @@ const makeCampaignStore = () => ({
         tenantId: '11111111-1111-1111-1111-111111111111',
         mode: 'production',
         status: 'active',
+        handoffNumber: '+74951234567',
         updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
       }
     ]),
@@ -84,9 +95,10 @@ const makeCampaignStore = () => ({
         return {
           id: query.where.id,
           tenantId: '22222222-2222-2222-2222-222222222222',
-          mode: 'production',
-          status: 'active',
-          updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+        mode: 'production',
+        status: 'active',
+        handoffNumber: '+74951234567',
+        updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
         };
       }
       return {
@@ -94,6 +106,7 @@ const makeCampaignStore = () => ({
         tenantId: '11111111-1111-1111-1111-111111111111',
         mode: 'production',
         status: 'active',
+        handoffNumber: '+74951234567',
         updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
       };
     })
@@ -104,7 +117,7 @@ const makeCampaignStore = () => ({
   callAttempt: {
     count: vi.fn(async () => 5)
   },
-  complianceDecision: {
+    complianceDecision: {
     count: vi.fn(async () => 1),
     findMany: vi.fn(async () => [
       {
@@ -114,6 +127,15 @@ const makeCampaignStore = () => ({
         checkedAt: new Date('2026-08-16T06:00:00.000Z').toISOString()
       }
     ])
+  },
+  platformEnv: {
+    YANDEX_SPEECHKIT_API_KEY: 'platform-asr',
+    YANDEXGPT_API_KEY: 'platform-llm',
+    GIGACHAT_API_KEY: '',
+    YANDEX_FOLDER_ID: 'folder'
+  },
+  providerCredential: {
+    findMany: vi.fn(async () => [])
   }
 });
 
@@ -1338,6 +1360,38 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/telephony-connection', 
 
     await app.close();
   });
+
+  it('rejects changing telephony connection while campaign is auto_paused', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'auto_paused',
+      telephonyConnectionId: '33333333-3333-3333-3333-333333333333'
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/telephony-connection',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        telephonyConnectionId: '44444444-4444-4444-4444-444444444444'
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'TELEPHONY_CONNECTION_LOCKED'
+    });
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
 });
 
 describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () => {
@@ -1366,9 +1420,18 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
         tenantId: '11111111-1111-1111-1111-111111111111',
         mode: 'production',
         status: 'active',
+        ...confirmedProductionProbe,
         updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
       }
     ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'production',
+      status: 'active',
+      ...confirmedProductionProbe,
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
     campaignStore.complianceDecision.count = vi.fn(async () => 0);
     campaignStore.complianceDecision.findMany = vi.fn(async () => []);
 
@@ -1404,6 +1467,118 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
     });
     expect(campaignStore.complianceDecision.count).toHaveBeenCalledOnce();
     expect(campaignStore.complianceDecision.findMany).toHaveBeenCalledOnce();
+
+    await app.close();
+  });
+
+  it('blocks production readiness when speech credentials are missing', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.platformEnv = {
+      YANDEX_SPEECHKIT_API_KEY: '',
+      YANDEXGPT_API_KEY: '',
+      GIGACHAT_API_KEY: '',
+      YANDEX_FOLDER_ID: ''
+    };
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-1',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'production',
+      status: 'active',
+      ...confirmedProductionProbe,
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'speech',
+          reasonCode: 'SPEECH_CREDENTIALS_NOT_READY'
+        })
+      ])
+    );
+
+    await app.close();
+  });
+
+  it('blocks production readiness when the operator queue destination is missing', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-1',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'production',
+      status: 'active',
+      ...confirmedProductionProbe,
+      handoffNumber: null,
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().blocked).toBe(true);
+    expect(response.json().reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'telephony',
+          reasonCode: 'HANDOFF_UNAVAILABLE_BLOCK'
+        })
+      ])
+    );
 
     await app.close();
   });
@@ -1516,6 +1691,116 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
         })
       ])
     );
+    expect(body.reasons).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          reasonCode: 'TELEPHONY_PROBE_INCOMPLETE'
+        })
+      ])
+    );
+
+    await app.close();
+  });
+
+  it('blocks production telephony when probe has not confirmed marking, recording and handoff', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-1',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.readinessState).toBe('blocked');
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'telephony',
+          reasonCode: 'TELEPHONY_PROBE_INCOMPLETE'
+        })
+      ])
+    );
+
+    await app.close();
+  });
+
+  it('blocks production telephony when probe only reports sandboxPass', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-1',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'production',
+      status: 'active',
+      lastProbeAt: new Date('2026-08-16T07:00:00.000Z').toISOString(),
+      probeMarking: false,
+      probeRecording: false,
+      probeHandoff: false,
+      probeSandboxPass: true,
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.readinessState).toBe('blocked');
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reasonCode: 'TELEPHONY_PROBE_INCOMPLETE'
+        })
+      ])
+    );
 
     await app.close();
   });
@@ -1543,6 +1828,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
         tenantId: '11111111-1111-1111-1111-111111111111',
         mode: 'production',
         status: 'active',
+        handoffNumber: '+74951234567',
         updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
       }
     ]);
@@ -1606,9 +1892,20 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
         tenantId: '11111111-1111-1111-1111-111111111111',
         mode: 'production',
         status: 'active',
+        ...confirmedProductionProbe,
+        lastProbeAt: new Date('2026-08-16T10:30:00.000Z').toISOString(),
         updatedAt: new Date('2026-08-16T10:30:00.000Z').toISOString()
       }
     ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'production',
+      status: 'active',
+      ...confirmedProductionProbe,
+      lastProbeAt: new Date('2026-08-16T10:30:00.000Z').toISOString(),
+      updatedAt: new Date('2026-08-16T10:30:00.000Z').toISOString()
+    }));
     campaignStore.complianceDecision.count = vi.fn(async () => 0);
     campaignStore.complianceDecision.findMany = vi.fn(async () => []);
 

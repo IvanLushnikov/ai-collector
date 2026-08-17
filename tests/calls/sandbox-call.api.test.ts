@@ -257,8 +257,13 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       findUnique: vi.fn(async (query: { where: { id: string } }) => ({
         id: query.where.id,
         tenantId: '11111111-1111-1111-1111-111111111111',
-        mode: 'production',
+        provider: 'sandbox',
+        mode: 'sandbox',
         status: 'active',
+        lastProbeAt: '2026-08-16T10:00:00.000Z',
+        probeMarking: true,
+        probeRecording: true,
+        probeHandoff: true,
         updatedAt: '2026-08-16T10:00:00.000Z'
       }))
     },
@@ -943,6 +948,8 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         telephonyConnectionId: 'telephony-1',
         scriptVersionId: 'script-1',
         providerCallId: 'provider-call-1',
+        identityVerified: false,
+        identityVerifiedAt: null,
         startedAt: '2026-08-16T09:00:00.000Z',
         endedAt: '2026-08-16T09:10:00.000Z',
         createdAt: '2026-08-16T09:00:00.000Z',
@@ -1470,7 +1477,9 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     expect(store.callAttempt.create).toHaveBeenCalledOnce();
     expect(store.callAttempt.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        scriptVersionId: 'script-1'
+        scriptVersionId: 'script-1',
+        identityVerified: false,
+        identityVerifiedAt: null
       })
     });
     expect(store.callResult.create).toHaveBeenCalledOnce();
@@ -1484,7 +1493,8 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         quantity: 1,
         unit: 'call',
         sourceId: 'sandbox-call:provider-call-1:started',
-        occurredAt: expect.any(Date)
+        occurredAt: expect.any(Date),
+        credentialMode: 'fake'
       }
     });
 
@@ -1527,6 +1537,117 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         telephonyConnectionId: 'telephony-selected'
       })
     });
+
+    await app.close();
+  });
+
+  it('does not start a sandbox call when the selected connection is production', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      telephonyConnection: {
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          provider: 'sandbox',
+          mode: 'production',
+          status: 'active',
+          lastProbeAt: '2026-08-16T10:00:00.000Z',
+          probeMarking: true,
+          probeRecording: true,
+          probeHandoff: true,
+          updatedAt: '2026-08-16T10:00:00.000Z'
+        }))
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'SANDBOX_CONNECTION_REQUIRED'
+    });
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('queues sandbox start when the queue flag is on and does not dial', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      sandboxCallsQueueEnabled: true
+    });
+
+    const app = createApp({ campaignStore: store as any });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toMatchObject({
+      queued: true,
+      job: {
+        name: 'calls.sandbox_start'
+      }
+    });
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('does not start a sandbox call when telephony provider is unknown', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      telephonyConnection: {
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          provider: 'exolve',
+          mode: 'sandbox',
+          status: 'active',
+          lastProbeAt: '2026-08-16T10:00:00.000Z',
+          probeMarking: true,
+          probeRecording: true,
+          probeHandoff: true,
+          updatedAt: '2026-08-16T10:00:00.000Z'
+        }))
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json()).toEqual({
+      error: 'UNKNOWN_VOICE_PROVIDER',
+      provider: 'exolve'
+    });
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -1708,7 +1829,8 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         quantity: 1,
         unit: 'call',
         sourceId: 'sandbox-call:provider-call-1:completed',
-        occurredAt: expect.any(Date)
+        occurredAt: expect.any(Date),
+        credentialMode: 'fake'
       }
     });
 

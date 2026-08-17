@@ -76,6 +76,54 @@
 - `404` — `TENANT_NOT_FOUND`
 - `422` — `NO_ACTIVE_USER_FOR_TENANT`
 
+### PATCH: обновить подключение
+
+`PATCH /tenants/:tenantId/telephony-connections/:connectionId`
+
+Назначение: изменить `provider`, `displayName` или `status` существующего соединения.
+
+#### Права доступа
+
+- `owner`
+- `integration_admin`
+
+#### Тело запроса
+
+Хотя бы одно поле:
+
+```json
+{
+  "provider": "string",
+  "displayName": "string",
+  "status": "active" | "disabled" | "invalid"
+}
+```
+
+`mode` этим маршрутом не меняется.
+
+#### Ограничение
+
+Если `provider` меняется и у tenant есть кампания в `running` или `auto_paused` на этом соединении — `409 TELEPHONY_PROVIDER_LOCKED`. `update` и успешный audit не выполняются.
+
+Смена соединения у самой кампании в `running` / `auto_paused` по-прежнему `409 TELEPHONY_CONNECTION_LOCKED` на `PATCH .../campaigns/:campaignId/telephony-connection`.
+
+#### Успешный ответ `200`
+
+Тот же объект, что после POST.
+
+#### Побочные эффекты
+
+- `AuditLog.action = telephony_connection.updated` только после успешного update.
+
+#### Ответы с ошибками
+
+- `400` — `VALIDATION_ERROR`
+- `401` — `USER_ROLE_MISSING`
+- `403` — `FORBIDDEN`
+- `404` — `TENANT_NOT_FOUND` или `TELEPHONY_CONNECTION_NOT_FOUND`
+- `409` — `TELEPHONY_PROVIDER_LOCKED`
+- `422` — `NO_ACTIVE_USER_FOR_TENANT`
+
 ### GET: список подключений
 
 `GET /tenants/:tenantId/telephony-connections`
