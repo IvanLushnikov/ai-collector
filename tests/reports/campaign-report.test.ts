@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  defaultCampaignBillingRates
+} from '../../src/domain/billing/index.js';
 import { createCampaignReport } from '../../src/reports/campaign-report.js';
 
 describe('createCampaignReport', () => {
@@ -42,6 +45,37 @@ describe('createCampaignReport', () => {
       })
     },
     usageEvent: {
+      findMany: vi.fn(async ({ where }: { where: { tenantId: string; campaignId: string } }) => {
+        expect(where.tenantId).toBe(tenantId);
+        expect(where.campaignId).toBe(campaignId);
+
+        return [
+          {
+            tenantId,
+            campaignId,
+            eventType: 'call_completed',
+            unit: 'minute',
+            sourceId: 'usage-1',
+            quantity: 5
+          },
+          {
+            tenantId,
+            campaignId,
+            eventType: 'call_completed',
+            unit: 'minute',
+            sourceId: 'usage-2',
+            quantity: 1
+          },
+          {
+            tenantId,
+            campaignId,
+            eventType: 'call_completed',
+            unit: 'call',
+            sourceId: 'usage-3',
+            quantity: 4
+          }
+        ];
+      }),
       count: vi.fn(async ({ where }: { where: { tenantId: string; campaignId: string; eventType: string } }) => {
         expect(where.tenantId).toBe(tenantId);
         expect(where.campaignId).toBe(campaignId);
@@ -56,14 +90,32 @@ describe('createCampaignReport', () => {
       tenantId,
       campaignId
     });
+    const expectedCostPerCall = (6 * defaultCampaignBillingRates.connectedMinuteRateRub) / 4;
+    const expectedCostPerPtp = (6 * defaultCampaignBillingRates.connectedMinuteRateRub) / 4;
 
     expect(report).toEqual({
       totalRecords: 15,
       attemptedCalls: 12,
-      completedCalls: 3,
+      completedCalls: 4,
       blockedCalls: 2,
-      ptpCount: 4
+      ptpCount: 4,
+      connectedMinutes: 6,
+      costPerCall: expectedCostPerCall,
+      costPerPtp: expectedCostPerPtp
     });
+  });
+
+  it('uses provided billing rates in cost calculations', async () => {
+    const report = await createCampaignReport(makeDeps(), {
+      tenantId,
+      campaignId,
+      billingRates: {
+        connectedMinuteRateRub: 2
+      }
+    });
+
+    expect(report.costPerCall).toBe(3);
+    expect(report.costPerPtp).toBe(3);
   });
 
   it('falls back to call_attempt.completed when usage events store does not provide usage metrics', async () => {
@@ -77,5 +129,8 @@ describe('createCampaignReport', () => {
     });
 
     expect(report.completedCalls).toBe(6);
+    expect(report.connectedMinutes).toBe(0);
+    expect(report.costPerCall).toBeNull();
+    expect(report.costPerPtp).toBeNull();
   });
 });

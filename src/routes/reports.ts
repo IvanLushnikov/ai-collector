@@ -1,10 +1,15 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { createCampaignReport } from '../reports/campaign-report.js';
+import { env } from '../config/env.js';
+import { roleMiddleware } from '../server/middleware/rbac.js';
 
 type ReportDependencies = {
   tenant: {
-    findUnique: (args: { where: { id: string } }) => Promise<unknown>;
+    findUnique: (args: { where: { id: string } }) => Promise<{ 
+      id: string;
+      connectedMinuteRateRub: number | null;
+    } | null>;
   };
   campaign: {
     findUnique: (args: { where: { id: string } }) => Promise<unknown>;
@@ -49,6 +54,17 @@ type ReportDependencies = {
         eventType: string;
       };
     }) => Promise<number>;
+    findMany?: (args: {
+      where: { tenantId: string; campaignId: string };
+      select: { sourceId: true; eventType: true; quantity: true; unit: true };
+    }) => Promise<Array<{
+      tenantId: string;
+      campaignId: string;
+      eventType: string;
+      quantity: number;
+      unit: string;
+      sourceId: string;
+    }>>;
   };
 };
 
@@ -58,7 +74,10 @@ const tenantCampaignReportSchema = z.object({
 });
 
 export const registerReportRoutes = (app: FastifyInstance, deps: ReportDependencies): void => {
-  app.get('/tenants/:tenantId/campaigns/:campaignId/report', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/report',
+    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    async (request, reply) => {
     const params = tenantCampaignReportSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -69,10 +88,12 @@ export const registerReportRoutes = (app: FastifyInstance, deps: ReportDependenc
 
     const tenant = await deps.tenant.findUnique({
       where: { id: params.data.tenantId }
-    }) as { id: string } | null;
+    });
     if (!tenant) {
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
+
+    const resolvedConnectedMinuteRate = tenant.connectedMinuteRateRub ?? env.BILLING_CONNECTED_MINUTE_RATE_RUB;
 
     const campaign = (await deps.campaign.findUnique({
       where: { id: params.data.campaignId }
@@ -83,7 +104,10 @@ export const registerReportRoutes = (app: FastifyInstance, deps: ReportDependenc
 
     const report = await createCampaignReport(deps, {
       tenantId: params.data.tenantId,
-      campaignId: params.data.campaignId
+      campaignId: params.data.campaignId,
+      billingRates: {
+        connectedMinuteRateRub: resolvedConnectedMinuteRate
+      }
     });
 
     return reply.code(200).send(report);

@@ -58,6 +58,26 @@ const makeCampaignStore = () => ({
       id: 'audit-1'
     }))
   },
+  scriptVersion: {
+    findMany: vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ])
+  },
+  telephonyConnection: {
+    findMany: vi.fn(async () => [
+      {
+        id: 'telephony-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+      }
+    ])
+  },
   debtorRecord: {
     count: vi.fn(async () => 2)
   },
@@ -65,7 +85,15 @@ const makeCampaignStore = () => ({
     count: vi.fn(async () => 5)
   },
   complianceDecision: {
-    count: vi.fn(async () => 1)
+    count: vi.fn(async () => 1),
+    findMany: vi.fn(async () => [
+      {
+        id: 'decision-1',
+        reasonCode: 'DEBT_STATUS_BLOCK',
+        reasonText: 'Debt status blocks call',
+        checkedAt: new Date('2026-08-16T06:00:00.000Z').toISOString()
+      }
+    ])
   }
 });
 
@@ -255,6 +283,41 @@ describe('POST /campaigns', () => {
 });
 
 describe('GET /tenants/:tenantId/campaigns', () => {
+  const authorizedRole = 'owner';
+
+  it('rejects missing user role header', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns'
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns',
+      headers: {
+        'X-User-Role': 'auditor'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+
   it('returns tenant campaigns sorted by createdAt in ascending order', async () => {
     const campaignStore = makeCampaignStore();
     campaignStore.campaign.findMany = vi.fn(async () => [
@@ -279,7 +342,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(200);
@@ -303,6 +369,59 @@ describe('GET /tenants/:tenantId/campaigns', () => {
     ]);
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
       where: { tenantId: '11111111-1111-1111-1111-111111111111' },
+      skip: 0,
+      take: 20,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        timezone: true,
+        createdAt: true
+      }
+    });
+
+    await app.close();
+  });
+
+  it('supports pagination with limit and offset on campaigns list', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findMany = vi.fn(async () => [
+      {
+        id: 'campaign-offset',
+        name: 'Offset campaign',
+        status: 'draft',
+        timezone: 'UTC',
+        createdAt: '2026-08-12T10:00:00.000Z'
+      }
+    ]);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns?limit=1&offset=1',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toEqual([
+      {
+        id: 'campaign-offset',
+        name: 'Offset campaign',
+        status: 'draft',
+        timezone: 'UTC',
+        createdAt: '2026-08-12T10:00:00.000Z'
+      }
+    ]);
+    expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
+      where: { tenantId: '11111111-1111-1111-1111-111111111111' },
+      skip: 1,
+      take: 1,
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
@@ -333,7 +452,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(200);
@@ -353,6 +475,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
     });
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
       where: { tenantId: '11111111-1111-1111-1111-111111111111' },
+      skip: 0,
+      take: 20,
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
@@ -372,7 +496,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/not-a-uuid/campaigns'
+      url: '/tenants/not-a-uuid/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(400);
@@ -388,7 +515,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns'
+      url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(404);
@@ -397,9 +527,73 @@ describe('GET /tenants/:tenantId/campaigns', () => {
 
     await app.close();
   });
+
+  it('rejects invalid pagination params for campaigns list', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const invalidLimitResponse = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns?limit=0',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(invalidLimitResponse.statusCode).toBe(400);
+    expect(invalidLimitResponse.json().error).toBe('VALIDATION_ERROR');
+
+    const invalidOffsetResponse = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns?offset=1001',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(invalidOffsetResponse.statusCode).toBe(400);
+    expect(invalidOffsetResponse.json().error).toBe('VALIDATION_ERROR');
+
+    await app.close();
+  });
 });
 
 describe('GET /tenants/:tenantId/campaigns/:campaignId', () => {
+  const authorizedRole = 'owner';
+
+  it('rejects missing user role header', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-abc'
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-abc',
+      headers: {
+        'X-User-Role': 'auditor'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+
   it('returns campaign details with aggregates from counts', async () => {
     const campaignStore = makeCampaignStore();
     campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => {
@@ -431,7 +625,10 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-abc'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-abc',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(200);
@@ -477,7 +674,10 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-other'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-other',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(404);
@@ -496,7 +696,10 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-missing'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-missing',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
     });
 
     expect(response.statusCode).toBe(404);
@@ -508,6 +711,47 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId', () => {
 });
 
 describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
+  const authorizedRole = 'owner';
+
+  it('rejects missing user role header', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status',
+      payload: {
+        status: 'review'
+      }
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status',
+      headers: {
+        'X-User-Role': 'operator'
+      },
+      payload: {
+        status: 'review'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+
   it('updates campaign status for valid transition', async () => {
     const campaignStore = makeCampaignStore();
     campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
@@ -533,6 +777,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
       payload: {
         status: 'review'
       }
@@ -551,6 +798,20 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
         status: true,
         timezone: true,
         createdAt: true
+      }
+    });
+    expect(campaignStore.auditLog.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        userId: 'user-1',
+        action: 'campaign.status_updated',
+        entityType: 'campaign',
+        entityId: 'campaign-draft',
+        metadata: {
+          campaignId: 'campaign-draft',
+          fromStatus: 'draft',
+          toStatus: 'review'
+        }
       }
     });
 
@@ -574,6 +835,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
       payload: {
         status: 'completed'
       }
@@ -582,6 +846,7 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     expect(response.statusCode).toBe(400);
     const body = response.json();
     expect(body.error).toBe('INVALID_STATUS_TRANSITION');
+    expect(campaignStore.auditLog.create).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -593,6 +858,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
       payload: {
         status: 'not-a-status'
       }
@@ -615,6 +883,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-missing/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
       payload: {
         status: 'review'
       }
@@ -634,6 +905,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/campaign-draft/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
       payload: {
         status: 'review'
       }
@@ -642,6 +916,702 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     expect(response.statusCode).toBe(404);
     const body = response.json();
     expect(body.error).toBe('TENANT_NOT_FOUND');
+
+    await app.close();
+  });
+});
+
+describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () => {
+  const authorizedRole = 'owner';
+
+  it('returns readiness summary in ready state when all checks pass', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findMany = vi.fn(async () => [
+      {
+        id: 'telephony-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toEqual({
+      campaignId: 'campaign-ready',
+      campaignStatus: 'ready',
+      source: 'campaign-readiness-v1',
+      timestamp: expect.any(String),
+      readinessHash: expect.any(String),
+      readinessState: 'ready',
+      blocked: false,
+      stale: false,
+      reasons: [],
+      complianceReasons: []
+    });
+
+    expect(campaignStore.scriptVersion.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.telephonyConnection.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.complianceDecision.count).toHaveBeenCalledOnce();
+    expect(campaignStore.complianceDecision.findMany).toHaveBeenCalledOnce();
+
+    await app.close();
+  });
+
+  it('returns stale readiness when campaign has no blockers but config changed after campaign update', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T10:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findMany = vi.fn(async () => [
+      {
+        id: 'telephony-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T10:30:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-stale/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toEqual({
+      campaignId: 'campaign-stale',
+      campaignStatus: 'ready',
+      source: 'campaign-readiness-v1',
+      timestamp: expect.any(String),
+      readinessHash: expect.any(String),
+      readinessState: 'stale',
+      blocked: false,
+      stale: true,
+      reasons: [],
+      complianceReasons: []
+    });
+
+    await app.close();
+  });
+
+  it('returns blocked readiness when required checks are missing', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'draft',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 0);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => []);
+    campaignStore.telephonyConnection.findMany = vi.fn(async () => []);
+    campaignStore.complianceDecision.count = vi.fn(async () => 1);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => [
+      {
+        id: 'decision-1',
+        reasonCode: 'DEBT_STATUS_BLOCK',
+        reasonText: 'Debt status blocks call',
+        checkedAt: new Date('2026-08-16T06:00:00.000Z').toISOString()
+      }
+    ]);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-blocked/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.blocked).toBe(true);
+    expect(body.readinessState).toBe('blocked');
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'debtors',
+          reasonCode: 'DEBTORS_MISSING'
+        }),
+        expect.objectContaining({
+          source: 'script',
+          reasonCode: 'SCRIPT_NOT_READY'
+        }),
+        expect.objectContaining({
+          source: 'telephony',
+          reasonCode: 'PRODUCTION_TELEPHONY_MISSING'
+        }),
+        expect.objectContaining({
+          source: 'compliance',
+          reasonCode: 'COMPLIANCE_BLOCKS_DETECTED'
+        }),
+        expect.objectContaining({
+          source: 'campaign',
+          reasonCode: 'CAMPAIGN_STATUS_INVALID'
+        })
+      ])
+    );
+    expect(body.complianceReasons).toEqual([
+      {
+        id: 'decision-1',
+        reasonCode: 'DEBT_STATUS_BLOCK',
+        reasonText: 'Debt status blocks call',
+        checkedAt: new Date('2026-08-16T06:00:00.000Z').toISOString()
+      }
+    ]);
+
+    await app.close();
+  });
+
+  it('rejects missing user role header', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary'
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role for readiness summary', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': 'auditor'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+});
+
+describe('GET /tenants/:tenantId/campaigns/:campaignId/review-items', () => {
+  it('returns review items for flagged QA and blocked compliance decisions with tenant isolation', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => {
+      if (query.where.id === 'campaign-other-tenant') {
+        return {
+          id: query.where.id,
+          tenantId: '22222222-2222-2222-2222-222222222222'
+        };
+      }
+
+      return {
+        id: query.where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: `Campaign ${query.where.id}`,
+        status: 'ready',
+        timezone: 'UTC',
+        createdAt: new Date().toISOString()
+      };
+    });
+    campaignStore.callAttempt.findMany = vi.fn(async ({ where }) => {
+      expect(where).toMatchObject({
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        callResult: {
+          qaStatus: 'flagged'
+        }
+      });
+
+      return [
+        {
+          id: 'attempt-1',
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: 'campaign-review',
+          debtorRecordId: 'debtor-1',
+          createdAt: new Date('2026-08-16T10:30:00.000Z').toISOString(),
+          callResult: {
+            id: 'result-1',
+            outcome: 'error',
+            qaStatus: 'flagged',
+            createdAt: new Date('2026-08-16T10:20:00.000Z').toISOString(),
+            reason: 'Need manual check'
+          },
+          debtorRecord: {
+            id: 'debtor-1'
+          }
+        },
+        {
+          id: 'attempt-2',
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: 'campaign-review',
+          debtorRecordId: 'debtor-2',
+          createdAt: new Date('2026-08-16T09:30:00.000Z').toISOString(),
+          callResult: {
+            id: 'result-2',
+            outcome: 'callback_requested',
+            qaStatus: 'flagged',
+            createdAt: new Date('2026-08-16T09:25:00.000Z').toISOString(),
+            reason: 'Need manual check'
+          },
+          debtorRecord: {
+            id: 'debtor-2'
+          }
+        }
+      ];
+    });
+    campaignStore.complianceDecision.findMany = vi.fn(async ({ where }) => {
+      expect(where).toMatchObject({
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        decision: 'block'
+      });
+
+      return [
+        {
+          id: 'decision-1',
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: 'campaign-review',
+          debtorRecordId: 'debtor-4',
+          decision: 'block',
+          reasonCode: 'CONSENT_REVOKED',
+          reasonText: 'Consent status was revoked after onboarding',
+          checkedAt: new Date('2026-08-16T10:10:00.000Z').toISOString()
+        }
+      ];
+    });
+    campaignStore.callAttempt.count = vi
+      .fn(async ({ where }) => {
+        if (where.debtorRecordId === 'debtor-1') {
+          return 2;
+        }
+        if (where.debtorRecordId === 'debtor-2') {
+          return 1;
+        }
+        if (where.debtorRecordId === 'debtor-4') {
+          return 1;
+        }
+        return 0;
+      });
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items',
+      headers: {
+        'X-User-Role': 'qa_analyst'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as Array<Record<string, unknown>>;
+    expect(body).toHaveLength(3);
+    expect(body).toEqual([
+      expect.objectContaining({
+        itemType: 'qa',
+        itemId: 'qa-result-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        debtorRecordId: 'debtor-1',
+        callAttemptId: 'attempt-1',
+        callResultId: 'result-1',
+        urgency: 'high',
+        retryCount: 2
+      }),
+      expect.objectContaining({
+        itemType: 'compliance',
+        itemId: 'compliance-decision-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        debtorRecordId: 'debtor-4',
+        decision: 'block',
+        reasonCode: 'CONSENT_REVOKED',
+        urgency: 'high',
+        retryCount: 1
+      }),
+      expect.objectContaining({
+        itemType: 'qa',
+        itemId: 'qa-result-2',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        debtorRecordId: 'debtor-2',
+        retryCount: 1,
+        urgency: 'medium'
+      })
+    ]);
+
+    expect(campaignStore.callAttempt.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.complianceDecision.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.callAttempt.count).toHaveBeenCalledTimes(3);
+
+    await app.close();
+  });
+
+  it('returns 404 for missing tenant or campaign', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/campaign-review/review-items',
+      headers: {
+        'X-User-Role': 'qa_analyst'
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+    const body = response.json();
+    expect(body.error).toBe('TENANT_NOT_FOUND');
+
+    await app.close();
+  });
+
+  it('rejects missing role header', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items'
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role for review items', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items',
+      headers: {
+        'X-User-Role': 'operator'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+});
+
+describe('PATCH /tenants/:tenantId/campaigns/:campaignId/review-items/:itemId/resolve', () => {
+  it('resolves qa review item with audit trail', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.callResult = {
+      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
+        expect(where).toEqual({ id: 'result-approve-1' });
+        return {
+          id: 'result-approve-1',
+          qaStatus: 'flagged',
+          callAttempt: {
+            id: 'attempt-approve-1',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: 'campaign-review',
+            debtorRecordId: 'debtor-1'
+          }
+        };
+      }),
+      update: vi.fn(async ({ where, data }: { where: { id: string }; data: { qaStatus: string } }) => ({
+        id: where.id,
+        qaStatus: data.qaStatus
+      }))
+    };
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/qa-result-approve-1/resolve',
+      headers: {
+        'X-User-Role': 'collection_manager'
+      },
+      payload: {
+        action: 'approve',
+        notes: 'Manual QA verification passed'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toMatchObject({
+      itemType: 'qa',
+      itemId: 'qa-result-approve-1',
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      campaignId: 'campaign-review',
+      debtorRecordId: 'debtor-1',
+      qaStatus: 'approved',
+      action: 'approve'
+    });
+
+    expect(campaignStore.callResult?.findUnique).toHaveBeenCalledOnce();
+    expect(campaignStore.callResult?.update).toHaveBeenCalledWith({
+      where: { id: 'result-approve-1' },
+      data: { qaStatus: 'approved' }
+    });
+    expect(campaignStore.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        userId: 'user-1',
+        action: 'review_item.resolved',
+        entityType: 'callResult',
+        entityId: 'result-approve-1',
+        metadata: expect.objectContaining({
+          itemType: 'qa',
+          itemId: 'qa-result-approve-1',
+          previousQaStatus: 'flagged',
+          qaStatus: 'approved',
+          action: 'approve'
+        })
+      })
+    });
+
+    await app.close();
+  });
+
+  it('acknowledges compliance review item and records audit trail', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => {
+      if (query.where.id === 'campaign-other-tenant') {
+        return {
+          id: query.where.id,
+          tenantId: '22222222-2222-2222-2222-222222222222'
+        };
+      }
+
+      return {
+        id: query.where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Campaign review',
+        status: 'ready',
+        timezone: 'UTC',
+        createdAt: new Date().toISOString()
+      };
+    });
+    campaignStore.complianceDecision.findMany = vi.fn(async ({ where }) => {
+      expect(where).toMatchObject({
+        id: 'decision-approve-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review'
+      });
+
+      return [
+        {
+          id: 'decision-approve-1',
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: 'campaign-review',
+          debtorRecordId: 'debtor-2',
+          decision: 'block',
+          reasonCode: 'CONSENT_REVOKED',
+          reasonText: 'Consent status was revoked'
+        }
+      ];
+    });
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/compliance-decision-approve-1/resolve',
+      headers: {
+        'X-User-Role': 'compliance_officer'
+      },
+      payload: {
+        action: 'escalate',
+        notes: 'Escalated to compliance'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toMatchObject({
+      itemType: 'compliance',
+      itemId: 'compliance-decision-approve-1',
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      campaignId: 'campaign-review',
+      debtorRecordId: 'debtor-2',
+      action: 'escalate',
+      status: 'acknowledged'
+    });
+
+    expect(campaignStore.complianceDecision.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.callResult?.findUnique).toBeUndefined();
+    expect(campaignStore.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        userId: 'user-1',
+        action: 'review_item.resolved',
+        entityType: 'complianceDecision',
+        entityId: 'decision-approve-1',
+        metadata: expect.objectContaining({
+          itemType: 'compliance',
+          action: 'escalate',
+          decision: 'block'
+        })
+      })
+    });
+
+    await app.close();
+  });
+
+  it('returns 400 for malformed review item id', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/invalid-item-id/resolve',
+      headers: {
+        'X-User-Role': 'qa_analyst'
+      },
+      payload: {
+        action: 'approve'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    const body = response.json();
+    expect(body.error).toBe('INVALID_REVIEW_ITEM_ID');
+
+    await app.close();
+  });
+
+  it('returns 404 for compliance review item that is not blocked', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.complianceDecision.findMany = vi.fn(async ({ where }) => {
+      expect(where).toMatchObject({
+        id: 'decision-allow-1',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-review',
+        decision: 'block'
+      });
+
+      return [];
+    });
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/compliance-decision-allow-1/resolve',
+      headers: {
+        'X-User-Role': 'owner'
+      },
+      payload: {
+        action: 'reject',
+        notes: 'Item is already acknowledged in allow status'
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+    const body = response.json();
+    expect(body.error).toBe('REVIEW_ITEM_NOT_FOUND');
+    expect(campaignStore.callResult?.findUnique).toBeUndefined();
+    expect(campaignStore.callResult?.update).toBeUndefined();
+    expect(campaignStore.auditLog.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('rejects missing role header when resolving', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/qa-result-approve-1/resolve',
+      payload: {
+        action: 'approve'
+      }
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+
+    await app.close();
+  });
+
+  it('rejects forbidden role when resolving review item', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-review/review-items/qa-result-approve-1/resolve',
+      headers: {
+        'X-User-Role': 'operator'
+      },
+      payload: {
+        action: 'approve'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
 
     await app.close();
   });

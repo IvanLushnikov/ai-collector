@@ -105,6 +105,7 @@ model Tenant {
   id        String       @id @default(uuid())
   name      String
   status    TenantStatus @default(active)
+  connectedMinuteRateRub Float?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 

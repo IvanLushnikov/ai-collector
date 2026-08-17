@@ -13,10 +13,14 @@ import {
   isTerminalCallStatus
 } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
+import { roleMiddleware } from '../server/middleware/rbac.js';
 
 type CallDependencies = {
   tenant: {
     findUnique: (args: any) => Promise<unknown>;
+  };
+  user: {
+    findFirst: (args: any) => Promise<unknown>;
   };
   campaign: {
     findUnique: (args: any) => Promise<unknown>;
@@ -39,6 +43,9 @@ type CallDependencies = {
   complianceDecision?: {
     create?: (args: any) => Promise<unknown>;
     findMany?: (args: any) => Promise<unknown>;
+  };
+  auditLog?: {
+    create?: (args: any) => Promise<unknown>;
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
@@ -166,13 +173,62 @@ const createUsageEvent = async (
   });
 };
 
+const createAuditEvent = async (
+  deps: CallDependencies,
+  actor: { id: string },
+  actorTenantId: string,
+  data: {
+    action: string;
+    entityType: string;
+    entityId: string;
+    metadata: Record<string, unknown>;
+  }
+) => {
+  if (!deps.auditLog?.create) {
+    return;
+  }
+
+  await deps.auditLog.create({
+    data: {
+      tenantId: actorTenantId,
+      userId: actor.id,
+      action: data.action,
+      entityType: data.entityType,
+      entityId: data.entityId,
+      metadata: data.metadata
+    }
+  });
+};
+
 export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies): void => {
   const tenantCampaignCallsSchema = z.object({
     tenantId: z.string().uuid(),
     campaignId: z.string().uuid()
   });
 
-  app.post('/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox', async (request, reply) => {
+  const tenantCampaignCallsQuerySchema = z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    offset: z.coerce.number().int().min(0).max(1000).default(0),
+    outcome: z
+      .enum([
+        'not_called',
+        'no_answer',
+        'callback_requested',
+        'wrong_number',
+        'ptp_created',
+        'handoff',
+        'dispute',
+        'blocked',
+        'error'
+      ])
+      .optional(),
+    qaStatus: z.enum(['not_reviewed', 'approved', 'flagged']).optional()
+  });
+
+  app.post(
+    '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox',
+    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator']) },
+    async (request, reply) => {
     const params = tenantCampaignDebtorCallSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -221,6 +277,18 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       return reply.code(404).send({ error: 'DEBTOR_RECORD_NOT_FOUND' });
     }
 
+    const actor = await deps.user.findFirst({
+      where: {
+        tenantId: params.data.tenantId,
+        isActive: true,
+        status: 'active'
+      }
+    }) as { id: string } | null;
+
+    if (!actor) {
+      return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
+    }
+
     const debtAmount = Number(debtorRecord.debtAmount);
     if (!Number.isFinite(debtAmount)) {
       return reply.code(400).send({
@@ -241,6 +309,19 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     });
 
     if (decision.decision === 'block') {
+      await createAuditEvent(deps, actor, params.data.tenantId, {
+        action: 'call.sandbox_blocked',
+        entityType: 'debtorRecord',
+        entityId: debtorRecord.id,
+        metadata: {
+          debtorRecordId: params.data.debtorRecordId,
+          campaignId: params.data.campaignId,
+          callOutcome: 'blocked',
+          reasons: decision.blockedReasons,
+          rules: decision.rules
+        }
+      });
+
       return reply.code(403).send({
         decision: decision.decision,
         reasons: decision.blockedReasons,
@@ -305,6 +386,20 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       });
     }
 
+    await createAuditEvent(deps, actor, params.data.tenantId, {
+      action: 'call.sandbox_started',
+      entityType: 'callAttempt',
+      entityId: callAttemptId,
+      metadata: {
+        debtorRecordId: params.data.debtorRecordId,
+        campaignId: params.data.campaignId,
+        callAttemptId,
+        providerCallId: providerCall.providerCallId,
+        callStatus: providerCall.status,
+        decision: decision.decision
+      }
+    });
+
     return reply.code(201).send({
       allowed: true,
       decision: decision.decision,
@@ -316,12 +411,32 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     });
   });
 
-  app.get('/tenants/:tenantId/campaigns/:campaignId/calls', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/calls',
+    {
+      preValidation: roleMiddleware([
+        'owner',
+        'collection_manager',
+        'operator',
+        'qa_analyst',
+        'compliance_officer',
+        'integration_admin'
+      ])
+    },
+    async (request, reply) => {
     const params = tenantCampaignCallsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
         error: 'VALIDATION_ERROR',
         issues: params.error.issues
+      });
+    }
+
+    const query = tenantCampaignCallsQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return reply.code(400).send({
+        error: 'VALIDATION_ERROR',
+        issues: query.error.issues
       });
     }
 
@@ -342,8 +457,18 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     const attempts = (await deps.callAttempt.findMany({
       where: {
         tenantId: params.data.tenantId,
-        campaignId: params.data.campaignId
+        campaignId: params.data.campaignId,
+        ...(query.data.outcome || query.data.qaStatus
+          ? {
+              callResult: {
+                ...(query.data.outcome ? { outcome: query.data.outcome } : {}),
+                ...(query.data.qaStatus ? { qaStatus: query.data.qaStatus } : {})
+              }
+            }
+          : {})
       },
+      skip: query.data.offset,
+      take: query.data.limit,
       orderBy: {
         startedAt: 'asc'
       },
@@ -355,20 +480,23 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         },
         callResult: {
           select: {
-            outcome: true
+            outcome: true,
+            qaStatus: true
           }
         }
       }
     }) as Array<{
+      id: string;
       status: string;
       startedAt: string | Date;
       endedAt: string | Date | null;
       debtorRecord: { externalId: string } | null;
-      callResult: { outcome: string } | null;
+      callResult: { outcome: string; qaStatus?: string } | null;
     }> ) ?? [];
 
     return reply.code(200).send(
       attempts.map((attempt) => ({
+        callAttemptId: attempt.id,
         status: attempt.status,
         debtorExternalId: attempt.debtorRecord?.externalId ?? null,
         startedAt: attempt.startedAt,
@@ -378,7 +506,19 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     );
   });
 
-  app.get('/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId',
+    {
+      preValidation: roleMiddleware([
+        'owner',
+        'collection_manager',
+        'operator',
+        'qa_analyst',
+        'compliance_officer',
+        'integration_admin'
+      ])
+    },
+    async (request, reply) => {
     const params = tenantCampaignCallSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -430,7 +570,14 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       endedAt: string | Date | null;
       createdAt: string | Date;
       updatedAt: string | Date;
-      callResult: { id: string; outcome: string; reason: string | null; transcriptUrl: string | null; recordingUrl: string | null } | null;
+      callResult: {
+        id: string;
+        outcome: string;
+        qaStatus: string;
+        reason: string | null;
+        transcriptUrl: string | null;
+        recordingUrl: string | null;
+      } | null;
       debtorRecord: {
         id: string;
         tenantId: string;
@@ -490,7 +637,12 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       },
       result: attempt.callResult ?? null,
       complianceDecisions,
-      usageEvents
+      usageEvents,
+      evidenceBundle: {
+        callResult: attempt.callResult ?? null,
+        complianceDecisions,
+        usageEvents
+      }
     });
   });
 };

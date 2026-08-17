@@ -15,6 +15,15 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       findFirst: vi.fn(async () => ({ id: 'user-1' }))
     },
     campaign: {
+      findUnique: vi.fn(async (query: { where: { id: string } }) => {
+        if (query.where.id === 'campaign-missing') {
+          return null;
+        }
+        return {
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111'
+        };
+      }),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: 'campaign-1',
         tenantId: data.tenantId as string,
@@ -25,8 +34,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })),
-      findMany: vi.fn(async () => []),
-      findUnique: vi.fn(async () => null)
+      findMany: vi.fn(async () => [])
     },
     debtorRecord: {
       findUnique: vi.fn(async (query: { where: { id: string } }) => {
@@ -78,7 +86,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
     const response = await app.inject({
       method: 'POST',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check',
+      headers: { 'x-user-role': 'operator' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -122,12 +131,52 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
     const response = await app.inject({
       method: 'POST',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/compliance/check'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/compliance/check',
+      headers: { 'x-user-role': 'operator' }
     });
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toEqual({
       error: 'DEBTOR_RECORD_NOT_FOUND'
+    });
+
+    await app.close();
+  });
+
+  it('returns 401 when X-User-Role is missing', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check'
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      error: 'USER_ROLE_MISSING',
+      message: 'X-User-Role header is required'
+    });
+
+    await app.close();
+  });
+
+  it('returns 403 when user role is not allowed', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check',
+      headers: { 'x-user-role': 'auditor' }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({
+      error: 'FORBIDDEN',
+      message: 'User role is not allowed for this endpoint'
     });
 
     await app.close();

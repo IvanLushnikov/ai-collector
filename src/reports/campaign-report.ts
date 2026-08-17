@@ -1,15 +1,34 @@
+import { calculateUsageLedgerTotals } from '../domain/usage-ledger/index.js';
+import {
+  calculateCostFromMinutes,
+  defaultCampaignBillingRates
+} from '../domain/billing/index.js';
+
 export type CampaignReport = {
   totalRecords: number;
   attemptedCalls: number;
   completedCalls: number;
   blockedCalls: number;
   ptpCount: number;
+  connectedMinutes: number;
+  costPerCall: number | null;
+  costPerPtp: number | null;
 };
 
 type UsageEventWhere = {
   tenantId: string;
   campaignId: string;
   eventType: string;
+  unit?: string;
+};
+
+type UsageEventRecord = {
+  tenantId: string;
+  campaignId: string;
+  eventType: string;
+  quantity: number;
+  unit: string;
+  sourceId: string;
 };
 
 type CampaignReportDependencies = {
@@ -47,6 +66,10 @@ type CampaignReportDependencies = {
   };
   usageEvent?: {
     count?: (args: { where: UsageEventWhere }) => Promise<number>;
+    findMany?: (args: {
+      where: { tenantId: string; campaignId: string };
+      select: { sourceId: true; eventType: true; quantity: true; unit: true };
+    }) => Promise<UsageEventRecord[]>;
   };
 };
 
@@ -55,6 +78,9 @@ export const createCampaignReport = async (
   args: {
     tenantId: string;
     campaignId: string;
+    billingRates?: {
+      connectedMinuteRateRub: number;
+    };
   }
 ): Promise<CampaignReport> => {
   const whereAttemptScope = {
@@ -62,7 +88,40 @@ export const createCampaignReport = async (
     campaignId: args.campaignId
   };
 
-  const [totalRecords, attemptedCalls, completedCalls, blockedCalls, ptpCount] = await Promise.all([
+  const billingRates = args.billingRates ?? defaultCampaignBillingRates;
+
+  const hasUsageLedger = Boolean(deps.usageEvent?.findMany);
+
+  const usageLedgerTotals = deps.usageEvent?.findMany
+    ? await calculateUsageLedgerTotals(
+      {
+        usageEvent: {
+          findMany: (query) => deps.usageEvent!.findMany!({
+            where: {
+              tenantId: query.where.tenantId,
+              campaignId: query.where.campaignId
+            },
+            select: {
+              sourceId: true,
+              eventType: true,
+              quantity: true,
+              unit: true
+            }
+          })
+        }
+      },
+      {
+        tenantId: args.tenantId,
+        campaignId: args.campaignId
+      }
+    ).then((result) => result.totals)
+    : [];
+
+  const connectedMinutes = usageLedgerTotals
+    .filter((item) => item.eventType === 'call_completed' && item.unit === 'minute')
+    .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
+
+  const [totalRecords, attemptedCalls, completedCallsFallback, blockedCalls, ptpCount] = await Promise.all([
     deps.debtorRecord.count({
       where: whereAttemptScope
     }),
@@ -80,8 +139,8 @@ export const createCampaignReport = async (
           where: {
             ...whereAttemptScope,
             status: 'completed'
-          }
-        }),
+      }
+    }),
     deps.complianceDecision.count({
       where: {
         ...whereAttemptScope,
@@ -99,11 +158,36 @@ export const createCampaignReport = async (
     })
   ]);
 
+  const callCompletedQuantityTotals = usageLedgerTotals
+    .filter((item) => item.eventType === 'call_completed' && item.unit === 'call')
+    .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
+
+  const finalizedCompletedCalls = deps.usageEvent?.findMany
+    ? callCompletedQuantityTotals
+    : completedCallsFallback;
+  const costPerCall = hasUsageLedger
+    ? calculateCostFromMinutes(
+      connectedMinutes,
+      finalizedCompletedCalls,
+      billingRates
+    )
+    : null;
+  const costPerPtp = hasUsageLedger
+    ? calculateCostFromMinutes(
+      connectedMinutes,
+      ptpCount,
+      billingRates
+    )
+    : null;
+
   return {
     totalRecords,
     attemptedCalls,
-    completedCalls,
+    completedCalls: finalizedCompletedCalls,
     blockedCalls,
-    ptpCount
+    ptpCount,
+    connectedMinutes,
+    costPerCall,
+    costPerPtp
   };
 };

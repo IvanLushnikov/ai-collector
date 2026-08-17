@@ -35,14 +35,28 @@ type AppStore = {
   callAttempt: {
     create: (payload: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
     findUnique: (query: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
-    findMany?: (query: { where: { tenantId: string; campaignId: string } }) => Promise<
+    findMany?: (query: {
+      where: {
+        tenantId: string;
+        campaignId: string;
+        callResult?: {
+          outcome?: string;
+          qaStatus?: string;
+        };
+      };
+      skip?: number;
+      take?: number;
+      orderBy?: {
+        startedAt: 'asc' | 'desc';
+      };
+    }) => Promise<
       Array<{
         id: string;
         status: string;
         startedAt: string | Date;
         endedAt: string | Date | null;
         debtorRecord: { externalId: string };
-        callResult?: { outcome: string } | null;
+        callResult?: { outcome: string; qaStatus?: string } | null;
       }>
     >;
   };
@@ -103,6 +117,19 @@ type AppStore = {
   auditLog?: {
     create: (payload: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
   };
+};
+
+const injectWithOwnerRole = (
+  app: ReturnType<typeof createApp>,
+  request: Parameters<ReturnType<typeof createApp>['inject']>[0]
+) => {
+  return app.inject({
+    ...request,
+    headers: {
+      'x-user-role': 'owner',
+      ...(request.headers ?? {})
+    }
+  });
 };
 
 describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox', () => {
@@ -224,8 +251,463 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
   return provider;
 };
 
-describe('GET /tenants/:tenantId/campaigns/:campaignId/calls', () => {
-  it('returns calls for campaign sorted by startedAt with debtor externalId and outcome', async () => {
+  it('returns 401 when role header is missing', async () => {
+    const appStore = makeStore();
+    const app = createApp({
+      campaignStore: appStore
+    });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      error: 'USER_ROLE_MISSING',
+      message: 'X-User-Role header is required'
+    });
+
+    await app.close();
+  });
+
+  it('returns 403 when role is not allowed for sandbox call', async () => {
+    const appStore = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()])
+    });
+    const app = createApp({
+      campaignStore: appStore
+    });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      headers: {
+        'x-user-role': 'auditor'
+      },
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+
+  describe('GET /tenants/:tenantId/campaigns/:campaignId/calls', () => {
+    it('returns 401 when role header is missing', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        }
+      });
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({
+        error: 'USER_ROLE_MISSING',
+        message: 'X-User-Role header is required'
+      });
+
+      await app.close();
+    });
+
+    it('returns 403 when role is not allowed for calls list', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        }
+      });
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls',
+        headers: {
+          'x-user-role': 'auditor'
+        }
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json().error).toBe('FORBIDDEN');
+
+      await app.close();
+    });
+
+    it('returns calls for campaign sorted by startedAt with debtor externalId and outcome', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        }
+      });
+      appStore.callAttempt.findMany = vi.fn(async () => [
+        {
+          id: 'call-1',
+          status: 'completed',
+          startedAt: '2026-08-16T09:00:00.000Z',
+          endedAt: '2026-08-16T09:10:00.000Z',
+          debtorRecord: {
+            externalId: 'debtor-002'
+          },
+          callResult: {
+            outcome: 'ptp_created'
+          }
+        },
+        {
+          id: 'call-2',
+          status: 'queued',
+          startedAt: '2026-08-16T10:00:00.000Z',
+          endedAt: null,
+          debtorRecord: {
+            externalId: 'debtor-001'
+          },
+          callResult: null
+        }
+      ]);
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([
+        {
+          callAttemptId: 'call-1',
+          status: 'completed',
+          debtorExternalId: 'debtor-002',
+          startedAt: '2026-08-16T09:00:00.000Z',
+          endedAt: '2026-08-16T09:10:00.000Z',
+          outcome: 'ptp_created'
+        },
+        {
+          callAttemptId: 'call-2',
+          status: 'queued',
+          debtorExternalId: 'debtor-001',
+          startedAt: '2026-08-16T10:00:00.000Z',
+          endedAt: null,
+          outcome: null
+        }
+      ]);
+      expect(appStore.callAttempt.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: '22222222-2222-2222-2222-222222222222'
+        },
+        skip: 0,
+        take: 20,
+        orderBy: {
+          startedAt: 'asc'
+        },
+        include: {
+          debtorRecord: {
+            select: {
+              externalId: true
+            }
+          },
+          callResult: {
+            select: {
+              outcome: true,
+              qaStatus: true
+            }
+          }
+        }
+      });
+      await app.close();
+    });
+
+    it('uses default pagination for calls list when limit and offset are omitted', async () => {
+      const calls = Array.from({ length: 25 }, (_, index) => ({
+        id: `call-${index + 1}`,
+        status: 'completed',
+        startedAt: `2026-08-16T00:${String(index).padStart(2, '0')}:00.000Z`,
+        endedAt: null,
+        debtorRecord: {
+          externalId: `debtor-${index + 1}`
+        },
+        callResult: null
+      }));
+
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        },
+        callAttempt: {
+          create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+            id: 'call-attempt-1',
+            ...data
+          })),
+          findUnique: vi.fn(async () => null),
+          findMany: vi.fn(async ({ skip = 0, take = 20 }: { where: Record<string, unknown>; skip?: number; take?: number }) => calls.slice(skip, skip + take))
+        }
+      });
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json() as Array<{ callAttemptId: string }>;
+      expect(body).toHaveLength(20);
+      expect(body[0].callAttemptId).toBe('call-1');
+      expect(body[19].callAttemptId).toBe('call-20');
+
+      expect(appStore.callAttempt.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: '22222222-2222-2222-2222-222222222222'
+        },
+        skip: 0,
+        take: 20,
+        orderBy: {
+          startedAt: 'asc'
+        },
+        include: {
+          debtorRecord: {
+            select: {
+              externalId: true
+            }
+          },
+          callResult: {
+            select: {
+              outcome: true,
+              qaStatus: true
+            }
+          }
+        }
+      });
+
+      await app.close();
+    });
+
+    it('filters calls by outcome and qaStatus query params', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        },
+        callAttempt: {
+          create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+            id: 'call-attempt-1',
+            ...data
+          })),
+          findUnique: vi.fn(async () => null),
+          findMany: vi.fn(async () => [
+            {
+              id: 'call-1',
+              status: 'completed',
+              startedAt: '2026-08-16T09:00:00.000Z',
+              endedAt: '2026-08-16T09:10:00.000Z',
+              debtorRecord: {
+                externalId: 'debtor-007'
+              },
+              callResult: {
+                outcome: 'ptp_created',
+                qaStatus: 'approved'
+              }
+            }
+          ])
+        }
+      });
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls?outcome=ptp_created&qaStatus=approved'
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual([
+        {
+          callAttemptId: 'call-1',
+          status: 'completed',
+          debtorExternalId: 'debtor-007',
+          startedAt: '2026-08-16T09:00:00.000Z',
+          endedAt: '2026-08-16T09:10:00.000Z',
+          outcome: 'ptp_created'
+        }
+      ]);
+
+      expect(appStore.callAttempt.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: '22222222-2222-2222-2222-222222222222',
+          callResult: {
+            outcome: 'ptp_created',
+            qaStatus: 'approved'
+          }
+        },
+        skip: 0,
+        take: 20,
+        orderBy: {
+          startedAt: 'asc'
+        },
+        include: {
+          debtorRecord: {
+            select: {
+              externalId: true
+            }
+          },
+          callResult: {
+            select: {
+              outcome: true,
+              qaStatus: true
+            }
+          }
+        }
+      });
+
+      await app.close();
+    });
+
+    it('returns 400 for invalid outcome filter', async () => {
+      const app = createApp({
+        campaignStore: makeStore()
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls?outcome=invalid'
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toBe('VALIDATION_ERROR');
+
+      await app.close();
+    });
+
+    it('returns 400 for invalid qaStatus filter', async () => {
+      const app = createApp({
+        campaignStore: makeStore()
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls?qaStatus=bad'
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toBe('VALIDATION_ERROR');
+
+      await app.close();
+    });
+
+    it('returns 400 when calls limit exceeds max', async () => {
+      const app = createApp({
+        campaignStore: makeStore()
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls?limit=101'
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toBe('VALIDATION_ERROR');
+
+      await app.close();
+    });
+
+    it('returns 400 when calls offset exceeds max', async () => {
+      const app = createApp({
+        campaignStore: makeStore()
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls?offset=1001'
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toBe('VALIDATION_ERROR');
+
+      await app.close();
+    });
+
+    it('returns 404 when campaign belongs to another tenant', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '22222222-2222-2222-2222-222222222222'
+          }))
+        }
+      });
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'GET',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({
+        error: 'CAMPAIGN_NOT_FOUND'
+      });
+
+      await app.close();
+    });
+  });
+
+describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', () => {
+  it('returns 401 when role header is missing', async () => {
     const appStore = makeStore({
       campaign: {
         create: vi.fn(async () => ({})),
@@ -235,31 +717,6 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls', () => {
         }))
       }
     });
-    appStore.callAttempt.findMany = vi.fn(async () => [
-      {
-        id: 'call-1',
-        status: 'completed',
-        startedAt: '2026-08-16T09:00:00.000Z',
-        endedAt: '2026-08-16T09:10:00.000Z',
-        debtorRecord: {
-          externalId: 'debtor-002'
-        },
-        callResult: {
-          outcome: 'ptp_created'
-        }
-      },
-      {
-        id: 'call-2',
-        status: 'queued',
-        startedAt: '2026-08-16T10:00:00.000Z',
-        endedAt: null,
-        debtorRecord: {
-          externalId: 'debtor-001'
-        },
-        callResult: null
-      }
-    ]);
-
     const app = createApp({
       campaignStore: appStore
     });
@@ -267,62 +724,35 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/11111111-1111-1111-1111-111111111111'
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual([
-      {
-        status: 'completed',
-        debtorExternalId: 'debtor-002',
-        startedAt: '2026-08-16T09:00:00.000Z',
-        endedAt: '2026-08-16T09:10:00.000Z',
-        outcome: 'ptp_created'
-      },
-      {
-        status: 'queued',
-        debtorExternalId: 'debtor-001',
-        startedAt: '2026-08-16T10:00:00.000Z',
-        endedAt: null,
-        outcome: null
-      }
-    ]);
-    expect(appStore.callAttempt.findMany).toHaveBeenCalledWith({
-      where: {
-        tenantId: '11111111-1111-1111-1111-111111111111',
-        campaignId: '22222222-2222-2222-2222-222222222222'
-      },
-      orderBy: {
-        startedAt: 'asc'
-      },
-      include: {
-        debtorRecord: {
-          select: {
-            externalId: true
-          }
-        },
-        callResult: {
-          select: {
-            outcome: true
-          }
-        }
-      }
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      error: 'USER_ROLE_MISSING',
+      message: 'X-User-Role header is required'
     });
 
     await app.close();
   });
 
-  it('returns 404 when campaign belongs to another tenant', async () => {
+  it('returns 403 when role is not allowed for call card', async () => {
     const appStore = makeStore({
       campaign: {
         create: vi.fn(async () => ({})),
         findUnique: vi.fn(async (query: { where: { id: string } }) => ({
           id: query.where.id,
-          tenantId: '22222222-2222-2222-2222-222222222222'
+          tenantId: '11111111-1111-1111-1111-111111111111'
         }))
+      },
+      callAttempt: {
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+          id: 'call-attempt-1',
+          ...data
+        })),
+        findUnique: vi.fn(async () => null)
       }
     });
-
     const app = createApp({
       campaignStore: appStore
     });
@@ -330,19 +760,18 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/11111111-1111-1111-1111-111111111111',
+      headers: {
+        'x-user-role': 'auditor'
+      }
     });
 
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({
-      error: 'CAMPAIGN_NOT_FOUND'
-    });
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
 
     await app.close();
   });
-});
 
-describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', () => {
   it('returns call card with attempt, result, compliance decisions and usage events', async () => {
     const appStore = makeStore({
       campaign: {
@@ -429,7 +858,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/11111111-1111-1111-1111-111111111111'
     });
@@ -490,7 +919,51 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
           sourceId: 'sandbox-call:provider-call-1:completed',
           occurredAt: '2026-08-16T09:10:00.000Z'
         }
-      ]
+      ],
+      evidenceBundle: {
+        callResult: {
+          id: 'result-1',
+          outcome: 'ptp_created',
+          reason: 'sandbox_call_result',
+          transcriptUrl: 'sandbox://transcripts/provider-call-1.txt',
+          recordingUrl: 'sandbox://recordings/provider-call-1.mp3'
+        },
+        complianceDecisions: [
+          {
+            id: 'decision-1',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+            decision: 'allow',
+            reasonCode: 'ALLOW',
+            reasonText: 'Allowed',
+            ruleVersion: 'v1',
+            checkedAt: '2026-08-16T09:05:00.000Z'
+          }
+        ],
+        usageEvents: [
+          {
+            id: 'usage-event-1',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            eventType: 'call_started',
+            quantity: 1,
+            unit: 'call',
+            sourceId: 'sandbox-call:provider-call-1:started',
+            occurredAt: '2026-08-16T09:00:00.000Z'
+          },
+          {
+            id: 'usage-event-2',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            eventType: 'call_completed',
+            quantity: 1,
+            unit: 'call',
+            sourceId: 'sandbox-call:provider-call-1:completed',
+            occurredAt: '2026-08-16T09:10:00.000Z'
+          }
+        ]
+      }
     });
 
     expect(appStore.callAttempt.findUnique).toHaveBeenCalledWith({
@@ -551,7 +1024,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/22222222-2222-2222-2222-222222222223'
     });
@@ -565,7 +1038,92 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   });
 
   describe('PATCH /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa', () => {
-    it('updates qaStatus and writes audit event', async () => {
+    it('returns 401 when role header is missing', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        }
+      });
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/qa',
+        payload: {
+          qaStatus: 'approved'
+        }
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({
+        error: 'USER_ROLE_MISSING',
+        message: 'X-User-Role header is required'
+      });
+
+      await app.close();
+    });
+
+    it('returns 403 when role is not allowed for qa update', async () => {
+      const appStore = makeStore({
+        campaign: {
+          create: vi.fn(async () => ({})),
+          findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+            id: query.where.id,
+            tenantId: '11111111-1111-1111-1111-111111111111'
+          }))
+        },
+        callAttempt: {
+          create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+            id: 'call-attempt-qa-forbidden',
+            ...data
+          })),
+          findUnique: vi.fn(async () => ({
+            id: 'call-attempt-qa-forbidden',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            callResult: {
+              id: 'call-result-qa-forbidden',
+              qaStatus: 'not_reviewed'
+            },
+            debtorRecord: {
+              tenantId: '11111111-1111-1111-1111-111111111111',
+              campaignId: '22222222-2222-2222-2222-222222222222'
+            }
+          }))
+        }
+      });
+
+      const app = createApp({
+        campaignStore: appStore
+      });
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/qa',
+        headers: {
+          'x-user-role': 'operator'
+        },
+        payload: {
+          qaStatus: 'approved'
+        }
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json().error).toBe('FORBIDDEN');
+
+      await app.close();
+    });
+
+    it('allows qa_analyst to update qa status', async () => {
       const store = makeStore({
         callAttempt: {
           create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
@@ -599,6 +1157,57 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       const response = await app.inject({
         method: 'PATCH',
         url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/qa',
+        headers: {
+          'x-user-role': 'qa_analyst'
+        },
+        payload: {
+          qaStatus: 'approved'
+        }
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
+        id: 'call-result-qa-1',
+        qaStatus: 'approved'
+      });
+
+      await app.close();
+    });
+
+    it('updates qaStatus and writes audit event', async () => {
+      const store = makeStore({
+        callAttempt: {
+          create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+            id: 'call-attempt-qa-1',
+            ...data
+          })),
+          findUnique: vi.fn(async () => ({
+            id: 'call-attempt-qa-1',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            callResult: {
+              id: 'call-result-qa-1',
+              qaStatus: 'not_reviewed'
+            },
+            debtorRecord: {
+              tenantId: '11111111-1111-1111-1111-111111111111',
+              campaignId: '22222222-2222-2222-2222-222222222222'
+            }
+          }))
+        },
+        auditLog: {
+          create: vi.fn(async () => ({}))
+        }
+      });
+
+      const app = createApp({
+        campaignStore: store
+      });
+      await app.ready();
+
+      const response = await injectWithOwnerRole(app, {
+        method: 'PATCH',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/qa',
         payload: {
           qaStatus: 'approved'
         }
@@ -628,6 +1237,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
           entityId: 'call-result-qa-1',
           metadata: {
             callAttemptId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+            campaignId: '22222222-2222-2222-2222-222222222222',
             qaStatus: 'approved',
             previousQaStatus: 'not_reviewed'
           }
@@ -645,7 +1255,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       });
       await app.ready();
 
-      const response = await app.inject({
+      const response = await injectWithOwnerRole(app, {
         method: 'PATCH',
         url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/qa',
         payload: {
@@ -688,7 +1298,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       });
       await app.ready();
 
-      const response = await app.inject({
+      const response = await injectWithOwnerRole(app, {
         method: 'PATCH',
         url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab/qa',
         payload: {
@@ -732,7 +1342,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       });
       await app.ready();
 
-      const response = await app.inject({
+      const response = await injectWithOwnerRole(app, {
         method: 'PATCH',
         url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/calls/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaac/qa',
         payload: {
@@ -762,7 +1372,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
       payload: {}
@@ -816,7 +1426,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
       payload: {}
@@ -845,6 +1455,49 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     await app.close();
   });
 
+  it('creates audit trail when sandbox call is successfully started', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      auditLog: {
+        create: vi.fn(async () => ({}))
+      }
+    });
+
+    const app = createApp({
+      campaignStore: store
+    });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(store.auditLog?.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        userId: 'test-user-id',
+        action: 'call.sandbox_started',
+        entityType: 'callAttempt',
+        entityId: 'call-attempt-1',
+        metadata: {
+          debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          campaignId: '22222222-2222-2222-2222-222222222222',
+          callAttemptId: 'call-attempt-1',
+          providerCallId: 'provider-call-1',
+          callStatus: 'queued',
+          decision: 'allow'
+        }
+      }
+    });
+
+    await app.close();
+  });
+
   it('returns 403 and does not start call when compliance blocks', async () => {
     const provider = makeProvider();
     const store = makeStore({
@@ -867,7 +1520,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     const app = createApp({ campaignStore: store });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/calls/sandbox',
       payload: {}
@@ -883,12 +1536,107 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     await app.close();
   });
 
+  it('creates audit trail when sandbox call is blocked by compliance', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([
+        new CallWindowComplianceRule(),
+        new DebtStatusRule(),
+        {
+          name: 'always-block',
+          evaluate: async () => ({
+            decision: 'block',
+            reasonCode: 'CUSTOM_BLOCK',
+            reasonText: 'Policy blocked'
+          })
+        },
+        new ConsentStatusRule()
+      ]),
+      voiceProvider: provider,
+      auditLog: {
+        create: vi.fn(async () => ({}))
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(store.auditLog?.create).toHaveBeenCalledWith({
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        userId: 'test-user-id',
+        action: 'call.sandbox_blocked',
+        entityType: 'debtorRecord',
+        entityId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        metadata: {
+          debtorRecordId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          campaignId: '22222222-2222-2222-2222-222222222222',
+          callOutcome: 'blocked',
+          reasons: expect.arrayContaining([
+            expect.objectContaining({
+              decision: 'block',
+              reasonCode: 'CUSTOM_BLOCK',
+              reasonText: 'Policy blocked'
+            }),
+            expect.objectContaining({
+              decision: 'block',
+              reasonCode: 'CONSENT_REVOKED',
+              reasonText: 'Consent status is revoked'
+            })
+          ]),
+          rules: expect.arrayContaining([
+            'call-window',
+            'debt-status',
+            'always-block',
+            'consent-status'
+          ])
+        }
+      }
+    });
+
+    await app.close();
+  });
+
+  it('returns 422 when active tenant actor is missing', async () => {
+    const appStore = makeStore({
+      user: {
+        findFirst: vi.fn(async () => null)
+      },
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()])
+    });
+
+    const app = createApp({
+      campaignStore: appStore
+    });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json()).toEqual({
+      error: 'NO_ACTIVE_USER_FOR_TENANT'
+    });
+
+    await app.close();
+  });
+
   it('returns 404 when debtor is outside tenant scope', async () => {
     const store = makeStore();
     const app = createApp({ campaignStore: store });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectWithOwnerRole(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/cccccccc-cccc-cccc-cccc-cccccccccccc/calls/sandbox',
       payload: {}

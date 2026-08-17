@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { isCallResultQaStatus } from '../domain/call-result/index.js';
+import { roleMiddleware } from '../server/middleware/rbac.js';
 
 type QaStatus = 'approved' | 'flagged';
 
@@ -36,7 +37,10 @@ const qaUpdateSchema = z.object({
 });
 
 export const registerQaRoutes = (app: FastifyInstance, deps: QaDependencies): void => {
-  app.patch('/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa', async (request, reply) => {
+  app.patch(
+    '/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa',
+    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer']) },
+    async (request, reply) => {
     const params = tenantCampaignCallSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -147,12 +151,13 @@ export const registerQaRoutes = (app: FastifyInstance, deps: QaDependencies): vo
         entityId: updatedResult.id,
         metadata: {
           callAttemptId: params.data.callAttemptId,
+          campaignId: params.data.campaignId,
           qaStatus: body.data.qaStatus,
           previousQaStatus: attempt.callResult.qaStatus
         }
       }
     });
 
-    return reply.code(200).send(updatedResult);
+      return reply.code(200).send(updatedResult);
   });
 };

@@ -1,5 +1,4 @@
 # Roadmap B2B SaaS для прототипа AI-коллектора
-
 Дата анализа: 14.08.2026
 
 ## 1. Что сейчас есть в прототипе
@@ -79,6 +78,8 @@
 - мониторинг качества: answer rate, dropped calls, transfer failures, latency, ASR/TTS errors;
 - сценарии отказов: провайдер недоступен, запись не сохранилась, CDR не совпал, очередь операторов переполнена;
 - механизм автопаузы кампании при нарушении SLA или safety-событиях.
+
+- Прототипный `calls` workflow в текущем цикле должен использовать `GET /tenants/:tenantId/campaigns/:campaignId/calls` как основной источник и явно показывать статус (`live` / `демо`) с fallback на локальные данные при падении API.
 
 ### 3.5. AI, сценарии и качество
 
@@ -348,7 +349,53 @@ Commercial:
 - Этап 4. Scale и enterprise: `5%`.
   Есть только отдельные подготовительные decision/doc-артефакты; масштабирование, multi-provider и enterprise package ещё фактически не начаты.
 
-### 8.4. Вывод по текущей готовности
+### 8.4. UX-аудит пути `создание кампании → импорт → readiness → launch → calls → review → report` (MVP Lab / Controlled Pilot)
+
+- `T-065 (16.08.2026)`: выполнен полный gap-аудит по 7 этапам канонического потока. Важные выводы: инфраструктурные API-цепочки для `campaign`, `debtors/import`, `telephony`, `scripts`, `calls` и `report` уже частично готовы, но в прототипе остаются несоответствия формата состояния и объяснимости risk/actions.
+
+#### Карта разрывов по этапам (оценка T-065)
+
+- `создание кампании` — MVP-critical: в UI есть мастер и статусы, но backend статус `draft/review/ready/running` не всегда служит источником истины в прототипе. Нужны явные сообщения об ошибках API, без которых возможно псевдоуспешное завершение flow.
+- `импорт` — MVP-critical: есть контракт `debtors/import` и parser/validator, но в UI пока есть блоки с локально зафиксированными числами и нет единообразной визуализации `accepted/rejected/errors`, поэтому не закрыта доверенность audit-first для quality report.
+- `readiness` — MVP-critical: локальные «плашки» готовы, но источник фактов (`DebtorRecord`, `ScriptVersion`, `TelephonyConnection`, `ComplianceDecision`) не связан с единой canonical моделью статуса readiness.
+- `launch` — MVP-critical: в прототипе есть simulation/теги запуска и controlled flow, но не полностью зафиксирован верифицированный backend-переход с role/actor gate и обязательным audit event на каждый переход.
+- `calls` — Controlled Pilot, но частично затрагивает MVP: API-листинг и карточка уже есть, но proof bundle по всем кейсам (compliance decision + result + usage) ещё не отображается консистентно в одном экране для всех `live/demo` записей.
+- `review` — Controlled Pilot critical: отдельная review-очередь выделена по состоянию реализации только визуально; для MVP нужно хотя бы подготовить единый тип карточки и поля очереди, чтобы рискованные события не терялись между экраном call и общим report.
+- `report` — Controlled Pilot: базовая интеграция с `GET /tenants/:tenantId/campaigns/:campaignId/report` есть, но критично добавить дриллдаун к первичным событиям/записям и link из KPI в конкретный evidence.
+
+- `создание кампании`: мастер в `prototype.html` работает как локальная последовательность экранов, но шаги не опираются на реальный контракт создания кампании/импорта с обработкой ошибок. Для MVP Lab нужен API-backed flow, где каждый шаг валидируется сервером, а не только локально помечается статусом.
+- `импорт`: в интерфейсе есть upload/mapping, но результаты показаны как локальные демо-значения (10 000/8 740/1 260), без привязки к `debtors/import` контракту и истории ошибок импорта в UI. Для Controlled Pilot это блокирует доверие к quality report.
+- `мастер создания`: для каждого шага уже внедрены состояния `empty/loading/partial-success/error/review-required` в UI (`prototype.html`) и явные blocking/review причины по импорту, телеком-тесту, сценарной проверке; требуется API-backend нормализация статусов через реальные ответы `debtors/import`, `telephony-connections`, `scripts`, `calls/sandbox` до полного production parity.
+- `readiness`: статусы readiness в overview/launch теперь имитируют прохождение проверок, хотя источники статусов пока не нормализованы по реальным сущностям (`DebtorRecord`, `ScriptVersion`, `TelephonyConnection`, `ComplianceDecision`, `CallAttempt`). Нужен единый "readiness source" и объяснение причин блокировки.
+- `launch`: запуск меняет состояние только в UI (`tag run`), без обязательной проверки tenant/role gate и связанного backend перехода статуса кампании. В MVP Lab критичен связанный вызов backend-перехода и журнал аудита.
+- `calls`: вкладка теперь опирается на API `GET /tenants/:tenantId/campaigns/:campaignId/calls` с явным источником (`live`/`демо`) и fallback на демо при ошибке API; добавлен drill-down через `GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId` там, где доступен `callAttemptId`. Для записей без `callAttemptId` сохраняется оговорённый ограниченный режим карточки.
+- `review`: в текущем прототипе отсутствует отдельная review-очередь; есть только косвенные пометки в сценарии и звонках. Для Controlled Pilot это уже обязательный UX-блок.
+- `report`: часть вёрстки читается из API (`GET /tenants/:tenantId/campaigns/:campaignId/report`), но ряд метрик и drill-down по первичным событиям пока отсутствуют, а также нет связки отчёта с review actions и proof-evidence.
+
+#### Разрывы по приоритету
+
+**Блокирующие MVP Lab**
+
+- `launch` не защищён backend-цепочкой `review -> running`, нет обязательного статуса кампании и обязательного audit-trail на каждом action запуск-останoвка.
+- Не хватает proof-видимости перед запуском: где явно отражаются причины blocking (`consent`, `debt status`, `телефония`, `сценарий`) и какие следующие шаги нужны пользователю.
+- Master flow не демонстрирует API-first ошибки импорта и валидаторов в inline формате, поэтому пользователь может получить false success без сохранения данных.
+- `calls` view и карточка звонка не показывают единый proof bundle (`ComplianceDecision`, `callResult`, `usage events`) во всех кейсах, что снижает применимость audit-first подхода.
+
+**Critical для Controlled Pilot**
+
+- Отсутствует отдельная review queue с приоритизацией по рискам и SLA-индикаторам для спорных/flagged звонков.
+- Нет обязательной привязки отчёта к первичным звонковым событиям и compliance-решениям, в том числе невозможен быстрый аудит по конкретному `ruleReason`.
+- Нет операционного маршрута для ручного перевода в controlled handoff при нестандартных сценариях разговора.
+- После автопаузы нет прозрачного flow resume и evidence-пакета для повторной активации кампании.
+
+#### Рекомендуемый UX MVP-scope MVP Lab для закрытия T-065
+
+1. Зафиксировать единственный источник `readiness` на основе backend-сущностей: `Campaign`, `DebtorRecord`, `ScriptVersion`, `TelephonyConnection`, `ComplianceDecision`, `CallAttempt`.
+2. Стандартизовать статусы этапов (`draft`, `loading`, `ready`, `blocked`, `review`, `error`) в карточках так, чтобы пользователь видел, откуда статус (`source`) и что нужно сделать дальше.
+3. Для всех ошибок импорта/launch/calls показывать путь к исправлению внутри того же потока, а не только визуально-статусный `toast`.
+4. Для `calls` и `review` задать обязательный drill-down: от KPI и списка звонков → карточка (attempt/result/compliance/usage) → review item/агент/комплаенс-комментарий.
+
+### 8.5. Вывод по текущей готовности
 
 Технический backlog текущей волны почти закрыт: в `TECH_BACKLOG_1SP.md` завершены `63` задачи по состоянию на 16 августа 2026 года. Но по самому roadmap проект ещё не “почти готов”: он находится между поздним MVP Lab и ранней подготовкой к Controlled Pilot. Главный разрыв сместился с backend-фундамента на продуктовый пользовательский контур, операционные сценарии и compliance-first UX.
 
@@ -363,3 +410,107 @@ Commercial:
 5. Только после этого выходить в controlled pilot с holdout-группой и ежедневным QA.
 
 Такой путь сохраняет сильную сторону текущего прототипа — понятный end-to-end процесс кампании — и закрывает главный разрыв до B2B SaaS: доказуемую безопасность, повторяемость и измеримую экономику.
+
+## 10. Design Update (после отчета ревью, 16.08.2026)
+
+### 1) What changed
+- Зафиксирован единый блок доработок `P0/P1/P2` на базе отчета ревью.
+- Разделены рисковые точки по категориям: `flow`, `states`, `roles`, `compliance`, `analytics`.
+- Для всех критичных переходов добавлены требования к источнику состояния, объяснимым причинам и следующему шагу.
+- Для каждой high-risk операции задана цепочка подтверждения и аудита.
+- Добавлен отдельный список `Needs product decision` вместо подмены backend/PRD-логики UI-обещаниями.
+
+### 2) Gaps closed
+- **P0** Readiness теперь не может оставаться локальной имитацией: требуется единый `readinessSummary` с `source`, `timestamp`, `readinessHash`, `blocked`/`stale` и причинами.
+- **P0** Launch переведен в высокорисковый backend transition: `draft/ready_for_review -> running` с role/actor gate и обязательным audit trail.
+- **P1** Ролевые зоны ответственности зафиксированы: UI больше не показывает одинаковые действия для всех ролей, только RBAC-доступ.
+- **P1** Импорт-цепочка закрыта по edge-cases: полная неудача импорта, partial success, quarantined rows, duplicate/invalid details и повторный import.
+- **P1** Отчетность и KPI привязаны к источнику (`live`/`demo`) и первичным событиям; для каждой метрики указан path drill-down.
+- **P1** Отчёт дополнен ролевой структурой (менеджер кампании, руководитель взыскания, compliance officer), разнесён по operational/business/risk-блокам и расширен drill-down в журнал звонков/QA/compliance review по первичным событиям.
+- **P1** Разъехавшиеся статусы из roadmap/D-005…D-012 помечены: что в roadmap уже реализовано, что остается placeholder или API-backed.
+- **P2** Глобальная review queue выделена как отдельное product решение: либо cross-campaign queue с SLA/overload, либо campaign-scoped fallback с явной заменой.
+
+### 3) Updated flows
+- `Import -> Validate -> Stale check -> Readiness proof`
+  - **Entry:** создание кампании или новая загрузка базы.
+  - **Key steps:** upload/report -> row-level errors/quarantine/duplicates -> повторная попытка или re-import -> freshness check.
+  - **Exit state:** `readinessSummary` в состоянии `ready`/`blocked`/`stale` и конкретный следующий шаг.
+
+- `Readiness -> Launch confirmation -> Controlled launch`
+  - **Entry:** кампания в `draft`/`ready_for_review`.
+  - **Key steps:** proof bundle (`importReport`, `telephonyProbeResult`, `scriptValidationReport`, `policyVersion`) -> blocking reasons -> explicit confirmation (actor/role).
+  - **Exit state:** `running`, или `blocked`/`awaiting_confirmation`.
+
+- `Running -> Risk event -> Auto-pause`
+  - **Entry:** активная кампания с in-flight calls.
+  - **Key steps:** risk code (`compliance`, `complaint`, `recording`, `provider`, `handoff`) -> reason/evidence -> остановка новых попыток.
+  - **Exit state:** `auto_paused` или `stopped`.
+
+- `Auto-pause/review -> Resume or Stop`
+  - **Entry:** `auto_paused`/`review` с reasonCode и audit context.
+  - **Key steps:** safe-resume checklist -> подтверждение owner/compliance -> запись audit transition.
+  - **Exit state:** `running` / `stopped` (irreversible).
+
+- `Risk call -> Handoff queue -> Human decision`
+  - **Entry:** handoff/flag на уровне звонка или campaign rule.
+  - **Key steps:** проверка owner/приоритета/overdue -> назначение reviewer -> approve/reject/escalate/requeue.
+  - **Exit state:** `approved`, `escalated`, `requeued`.
+
+- `Call completion -> Evidence capture -> QA`
+  - **Entry:** завершение попытки.
+  - **Key steps:** capture decision chain + transcript/recording availability -> QA annotation.
+  - **Exit state:** `qa_pass`, `qa_flag`, `needs_recheck`.
+
+- `Campaign stop/close` (manual)
+  - **Entry:** manual stop request или incident.
+  - **Key steps:** irreversible confirmation с consequences и альтернативным путём возобновления после закрытия причины.
+  - **Exit state:** `stopped`.
+
+- `Reporting -> Drill-down to evidence`
+  - **Entry:** открытие отчета или KPI.
+  - **Key steps:** filter scope + source + denominator; переход в calls/review/audit detail.
+  - **Exit state:** traceable решение по конкретной единице риска/результата.
+
+- `Audit detail chain`
+  - **Entry:** пользователь кликает событие или review outcome.
+  - **Key steps:** связать actor, source, before/after state, `ruleVersion`, `callAttemptId`, `complianceReason`.
+  - **Exit state:** переход к следующему action или возврат в workflow.
+
+### 4) States and edge cases
+- Базовые состояния: `loading`, `empty`, `error`, `partial`, `blocked`, `review required`, `stale`, `auto-pause`, `stopped`, `no access`.
+- Для мастера создания кампании зафиксировать единый контракт состояний:
+  - шаги `campaign / import / telephony / script / readiness`,
+  - поля `status`, `blockingReasons`, `nextActions`, `source` и `correlationId`,
+  - обязательная трассировка `ready`/`partial`/`review`/`blocked`/`error` в причины действий (`Что сделать дальше?`) без «тихого» fallback к mock.
+- Для launch: `draft`, `ready_for_review`, `awaiting_confirmation`, `running`, `running_with_warnings`.
+- Для импорта: `bad_file`, `empty_file`, `row_errors`, `partial`, `quarantine`, `rejected`, `failed`, `stale_file`.
+- Для review: `awaiting_assignment`, `handoff_queue_overload`, `expired`, `escalated`.
+- Для отчета: `live` vs `demo`, `denominator_mismatch`.
+- Для ошибок действий: launch/resume/review/QA backend failures with explicit retry/escalate path.
+- Каждый state указывает «что делать дальше» (retry, re-import, re-check, request owner, escalate).
+
+### 5) Role coverage
+- `owner` / `collection_manager`: старт/стоп/резюмирование только при праве; видит risk dashboard и review-навигацию.
+- `campaign_manager`: рабочие экраны кампании и мониторинг, без critical override в blocked/review без escalation.
+- `compliance_officer`: полный доступ к decision chain, rule version, override с audit trail.
+- `qa_analyst`: только QA-панель и разбор спорных звонков.
+- `integration_admin`: только telephony/settings/health, без бизнес-решений запуска и compliance override.
+
+### 6) Compliance / audit implications
+- Обязательная цепочка доказательств: `campaign -> readinessSummary -> launchAttempt -> callAttempt -> complianceDecision -> review/QA -> state transition`.
+- High-risk операторы (`launch`, `resume`, `stop`, `approve_review`, `escalate_review`) фиксируют actor/role/reasonCode/evidence/before-after state.
+- Любой `blocked`/`auto-pause` должен объясняться и вести в action, а не маскироваться как обычная ошибка.
+- Любые `demo`/fallback состояния помечены явно и не смешиваются с аудируемым live-источником.
+
+### 7) Remaining open questions
+- Какой legal rulebook и стоп-сценарии утверждены для v1.
+- Какие точные stop conditions и thresholds автопаузы, и кто может resume.
+- Подтверждение scope для manual contact add: v1/не v1 и fallback flow.
+- Какой объект является `compliance_owner` для критических unblock решений.
+- Что является обязательным KPI set и как формируется denominator.
+- Нужна ли cross-campaign review queue в v1 или она остаётся campaign-scoped.
+
+### 8) Final recommendation
+- Передать блок `Design Update` в реализацию как контракт для следующего цикла.
+- Сначала закрыть `Remaining open questions` как backend/PRD/legal решения, затем реализовывать 1 SP-дизайн-задачи по flow.
+- Для каждого закрытого решения пересмотреть `ROADMAP_B2B_SAAS.md`/`DESIGN_BACKLOG_1SP.md` и обновить статус зависимости.

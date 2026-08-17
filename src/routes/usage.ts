@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { UsageLedgerItem } from '../domain/usage-event/index.js';
 import type { UsageEventType } from '../domain/usage-event/index.js';
 import { calculateUsageLedgerTotals } from '../domain/usage-ledger/index.js';
+import { roleMiddleware } from '../server/middleware/rbac.js';
 
 type UsageDependencies = {
   tenant: {
@@ -39,6 +40,11 @@ const tenantCampaignUsageSchema = z.object({
   campaignId: z.string().uuid()
 });
 
+const tenantCampaignUsageQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).max(1000).default(0)
+});
+
 type UsageEventTotalsRecord = {
   sourceId: string;
   eventType: UsageEventType;
@@ -68,12 +74,23 @@ export const registerUsageRoutes = (app: FastifyInstance, deps: UsageDependencie
     return 'ok';
   };
 
-  app.get('/tenants/:tenantId/campaigns/:campaignId/usage-events', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/usage-events',
+    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    async (request, reply) => {
     const params = tenantCampaignUsageSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
         error: 'VALIDATION_ERROR',
         issues: params.error.issues
+      });
+    }
+
+    const query = tenantCampaignUsageQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      return reply.code(400).send({
+        error: 'VALIDATION_ERROR',
+        issues: query.error.issues
       });
     }
 
@@ -91,6 +108,8 @@ export const registerUsageRoutes = (app: FastifyInstance, deps: UsageDependencie
           tenantId: params.data.tenantId,
           campaignId: params.data.campaignId
         },
+        skip: query.data.offset,
+        take: query.data.limit,
         orderBy: {
           occurredAt: 'asc'
         },
@@ -112,7 +131,10 @@ export const registerUsageRoutes = (app: FastifyInstance, deps: UsageDependencie
     return reply.code(200).send(mappedEvents);
   });
 
-  app.get('/tenants/:tenantId/campaigns/:campaignId/usage-events/totals', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/usage-events/totals',
+    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    async (request, reply) => {
     const params = tenantCampaignUsageSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
