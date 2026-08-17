@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
+    "dev:ui": "node scripts/dev-gateway.mjs",
+    "dev:local": "bash scripts/cloud-dev-start.sh",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server/index.js",
     "verify:skills": "node scripts/verify-skills-bootstrap.mjs",

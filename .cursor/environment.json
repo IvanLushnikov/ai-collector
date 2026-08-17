@@ -1,0 +1,23 @@
+{
+  "name": "AI Collector",
+  "install": "npm ci && cp -n .env.example .env && npx prisma generate",
+  "start": "bash scripts/cloud-dev-start.sh",
+  "ports": [
+    {
+      "name": "cabinet",
+      "port": 8080
+    }
+  ],
+  "terminals": [
+    {
+      "name": "api",
+      "command": "npm run dev",
+      "description": "Backend API on port 3000"
+    },
+    {
+      "name": "ui",
+      "command": "node scripts/dev-gateway.mjs",
+      "description": "Prototype UI gateway on port 8080"
+    }
+  ]
+}
