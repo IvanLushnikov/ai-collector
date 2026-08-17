@@ -1,33 +1,70 @@
 # Technical Backlog: 1 SP Tasks
 
-Дата: 16.08.2026
+Дата: 17.08.2026
 
-Этот backlog разбивает roadmap AI-коллектора на маленькие технологические задачи уровня 1 story point. Каждая задача должна быть достаточно узкой, чтобы Codex Spark 5.3 мог выполнить ее за один проход: прочитать контекст, внести изменения, проверить результат и обновить этот файл.
+Каноническая очередь работ репозитория. UX/UI-задачи тоже живут здесь (`T-*`), не в отдельном файле. `DESIGN_BACKLOG_1SP.md` — архив закрытых дизайн-волн `D-001`–`D-013`.
 
-## Правила работы с backlog
+Каждая задача = 1 story point и должна быть узкой: прочитать контекст, изменить файлы из «Где менять», проверить, обновить этот файл.
 
-- Каждая задача = 1 story point.
-- За один проход брать только одну задачу со статусом `todo`.
-- После реализации менять статус задачи на `done`.
-- Если во время реализации появился новый технический шаг, добавить его как новую задачу со статусом `todo`.
-- Если задача оказалась слишком крупной, не делать ее целиком: разбить на несколько задач по 1 SP и оставить исходную как `split`.
-- После каждой реализации обновлять раздел `Журнал изменений плана`.
-- Если структура проекта изменилась, обновлять поля `Где менять` у затронутых будущих задач.
+## Правила
+
+- За проход брать **одну** задачу `todo` (если человек явно не попросил больше).
+- После реализации: `done`, журнал, при необходимости новые `todo`.
+- Слишком крупная → `split` и несколько новых 1 SP.
+- `blocked` — только внешний договор, ключ, legal memo или доступ.
+- Поля «Где менять» у открытых задач держать в актуальных путях (`src/`, `tests/`, `docs/`).
+- Исторические id `T-065`/`T-066` встречаются дважды (API-docs и UX). Не перенумеровывать закрытое. Новые задачи — следующие свободные после последней `T-*` (сейчас `T-205+`).
 
 ## Статусы
 
-- `todo` - задача готова к реализации.
-- `doing` - задача взята в работу.
-- `done` - задача реализована и проверена.
-- `blocked` - задача заблокирована внешним решением или доступом.
-- `split` - задача разбита на более мелкие задачи.
+- `todo` / `doing` / `done` / `blocked` / `split`
 
-## Предположения на старт
+## Архитектура as-is (17.08.2026)
 
-- Сейчас проект состоит из `index.html`, `prototype.html` и `ROADMAP_B2B_SAAS.md`.
-- Backend, БД и тестовый контур еще не созданы.
-- Первый технический инкремент должен перейти от статического прототипа к минимальному рабочему MVP Lab: доменная модель, API, импорт базы, compliance decision log, sandbox voice provider и отчеты из событий.
-- До выбора стека задачи на backend указывают ожидаемые пути. После выбора стека эти пути нужно уточнить.
+Стек: Node 20, TypeScript, Fastify, Prisma, PostgreSQL 16, Vitest. ADR: `0001` backend, `0002` SSO (ещё не код), `0003` Exolve+Mango, `0004` SpeechKit+YandexGPT/GigaChat, `0005` BYOK.
+
+Есть в коде:
+
+- Домен Lab: Tenant, User, Role, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog.
+- API: кампании, CSV-импорт, sandbox-звонок, отчёт, usage, QA, scripts, telephony connections, audit-logs, readiness-summary, review-items (вычисляемые, без таблицы).
+- Compliance v1: окно будни `08:00–22:00` / выходные и продуктовые праздники РФ 2026–2027 `09:00–20:00` по `DebtorRecord.timezone`, `consent=revoked`/`pending`, `debtStatus` block-список. Fail-closed до sandbox-звонка.
+- Телефония: `VoiceProviderAdapter` + sandbox. Секретов провайдера в БД нет. Активный сценарий на `running` нельзя сменить (`SCRIPT_VERSION_LOCKED`). Safe-resume: `POST .../safe-resume` с чеклистом в `review`/`ready`.
+- Auth: заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
+- UI: `prototype.html`, частично API-backed.
+- Биллинг v0: connected minute из usage + тариф tenant/env.
+- `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox.
+- Identity slots: `DebtorRecord.displayName`, `agreementRef` (опциональны в CSV).
+- Маскировка телефона в audit metadata sandbox: `src/logging/mask.ts`. GitHub Actions CI: `.github/workflows/ci.yml`.
+
+Нет в коде (и это уже разрыв относительно ADR/rulebook/карты, не «будущий SaaS»):
+
+- Docker Compose, Redis, BullMQ, object storage.
+- Frequency ledger + `FREQUENCY_LIMIT_BLOCK` (1/2/8); sandbox канал не инкрементирует. `SUPPRESSION_BLOCK` есть. `Tenant.legalBasisStatus` (default `pending`); production-ready без `confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`.
+- Live-провайдер, маркировка/probe, ASR/TTS/LLM, BYOK, state machine диалога, prompt registry.
+- Excel-импорт, golden/red-team, extractor, GigaChat/Mango скелеты, handoff destination.
+
+Карта: `docs/architecture/2026-08-17-technology-map.md`. Rulebook: `docs/compliance/rulebook-v1.md`. Live без legal memo не запускать (`T-149`, `T-157` остаются `blocked`).
+
+## Очередь исполнения (открытое)
+
+Не идти сверху файла: P0 закрыт. Брать первую `todo` из волны ниже.
+
+1. **Lab hardening** — закрыта (`T-129`, `T-184`–`T-191`).
+2. **Pre-dial pilot** — закрыта (`T-130`–`T-139`).
+3. **Live telephony skeleton** — `T-141`–`T-148`, `T-195` (Mango); HTTP Exolve = `T-149` blocked.
+4. **Речь и ключи** — контракты `T-150`–`T-156`, BYOK `T-162`–`T-180`, UI `T-181`–`T-183`, GigaChat `T-194`. Factory `T-176` после `T-150`–`T-152`. HTTP SpeechKit = `T-157` blocked.
+5. **Диалог** — `T-153`–`T-155`, `T-197`, `T-198`, `T-201`.
+6. **Оркестратор** — `T-158`–`T-160`.
+7. **Evidence** — `T-192`, `T-193`, `T-202`; retention = `T-203` blocked.
+8. **Adjacent** — `T-196`, `T-199`, `T-200`, `T-204`.
+9. **UX-волна кабинета (аудит 17.08.2026)** — `T-205`–`T-228`. Отдельная волна по `docs/product/2026-08-17-ux-audit-cabinet.md`. Не вшивать в закрытые P0 `T-001`–`T-128`. Не подменяет Lab `T-129`.
+
+Следующая рекомендуемая задача Lab: **`T-141`**.  
+Первая задача UX-волны (брать по команде «реализуй» / режим B): **`T-205`**.
+
+## Закрытые волны (не переписывать)
+
+`T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
 
 ## P0. Подготовка технического контура
 
@@ -2810,7 +2847,2565 @@
 - Вкладки кампании соответствуют экранам: overview, base, scenario, phone, launch, calls, review, report, settings.
 - Тест `tests/prototype-campaign-views.test.ts` проходит.
 
+## P1. Rulebook v1: допуск до звонка
+
+Источник: `docs/compliance/rulebook-v1.md`. Волна pre-dial после Lab hardening: первая `todo` — `T-130`.
+Лимиты 1/2/8 и календарь внедряются как **продуктовый system-lock** из rulebook, не как утверждённое юрзаключение. Live по-прежнему закрыт правилами `T-138`/`T-139` до legal memo.
+
+### T-129: Блокировать consentStatus=pending
+
+Статус: `done`
+
+Что сделать:
+
+- В `ConsentStatusRule` блокировать `pending` с кодом `CONSENT_PENDING_BLOCK` наряду с `revoked` → `CONSENT_REVOKED`.
+- Пропускать только `given`.
+- Обновить тесты, где `pending` сейчас даёт `allow`.
+
+Где менять:
+
+- `src/compliance/rules/consent-status.ts`
+- `tests/compliance/consent-status.test.ts`
+- `tests/compliance/api-check.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `docs/compliance/rulebook-v1.md` (статус внедрения R-CONSENT)
+
+Критерии готовности:
+
+- `pending` и `revoked` дают `block`; `given` даёт `allow`.
+- Sandbox-звонок с `pending` не создаёт `CallAttempt`.
+- `npm run test -- tests/compliance tests/calls/sandbox-call.api.test.ts` проходит.
+
+Результат:
+- `ConsentStatusRule` блокирует всё, кроме `given`: `revoked` → `CONSENT_REVOKED`, иное (включая `pending`) → `CONSENT_PENDING_BLOCK`.
+- Sandbox с `pending` отвечает 403 и не создаёт `CallAttempt`.
+- R-CONSENT в rulebook отмечен как внедрённый для Lab/Pilot.
+
+Изменено:
+- `src/compliance/rules/consent-status.ts`
+- `tests/compliance/consent-status.test.ts`
+- `tests/compliance/api-check.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `docs/compliance/rulebook-v1.md`
+
+Контекст для следующих задач:
+- Импорт по-прежнему принимает `pending` в CSV — запись создаётся, но звонок не стартует.
+- Неизвестный `consentStatus` тоже fail-closed через `CONSENT_PENDING_BLOCK`.
+
+### T-130: Разделить окно звонка на будни и выходные
+
+Статус: `done`
+
+Что сделать:
+
+- Считать местный день должника по `timezone`.
+- Будни: 08:00–22:00; суббота и воскресенье: 09:00–20:00.
+- Клиентское окно, если появится позже, не может быть шире этого минимума; в этой задаче достаточно системного минимума.
+
+Где менять:
+
+- `src/compliance/rules/call-window.ts`
+- `tests/compliance/call-window.test.ts`
+
+Критерии готовности:
+
+- Есть тесты на будний 21:30 = allow и воскресный 08:30 = block при той же таймзоне.
+- Reason code по-прежнему `CALL_WINDOW_BLOCK`.
+- В reasonText/UI не писать «по ФЗ-230»: это продуктовая рамка rulebook, legal memo ещё нет.
+- `npm run test -- tests/compliance/call-window.test.ts` проходит.
+
+Результат:
+- Местный weekday по `timezone`: будни 08:00–22:00, Sat/Sun 09:00–20:00.
+- Reason `CALL_WINDOW_BLOCK`, текст без «ФЗ-230».
+
+Изменено:
+- `src/compliance/rules/call-window.ts`
+- `tests/compliance/call-window.test.ts`
+- `docs/compliance/rulebook-v1.md`
+
+Контекст для следующих задач:
+- Праздники (`T-131`) должны использовать то же weekend-окно, не дублировать часы.
+- `parseTimeWindow` сохранён для будущего client-narrowing.
+
+### T-131: Добавить нерабочие праздники в окно звонка
+
+Статус: `done`
+
+Что сделать:
+
+- Зафиксировать продуктовый календарь нерабочих дней РФ на 2026–2027 отдельным модулем.
+- В эти дни применять окно выходных 09:00–20:00.
+- В комментарии модуля указать, что список — продуктовая рамка, не legal sign-off.
+
+Где менять:
+
+- `src/compliance/rules/russian-holidays.ts`
+- `src/compliance/rules/call-window.ts`
+- `tests/compliance/call-window.test.ts`
+
+Критерии готовности:
+
+- Известный праздничный день в 10:00 = allow, в 08:30 = block.
+- Календарь не зашит внутрь `evaluate` без возможности тестировать дату.
+- Модуль явно помечает список как продуктовую рамку, не legal sign-off.
+- `npm run test -- tests/compliance/call-window.test.ts` проходит.
+
+Результат:
+- Календарь 2026–2027 в `russian-holidays.ts` (продуктовая рамка, не legal sign-off).
+- Праздник использует то же окно, что выходные (09:00–20:00).
+- Дата проверяется через `localCalendarDate` / `isProductNonWorkingHoliday`, не внутри литералов `evaluate`.
+
+Изменено:
+- `src/compliance/rules/russian-holidays.ts`
+- `src/compliance/rules/call-window.ts`
+- `tests/compliance/call-window.test.ts`
+- `tests/compliance/russian-holidays.test.ts`
+- `docs/compliance/rulebook-v1.md`
+
+Контекст для следующих задач:
+- Переносы выходных в календаре не кодировались; это не official production calendar.
+- Frequency (`T-132+`) не зависит от праздников.
+
+### T-132: Создать схему FrequencyLedger
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить таблицу счётчика взаимодействий: `tenantId`, `creditorKey`, `obligationId`, `bucket` (`day`/`week`/`month`), `periodStart`, `count`.
+- Уникальность `(tenantId, creditorKey, obligationId, bucket, periodStart)`.
+- Пока `creditorKey` = `tenantId`, `obligationId` = `DebtorRecord.externalId`, если отдельного creditor ещё нет.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/frequency-ledger/index.ts`
+
+Критерии готовности:
+
+- Prisma-модель и миграция существуют.
+- Доменный тип покрывает поля и buckets.
+- Повторная миграция на чистой БД применяется.
+- Лимит 1/2/8 в коде — продуктовый cap; live как «норма закона» не включать без legal memo (`T-138`/`T-139`).
+
+Результат:
+- Модель `FrequencyLedger` + enum `FrequencyBucket`.
+- `PRODUCT_FREQUENCY_CAPS` = 1/2/8 как продуктовый cap.
+- Миграция `0016_init_frequency_ledger` с `IF NOT EXISTS`.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0016_init_frequency_ledger/migration.sql`
+- `src/domain/frequency-ledger/index.ts`
+- `tests/domain-frequency-ledger.test.ts`
+- `docs/domain-model.md`
+
+Контекст для следующих задач:
+- Lab mapping: `creditorKey` = `tenantId`, `obligationId` = `externalId`.
+- Инкремент и идемпотентность `callAttemptId` — `T-133`.
+- Не включать caps в UI как «норму закона».
+
+### T-133: Сервис инкремента frequency ledger
+
+Статус: `done`
+
+Что сделать:
+
+- Идемпотентно учитывать попытку один раз по `callAttemptId`.
+- Консервативное продуктовое правило из rulebook: инкремент с статуса `ringing` и далее; `queued`/`initiated`/`blocked` не считать.
+- Инкрементировать day/week/month buckets.
+
+Где менять:
+
+- `src/domain/frequency-ledger/index.ts`
+- `tests/compliance/frequency-ledger.test.ts`
+
+Критерии готовности:
+
+- Повторный вызов с тем же `callAttemptId` не увеличивает `count`.
+- `queued` не инкрементирует; `ringing` инкрементирует.
+- `npm run test -- tests/compliance/frequency-ledger.test.ts` проходит.
+
+Результат:
+- `recordFrequencyAttempt` считает `ringing`+; `queued`/`initiated`/`blocked` ignored.
+- Идемпотентность по `callAttemptId`.
+- In-memory repository для тестов; periodStart в UTC (day/ISO-week Monday/month).
+
+Изменено:
+- `src/domain/frequency-ledger/index.ts`
+- `tests/compliance/frequency-ledger.test.ts`
+
+Контекст для следующих задач:
+- Sandbox ещё не вызывает инкремент — это `T-135` (не считать sandbox).
+- `T-134` читает `getCount` до старта звонка.
+- Period boundaries — UTC, не timezone должника.
+
+### T-134: Добавить правило FREQUENCY_LIMIT_BLOCK
+
+Статус: `done`
+
+Что сделать:
+
+- Лимиты system-lock: 1 / сутки, 2 / неделя, 8 / месяц.
+- Правило читает ledger и блокирует превышение **до** старта звонка.
+- Подключить в `ComplianceEngine` рядом с существующими правилами.
+
+Где менять:
+
+- `src/compliance/rules/frequency-limit.ts`
+- `src/compliance/engine/compliance-engine.ts`
+- `src/routes/calls.ts`
+- `src/routes/compliance.ts`
+- `tests/compliance/frequency-limit.test.ts`
+
+Критерии готовности:
+
+- При `day count >= 1` новая проверка даёт `FREQUENCY_LIMIT_BLOCK`.
+- Decision log сохраняет код.
+- `npm run test -- tests/compliance` проходит.
+
+Результат:
+- `FrequencyLimitRule` читает ledger до старта; caps 1/2/8.
+- Подключено в sandbox/compliance engine.
+- Reason без «ФЗ-230». Default in-memory ledger пустой, поэтому существующие sandbox-тесты не блокируются.
+
+Изменено:
+- `src/compliance/rules/frequency-limit.ts`
+- `src/compliance/rules/decision.ts`
+- `src/routes/calls.ts`
+- `src/routes/compliance.ts`
+- `tests/compliance/frequency-limit.test.ts`
+- `tests/compliance/api-check.test.ts`
+- `docs/compliance/rulebook-v1.md`
+
+Контекст для следующих задач:
+- Инкремент на sandbox ещё не вызывается — `T-135` должен добавить production-only increment, не sandbox.
+- `obligationId` = `externalId` или id записи.
+
+### T-135: Исключить sandbox из frequency ledger
+
+Статус: `done`
+
+Что сделать:
+
+- Инкремент ledger только если `TelephonyConnection.mode=production`.
+- Sandbox API не меняет счётчик 1/2/8.
+
+Где менять:
+
+- `src/domain/frequency-ledger/index.ts`
+- `src/routes/calls.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `tests/compliance/frequency-ledger.test.ts`
+
+Критерии готовности:
+
+- Успешный sandbox-звонок не создаёт/не увеличивает FrequencyLedger.
+- Тест на production-mode increment есть (можно на fake connection без сети).
+- `npm run test -- tests/calls/sandbox-call.api.test.ts tests/compliance/frequency-ledger.test.ts` проходит.
+
+Результат:
+- `shouldRecordFrequencyAttempt`: только `channel=live` + `mode=production`.
+- Sandbox route всегда `channel=sandbox` — ledger не трогает, даже если кампания на production connection.
+
+Изменено:
+- `src/domain/frequency-ledger/index.ts`
+- `src/routes/calls.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `tests/compliance/frequency-ledger.test.ts`
+
+Контекст для следующих задач:
+- Live-маршрут должен вызывать `recordFrequencyAttempt` с `channel: 'live'`.
+- Readiness production ≠ sandbox increment.
+
+### T-136: Создать схему списка исключений
+
+Статус: `done`
+
+Что сделать:
+
+- Tenant-scoped `SuppressionEntry`: `phone` и/или `externalId`, причина, `createdAt`.
+- Уникальность непустого телефона и непустого `externalId` в рамках tenant.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/suppression-entry/index.ts`
+
+Критерии готовности:
+
+- Модель и миграция существуют.
+- Доменный тип описывает поля.
+- Нет секретов и сырого vendor payload.
+
+Результат:
+- `SuppressionEntry` с partial unique indexes на непустые `phone`/`externalId`.
+- Доменный guard: нужна хотя бы одна идентичность.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0017_init_suppression_entry/migration.sql`
+- `src/domain/suppression-entry/index.ts`
+- `tests/domain-suppression-entry.test.ts`
+
+Контекст для следующих задач:
+- Правило `T-137` читает tenant-scoped lookup по phone или externalId.
+- API управления списком в этой задаче нет.
+
+### T-137: Добавить правило SUPPRESSION_BLOCK
+
+Статус: `done`
+
+Что сделать:
+
+- Блокировать допуск, если телефон или `externalId` записи есть в suppression tenant.
+- Подключить в engine и sandbox-start.
+
+Где менять:
+
+- `src/compliance/rules/suppression.ts`
+- `src/compliance/engine/compliance-engine.ts`
+- `src/routes/calls.ts`
+- `tests/compliance/suppression.test.ts`
+
+Критерии готовности:
+
+- Совпадение по телефону и по `externalId` даёт `SUPPRESSION_BLOCK`.
+- Отсутствие в списке не блокирует само по себе.
+- `npm run test -- tests/compliance/suppression.test.ts` проходит.
+
+Результат:
+- `SuppressionRule` + in-memory lookup; пустой список = allow.
+- Подключено в default engine sandbox/compliance.
+
+Изменено:
+- `src/compliance/rules/suppression.ts`
+- `src/routes/calls.ts`
+- `src/routes/compliance.ts`
+- `tests/compliance/suppression.test.ts`
+- `tests/compliance/api-check.test.ts`
+
+Контекст для следующих задач:
+- Persist lookup из Prisma — отдельная задача, если появится API списка.
+- `obligationId` используется как `externalId` для сверки.
+
+## P1. Rulebook v1: live-гейты
+
+### T-138: Добавить legalBasisStatus на tenant
+
+Статус: `done`
+
+Что сделать:
+
+- Поле `legalBasisStatus`: `pending` | `confirmed` | `revoked`, по умолчанию `pending`.
+- Не давать campaign manager менять его через API кампаний. В этой задаче достаточно схемы и чтения; запись — только через код/seed/явный admin-путь, если он уже есть.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/tenant/index.ts`
+
+Критерии готовности:
+
+- Новые tenant создаются с `pending`.
+- Поле есть в доменном типе.
+- Миграция применяется.
+
+Результат:
+- Prisma default `pending`; API кампаний поле не пишет.
+- Billing settings не экспортирует и не меняет legal basis.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0018_add_tenant_legal_basis_status/migration.sql`
+- `src/domain/tenant/index.ts`
+- `tests/domain-tenant.test.ts`
+
+Контекст для следующих задач:
+- `T-139` должен блокировать production-ready при не-`confirmed`.
+- Менять статус может только будущий admin/seed, не collection_manager.
+
+### T-139: Блокировать production-ready без legalBasis=confirmed
+
+Статус: `done`
+
+Что сделать:
+
+- В `readiness-summary` добавлять blocking reason, если у tenant не `legalBasisStatus=confirmed` и кампания претендует на production-телефонию.
+- Не менять sandbox-ready: sandbox соединение не требует legal basis.
+
+Где менять:
+
+- `src/routes/campaigns.ts`
+- `tests/campaigns.create.test.ts`
+- `docs/campaign-readiness-api.md`
+
+Критерии готовности:
+
+- Production connection + `pending` legal basis → `blocked` с понятным `reasonCode`.
+- Только sandbox connection → legal basis не блокирует.
+- `npm run test -- tests/campaigns.create.test.ts` проходит.
+
+Результат:
+- Production + не-`confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`.
+- Sandbox connection: legal reason не добавляется (может остаться `PRODUCTION_TELEPHONY_MISSING`).
+- Отсутствие поля трактуется как `pending`.
+
+Изменено:
+- `src/campaigns/readiness.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `docs/campaign-readiness-api.md`
+- `docs/compliance/rulebook-v1.md`
+
+Контекст для следующих задач:
+- Live adapter (`T-140+`) не обходит этот gate.
+- Тестовые фикстуры sandbox с production connection ставят `legalBasisStatus=confirmed`.
+
+### T-140: Расширить adapter контрактом capabilities probe
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить в `VoiceProviderAdapter` метод `probeCapabilities()`: `marking`, `recording`, `handoff`, `checkedAt`.
+- Sandbox возвращает все `false` либо явный sandbox-pass, но не притворяется live-маркировкой.
+
+Где менять:
+
+- `src/telephony/voice-provider/adapter.ts`
+- `src/telephony/sandbox-provider/index.ts`
+- `tests/telephony/voice-provider.test.ts`
+- `docs/integrations/voice-provider-adapter.md`
+
+Критерии готовности:
+
+- Контракт и sandbox реализованы.
+- Доменные типы без vendor-полей.
+- `npm run test -- tests/telephony` проходит.
+
+Результат:
+- `probeCapabilities()` на адаптере.
+- Sandbox: `marking/recording/handoff=false`, `sandboxPass=true`.
+
+Изменено:
+- `src/telephony/voice-provider/adapter.ts`
+- `src/telephony/sandbox-provider/index.ts`
+- `tests/telephony/sandbox-provider.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `docs/integrations/voice-provider-adapter.md`
+
+Контекст для следующих задач:
+- `T-141` должен требовать marking/recording/handoff только для production; `sandboxPass` не считать live-маркировкой.
+
+### T-141: Требовать marking/recording/handoff в readiness для production
+
+Статус: `todo`
+
+Что сделать:
+
+- Для `TelephonyConnection.mode=production` readiness блокируется, пока probe не подтвердил marking, recording и handoff.
+- Сохранять время последней проверки.
+
+Где менять:
+
+- `src/routes/campaigns.ts`
+- `src/domain/telephony-connection/index.ts`
+- `tests/campaigns.create.test.ts`
+- `docs/campaign-readiness-api.md`
+
+Критерии готовности:
+
+- Production без probe → `blocked`.
+- Sandbox не требует live marking.
+- `npm run test -- tests/campaigns.create.test.ts` проходит.
+
+### T-142: Запретить смену провайдера у running-кампании
+
+Статус: `todo`
+
+Что сделать:
+
+- Если у кампании появится поле соединения — запретить менять его в `running` / `auto_paused`.
+- Если поля ещё нет: зафиксировать в API telephony, что `provider` у используемого соединения нельзя сменить, пока есть `running` кампании tenant на этом соединении.
+
+Где менять:
+
+- `src/routes/telephony.ts`
+- `src/routes/campaigns.ts`
+- `tests/telephony.routes.test.ts`
+
+Критерии готовности:
+
+- Попытка сменить provider на активном контуре с running-кампанией возвращает ошибку, не 200.
+- Audit не пишет успешную смену.
+- `npm run test -- tests/telephony.routes.test.ts` проходит.
+
+### T-143: Зафиксировать locked disclosure в ScriptVersion
+
+Статус: `todo`
+
+Что сделать:
+
+- В `content` (или отдельных полях) обязать `agentName`, `agentId`, `creditorName`.
+- Создание версии без них — валидационная ошибка.
+- Не проверять «человечность» формулировок LLM в этой задаче.
+
+Где менять:
+
+- `src/routes/scripts.ts`
+- `src/domain/script-version/index.ts`
+- `tests/scripts.api.test.ts`
+
+Критерии готовности:
+
+- POST без трёх полей → `VALIDATION_ERROR`.
+- POST с полями создаёт версию.
+- `npm run test -- tests/scripts.api.test.ts` проходит.
+
+## P1. ADR 0003: live voice provider
+
+Источник: `docs/decisions/0003-live-voice-provider.md`. Боевой HTTP к Exolve не делать, пока нет DPA/секретов (`T-149`).
+
+### T-144: Добавить providerResolver
+
+Статус: `todo`
+
+Что сделать:
+
+- Выбирать адаптер по `TelephonyConnection.provider`: `sandbox` → sandbox, иное неизвестное → ошибка, не fallback на live.
+- Подключить в sandbox-call так, чтобы явный sandbox provider продолжал работать.
+
+Где менять:
+
+- `src/telephony/voice-provider/resolver.ts`
+- `src/routes/calls.ts`
+- `src/server/app.ts`
+- `tests/telephony/provider-resolver.test.ts`
+
+Критерии готовности:
+
+- Неизвестный provider не стартует звонок.
+- `sandbox` резолвится в `SandboxVoiceProvider`.
+- `npm run test -- tests/telephony/provider-resolver.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+### T-145: Скелет адаптера Exolve без сети
+
+Статус: `todo`
+
+Что сделать:
+
+- Модуль `src/telephony/exolve/` реализует `VoiceProviderAdapter`.
+- Без реальных HTTP-вызовов: детерминированные ошибки «not configured», если нет env, либо test double.
+- `mapVendorStatus` для типичных статусов Exolve, без vendor-полей в домене.
+
+Где менять:
+
+- `src/telephony/exolve/*`
+- `tests/telephony/exolve-adapter.test.ts`
+- `.env.example` (пустые `EXOLVE_*`)
+
+Критерии готовности:
+
+- Адаптер компилируется и покрыт тестом маппинга статусов.
+- Секретов в репозитории нет.
+- `npm run test -- tests/telephony/exolve-adapter.test.ts` проходит.
+
+### T-146: Не стартовать production-звонок через sandbox API
+
+Статус: `todo`
+
+Что сделать:
+
+- `POST .../calls/sandbox` работает только с `mode=sandbox`.
+- Если единственное/выбранное соединение `production` — 409/422 с явным кодом, без `CallAttempt`.
+
+Где менять:
+
+- `src/routes/calls.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Sandbox + sandbox connection → как сейчас, плюс compliance.
+- Production connection → звонок не стартует этим маршрутом.
+- `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
+
+### T-147: Описать контракт live-call API без реализации вендора
+
+Статус: `todo`
+
+Что сделать:
+
+- Route-level документ будущего `POST .../calls/live`: compliance gate, legalBasis, production connection, probe, adapter.
+- Явно написать, что вендорский робот не используется.
+
+Где менять:
+
+- `docs/calls-api.md`
+- `docs/integrations/voice-provider-adapter.md`
+
+Критерии готовности:
+
+- В документации есть отличия sandbox vs live.
+- Есть список fail-closed условий из rulebook/ADR 0003.
+- Код live-маршрута в этой задаче не пишется.
+
+### T-148: Feature-flag LIVE_CALLS_ENABLED
+
+Статус: `todo`
+
+Что сделать:
+
+- Env `LIVE_CALLS_ENABLED` по умолчанию `false`.
+- Даже при появлении live-маршрута позже флаг запрещает старт, если `false`.
+- Сейчас достаточно валидации env и проверки в одном месте, которое будут использовать следующие задачи.
+
+Где менять:
+
+- `src/config/env.ts`
+- `.env.example`
+- `tests/config/env.test.ts` или существующий конфиг-тест, если есть
+
+Критерии готовности:
+
+- По умолчанию live выключен.
+- Невалидное значение env не стартует процесс без ошибки валидации Zod.
+- Секретов в примере нет.
+
+### T-149: HTTP-интеграция Exolve start/status/hangup
+
+Статус: `blocked`
+
+Что сделать:
+
+- Реальные вызовы Exolve Voice API за адаптером.
+- Идемпотентность webhook/status.
+- Нужны DPA, маркировка, recording, transfer, секреты вне git.
+
+Где менять:
+
+- `src/telephony/exolve/*`
+- `tests/telephony/exolve-adapter.test.ts`
+
+Критерии готовности:
+
+- Контракт adapter соблюдён на тестовом номере.
+- ПДн не логируются целиком.
+- Задача не берётся, пока нет доступа/договора.
+
+Блокер: коммерция/DPA и тестовый аккаунт Exolve (ADR 0003).
+
+## P1. ADR 0004: ASR, TTS, LLM
+
+Источник: `docs/decisions/0004-speech-llm-stack.md`. Иностранные cloud-модели не подключать.
+
+### T-150: Контракт ASR adapter
+
+Статус: `todo`
+
+Что сделать:
+
+- Интерфейс streaming/partials/confidence/timestamps без привязки к Яндексу в домене.
+- Fake-реализация для тестов.
+
+Где менять:
+
+- `src/speech/asr/adapter.ts`
+- `src/speech/asr/fake.ts`
+- `tests/speech/asr-adapter.test.ts`
+- `docs/integrations/speech-adapters.md`
+
+Критерии готовности:
+
+- Fake возвращает детерминированный текст и confidence.
+- Нет сетевых вызовов в unit-тестах.
+- `npm run test -- tests/speech/asr-adapter.test.ts` проходит.
+
+### T-151: Контракт TTS adapter
+
+Статус: `todo`
+
+Что сделать:
+
+- Интерфейс синтеза с `voiceId` и версией голоса.
+- Fake, который не пишет файлы наружу (buffer/stub url).
+
+Где менять:
+
+- `src/speech/tts/adapter.ts`
+- `src/speech/tts/fake.ts`
+- `tests/speech/tts-adapter.test.ts`
+- `docs/integrations/speech-adapters.md`
+
+Критерии готовности:
+
+- Контракт и fake покрыты тестом.
+- Vendor-поля не протекают в домен.
+- `npm run test -- tests/speech/tts-adapter.test.ts` проходит.
+
+### T-152: Контракт LLM adapter и allowlisted tools
+
+Статус: `todo`
+
+Что сделать:
+
+- Интерфейс `completeTurn` со схемой tools: `set_outcome`, `request_handoff`, `schedule_callback`, `end_call`, `confirm_ptp`.
+- `confirm_ptp` нельзя вызывать, пока контекст не содержит `identityVerified=true`.
+- Fake LLM для тестов.
+
+Где менять:
+
+- `src/dialogue/llm/adapter.ts`
+- `src/dialogue/llm/fake.ts`
+- `src/dialogue/llm/tools.ts`
+- `tests/dialogue/llm-adapter.test.ts`
+
+Критерии готовности:
+
+- Fake не может вернуть `confirm_ptp` без identity gate на уровне типов/рантайм-проверки адаптера.
+- `npm run test -- tests/dialogue/llm-adapter.test.ts` проходит.
+
+### T-153: Схема PromptVersion
+
+Статус: `todo`
+
+Что сделать:
+
+- Tenant/campaign-scoped версия промпта: `version`, `status`, hashes/content, `modelId`, связь с `ScriptVersion` если уместно.
+- Не класть секреты модели в таблицу.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/prompt-version/index.ts`
+
+Критерии готовности:
+
+- Модель и миграция существуют.
+- Уникальность версии в рамках кампании.
+- Доменный тип описан.
+
+### T-154: Описать state machine диалога
+
+Статус: `todo`
+
+Что сделать:
+
+- Документ шагов: identity → disclosure → purpose → ptp_or_decline → confirm → end/handoff.
+- Для каждого шага: разрешённые tools, запрет суммы до identity, locked disclosure.
+
+Где менять:
+
+- `docs/dialogue/state-machine-v1.md`
+
+Критерии готовности:
+
+- Есть перечень состояний и переходов.
+- Явно указано, что LLM не стартует звонок и не меняет compliance decision.
+- Документ ссылается на rulebook R-IDENTITY / R-AI-DISCLOSURE / R-LLM-NOT-JUDGE.
+
+### T-155: Скелет DialogueStateMachine без вендора
+
+Статус: `todo`
+
+Что сделать:
+
+- Чистые переходы состояния по событиям (`user_said`, `tool_result`, `handoff_requested`).
+- На шаге identity контекст для LLM не содержит `debtAmount`.
+- Тесты переходов без ASR/TTS.
+
+Где менять:
+
+- `src/dialogue/state-machine.ts`
+- `tests/dialogue/state-machine.test.ts`
+
+Критерии готовности:
+
+- Нельзя перейти к раскрытию суммы, пока identity не `verified`.
+- Запрос человека переводит в `handoff`.
+- `npm run test -- tests/dialogue/state-machine.test.ts` проходит.
+
+### T-156: Скелет адаптера Yandex SpeechKit/GPT без сети
+
+Статус: `todo`
+
+Что сделать:
+
+- Модули `src/speech/yandex/` и `src/dialogue/llm/yandexgpt.ts` с «not configured» без HTTP, по аналогии с Exolve skeleton.
+- Env-ключи только в `.env.example`.
+- Не читать `process.env` из адаптера, если уже есть `T-176`: ключ приходит из resolver.
+
+Где менять:
+
+- `src/speech/yandex/*`
+- `src/dialogue/llm/yandexgpt.ts`
+- `.env.example`
+- `tests/speech/yandex-skeleton.test.ts`
+
+Критерии готовности:
+
+- Без ключей адаптер не ходит в сеть и возвращает контролируемую ошибку.
+- Нет иностранных SDK.
+- `npm run test -- tests/speech/yandex-skeleton.test.ts` проходит.
+
+### T-157: HTTP SpeechKit + YandexGPT
+
+Статус: `blocked`
+
+Что сделать:
+
+- Боевые streaming ASR/TTS и completeTurn к Yandex.
+- Нужны DPA, ключи, замер WER/latency на корпусе.
+
+Где менять:
+
+- `src/speech/yandex/*`
+- `src/dialogue/llm/yandexgpt.ts`
+
+Критерии готовности:
+
+- ПДн не уходят вне РФ-контура вендора.
+- Адаптеры соответствуют T-150…T-152.
+- Задача не берётся без договора/ключей.
+
+Блокер: DPA и ключи Yandex Cloud (ADR 0004).
+
+## P2. Оркестратор звонков
+
+Нужен для live-обзвона, не для текущего sandbox POST.
+
+### T-158: Добавить docker-compose для PostgreSQL и Redis
+
+Статус: `todo`
+
+Что сделать:
+
+- `docker-compose.yml`: PostgreSQL 16 и Redis.
+- Обновить README локального запуска, чтобы `docker compose up -d` из ADR 0001 стал правдой.
+
+Где менять:
+
+- `docker-compose.yml`
+- `README.md`
+- `.env.example`
+
+Критерии готовности:
+
+- Compose поднимает PG на `DATABASE_URL` из примера.
+- Redis доступен локально без секретов в git.
+- Документация запуска совпадает с файлами.
+
+### T-159: Подключить BullMQ worker skeleton
+
+Статус: `todo`
+
+Что сделать:
+
+- Зависимости Redis/BullMQ.
+- Worker, который пока только health/ping и не звонит.
+- Не ломать `npm run test` без Redis: в unit-тестах не требовать живой Redis, либо skip по env.
+
+Где менять:
+
+- `package.json`
+- `src/jobs/queue.ts`
+- `src/jobs/worker.ts`
+- `tests/jobs/queue.test.ts`
+
+Критерии готовности:
+
+- Очередь создаётся в коде.
+- Тесты не ходят в боевую телефонию.
+- `npm run typecheck` проходит.
+
+### T-160: Ставить sandbox-звонок в очередь только по флагу
+
+Статус: `todo`
+
+Что сделать:
+
+- Опционально enqueue sandbox start, по умолчанию оставить синхронный путь.
+- Если кампания `auto_paused`/`completed`/`archived` — job не стартует звонок.
+
+Где менять:
+
+- `src/jobs/*`
+- `src/routes/calls.ts`
+- `src/domain/campaign-auto-pause/index.ts`
+- `tests/jobs/call-jobs.test.ts`
+
+Критерии готовности:
+
+- Автопауза предотвращает выполнение job.
+- Синхронный sandbox без флага не сломан.
+- `npm run test -- tests/jobs/call-jobs.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+## P1. BYOK: ключи ASR, TTS, LLM
+
+Источник: `docs/decisions/0005-byok-speech-llm.md`, `docs/superpowers/specs/2026-08-17-byok-speech-llm-design.md`. UI — `T-181`–`T-183`. Не подключать иностранные cloud-провайдеры.
+
+### T-161: Зафиксировать ADR и спеку BYOK
+
+Статус: `done`
+
+Что сделать:
+
+- Зафиксировать решение: tenant BYOK для ASR/TTS/LLM, allowlist ADR 0004, envelope encryption, fail-closed, без fallback на ключ платформы.
+- Разложить реализацию на задачи 1 SP.
+
+Где менять:
+
+- `docs/decisions/0005-byok-speech-llm.md`
+- `docs/superpowers/specs/2026-08-17-byok-speech-llm-design.md`
+- `TECH_BACKLOG_1SP.md`
+- `DESIGN_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Есть ADR со статусом «принято как направление».
+- Есть спека с моделью, API, resolver и списком 1 SP.
+- Секреты не предлагается хранить в `ProviderCredential` plaintext.
+
+### T-162: Описать домен ProviderCredential
+
+Статус: `todo`
+
+Что сделать:
+
+- Добавить сущности `ProviderCredential` и `CredentialSecret` в доменную модель.
+- Указать unique `(tenantId, capability)`, отсутствие секрета в публичной модели, связи с Tenant.
+
+Где менять:
+
+- `docs/domain-model.md`
+
+Критерии готовности:
+
+- Обе сущности описаны с полями из спеки BYOK.
+- Явно написано, что ciphertext не отдаётся API.
+
+### T-163: Схема Prisma ProviderCredential и CredentialSecret
+
+Статус: `todo`
+
+Что сделать:
+
+- Enum-ы capability/provider/mode/status/probeResult по спеке.
+- Модели, unique `(tenantId, capability)`, 1:1 secret, cascade delete.
+- Миграция. Не класть apiKey в `ProviderCredential`.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/provider-credential/index.ts`
+
+Критерии готовности:
+
+- Миграция применяется на пустую БД.
+- Доменный тип без поля секрета.
+- `npm run typecheck` проходит.
+
+### T-164: Envelope AES-256-GCM
+
+Статус: `todo`
+
+Что сделать:
+
+- `encryptSecret` / `decryptSecret` / `secretHintFromKey`.
+- Ключ 32 байта из аргумента функции, не из глобального синглтона в тестах.
+
+Где менять:
+
+- `src/secrets/envelope.ts`
+- `tests/secrets/envelope.test.ts`
+
+Критерии готовности:
+
+- Roundtrip совпадает.
+- Чужой nonce/ключ/битый tag бросает ошибку, не возвращает мусор.
+- Hint для ключа длиннее 4 символов — последние 4.
+- `npm run test -- tests/secrets/envelope.test.ts` проходит.
+
+### T-165: Env ключа шифрования и platform speech keys
+
+Статус: `todo`
+
+Что сделать:
+
+- `CREDENTIALS_ENCRYPTION_KEY` обязателен в `production` (hex 64).
+- В `.env.example` пустые `YANDEX_SPEECHKIT_API_KEY`, `YANDEXGPT_API_KEY`, `GIGACHAT_API_KEY`, `YANDEX_FOLDER_ID`.
+- В `test` ключ шифрования может иметь fixture, если Zod это явно допускает.
+
+Где менять:
+
+- `src/config/env.ts`
+- `.env.example`
+- `tests/config/env.test.ts`
+
+Критерии готовности:
+
+- Production без encryption key не стартует.
+- В примере нет реальных секретов.
+- `npm run test -- tests/config/env.test.ts` проходит.
+
+### T-166: Allowlist capability × provider
+
+Статус: `todo`
+
+Что сделать:
+
+- Чистая функция: asr/tts только `yandex_speechkit`; llm только `yandexgpt` или `gigachat`.
+- `openai`, `anthropic`, `google`, `deepgram` → not allowed.
+
+Где менять:
+
+- `src/speech/credentials/allowlist.ts`
+- `tests/speech/credentials-allowlist.test.ts`
+
+Критерии готовности:
+
+- Разрешённые пары проходят, иностранные — нет.
+- Нет сетевых вызовов.
+- `npm run test -- tests/speech/credentials-allowlist.test.ts` проходит.
+
+### T-167: Credential secret store
+
+Статус: `todo`
+
+Что сделать:
+
+- put/get/delete ciphertext по `providerCredentialId` с фильтром `tenantId`.
+- get другого tenant возвращает empty, не чужой секрет.
+
+Где менять:
+
+- `src/secrets/credential-store.ts`
+- `tests/secrets/credential-store.test.ts`
+
+Критерии готовности:
+
+- Cross-tenant read не возвращает строку.
+- Delete каскадно безопасен для тестов на fake prisma/in-memory.
+- `npm run test -- tests/secrets/credential-store.test.ts` проходит.
+
+### T-168: Resolver platform vs byok
+
+Статус: `todo`
+
+Что сделать:
+
+- Реализовать `resolveSpeechCredential` по спеке: platform env, byok decrypt, disable/invalid/missing.
+- Decrypt fail → `SPEECH_CREDENTIAL_DECRYPT_FAILED`, без fallback на platform.
+
+Где менять:
+
+- `src/speech/credentials/resolve.ts`
+- `tests/speech/credentials-resolve.test.ts`
+
+Критерии готовности:
+
+- Покрыты platform, byok, disabled, decrypt fail, missing.
+- `npm run test -- tests/speech/credentials-resolve.test.ts` проходит.
+
+### T-169: API создания и списка ProviderCredential
+
+Статус: `todo`
+
+Что сделать:
+
+- `POST` и `GET /tenants/:tenantId/provider-credentials`.
+- POST byok пишет secret store; ответ без `apiKey`.
+- Повтор на ту же capability → `409 CREDENTIAL_ALREADY_EXISTS`.
+- Allowlist до записи.
+
+Где менять:
+
+- `src/routes/provider-credentials.ts`
+- `src/server/app.ts`
+- `tests/provider-credentials.api.test.ts`
+
+Критерии готовности:
+
+- Tenant isolation как у telephony API.
+- GET не содержит ciphertext/apiKey.
+- `npm run test -- tests/provider-credentials.api.test.ts` проходит.
+
+### T-170: API ротации и disable
+
+Статус: `todo`
+
+Что сделать:
+
+- `PATCH /tenants/:tenantId/provider-credentials/:id` — metadata и/или новый `apiKey`.
+- Ротация сбрасывает статус в `pending_probe` и меняет `secretHint`.
+- `POST .../disable` → `disabled`; resolver больше не отдаёт ключ.
+
+Где менять:
+
+- `src/routes/provider-credentials.ts`
+- `tests/provider-credentials.api.test.ts`
+
+Критерии готовности:
+
+- Старый ciphertext недоступен после ротации.
+- Disable даёт ошибку resolve в тесте resolver+store.
+- `npm run test -- tests/provider-credentials.api.test.ts tests/speech/credentials-resolve.test.ts` проходит.
+
+### T-171: Audit trail credentials
+
+Статус: `todo`
+
+Что сделать:
+
+- Писать `provider_credential.created|updated|rotated|disabled`.
+- Metadata: capability, provider, mode, secretHint, status. Без ключа и ciphertext.
+
+Где менять:
+
+- `src/routes/provider-credentials.ts`
+- `tests/provider-credentials.api.test.ts`
+
+Критерии готовности:
+
+- Create/rotate/disable оставляют audit.
+- Тест проверяет, что metadata не содержит исходный `apiKey`.
+- `npm run test -- tests/provider-credentials.api.test.ts` проходит.
+
+### T-172: RBAC для credentials API
+
+Статус: `todo`
+
+Что сделать:
+
+- Write: `owner`, `integration_admin`.
+- Read: плюс `collection_manager`.
+- `operator` / `qa_analyst` → 403.
+
+Где менять:
+
+- `src/routes/provider-credentials.ts`
+- `docs/security/rbac.md`
+- `tests/provider-credentials.api.test.ts`
+
+Критерии готовности:
+
+- 401 без роли, 403 чужой роли, 201 у owner.
+- Матрица RBAC обновлена.
+- `npm run test -- tests/provider-credentials.api.test.ts` проходит.
+
+### T-173: Документация Provider Credentials API
+
+Статус: `todo`
+
+Что сделать:
+
+- Route-level документ по образцу `docs/telephony-api.md`.
+- Ссылка в README.
+
+Где менять:
+
+- `docs/provider-credentials-api.md`
+- `README.md`
+
+Критерии готовности:
+
+- Описаны POST/GET/PATCH/disable/probe, ошибки, RBAC, запрет секрета в ответе.
+
+### T-174: Fake probe без сети
+
+Статус: `todo`
+
+Что сделать:
+
+- Порт `SpeechCredentialProbe` и fake: непустой ключ + allowlist → `ok`.
+- Пустой ключ или неизвестный provider → `failed`.
+- HTTP к вендору нет.
+
+Где менять:
+
+- `src/speech/credentials/probe.ts`
+- `src/speech/credentials/fake-probe.ts`
+- `tests/speech/credentials-probe.test.ts`
+
+Критерии готовности:
+
+- Детерминированный ok/failed.
+- `npm run test -- tests/speech/credentials-probe.test.ts` проходит.
+
+### T-175: API probe
+
+Статус: `todo`
+
+Что сделать:
+
+- `POST /tenants/:tenantId/provider-credentials/:id/probe`.
+- Успех → `active` + `lastProbeResult=ok`; провал → `invalid`.
+- Audit `provider_credential.probed`.
+
+Где менять:
+
+- `src/routes/provider-credentials.ts`
+- `docs/provider-credentials-api.md`
+- `tests/provider-credentials.api.test.ts`
+
+Критерии готовности:
+
+- Probe не возвращает ключ.
+- Статус меняется по результату fake probe.
+- `npm run test -- tests/provider-credentials.api.test.ts` проходит.
+
+### T-176: Factory адаптеров через resolver
+
+Статус: `todo`
+
+Что сделать:
+
+- ASR/TTS/LLM factory принимает `ResolvedSpeechCredential`, не читает env напрямую.
+- Если `T-150`–`T-152` ещё не `done`, ограничиться factory + fake adapters.
+- Скелет Yandex (`T-156`) после этой задачи должен идти в resolver, а не в `process.env`.
+
+Где менять:
+
+- `src/speech/asr/*`
+- `src/speech/tts/*`
+- `src/dialogue/llm/*`
+- `tests/speech/adapter-factory.test.ts`
+
+Критерии готовности:
+
+- Fake factory работает с резолвленным credential.
+- Нет прямого `process.env.YANDEX_*` в адаптере.
+- `npm run test -- tests/speech/adapter-factory.test.ts` проходит.
+
+### T-177: Fail-closed live без ключей
+
+Статус: `todo`
+
+Что сделать:
+
+- Общий guard `assertSpeechCredentialsReady(tenantId)` для трёх capability.
+- Подключить к будущему live-старту; для sandbox+fake — skip.
+- Пока live-маршрута нет — экспорт guard + unit-тест, плюс вызов-заглушка в одном месте рядом с `LIVE_CALLS_ENABLED` если флаг уже есть.
+
+Где менять:
+
+- `src/speech/credentials/assert-ready.ts`
+- `src/routes/calls.ts` только если live/non-fake путь уже существует
+- `tests/speech/assert-speech-ready.test.ts`
+
+Критерии готовности:
+
+- Нет ключей → ошибка `SPEECH_CREDENTIAL_MISSING`, CallAttempt не создаётся на non-fake пути.
+- Fake sandbox не сломан.
+- `npm run test -- tests/speech/assert-speech-ready.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+### T-178: Readiness check речи и модели
+
+Статус: `todo`
+
+Что сделать:
+
+- В `readiness-summary` добавить check `speech_credentials` по спеке.
+- Sandbox/fake: ok. Production-ready: active BYOK или platform env.
+
+Где менять:
+
+- `src/routes/campaigns.ts` (readiness)
+- `docs/campaign-readiness-api.md`
+- `tests/campaigns.create.test.ts` или существующий readiness-тест
+
+Критерии готовности:
+
+- Документ и API согласованы.
+- Тест на blocked без ключей в production-контуре.
+- `npm run test` затронутого файла проходит.
+
+### T-179: UsageEvent.credentialMode и speech units
+
+Статус: `todo`
+
+Что сделать:
+
+- Enum/поле `credentialMode`: `platform` `byok` `fake`.
+- Типы событий `asr_units`, `tts_units`, `llm_units`.
+- Существующие sandbox события → `fake`, тесты sandbox не ломаются.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/usage-event/index.ts`
+- `tests/usage.api.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Миграция совместима с текущими rows (default `fake`).
+- `npm run test -- tests/usage.api.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+### T-180: Billing mapper исключает BYOK speech
+
+Статус: `todo`
+
+Что сделать:
+
+- Mapper не включает `asr_units`/`tts_units`/`llm_units` с `credentialMode=byok` в platform invoice.
+- Platform mode speech единицы учитываются отдельно от connected minutes.
+- Документировать в billing model v0/v1 заметке.
+
+Где менять:
+
+- `src/domain/billing/index.ts`
+- `docs/billing/billing-model-v0.md`
+- `tests/billing/*.test.ts` или существующий billing-тест
+
+Критерии готовности:
+
+- BYOK speech не увеличивает platform sum.
+- `platform` speech суммируется.
+- Тест на оба режима проходит.
+
+## P1. BYOK UI (бывшие D-014–D-016)
+
+Канон текстов: `PRODUCT_LANGUAGE.md`, `skills/russian-product-copy`. В кабинете не писать ASR/TTS/LLM/BYOK.
+
+### T-181: Словарь «Речь и модель»
+
+Статус: `todo`
+
+Что сделать:
+
+- Добавить пользовательские термины: речь и модель, свой ключ, ключ платформы, распознавание речи, голос, модель диалога, проверить подключение.
+- Запретить в кабинете BYOK, ASR, TTS, LLM, API key как заголовок карточки.
+
+Где менять:
+
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- Таблица покрывает три карточки и статусы.
+- Внутренние коды (`ProviderCredential`, `SPEECH_CREDENTIAL_MISSING`) не предлагаются как копирайт кабинета.
+
+### T-182: Карточки «Речь и модель» в интеграциях
+
+Статус: `todo`
+
+Что сделать:
+
+- В `prototype.html` добавить блок из трёх карточек со статусами из спеки BYOK.
+- Модалка: поставщик, ключ (`password`), каталог для Yandex, «Сохранить», «Проверить подключение».
+- После сохранения только «ключ ···XXXX». Форму не показывать менеджеру кампании.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-campaign-views.test.ts` при необходимости
+
+Критерии готовности:
+
+- Есть состояния: не настроено / свой ключ / ключ платформы / ошибка подключения.
+- В видимом тексте нет BYOK/ASR/TTS/LLM.
+- `node --check` для скрипта прототипа проходит.
+
+### T-183: Readiness «Речь и модель» без формы ключа
+
+Статус: `todo`
+
+Что сделать:
+
+- На проверке готовности кампании строка «Речь и модель»: готово / не готово.
+- Блокер: «Речь и модель не готовы. Подключите ключи в разделе интеграций.»
+- Форму ключа внутри кампании не дублировать.
+
+Где менять:
+
+- `prototype.html`
+
+Критерии готовности:
+
+- Менеджер видит статус и куда идти.
+- Sandbox без боевых ключей не выглядит как production-ready речь.
+
+## P1. Дыры Lab относительно текущей архитектуры
+
+Пропуски, которые уже мешают честному sandbox/readiness, без live-вендора.
+
+### T-184: Запретить смену активного сценария на running
+
+Статус: `done`
+
+Что сделать:
+
+- `POST` новой `ScriptVersion` со `status=active` (или активация) при `Campaign.status=running` → 409.
+- Новая версия остаётся `draft`; кампания не переключается на лету (R-SCRIPT-VERSION).
+
+Где менять:
+
+- `src/routes/scripts.ts`
+- `tests/scripts.api.test.ts`
+
+Критерии готовности:
+
+- На `running` активный сценарий не меняется.
+- На `draft`/`review` создание версии работает как сейчас.
+- `npm run test -- tests/scripts.api.test.ts` проходит.
+
+Результат:
+- `POST /scripts` при `Campaign.status=running` отвечает 409 `SCRIPT_VERSION_LOCKED`, не создаёт версию и не переводит кампанию в `review`.
+- На `draft`/`review` создание версии работает как раньше.
+
+Изменено:
+- `src/routes/scripts.ts`
+- `tests/scripts.api.test.ts`
+
+Контекст для следующих задач:
+- Отдельного endpoint активации сценария нет: lock стоит на create.
+- `auto_paused` этим lock не закрыт (`T-187`).
+- Смена telephony на running — отдельно в `T-142`/`T-185`.
+
+### T-185: Привязать кампанию к TelephonyConnection
+
+Статус: `done`
+
+Что сделать:
+
+- Поле `Campaign.telephonyConnectionId` (nullable FK, tenant-scoped).
+- Readiness и sandbox используют выбранное соединение, а не «любое production у tenant».
+- Смена на `running` запрещена (согласовать с `T-142`).
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/campaign/index.ts`
+- `src/routes/campaigns.ts`
+- `src/routes/calls.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Чужой tenant connection нельзя привязать.
+- Readiness смотрит на выбранное соединение.
+- `npm run test -- tests/campaigns.create.test.ts tests/calls/sandbox-call.api.test.ts` проходит.
+
+Результат:
+- `Campaign.telephonyConnectionId` nullable FK, `ON DELETE SET NULL`.
+- Create и `PATCH .../telephony-connection` проверяют tenant; чужой connection → 404 `TELEPHONY_CONNECTION_NOT_FOUND`.
+- На `running`/`auto_paused` смена → 409 `TELEPHONY_CONNECTION_LOCKED`.
+- Readiness смотрит только выбранное соединение; sandbox пишет его в `CallAttempt` (тело запроса не перебивает).
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0013_add_campaign_telephony_connection/migration.sql`
+- `src/domain/campaign/index.ts`
+- `src/routes/campaigns.ts`
+- `src/routes/calls.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- `T-142` может опираться на `Campaign.telephonyConnectionId` вместо «любая running кампания tenant».
+- Без выбранного соединения readiness = `PRODUCTION_TELEPHONY_MISSING`.
+- `T-186` должен читать readiness выбранного соединения, не tenant-wide findMany.
+
+### T-186: Sandbox-звонок уважает blocked/stale readiness
+
+Статус: `done`
+
+Что сделать:
+
+- `POST .../calls/sandbox` не создаёт `CallAttempt`, если readiness кампании `blocked` или `stale`.
+- Ответ 409 с кодом `CAMPAIGN_NOT_READY` и reasons из readiness-summary.
+
+Где менять:
+
+- `src/routes/calls.ts`
+- `src/campaigns/readiness.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Stale после смены сценария блокирует sandbox так же, как UI.
+- Успешный текущий happy-path с ready-кампанией сохранён.
+- `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
+
+Результат:
+- Оценка readiness вынесена в `evaluateCampaignReadiness`.
+- Sandbox при `blocked`/`stale` отвечает 409 `CAMPAIGN_NOT_READY` с reasons, без `CallAttempt`.
+- GET readiness-summary использует тот же модуль.
+
+Изменено:
+- `src/campaigns/readiness.ts`
+- `src/routes/calls.ts`
+- `src/routes/campaigns.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- Любая новая проверка готовности должна идти через `evaluateCampaignReadiness`, не копировать правила.
+- Happy-path sandbox в тестах теперь требует ready-фикстуры (должники, active script, выбранный production connection).
+
+### T-187: Safe-resume API после автопаузы
+
+Статус: `done`
+
+Что сделать:
+
+- Отдельный переход `auto_paused` → `review`/`ready` только через endpoint с чеклистом (owner или compliance_officer).
+- Обычный `PATCH .../status` с `running` из `auto_paused` запрещён (сейчас машина пускает только в `review` — закрепить тестом и не открывать one-click `running`).
+- Audit `campaign.safe_resumed` с пунктами чеклиста, без force-call.
+
+Где менять:
+
+- `src/routes/campaigns.ts`
+- `docs/operations/auto-pause.md`
+- `tests/campaigns.create.test.ts`
+- `tests/campaign-auto-pause.test.ts`
+
+Критерии готовности:
+
+- Нет прямого `auto_paused` → `running`.
+- Resume пишет audit.
+- `npm run test -- tests/campaign-auto-pause.test.ts tests/campaigns.create.test.ts` проходит.
+
+Результат:
+- `POST .../safe-resume` (owner, compliance_officer) переводит `auto_paused` → `review`/`ready` только при полном чеклисте.
+- `PATCH .../status` из `auto_paused` закрыт (в т.ч. в `review` и `running`).
+- Audit `campaign.safe_resumed` с checklist и `forceCall: false`.
+- Документ автопаузы синхронизирован: не one-click в `running`.
+
+Изменено:
+- `src/routes/campaigns.ts`
+- `docs/operations/auto-pause.md`
+- `tests/campaigns.create.test.ts`
+
+Контекст для следующих задач:
+- `collection_manager` не может safe-resume.
+- После resume кампания в `review`/`ready`; controlled launch в `running` по-прежнему через status machine `ready` → `running`.
+
+### T-188: scriptVersionId на CallAttempt
+
+Статус: `done`
+
+Что сделать:
+
+- FK `CallAttempt.scriptVersionId` на активную версию кампании в момент старта.
+- Sandbox пишет id; в ответе карточки звонка поле видно.
+- Без активной версии — 409 `SCRIPT_VERSION_MISSING`.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/call-attempt/index.ts`
+- `src/routes/calls.ts`
+- `docs/calls-api.md`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Звонок хранит версию сценария (R-AUDIT).
+- `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
+
+Результат:
+- `CallAttempt.scriptVersionId` nullable FK на `ScriptVersion`.
+- Sandbox берёт активную версию кампании; нет версии → 409 `SCRIPT_VERSION_MISSING`.
+- Карточка звонка отдаёт `attempt.scriptVersionId`.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0014_add_call_attempt_script_version/migration.sql`
+- `src/domain/call-attempt/index.ts`
+- `src/routes/calls.ts`
+- `docs/calls-api.md`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- `findFirst` активного сценария — guard после readiness; readiness по-прежнему смотрит `findMany`.
+
+### T-189: CI typecheck и test
+
+Статус: `done`
+
+Что сделать:
+
+- GitHub Actions: `npm ci`, `npm run typecheck`, `npm run test` на pull_request и push в основную ветку.
+- Без секретов в workflow. PostgreSQL для интеграционных тестов — как в локальных тестах (если тесты бьют в БД, поднять service container; если нет — не добавлять).
+
+Где менять:
+
+- `.github/workflows/ci.yml`
+- `README.md` (бейдж/команда не обязательны, ссылка на CI — да)
+
+Критерии готовности:
+
+- Workflow существует и запускает те же команды, что README.
+- Нет реальных credentials в YAML.
+
+Результат:
+- Workflow `.github/workflows/ci.yml`: Node 20, `npm ci`, `npm run typecheck`, `npm run test` на PR и push в `main`/`master`.
+- PostgreSQL service не добавлен: текущие тесты на in-memory mocks.
+- README ссылается на CI.
+
+Изменено:
+- `.github/workflows/ci.yml`
+- `README.md`
+
+Контекст для следующих задач:
+- `npm run typecheck` (`tsc --noEmit`) сейчас имеет предсуществующие ошибки в `src/routes/campaigns.ts`, `src/server/app.ts` и тестах. CI typecheck будет красным, пока их не починить отдельной задачей.
+
+### T-190: Поля идентификации должника
+
+Статус: `done`
+
+Что сделать:
+
+- В `DebtorRecord` добавить минимальные слоты для identity gate: `displayName` (как в файле клиента) и `agreementRef` (номер/хвост договора), оба опциональны на Lab.
+- CSV contract расширить; без них sandbox жив, live/SM (`T-155`) сможет сверять реплику без `debtAmount`.
+- Не добавлять дату рождения, паспорт, voiceprint.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/domain/debtor-record/index.ts`
+- `docs/data-contracts/debtor-import-csv.md`
+- `src/import/*`
+- `tests/import/debtor-import-parser.test.ts`
+
+Критерии готовности:
+
+- Импорт без новых колонок не ломается.
+- С колонками значения сохраняются tenant-scoped.
+- `npm run test -- tests/import` проходит.
+
+Результат:
+- `DebtorRecord.displayName` и `agreementRef` nullable.
+- CSV без колонок импортируется с `null`; с колонками значения trim, пустые → `null`.
+- Дата рождения / паспорт / voiceprint не добавлялись.
+
+Изменено:
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/0015_add_debtor_identity_fields/migration.sql`
+- `src/domain/debtor-record/index.ts`
+- `src/routes/campaigns.ts`
+- `docs/data-contracts/debtor-import-csv.md`
+- `docs/domain-model.md`
+- `docs/integrations/external-systems.md`
+- `tests/import/*`
+
+Контекст для следующих задач:
+- Identity gate (`T-155`) может читать `displayName`/`agreementRef`; sandbox их не требует.
+- Парсер по-прежнему generic: новые опциональные колонки не нужно добавлять в `mandatoryDebtorImportFields`.
+
+### T-191: Не писать сырой телефон в логи приложения
+
+Статус: `done`
+
+Что сделать:
+
+- Хелпер маскировки (`+7 •••-••-12-34` или last4).
+- Audit/error logs sandbox-звонка и импорта не содержат полный `phone`, если он туда попадает.
+- В БД `DebtorRecord.phone` остаётся полным — это не лог.
+
+Где менять:
+
+- `src/logging/mask.ts`
+- места логирования в `src/routes/calls.ts` / `src/import/*` если есть console/logger payload
+- `tests/logging/mask.test.ts`
+
+Критерии готовности:
+
+- Unit на маскировку.
+- Регрессия: ответ API с телефоном для ролей, которым он нужен, не ломается (маскировка только логов).
+- `npm run test -- tests/logging/mask.test.ts` проходит.
+
+Результат:
+- `maskPhone` / `maskSensitiveFields` маскируют ключи `phone`/`phoneNumber` в audit metadata.
+- Импорт не пишет телефон в логи (logger отсутствует).
+- Sandbox `startCall` по-прежнему получает полный номер; в БД phone полный.
+
+Изменено:
+- `src/logging/mask.ts`
+- `src/routes/calls.ts`
+- `tests/logging/mask.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Контекст для следующих задач:
+- Structured logger (`T-204`) должен пропускать payload через `maskSensitiveFields`.
+- Не маскировать телефон в API-ответах оператора и в `DebtorRecord.phone`.
+
+## P1. Pilot building blocks, которых не было в очереди
+
+### T-192: Контракт object storage + fake
+
+Статус: `todo`
+
+Что сделать:
+
+- Интерфейс put/get recording и transcript (bytes + contentType → url).
+- Fake: `sandbox://` как сейчас в CallResult, без сети.
+- Не выбирать Lockbox/S3 вендора в этой задаче.
+
+Где менять:
+
+- `src/storage/object-store.ts`
+- `src/storage/fake-object-store.ts`
+- `tests/storage/object-store.test.ts`
+- `docs/integrations/object-storage.md`
+
+Критерии готовности:
+
+- Fake детерминирован, tenant prefix в ключе.
+- Нет AWS SDK в зависимостях.
+- `npm run test -- tests/storage/object-store.test.ts` проходит.
+
+### T-193: Live без recording URL → recording_failed
+
+Статус: `todo`
+
+Что сделать:
+
+- Для non-fake answered звонка отсутствие `recordingUrl` или `transcriptUrl` после терминального статуса вызывает автопаузу `recording_failed` (R-RECORDING).
+- Sandbox fake по-прежнему может жить на `sandbox://` URL.
+- Пока live-маршрута нет — guard + unit, вызываемый из того же места, что `T-177`.
+
+Где менять:
+
+- `src/calls/evidence-guard.ts`
+- `src/domain/campaign-auto-pause/index.ts`
+- `tests/calls/evidence-guard.test.ts`
+
+Критерии готовности:
+
+- Нет evidence на live-пути → кампания не продолжает набор.
+- Fake sandbox не автопаузится.
+- `npm run test -- tests/calls/evidence-guard.test.ts tests/campaign-auto-pause.test.ts` проходит.
+
+### T-194: Скелет GigaChat без сети
+
+Статус: `todo`
+
+Что сделать:
+
+- `src/dialogue/llm/gigachat.ts` реализует LLM adapter: без ключа — контролируемая ошибка, без HTTP.
+- Env placeholder `GIGACHAT_API_KEY` (уже в `T-165`, не дублировать секрет).
+
+Где менять:
+
+- `src/dialogue/llm/gigachat.ts`
+- `tests/dialogue/gigachat-skeleton.test.ts`
+
+Критерии готовности:
+
+- Нет иностранных SDK.
+- `npm run test -- tests/dialogue/gigachat-skeleton.test.ts` проходит.
+
+### T-195: Скелет адаптера Mango без сети
+
+Статус: `todo`
+
+Что сделать:
+
+- `src/telephony/mango/` реализует `VoiceProviderAdapter` по образцу Exolve skeleton (`T-145`).
+- `mapVendorStatus`, not configured без HTTP.
+
+Где менять:
+
+- `src/telephony/mango/*`
+- `tests/telephony/mango-adapter.test.ts`
+- `.env.example` пустые `MANGO_*`
+
+Критерии готовности:
+
+- Resolver сможет выбрать `mango` после `T-144`.
+- Секретов в git нет.
+- `npm run test -- tests/telephony/mango-adapter.test.ts` проходит.
+
+### T-196: Handoff destination на tenant
+
+Статус: `todo`
+
+Что сделать:
+
+- Поля tenant или telephony connection: номер/SIP очереди и часы (не шире call-window).
+- Readiness production: нет destination → `HANDOFF_UNAVAILABLE_BLOCK`.
+- Live transfer в этой задаче не вызывается.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/handoff-destination/index.ts`
+- readiness в `src/routes/campaigns.ts`
+- `docs/campaign-readiness-api.md`
+- тесты readiness
+
+Критерии готовности:
+
+- Sandbox без очереди остаётся допустимым.
+- Production-ready без очереди — blocked.
+- Тесты readiness проходят.
+
+### T-197: Golden / red-team фикстуры диалога
+
+Статус: `todo`
+
+Что сделать:
+
+- Каталог YAML/JSON кейсов: третье лицо, просьба оператора, спор, prompt injection, низкая уверенность.
+- Тесты state machine (`T-155`) или отдельный runner читают фикстуры.
+- Если SM ещё нет — фикстуры + skipped/failing harness, не выдумывать runtime.
+
+Где менять:
+
+- `tests/dialogue/golden/*.json`
+- `tests/dialogue/golden-set.test.ts`
+- `docs/dialogue/golden-set.md`
+
+Критерии готовности:
+
+- Минимум 5 кейсов с expected outcome/handoff.
+- Нет ПДн реальных должников.
+- Команда теста документирована.
+
+### T-198: Extractor CallResult из tool-call
+
+Статус: `todo`
+
+Что сделать:
+
+- Чистая функция: allowlisted tool payload → поля `CallResult` (`outcome`, `ptpAmount`, `ptpDate`, `reason`).
+- `confirm_ptp` без `identityVerified` отвергается.
+- Без LLM.
+
+Где менять:
+
+- `src/dialogue/extractor.ts`
+- `tests/dialogue/extractor.test.ts`
+
+Критерии готовности:
+
+- Невалидный JSON не пишет сумму.
+- `npm run test -- tests/dialogue/extractor.test.ts` проходит.
+
+### T-199: XLSX parser импорта
+
+Статус: `todo`
+
+Что сделать:
+
+- Принять `.xlsx` тем же data contract, что CSV.
+- Не выполнять формулы. Пустой лист → понятная ошибка валидации.
+- Лимит размера как у CSV.
+
+Где менять:
+
+- `src/import/debtor-import-parser.ts`
+- `src/routes/campaigns.ts` (если import route там)
+- `tests/import/debtor-import-parser.test.ts`
+- `docs/data-contracts/debtor-import-csv.md`
+
+Критерии готовности:
+
+- Фикстура xlsx парсится в те же поля, что CSV.
+- CSV регрессия зелёная.
+- `npm run test -- tests/import` проходит.
+
+### T-200: Pilot cap на кампании
+
+Статус: `todo`
+
+Что сделать:
+
+- Поле `Campaign.dailyCallCap` (int, nullable).
+- Live/non-fake старт сверх cap → block `PILOT_CAP_REACHED`.
+- Sandbox fake cap не считает, либо считает отдельно — явно выбрать fake не считает.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/campaign/index.ts`
+- `src/routes/calls.ts`
+- `tests/calls/sandbox-call.api.test.ts` или unit cap
+
+Критерии готовности:
+
+- Без cap sandbox не ломается.
+- С cap non-fake путь блокируется (unit, если live нет).
+- Тест проходит.
+
+### T-201: identityVerified на CallAttempt
+
+Статус: `todo`
+
+Что сделать:
+
+- Поле `identityVerifiedAt` / boolean на попытке.
+- По умолчанию false. Ставит только state machine / QA, не LLM напрямую.
+- Карточка звонка отдаёт флаг.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/call-attempt/index.ts`
+- `src/routes/calls.ts`
+- `docs/calls-api.md`
+- `tests/calls/sandbox-call.api.test.ts`
+
+Критерии готовности:
+
+- Sandbox оставляет false, пока нет SM.
+- `npm run test -- tests/calls/sandbox-call.api.test.ts` проходит.
+
+### T-202: Webhook inbox идемпотентности
+
+Статус: `todo`
+
+Что сделать:
+
+- Таблица `(tenantId, sourceSystem, eventId)` unique.
+- Повтор события не создаёт второй UsageEvent/CallAttempt update.
+- Без реального Exolve HTTP.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/db/migrations/*`
+- `src/integrations/webhook-inbox.ts`
+- `tests/integrations/webhook-inbox.test.ts`
+
+Критерии готовности:
+
+- Дубль eventId — no-op с тем же результатом.
+- Cross-tenant тот же eventId изолирован.
+- `npm run test -- tests/integrations/webhook-inbox.test.ts` проходит.
+
+### T-203: Retention job stub
+
+Статус: `blocked`
+
+Что сделать:
+
+- Не удалять evidence автоматически.
+- Документ политики: пилот не purge-ит; job появится после legal memo (R-RETENTION).
+- Код job не включать в prod scheduler.
+
+Где менять:
+
+- `docs/operations/retention.md`
+
+Критерии готовности:
+
+- Документ ссылается на rulebook R-RETENTION и конфликт 152‑ФЗ vs 1,5 года.
+- Нет cron, который стирает CallResult.
+
+Блокер: legal memo по сроку хранения.
+
+### T-204: Structured logger без PII-полей по умолчанию
+
+Статус: `todo`
+
+Что сделать:
+
+- Обёртка лога с `requestId`, `tenantId`, `campaignId`, без phone/debtAmount по умолчанию.
+- Подключить в Fastify logger config.
+- Не тащить ELK/Grafana в этой задаче.
+
+Где менять:
+
+- `src/logging/logger.ts`
+- `src/server/app.ts`
+- `tests/logging/logger.test.ts`
+
+Критерии готовности:
+
+- Сериализация unknown error не вываливает `DebtorRecord` целиком.
+- `npm run test -- tests/logging/logger.test.ts` проходит.
+
+## P1. UX-волна кабинета (аудит 17.08.2026)
+
+Источник: `docs/product/2026-08-17-ux-audit-cabinet.md`. Improve existing `prototype.html`, не новый кабинет и не параллельный план. Не дублировать закрытые UX `T-065`–`T-072`, `T-127`, `T-128`. Identity-статус в карточке звонка не рисовать до `T-201`. Live без legal memo не обещать.
+
+Порядок волны: `T-205` → `T-228`. Lab `T-129+` не сдвигать.
+
+### T-205: Колонка риска и CTA «Открыть причину» на Главной
+
+Статус: `todo`
+
+Что сделать:
+
+- В таблице «Последние кампании» на `#home` колонка риска/причины сразу справа от статуса.
+- У строки с `автопауза` главный CTA — «Открыть причину» (`data-open-campaign="launch"`), не «Перенастроить» в настройки.
+- Числа «3 084» / «1 172» не показывать как факт: либо не выводить, либо явная метка «демо».
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-home-risk.test.ts`
+- `PRODUCT_LANGUAGE.md` (если фиксируется термин «Открыть причину»)
+
+Критерии готовности:
+
+- В HTML `#home` у автопаузы нет кнопки «Перенастроить»; есть «Открыть причину».
+- В таблице главной нет голых KPI без метки «демо», либо колонок диалогов/обещаний нет.
+- `npm run test -- tests/prototype-home-risk.test.ts` проходит.
+
+### T-206: Колонка риска и CTA «Открыть причину» в списке кампаний
+
+Статус: `todo`
+
+Что сделать:
+
+- На `#campaigns` колонка риска/причины рядом со статусом; фильтр статусов включает «Автопауза», не только «Работает / Черновик».
+- У кампании в автопаузе главный CTA — «Открыть причину» → вкладка «Запуск».
+- Метрики над таблицей (2 работают / 1 очередь операторов / 12 завершены) не выдавать за живые, если нет API: метка «демо» или убрать.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-campaigns-list.test.ts`
+
+Критерии готовности:
+
+- В `#campaigns` у автопаузы CTA ведёт на `launch`, не на `settings`.
+- В селекте статусов есть автопауза.
+- `npm run test -- tests/prototype-campaigns-list.test.ts` проходит.
+
+### T-207: Шапка автопаузы ведёт на «Запуск», не в настройки
+
+Статус: `todo`
+
+Что сделать:
+
+- В `.campaign-top` при статусе `auto_paused` главный CTA — «Открыть причину» / «Возобновить после проверки» → вкладка «Запуск» с баннером safe-resume.
+- Кнопка «Перенастроить» (`data-camp-tab-link="settings"`) не главный CTA в автопаузе: скрыть или оставить вторичной.
+- Не менять чеклист safe-resume.
+
+Где менять:
+
+- `prototype.html` (`setCampaignState`, `.head-actions`)
+- `tests/prototype-campaign-header.test.ts`
+
+Критерии готовности:
+
+- При `auto_paused` в шапке нет единственной заметной кнопки «Перенастроить».
+- Клик главного CTA открывает `data-camp-view="launch"`.
+- `npm run test -- tests/prototype-campaign-header.test.ts` проходит.
+
+### T-208: Глобальный экран «Очередь проверок» с таблицей и drawer
+
+Статус: `todo`
+
+Что сделать:
+
+- На `#reviewQueue` показать существующие фильтры, метрики, таблицу `#reviewQueueBody` и `reviewDrawer`; не собирать второй UI.
+- Вкладка кампании «Проверка» остаётся той же таблицей, отфильтрованной по `campaignId`.
+- Drill-down отчёта `showScreen('reviewQueue')` открывает заполненный глобальный экран, не заглушку из абзаца.
+
+Где менять:
+
+- `prototype.html` (`#reviewQueue`, `renderReviewQueue`, `openReviewQueue`)
+- `tests/prototype-review-queue.test.ts`
+
+Критерии готовности:
+
+- В `#reviewQueue` есть `tbody` очереди, не только поясняющий абзац.
+- `renderReviewQueue()` без campaign-scope заполняет глобальный экран.
+- `npm run test -- tests/prototype-review-queue.test.ts` проходит.
+
+### T-209: Тестовый звонок не переводит кампанию в «работает»
+
+Статус: `todo`
+
+Что сделать:
+
+- `#runTestCall` обновляет только `#testCallResult` (номер, итог, время). Не вызывать `setCampaignState('running')`.
+- Кнопка теста не выглядит как запуск обзвона: текст про проверку соединения, не про старт кампании.
+- Статус кампании после теста остаётся прежним.
+
+Где менять:
+
+- `prototype.html` (обработчик `#runTestCall`)
+- `tests/prototype-test-call.test.ts`
+
+Критерии готовности:
+
+- В обработчике `#runTestCall` нет `setCampaignState('running')`.
+- После теста `#campaignStatus` не обязан стать «работает».
+- `npm run test -- tests/prototype-test-call.test.ts` проходит.
+
+### T-210: Модалка запуска: название, готовность, sandbox, cap
+
+Статус: `todo`
+
+Что сделать:
+
+- `#launchCampaign` и `#wizardControlledLaunch` открывают подтверждение: название кампании, итог `readiness-summary`, режим sandbox (live не обещать), cap если поле уже есть в данных.
+- Текст: новые звонки начнут создаваться в пределах проверки готовности; при риске — автопауза.
+- Кнопка запуска `disabled`, пока readiness не `ready`. После подтверждения — переход статуса и toast без «Первые звонки появятся…» как production-факт.
+- Зависимость: `T-209` уже отделила тест от запуска.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-launch-confirm.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- Запуск без модалки подтверждения невозможен.
+- В модалке есть название и sandbox; нет формулировки полностью автономного боевого обзвона.
+- `npm run test -- tests/prototype-launch-confirm.test.ts` проходит.
+
+### T-211: Решение review не меняет статус кампании
+
+Статус: `todo`
+
+Что сделать:
+
+- `updateReviewDecision` меняет только статус задачи (`approved` / `rejected` / `escalated` / `requeued`). Не вызывать `setCampaignState('running'|'manual_paused'|'auto_paused')`.
+- Убрать источник `manual_override` и тип `legal_review` из фильтров и демо-данных; в UI типы только `qa` / `compliance` (как `docs/review-items-api.md`).
+- Кнопки: «Подтвердить разбор» / «Отклонить» / «Передать дальше» / «Оставить в очереди». Next step RQ-1001: «Проверьте событие. Возобновление — на вкладке «Запуск» после чеклиста».
+
+Где менять:
+
+- `prototype.html` (`updateReviewDecision`, `reviewQueueItems`, `reviewSourceMeta`, `#approveReviewItem`)
+- `tests/prototype-review-queue.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- В `updateReviewDecision` нет вызова `setCampaignState`.
+- В видимом UI нет `manual_override` и `legal_review`.
+- `npm run test -- tests/prototype-review-queue.test.ts` проходит.
+
+### T-212: Обзор без ложных ✓ до readiness-summary
+
+Статус: `todo`
+
+Что сделать:
+
+- В `data-camp-view="overview"` не держать четыре зелёные `✓` в статическом HTML до ответа `readiness-summary`.
+- Пока API не пришёл: «Не проверено» / пустое состояние, не «готово».
+- Не показывать «Кампания в рабочем режиме. Риск-событий нет.» как дефолт обзора, если статус не `running` или есть открытый риск.
+
+Где менять:
+
+- `prototype.html` (overview readiness rows, `applySafeResumePanel` / runtime notice если он виден с обзора)
+- `tests/prototype-overview-readiness.test.ts`
+
+Критерии готовности:
+
+- В исходном HTML overview нет четырёх `.ready-icon` с `✓` как факта готовности.
+- До API обзор не выглядит полностью зелёным.
+- `npm run test -- tests/prototype-overview-readiness.test.ts` проходит.
+
+### T-213: Readiness: «Блокирует запуск» / «Предупреждение»; лимиты из API
+
+Статус: `todo`
+
+Что сделать:
+
+- На шаге 5 мастера и вкладке «Запуск» причины readiness делить на группы «Блокирует запуск» и «Предупреждение» из `reasons[].reasonText` / `nextAction`.
+- Пункт «Лимиты и время» / «Применены» не хардкодить `state-ready`: брать факт из `readiness-summary`, иначе «Нужна проверка».
+- Поля окна в мастере и «Настройки»: нельзя ввести интервал шире системного минимума, который уже применяет backend (`08:00–22:00` по timezone записи). Минимум read-only, не выключаемый тоггл. Юридическую норму в UI не формулировать.
+
+Где менять:
+
+- `prototype.html` (`syncCampaignLaunchReadinessPanel`, `updateWizardReadiness`, `#wizardWeekdays`, `#wizardWeekends`, вкладка settings)
+- `tests/prototype-readiness-groups.test.ts`
+
+Критерии готовности:
+
+- `#campaignLaunchLimitsStatus` и `#readinessLimitsStatus` не стартуют как «Применены» в HTML.
+- Блокирующие и предупреждения различимы в DOM.
+- `npm run test -- tests/prototype-readiness-groups.test.ts` проходит.
+
+### T-214: Русские message валидатора импорта
+
+Статус: `todo`
+
+Что сделать:
+
+- В `src/import/debtor-import-validator.ts` и `src/import/phone-normalizer.ts` поле `message` — русский текст с next step: чего не хватает и что сделать.
+- Коды ошибок API оставить английскими. Не выдумывать юридические причины исключения.
+- Обновить тесты, которые сейчас ждут `Missing required columns` / `Phone is empty` / `Duplicate externalId`.
+
+Где менять:
+
+- `src/import/debtor-import-validator.ts`
+- `src/import/phone-normalizer.ts`
+- `tests/import/debtor-import-validator.test.ts`
+- `tests/import/phone-normalizer.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- Сообщение про отсутствующие колонки перечисляет часовой пояс, сумму долга, статус долга, статус согласия по-русски.
+- `npm run test -- tests/import` проходит.
+
+### T-215: Отчёт импорта: найдено / готовы / исправить / дубли
+
+Статус: `todo`
+
+Что сделать:
+
+- На шаге 2 мастера после загрузки показать: найдено N, готовы, требуют исправления, дубли; список причин по строкам (из ответа импорта или текущего сима, без выдуманных KPI).
+- Развести кнопки «Продолжить с принятыми записями» и «Исправить файл». «Загрузить пример» не выглядит как успешный боевой импорт без пометки примера.
+- Не называть «исключено» смесь правил и ошибок одной цифрой без расшифровки.
+
+Где менять:
+
+- `prototype.html` (`#mappingBlock`, `baseReady`, `setWizardBaseState`)
+- `tests/prototype-import-report.test.ts`
+
+Критерии готовности:
+
+- В шаге 2 видны четыре счётчика или эквивалент: найдено / готовы / исправить / дубли.
+- Пример базы помечен как пример.
+- `npm run test -- tests/prototype-import-report.test.ts` проходит.
+
+### T-216: Маппинг импорта: часовой пояс, статус долга, статус согласия
+
+Статус: `todo`
+
+Что сделать:
+
+- В `#mappingBlock` и на вкладке «База» показать поля контракта импорта: номер клиента, телефон, часовой пояс, сумма долга, статус долга, статус согласия.
+- Не добавлять полей, которых нет в `docs/data-contracts/debtor-import-csv.md`.
+- Подпись «допущено» в маппинге не использовать для ещё не проверенных к звонку строк.
+
+Где менять:
+
+- `prototype.html`
+- `docs/data-contracts/debtor-import-csv.md` (сверка списка, без смены контракта)
+- `tests/prototype-import-mapping.test.ts`
+
+Критерии готовности:
+
+- В маппинге есть часовой пояс, статус долга и статус согласия.
+- Нет обещания eligibility-проверки на этом шаге.
+- `npm run test -- tests/prototype-import-mapping.test.ts` проходит.
+
+### T-217: Вкладка «База»: «принято в базу» ≠ «допущено к звонку»
+
+Статус: `todo`
+
+Что сделать:
+
+- На `data-camp-view="base"` метрику «Допущено» переименовать в «Принято в базу»; отдельно пояснить, что допуск к звонку — на проверке перед звонком, не на импорте.
+- «Исключено» не смешивать правила и ошибки одной подписью: две строки или расшифровка.
+- Ссылку «скачать проблемные строки» не рисовать, если нет API выгрузки; показать список причин, который уже есть.
+
+Где менять:
+
+- `prototype.html` (`data-camp-view="base"`)
+- `PRODUCT_LANGUAGE.md`
+- `tests/prototype-base-metrics.test.ts`
+
+Критерии готовности:
+
+- На вкладке «База» нет метрики «Допущено», читаемой как eligibility.
+- Нет кнопки скачивания, если endpoint выгрузки отсутствует.
+- `npm run test -- tests/prototype-base-metrics.test.ts` проходит.
+
+### T-218: «Далее» на шаге 1 мастера не пропускает error
+
+Статус: `todo`
+
+Что сделать:
+
+- `#wizardNext` на шаге 1 `disabled`, пока `wizardStepStates.campaign.status` = `empty` / `loading` / `error`.
+- Если шаг 1 дергает create/update кампании — показать `message` ответа; без успешного сохранения не переходить к шагу 2.
+- Не обещать полей, которых нет в campaigns API.
+
+Где менять:
+
+- `prototype.html` (`#wizardNext`, `evaluateCampaignStepState`)
+- `tests/prototype-wizard-step1.test.ts`
+
+Критерии готовности:
+
+- Клик «Далее» при error/empty не меняет `wizardStep` на 2.
+- `npm run test -- tests/prototype-wizard-step1.test.ts` проходит.
+
+### T-219: Журнал звонков: исход API, решение, QA; `handoff` вместо `transferred`
+
+Статус: `todo`
+
+Что сделать:
+
+- Колонки журнала: статус попытки, исход из enum API, решение allow/block + человекочитаемая причина + время, QA.
+- Фильтр `transferred` / «Передача оператору» заменить на `handoff` / «Перевод оператору».
+- Колонку «Источник исхода» переименовать в «Как получен результат» или убрать с первого уровня.
+- Бейдж `live` / `демо` на строке, не только над таблицей. Поле identity не выдумывать (ждёт `T-201`).
+
+Где менять:
+
+- `prototype.html` (`#callsTableBody`, `#callOutcomeFilter`, `callOutcomeMeta`)
+- `tests/prototype-calls-journal.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- В прототипе нет пользовательского фильтра `transferred`.
+- В таблице есть решение allow/block или явный прочерк, не скрытый код `TIME_WINDOW_VIOLATION` без текста.
+- `npm run test -- tests/prototype-calls-journal.test.ts` проходит.
+
+### T-220: Карточка звонка: disclosure, запись «хранится/нет», свёрнутый timeline
+
+Статус: `todo`
+
+Что сделать:
+
+- В демо-транскрипте убрать «я представитель банка»; первая реплика — автоматизированный интеллектуальный агент от имени организации, как в сценарии кампании.
+- Ссылку «Скачать запись» при `sandbox://…` заменить на статус «Запись хранится» / «Записи нет»; плеер не добавлять.
+- Техтаймлайн (`stage`, `usage-event`) свернуть; сверху — статус попытки, исход, решение, QA.
+- `callAttemptId` не в заголовке первым уровнем.
+
+Где менять:
+
+- `prototype.html` (`#callCardDrawer`, демо `call-883090`)
+- `tests/prototype-call-card.test.ts`
+
+Критерии готовности:
+
+- В `prototype.html` нет строки «я представитель банка».
+- Нет `href` на `sandbox://` как «Скачать запись».
+- `npm run test -- tests/prototype-call-card.test.ts` проходит.
+
+### T-221: Источники: обмен и папка «не в этом релизе»
+
+Статус: `todo`
+
+Что сделать:
+
+- На `#sources` карточка «Загрузка файла» остаётся рабочим путём.
+- «Система взыскания» и «Защищённая папка»: статус не «подключена»; подпись «не в этом релизе»; кнопки «Настроить обмен» / «Подключить» не обещают v1-интеграцию.
+- Не добавлять новый UI обмена.
+
+Где менять:
+
+- `prototype.html` (`#sources`)
+- `PRODUCT_LANGUAGE.md`
+- `tests/prototype-sources.test.ts`
+
+Критерии готовности:
+
+- В `#sources` нет тега «подключена» у системы взыскания.
+- Есть явная пометка «не в этом релизе» у обмена и папки.
+- `npm run test -- tests/prototype-sources.test.ts` проходит.
+
+### T-222: «Прослушать» → «Тестовый диалог»
+
+Статус: `todo`
+
+Что сделать:
+
+- На `#scripts` кнопку `data-test-dialog` подписать «Тестовый диалог», не «Прослушать».
+- Клик открывает уже существующий `#dialogDrawer`, не обещает аудио.
+- Вкладку сценария кампании не ломать: там уже «Тестовый диалог».
+
+Где менять:
+
+- `prototype.html` (`#scripts`)
+- `tests/prototype-scripts.test.ts`
+
+Критерии готовности:
+
+- В `#scripts` нет кнопки «Прослушать».
+- Есть «Тестовый диалог» с `data-test-dialog`.
+- `npm run test -- tests/prototype-scripts.test.ts` проходит.
+
+### T-223: Пункты «Интеграции» и «Сценарии» в сайдбаре
+
+Статус: `todo`
+
+Что сделать:
+
+- Показать уже существующие `#telephony` и `#scripts` в глобальной навигации. Допустимо: пункт «Интеграции» (внутри источники + телефония) и отдельный «Сценарии», как в `prd-open-questions.md`.
+- Вкладки кампании «Телефония» / «Сценарий» оставить выбором соединения и версии, не дублировать админ-формы.
+- Это возврат входа, который `T-127` скрыл; IA не пересобирать с нуля.
+
+Где менять:
+
+- `prototype.html` (sidebar `data-screen`, `screenNames`)
+- `tests/prototype-nav.test.ts`
+
+Критерии готовности:
+
+- Из сайдбара открываются `#telephony` и `#scripts` (напрямую или через «Интеграции»).
+- Экраны `#telephony` / `#scripts` не удалены.
+- `npm run test -- tests/prototype-nav.test.ts` проходит.
+
+### T-224: Подтверждение «Приостановить кампанию»
+
+Статус: `todo`
+
+Что сделать:
+
+- `#pauseCampaign` не ставит паузу одним кликом: модалка «Приостановить «…»? Новые звонки не создаются.» Кнопки: «Приостановить кампанию» / «Отмена».
+- Подпись кнопки в шапке — «Приостановить кампанию», не «Пауза».
+- Для ручной паузы оставить отличие от автопаузы в UI (`Снять паузу` → «Продолжить обзвон»). Не вызывать API-статус, которого нет: локальный paused-контур прототипа, не `stopped`.
+
+Где менять:
+
+- `prototype.html` (`#pauseCampaign`, `#resumeCampaign`)
+- `tests/prototype-pause-confirm.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- Один клик по `#pauseCampaign` не меняет статус без подтверждения.
+- В шапке нет голой кнопки «Пауза».
+- `npm run test -- tests/prototype-pause-confirm.test.ts` проходит.
+
+### T-225: Подтверждение остановки как переход в `completed`
+
+Статус: `todo`
+
+Что сделать:
+
+- `#stopCampaign` открывает модалку: «Остановить «…»? Для продолжения нужен новый запуск.» Кнопка называет действие.
+- В UI «остановлена» отображает API-статус `completed` (в enum нет `stopped`). Не вводить локальный `stopped` как отдельную машину.
+- Если продукт решит, что stop ≠ `completed`, задачу не закрывать костылём — вернуть в `blocked` и завести backend 1 SP. Пока confirm: см. журнал волны.
+
+Где менять:
+
+- `prototype.html` (`#stopCampaign`, `setCampaignState`)
+- `tests/prototype-stop-confirm.test.ts`
+
+Критерии готовности:
+
+- Нет одношагового stop через toast.
+- После подтверждения статус в шапке — пользовательский ярлык для `completed`, не выдуманный `stopped` в копирайте как отдельный API-enum.
+- `npm run test -- tests/prototype-stop-confirm.test.ts` проходит.
+
+### T-226: Селект роли в отчёте — демонстрация прав, не смена должности
+
+Статус: `todo`
+
+Что сделать:
+
+- `#reportRoleSelector` либо убрать, либо оставить с явной подписью «демонстрация прав» / «что видит роль» и не называть «Роль для принятия решений».
+- Подпись `Compliance officer` → «Специалист по ограничениям».
+- Не имитировать смену доступа в API.
+
+Где менять:
+
+- `prototype.html` (`#reportRoleSelector`, `#reportRoleHint`)
+- `PRODUCT_LANGUAGE.md`
+- `tests/prototype-report-role.test.ts`
+
+Критерии готовности:
+
+- В отчёте нет селекта, который читается как смена должности без пометки демонстрации.
+- Нет пользовательской строки «Compliance officer».
+- `npm run test -- tests/prototype-report-role.test.ts` проходит.
+
+### T-227: Воронка отчёта: «Завершено» не сверлит `outcome=all`
+
+Статус: `todo`
+
+Что сделать:
+
+- Кнопка «Завершено» в `#reportFunnel` не ставит `data-report-outcome="all"`.
+- Drill ведёт к журналу с понятным знаменателем (завершённые попытки / соединения), не «все исходы».
+- Не выдумывать outcome вне enum `CallResultOutcome`.
+
+Где менять:
+
+- `prototype.html` (`#reportFunnel`, `#reportOutcomeCompletedCount`)
+- `tests/prototype-report-funnel.test.ts`
+
+Критерии готовности:
+
+- У KPI «Завершено» нет `data-report-outcome="all"`.
+- Подпись знает, что считается в знаменателе.
+- `npm run test -- tests/prototype-report-funnel.test.ts` проходит.
+
+### T-228: Журнал кампании без внутренних `campaign state` / `safe-resume`
+
+Статус: `todo`
+
+Что сделать:
+
+- `addCampaignActivity` пишет пользовательские фразы: «Кампания приостановлена системой», без `campaign state: …` и без `safe-resume` в видимом тексте.
+- Идентификаторы событий — вторым уровнем, если нужны.
+- Не менять состав audit API.
+
+Где менять:
+
+- `prototype.html` (`addCampaignActivity`, `setCampaignState`)
+- `PRODUCT_LANGUAGE.md`
+- `tests/prototype-activity-copy.test.ts`
+
+Критерии готовности:
+
+- В скрипте нет пользовательской строки `campaign state:`.
+- В ленте `#campaignActivityLog` нет `safe-resume` как термина оператора.
+- `npm run test -- tests/prototype-activity-copy.test.ts` проходит.
+
 ## Журнал изменений плана
+
+- 17.08.2026: `T-140` переведена в `done`; `probeCapabilities()` на adapter, sandbox без live-маркировки. Проверка: `npm run test -- tests/telephony`. Следующая: `T-141`.
+
+- 17.08.2026: `T-139` переведена в `done`; production-ready без `legalBasis=confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`. Проверка: `npm run test -- tests/campaigns.create.test.ts tests/calls/sandbox-call.api.test.ts`. Следующая: `T-140`.
+
+- 17.08.2026: `T-138` переведена в `done`; `Tenant.legalBasisStatus` default `pending`. Проверка: `npm run test -- tests/domain-tenant.test.ts`. Следующая: `T-139`.
+
+- 17.08.2026: `T-137` переведена в `done`; `SUPPRESSION_BLOCK` по phone/`externalId`. Проверка: `npm run test -- tests/compliance`. Следующая: `T-138`.
+
+- 17.08.2026: `T-136` переведена в `done`; схема `SuppressionEntry`. Проверка: `npm run test -- tests/domain-suppression-entry.test.ts`. Следующая: `T-137`.
+
+- 17.08.2026: `T-135` переведена в `done`; sandbox не инкрементирует frequency ledger. Проверка: `npm run test -- tests/calls/sandbox-call.api.test.ts tests/compliance/frequency-ledger.test.ts`. Следующая: `T-136`.
+
+- 17.08.2026: `T-134` переведена в `done`; `FREQUENCY_LIMIT_BLOCK` до старта звонка, caps 1/2/8. Проверка: `npm run test -- tests/compliance`. Следующая: `T-135`.
+
+- 17.08.2026: `T-133` переведена в `done`; идемпотентный инкремент frequency ledger с `ringing`. Проверка: `npm run test -- tests/compliance/frequency-ledger.test.ts`. Следующая: `T-134`.
+
+- 17.08.2026: `T-132` переведена в `done`; схема `FrequencyLedger` + продуктовые caps 1/2/8. Проверка: `npm run test -- tests/domain-frequency-ledger.test.ts`. Следующая: `T-133`.
+
+- 17.08.2026: `T-131` переведена в `done`; продуктовый календарь праздников РФ 2026–2027, окно 09–20. Проверка: `npm run test -- tests/compliance`. Следующая: `T-132`.
+
+- 17.08.2026: `T-130` переведена в `done`; окно будни 08–22 / выходные 09–20 по timezone. Проверка: `npm run test -- tests/compliance`. Следующая: `T-131`.
+
+- 17.08.2026: `T-191` переведена в `done`; маскировка телефона в audit metadata (`src/logging/mask.ts`). Проверка: `npm run test` (228). Следующая: `T-130`.
+
+- 17.08.2026: `T-190` переведена в `done`; `displayName`/`agreementRef` на DebtorRecord и в CSV (опционально). Проверка: `npm run test -- tests/import`. Следующая Lab: `T-191`.
+
+- 17.08.2026: `T-189` переведена в `done`; GitHub Actions CI (`npm ci`, `typecheck`, `test`) без секретов и без Postgres service. Проверка: файл workflow + `npm run test`. Следующая Lab: `T-190`. Известно: `tsc --noEmit` ещё красный на старых ошибках.
+
+- 17.08.2026: `T-188` переведена в `done`; `CallAttempt.scriptVersionId`, sandbox пишет активную версию, иначе 409 `SCRIPT_VERSION_MISSING`. Проверка: `npm run test -- tests/calls/sandbox-call.api.test.ts`. Следующая Lab: `T-189`.
+
+- 17.08.2026: `T-187` переведена в `done`; `POST .../safe-resume` с чеклистом, `PATCH` из `auto_paused` закрыт, audit `campaign.safe_resumed`. Проверка: `npm run test -- tests/campaign-auto-pause.test.ts tests/campaigns.create.test.ts`. Следующая Lab: `T-188`.
+
+- 17.08.2026: `T-186` переведена в `done`; sandbox уважает blocked/stale readiness (409 `CAMPAIGN_NOT_READY`). Общий модуль `src/campaigns/readiness.ts`. Проверка: `npm run test -- tests/calls/sandbox-call.api.test.ts tests/campaigns.create.test.ts`. Следующая Lab: `T-187`.
+
+- 17.08.2026: `T-185` переведена в `done`; `Campaign.telephonyConnectionId` + PATCH bind, tenant-scoped, lock на running. Readiness и sandbox используют выбранное соединение. Проверка: `npm run test -- tests/campaigns.create.test.ts tests/calls/sandbox-call.api.test.ts`. Следующая Lab: `T-186`.
+
+- 17.08.2026: `T-184` переведена в `done`; `POST /scripts` на `running` → 409 `SCRIPT_VERSION_LOCKED`, версия не создаётся. На `review` create сохранён. Проверка: `npm run test -- tests/scripts.api.test.ts`. Следующая Lab: `T-185`.
+
+- 17.08.2026: `T-129` переведена в `done`; `ConsentStatusRule` блокирует `pending` кодом `CONSENT_PENDING_BLOCK` (пропускает только `given`). Sandbox с `pending` не создаёт `CallAttempt`. Rulebook R-CONSENT: Lab/Pilot внедрён. Проверка: `npm run test -- tests/compliance tests/calls/sandbox-call.api.test.ts`. Следующая Lab: `T-184`.
+
+- 17.08.2026: UX-волна кабинета `T-205`–`T-228` по аудиту `docs/product/2026-08-17-ux-audit-cabinet.md`. Порядок: вход (Главная / список / шапка автопаузы) → глобальная очередь проверок → тест ≠ запуск → review не resume → readiness → импорт (backend RU, отчёт, маппинг, вкладка «База») → мастер шаг 1 → журнал/карточка звонка → источники/сценарии/nav → pause/stop → отчёт/копирайт. Lab `T-129+` не сдвинута. Не вошли: identity-бейдж (ждёт `T-201`), download проблемных строк (нет API), live vs sandbox как legalBasis (нет поля; в `T-210` только sandbox), SMS/email follow-up, типы review сверх `qa`/`compliance`. `T-225` стоп мапит UI на `completed`, пока нет отдельного API `stopped`.
+
+- 17.08.2026: Канон очереди — этот файл. Шапка заменена: as-is архитектуры, волны исполнения, `T-129` как следующая. UI BYOK перенесён в `T-181`–`T-183` (`D-014`–`D-016` → `split`). Добавлены пропуски Lab/pilot `T-184`–`T-204` (сценарий на running, связь кампании с телефонией, stale на sandbox, safe-resume, scriptVersion на звонке, CI, поля identity, маскировка логов, object storage, recording guard, GigaChat/Mango скелеты, handoff destination, golden set, extractor, XLSX, pilot cap, identityVerified, webhook inbox, retention stub, structured logger). `T-130`/`T-131`/`T-132` уточнены: не выдавать окно/1/2/8 за факт закона до memo.
+
+- 17.08.2026: `T-161` `done` — ADR `docs/decisions/0005-byok-speech-llm.md` и спека `docs/superpowers/specs/2026-08-17-byok-speech-llm-design.md`. В backlog добавлены `T-162`–`T-180` (шифрование, store, API, probe, factory, readiness, usage/billing). UI — `T-181`–`T-183`. Первая задача волны BYOK-кода: `T-162` после Lab hardening / по очереди исполнения в шапке.
+
+- 17.08.2026: В backlog добавлена волна `T-129`–`T-160` по `docs/compliance/rulebook-v1.md`, ADR 0003 и ADR 0004: pre-dial правила, live-гейты, скелеты Exolve/Yandex без сети, `blocked` HTTP-интеграции (`T-149`, `T-157`), docker-compose/BullMQ. Первая рекомендуемая задача: `T-129`.
+
+- 17.08.2026: Добавлены `docs/compliance/rulebook-v1.md` (продуктовый каталог системных правил и legal-confirm до live), `docs/decisions/0003-live-voice-provider.md` (Exolve Voice API, запасной Mango, без вендорского робота как мозга) и `docs/decisions/0004-speech-llm-stack.md` (SpeechKit + YandexGPT, запасной GigaChat, своя state machine). PRD v0.3, карта технологий, `prd-open-questions.md` и `README.md` связаны со этими документами.
+
+- 17.08.2026: Добавлен технический анализ стека `docs/architecture/2026-08-17-technology-map.md` (карта core/platform/adjacent решений по этапам 0–4 с учётом ФЗ‑230/152/126 и текущего as-is). PRD обновлён до v0.3: раздел 22 «Технологический контур», инварианты compliance в разделе 13. Ссылки добавлены в `README.md`, `ROADMAP_B2B_SAAS.md` и `docs/product/prd-open-questions.md`.
 
 - 17.08.2026: `T-128` переведена в `done`; починено переключение разделов кампании в `prototype.html`:
   - убраны лишние `</div>` в экранах `launch` и `report`, из-за которых «Звонки», «Проверка», «Отчёт» и «Настройки» оказывались вне рабочей области кампании;
@@ -2950,8 +5545,6 @@
 - 16.08.2026: `T-104` переведена в `done`; добавлено optional поле `connectedMinuteRateRub` в `Tenant` (nullable `Float`) и fallback-логика в `GET /tenants/:tenantId/campaigns/:campaignId/report`: для расчета `costPerCall` и `costPerPtp` используется `tenant.connectedMinuteRateRub`, а при отсутствии override — `env.BILLING_CONNECTED_MINUTE_RATE_RUB`; добавлены API-тесты tenant-override/fallback (`tests/reports/campaign-report.api.test.ts`), обновлена схема `src/db/prisma/schema.prisma` и миграция `src/db/migrations/0012_add_connected_minute_rate_to_tenant/migration.sql`.
 - 16.08.2026: `T-102` переведена в `done`; создан модуль тарифов `src/domain/billing/index.ts` с константой `connectedMinuteRateRub` (v0: 1.20 ₽/мин) и хелпером расчета стоимости;
   `src/reports/campaign-report.ts` теперь использует этот тариф для `costPerCall` и `costPerPtp` через `calculateCostFromMinutes`; обновлены `tests/reports/campaign-report.test.ts` и `tests/reports/campaign-report.api.test.ts` с расчетом ожидаемого `expectedCost`.
-
-## Журнал изменений плана
 
 - 16.08.2026: `T-100` переведена в `done`; в `prototype.html` добавлены IDs метрик и логика `syncCampaignOverviewMetricsFromReport`, которая подставляет значения overview KPI из `currentCampaignReportSnapshot` (live через `report` API или local через `getReportSnapshotFromCalls`). В `showCampaignTab('overview')` добавлен вызов синхронизации метрик; жёсткие статичные цифры в overview заменены на источник данных/`н/д` при отсутствии расчёта стоимости.
 

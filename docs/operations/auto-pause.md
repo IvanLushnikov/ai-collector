@@ -102,7 +102,8 @@
 2. Записать в `audit log` событие автопаузы с `reasonCode` и диагностическими метаданными.
 3. Уведомить ответственных (owner/collection_manager) о причине и следующем действии.
 4. Ожидать ручного подтверждения перед возобновлением: корректировка правил, проверка интеграций, согласование с поддержкой.
-5. После снятия паузы кампании переводить в `review`.
+5. Возобновление только через `POST /tenants/:tenantId/campaigns/:campaignId/safe-resume` с чеклистом. Обычный `PATCH .../status` из `auto_paused` запрещён, в том числе в `running` и в `review`.
+6. После safe-resume кампания переходит в `review` или `ready` (не сразу в `running`). Audit: `campaign.safe_resumed`. Force-call нет.
 
 ## Безопасное возобновление после risk-события
 
@@ -114,12 +115,14 @@
 
 Поток возобновления не может быть one-click:
 
+- `PATCH .../status` из `auto_paused` не переводит ни в `running`, ни в `review`;
 - кнопка `resume` в статусе `auto_paused` открывает экран `safe resume`;
-- в `safe resume` обяательно показываются `autoPauseEvent`, `autoPauseReason`, `autoPauseImpact`;
+- в `safe resume` обязательно показываются `autoPauseEvent`, `autoPauseReason`, `autoPauseImpact`;
 - кнопка подтверждения активируется только после 3-х чеков выше;
-- после подтверждения фиксируется audit-событие `campaign.state.running` с `source=auto_pause_resume`.
+- после подтверждения `POST .../safe-resume` пишет audit `campaign.safe_resumed` с пунктами чеклиста (`reasonAcknowledged`, `causeResolved`, `ownerApproved`) и `forceCall: false`;
+- целевой статус: `review` или `ready`. Прямой переход в `running` запрещён.
 
-Только после этого `campaign.auto_paused` переводится в `running`.
+Только после повторного readiness и controlled launch кампания может снова стать `running`.
 
 ## Базовый поток автоматики
 

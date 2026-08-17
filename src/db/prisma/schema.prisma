@@ -13,6 +13,12 @@ enum TenantStatus {
   blocked
 }
 
+enum LegalBasisStatus {
+  pending
+  confirmed
+  revoked
+}
+
 enum UserStatus {
   active
   inactive
@@ -101,10 +107,17 @@ enum UsageEventType {
   transcript_generated
 }
 
+enum FrequencyBucket {
+  day
+  week
+  month
+}
+
 model Tenant {
   id        String       @id @default(uuid())
   name      String
   status    TenantStatus @default(active)
+  legalBasisStatus LegalBasisStatus @default(pending)
   connectedMinuteRateRub Float?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
@@ -120,6 +133,8 @@ model Tenant {
   callResults CallResult[]
   usageEvents UsageEvent[]
   auditLogs AuditLog[]
+  frequencyLedgers FrequencyLedger[]
+  suppressionEntries SuppressionEntry[]
 }
 
 model Role {
@@ -164,6 +179,8 @@ model Campaign {
   timezone        String
   createdByUserId String
   createdBy       User           @relation("CampaignCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  telephonyConnectionId String?
+  telephonyConnection   TelephonyConnection? @relation(fields: [telephonyConnectionId], references: [id], onDelete: SetNull)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -186,6 +203,8 @@ model DebtorRecord {
   debtAmount    Decimal
   debtStatus    DebtStatus    @default(active)
   consentStatus ConsentStatus @default(pending)
+  displayName   String?
+  agreementRef  String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -207,6 +226,8 @@ model ScriptVersion {
   createdByUserId String
   createdBy       User         @relation("ScriptCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   createdAt       DateTime     @default(now())
+
+  callAttempts    CallAttempt[]
 
   @@unique([campaignId, version])
 }
@@ -237,6 +258,7 @@ model TelephonyConnection {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  campaigns    Campaign[]
   callAttempts CallAttempt[]
 }
 
@@ -250,6 +272,8 @@ model CallAttempt {
   debtorRecord          DebtorRecord      @relation(fields: [debtorRecordId], references: [id], onDelete: Cascade)
   telephonyConnectionId String
   telephonyConnection   TelephonyConnection @relation(fields: [telephonyConnectionId], references: [id], onDelete: Restrict)
+  scriptVersionId       String?
+  scriptVersion         ScriptVersion?      @relation(fields: [scriptVersionId], references: [id], onDelete: Restrict)
   status                CallAttemptStatus  @default(initiated)
   providerCallId        String
   startedAt             DateTime
@@ -304,4 +328,32 @@ model AuditLog {
 
   @@index([tenantId, createdAt])
   @@index([userId])
+}
+
+model FrequencyLedger {
+  id            String           @id @default(uuid())
+  tenantId      String
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creditorKey   String
+  obligationId  String
+  bucket        FrequencyBucket
+  periodStart   DateTime
+  count         Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([tenantId, creditorKey, obligationId, bucket, periodStart])
+}
+
+model SuppressionEntry {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phone      String?
+  externalId String?
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, phone])
+  @@index([tenantId, externalId])
 }

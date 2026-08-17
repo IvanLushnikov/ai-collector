@@ -1,0 +1,3 @@
+ALTER TABLE "DebtorRecord"
+  ADD COLUMN IF NOT EXISTS "displayName" TEXT,
+  ADD COLUMN IF NOT EXISTS "agreementRef" TEXT;

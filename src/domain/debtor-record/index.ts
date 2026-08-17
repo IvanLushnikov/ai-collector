@@ -11,6 +11,8 @@ export interface DebtorRecord {
   debtAmount: number;
   debtStatus: DebtStatus;
   consentStatus: ConsentStatus;
+  displayName?: string | null;
+  agreementRef?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

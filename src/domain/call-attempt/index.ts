@@ -14,6 +14,7 @@ export interface CallAttempt {
   campaignId: string;
   debtorRecordId: string;
   telephonyConnectionId: string;
+  scriptVersionId?: string | null;
   status: CallAttemptStatus;
   providerCallId: string;
   startedAt: Date;

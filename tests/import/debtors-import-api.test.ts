@@ -78,7 +78,62 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
         timezone: 'Europe/Moscow',
         debtAmount: 15320.5,
         debtStatus: 'active',
-        consentStatus: 'given'
+        consentStatus: 'given',
+        displayName: null,
+        agreementRef: null
+      }
+    });
+
+    await app.close();
+  });
+
+  it('persists optional identity columns tenant-scoped', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
+      payload: {
+        csvContent: 'externalId,phone,timezone,debtAmount,debtStatus,consentStatus,displayName,agreementRef\n'
+          + 'AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given,Иванов И.И.,ДГ-4412\n'
+          + 'CD-1002,+7 903 222 11 22,Asia/Yekaterinburg,5600,active,pending,,'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      acceptedCount: 2,
+      rejectedCount: 0,
+      errors: []
+    });
+    expect(campaignStore.debtorRecord.create).toHaveBeenNthCalledWith(1, {
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-1',
+        externalId: 'AB-1001',
+        phone: '+79501234567',
+        timezone: 'Europe/Moscow',
+        debtAmount: 15320.5,
+        debtStatus: 'active',
+        consentStatus: 'given',
+        displayName: 'Иванов И.И.',
+        agreementRef: 'ДГ-4412'
+      }
+    });
+    expect(campaignStore.debtorRecord.create).toHaveBeenNthCalledWith(2, {
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        campaignId: 'campaign-1',
+        externalId: 'CD-1002',
+        phone: '+79032221122',
+        timezone: 'Asia/Yekaterinburg',
+        debtAmount: 5600,
+        debtStatus: 'active',
+        consentStatus: 'pending',
+        displayName: null,
+        agreementRef: null
       }
     });
 

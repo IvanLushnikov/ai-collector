@@ -28,6 +28,18 @@ CD-1002,+7 903 222 11 22,Asia/Yekaterinburg,5600,active,pending`;
     });
   });
 
+  it('keeps optional identity columns when present', () => {
+    const csv = `externalId,phone,timezone,debtAmount,debtStatus,consentStatus,displayName,agreementRef
+AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given,Иванов И.И.,ДГ-4412`;
+
+    const result = parseDebtorImportCsv(csv);
+
+    expect(result.rows[0]).toMatchObject({
+      displayName: 'Иванов И.И.',
+      agreementRef: 'ДГ-4412'
+    });
+  });
+
   it('throws for empty csv', () => {
     expect(() => parseDebtorImportCsv('')).toThrowError(/EMPTY_CSV/);
     expect(() => parseDebtorImportCsv('   \n\r\n')).toThrowError(/EMPTY_CSV/);

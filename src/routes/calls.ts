@@ -4,6 +4,14 @@ import { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import { CallWindowComplianceRule } from '../compliance/rules/call-window.js';
 import { ConsentStatusRule } from '../compliance/rules/consent-status.js';
 import { DebtStatusRule } from '../compliance/rules/debt-status.js';
+import { FrequencyLimitRule } from '../compliance/rules/frequency-limit.js';
+import { SuppressionRule, createInMemorySuppressionLookup, type SuppressionLookup } from '../compliance/rules/suppression.js';
+import {
+  createInMemoryFrequencyLedgerRepository,
+  recordFrequencyAttempt,
+  shouldRecordFrequencyAttempt,
+  type FrequencyLedgerRepository
+} from '../domain/frequency-ledger/index.js';
 import { CallAttemptStatus } from '../domain/call-attempt/index.js';
 import { CallResultOutcome, isCallResultQaStatus } from '../domain/call-result/index.js';
 import { UsageEventType } from '../domain/usage-event/index.js';
@@ -14,6 +22,8 @@ import {
 } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
+import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
+import { maskSensitiveFields } from '../logging/mask.js';
 
 type CallDependencies = {
   tenant: {
@@ -27,6 +37,14 @@ type CallDependencies = {
   };
   debtorRecord: {
     findUnique: (args: any) => Promise<unknown>;
+    count?: (args: any) => Promise<number>;
+  };
+  scriptVersion?: {
+    findMany?: (args: any) => Promise<unknown>;
+    findFirst?: (args: any) => Promise<unknown>;
+  };
+  telephonyConnection?: {
+    findUnique?: (args: any) => Promise<unknown>;
   };
   callAttempt: {
     create: (args: any) => Promise<unknown>;
@@ -43,12 +61,15 @@ type CallDependencies = {
   complianceDecision?: {
     create?: (args: any) => Promise<unknown>;
     findMany?: (args: any) => Promise<unknown>;
+    count?: (args: any) => Promise<number>;
   };
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
+  frequencyLedger?: FrequencyLedgerRepository;
+  suppressionLookup?: SuppressionLookup;
 };
 
 const tenantCampaignDebtorCallSchema = z.object({
@@ -68,7 +89,7 @@ const tenantCampaignCallSchema = z.object({
 });
 
 const createEngine = (
-  deps: Pick<CallDependencies, 'complianceDecision' | 'complianceEngine'>
+  deps: Pick<CallDependencies, 'complianceDecision' | 'complianceEngine' | 'frequencyLedger' | 'suppressionLookup'>
 ): ComplianceEngine => {
   if (deps.complianceEngine) {
     return deps.complianceEngine;
@@ -78,7 +99,9 @@ const createEngine = (
     [
       new CallWindowComplianceRule(),
       new ConsentStatusRule(),
-      new DebtStatusRule()
+      new DebtStatusRule(),
+      new FrequencyLimitRule(deps.frequencyLedger ?? createInMemoryFrequencyLedgerRepository()),
+      new SuppressionRule(deps.suppressionLookup ?? createInMemorySuppressionLookup())
     ],
     {
       ruleVersion: 'v1',
@@ -195,7 +218,7 @@ const createAuditEvent = async (
       action: data.action,
       entityType: data.entityType,
       entityId: data.entityId,
-      metadata: data.metadata
+      metadata: maskSensitiveFields(data.metadata)
     }
   });
 };
@@ -254,10 +277,35 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
     const campaign = await deps.campaign.findUnique({
       where: { id: params.data.campaignId }
-    }) as { id: string; tenantId: string } | null;
+    }) as {
+      id: string;
+      tenantId: string;
+      status?: string;
+      updatedAt?: string;
+      telephonyConnectionId?: string | null;
+    } | null;
 
     if (!campaign || campaign.tenantId !== params.data.tenantId) {
       return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
+    }
+
+    const readiness = await evaluateCampaignReadiness(
+      deps,
+      {
+        id: campaign.id,
+        tenantId: campaign.tenantId,
+        status: campaign.status ?? 'draft',
+        updatedAt: campaign.updatedAt ?? new Date(0).toISOString(),
+        telephonyConnectionId: campaign.telephonyConnectionId
+      },
+      params.data.tenantId
+    );
+
+    if (readiness.blocked || readiness.stale) {
+      return reply.code(409).send({
+        error: 'CAMPAIGN_NOT_READY',
+        ...readiness
+      });
     }
 
     const debtorRecord = await deps.debtorRecord.findUnique({
@@ -271,6 +319,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       debtAmount: number | string;
       debtStatus: string;
       consentStatus: string;
+      externalId?: string;
     } | null;
 
     if (!debtorRecord || debtorRecord.campaignId !== params.data.campaignId || debtorRecord.tenantId !== params.data.tenantId) {
@@ -305,7 +354,9 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       timezone: debtorRecord.timezone,
       debtAmount,
       debtStatus: debtorRecord.debtStatus,
-      consentStatus: debtorRecord.consentStatus
+      consentStatus: debtorRecord.consentStatus,
+      creditorKey: params.data.tenantId,
+      obligationId: debtorRecord.externalId ?? debtorRecord.id
     });
 
     if (decision.decision === 'block') {
@@ -331,6 +382,23 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       });
     }
 
+    const activeScript = await deps.scriptVersion?.findFirst?.({
+      where: {
+        campaignId: params.data.campaignId,
+        status: 'active'
+      },
+      orderBy: {
+        version: 'desc'
+      },
+      select: {
+        id: true
+      }
+    }) as { id: string } | null | undefined;
+
+    if (!activeScript) {
+      return reply.code(409).send({ error: 'SCRIPT_VERSION_MISSING' });
+    }
+
     const provider = deps.voiceProvider ?? defaultVoiceProvider;
     const providerCall = await provider.startCall({
       tenantId: params.data.tenantId,
@@ -351,7 +419,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         tenantId: params.data.tenantId,
         campaignId: params.data.campaignId,
         debtorRecordId: params.data.debtorRecordId,
-        telephonyConnectionId: body.data.telephonyConnectionId ?? `${params.data.tenantId}-sandbox`,
+        telephonyConnectionId: campaign.telephonyConnectionId ?? body.data.telephonyConnectionId ?? `${params.data.tenantId}-sandbox`,
+        scriptVersionId: activeScript.id,
         status: mapVoiceStatusToCallAttemptStatus(providerCall.status),
         providerCallId: providerCall.providerCallId,
         startedAt: new Date(),
@@ -360,6 +429,28 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     });
 
     const callAttemptId = (created as { id: string }).id;
+    const telephonyMode = campaign.telephonyConnectionId
+      ? ((await deps.telephonyConnection?.findUnique?.({
+          where: { id: campaign.telephonyConnectionId }
+        })) as { mode?: string } | null)?.mode
+      : 'sandbox';
+
+    if (
+      deps.frequencyLedger
+      && shouldRecordFrequencyAttempt({
+        channel: 'sandbox',
+        telephonyMode: telephonyMode ?? 'sandbox'
+      })
+    ) {
+      await recordFrequencyAttempt(deps.frequencyLedger, {
+        callAttemptId,
+        tenantId: params.data.tenantId,
+        creditorKey: params.data.tenantId,
+        obligationId: debtorRecord.externalId ?? debtorRecord.id,
+        status: mapVoiceStatusToCallAttemptStatus(providerCall.status),
+        occurredAt: new Date()
+      });
+    }
     const defaultQaStatus = 'not_reviewed';
     if (!isCallResultQaStatus(defaultQaStatus)) {
       return reply.code(500).send({ error: 'INVALID_QA_STATUS' });
@@ -564,6 +655,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       campaignId: string;
       debtorRecordId: string;
       telephonyConnectionId: string;
+      scriptVersionId?: string | null;
       status: string;
       providerCallId: string;
       startedAt: string | Date;
@@ -629,6 +721,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         debtorRecordId: attempt.debtorRecordId,
         status: attempt.status,
         telephonyConnectionId: attempt.telephonyConnectionId,
+        scriptVersionId: attempt.scriptVersionId ?? null,
         providerCallId: attempt.providerCallId,
         startedAt: attempt.startedAt,
         endedAt: attempt.endedAt ?? null,

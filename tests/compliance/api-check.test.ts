@@ -62,6 +62,18 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
             consentStatus: 'given'
           };
         }
+        if (query.where.id === 'cccccccc-cccc-cccc-cccc-cccccccccccc') {
+          return {
+            id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '11111111-1111-1111-1111-111111111111',
+            phone: '+79501234567',
+            timezone: 'Europe/Moscow',
+            debtAmount: 800,
+            debtStatus: 'active',
+            consentStatus: 'pending'
+          };
+        }
         return null;
       }),
       count: vi.fn(async () => 0),
@@ -102,7 +114,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
             reasonText: 'Consent status is revoked'
           })
         ]),
-        rules: ['call-window', 'consent-status', 'debt-status']
+        rules: ['call-window', 'consent-status', 'debt-status', 'frequency-limit', 'suppression']
       })
     );
 
@@ -115,6 +127,51 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
           decision: 'block',
           reasonCode: expect.any(String),
+          reasonText: expect.any(String),
+          ruleVersion: 'v1'
+        })
+      })
+    );
+
+    await app.close();
+  });
+
+  it('blocks when consent is pending', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/cccccccc-cccc-cccc-cccc-cccccccccccc/compliance/check',
+      headers: { 'x-user-role': 'operator' }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body).toEqual(
+      expect.objectContaining({
+        decision: 'block',
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            decision: 'block',
+            reasonCode: 'CONSENT_PENDING_BLOCK',
+            reasonText: 'Consent status is pending'
+          })
+        ]),
+        rules: ['call-window', 'consent-status', 'debt-status', 'frequency-limit', 'suppression']
+      })
+    );
+
+    expect(campaignStore.complianceDecision.create).toHaveBeenCalledTimes(1);
+    expect(campaignStore.complianceDecision.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: '11111111-1111-1111-1111-111111111111',
+          debtorRecordId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          decision: 'block',
+          reasonCode: expect.stringContaining('CONSENT_PENDING_BLOCK'),
           reasonText: expect.any(String),
           ruleVersion: 'v1'
         })

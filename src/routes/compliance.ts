@@ -4,6 +4,12 @@ import { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import { CallWindowComplianceRule } from '../compliance/rules/call-window.js';
 import { ConsentStatusRule } from '../compliance/rules/consent-status.js';
 import { DebtStatusRule } from '../compliance/rules/debt-status.js';
+import { FrequencyLimitRule } from '../compliance/rules/frequency-limit.js';
+import { SuppressionRule, createInMemorySuppressionLookup, type SuppressionLookup } from '../compliance/rules/suppression.js';
+import {
+  createInMemoryFrequencyLedgerRepository,
+  type FrequencyLedgerRepository
+} from '../domain/frequency-ledger/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 
 type ComplianceDependencies = {
@@ -21,6 +27,8 @@ type ComplianceDependencies = {
     findMany?: (args: any) => Promise<unknown>;
   };
   complianceEngine?: ComplianceEngine;
+  frequencyLedger?: FrequencyLedgerRepository;
+  suppressionLookup?: SuppressionLookup;
 };
 
 const tenantCampaignDebtorComplianceSchema = z.object({
@@ -58,7 +66,9 @@ const createEngine = (deps: ComplianceDependencies): ComplianceEngine => {
     [
       new CallWindowComplianceRule(),
       new ConsentStatusRule(),
-      new DebtStatusRule()
+      new DebtStatusRule(),
+      new FrequencyLimitRule(deps.frequencyLedger ?? createInMemoryFrequencyLedgerRepository()),
+      new SuppressionRule(deps.suppressionLookup ?? createInMemorySuppressionLookup())
     ],
     {
       ruleVersion: 'v1',
@@ -148,6 +158,7 @@ export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceD
       debtAmount: number | string;
       debtStatus: string;
       consentStatus: string;
+      externalId?: string;
     } | null;
 
     if (!debtorRecord || debtorRecord.tenantId !== params.data.tenantId || debtorRecord.campaignId !== params.data.campaignId) {
@@ -170,7 +181,9 @@ export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceD
       timezone: debtorRecord.timezone,
       debtAmount,
       debtStatus: debtorRecord.debtStatus,
-      consentStatus: debtorRecord.consentStatus
+      consentStatus: debtorRecord.consentStatus,
+      creditorKey: params.data.tenantId,
+      obligationId: debtorRecord.externalId ?? debtorRecord.id
     });
 
     return reply.code(200).send({

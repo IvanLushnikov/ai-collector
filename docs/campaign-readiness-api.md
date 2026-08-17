@@ -65,8 +65,8 @@
 ```
 
 - `reasons` — массив объектов с причинами, которые блокируют или поясняют статус запуска:
-  - `source` (`debtors` | `script` | `telephony` | `compliance` | `campaign`)
-  - `reasonCode` (`DEBTORS_MISSING`, `SCRIPT_NOT_READY`, `PRODUCTION_TELEPHONY_MISSING`, `COMPLIANCE_BLOCKS_DETECTED`, `CAMPAIGN_STATUS_INVALID`)
+  - `source` (`debtors` | `script` | `telephony` | `compliance` | `campaign` | `legal`)
+  - `reasonCode` (`DEBTORS_MISSING`, `SCRIPT_NOT_READY`, `PRODUCTION_TELEPHONY_MISSING`, `LEGAL_BASIS_NOT_CONFIRMED`, `COMPLIANCE_BLOCKS_DETECTED`, `CAMPAIGN_STATUS_INVALID`)
   - `reasonText` (`string`)
   - `nextAction` (`string`)
 

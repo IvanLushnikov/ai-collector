@@ -35,12 +35,22 @@ export type HangupCallResult = {
 
 export type VendorCallStatus = string;
 
+export type VoiceProviderCapabilities = {
+  marking: boolean;
+  recording: boolean;
+  handoff: boolean;
+  sandboxPass: boolean;
+  checkedAt: Date;
+};
+
 export interface VoiceProviderAdapter {
   startCall(input: StartCallInput): Promise<StartCallResult>;
 
   getCallStatus(providerCallId: string): Promise<CallStatusResult>;
 
   hangupCall(providerCallId: string): Promise<HangupCallResult>;
+
+  probeCapabilities(): Promise<VoiceProviderCapabilities>;
 
   mapVendorStatus?(status: VendorCallStatus): VoiceCallStatus;
 }

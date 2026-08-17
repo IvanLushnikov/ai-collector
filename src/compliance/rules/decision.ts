@@ -11,6 +11,9 @@ export type ComplianceRuleContext = {
   debtAmount: number;
   debtStatus: string;
   consentStatus: string;
+  creditorKey?: string;
+  obligationId?: string;
+  occurredAt?: Date;
 };
 
 export type ComplianceRuleResult = {

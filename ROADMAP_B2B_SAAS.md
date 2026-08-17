@@ -270,6 +270,7 @@ P2:
 - SSO;
 - API/SFTP интеграции;
 - биллинг и коммерческие лимиты;
+- BYOK ключей SpeechKit / YandexGPT / GigaChat (ADR 0005);
 - advanced analytics;
 - второй telecom provider;
 - on-prem/private cloud assessment.
@@ -321,6 +322,8 @@ Commercial:
 ## 8. Статус технологического roadmap на 16.08.2026
 
 Оценка ниже основана на текущих артефактах репозитория и `TECH_BACKLOG_1SP.md`, а не на предположениях о внешней готовности команды.
+
+Полная карта необходимых технологий по этапам (core / platform / adjacent, включая БД, хостинг, телефонию, ASR/TTS, LLM, промпты и ФЗ-контроли) зафиксирована в `docs/architecture/2026-08-17-technology-map.md` и кратко отражена в PRD, раздел 22. Продуктовый rulebook: `docs/compliance/rulebook-v1.md`. Направление live-телефонии: `docs/decisions/0003-live-voice-provider.md`. Направление speech/LLM: `docs/decisions/0004-speech-llm-stack.md`.
 
 ### 8.1. Что уже закрыто
 
@@ -513,4 +516,4 @@ Commercial:
 ### 8) Final recommendation
 - Передать блок `Design Update` в реализацию как контракт для следующего цикла.
 - Сначала закрыть `Remaining open questions` как backend/PRD/legal решения, затем реализовывать 1 SP-дизайн-задачи по flow.
-- Для каждого закрытого решения пересмотреть `ROADMAP_B2B_SAAS.md`/`DESIGN_BACKLOG_1SP.md` и обновить статус зависимости.
+- Для каждого закрытого решения пересмотреть `ROADMAP_B2B_SAAS.md`/`TECH_BACKLOG_1SP.md` и обновить статус зависимости.

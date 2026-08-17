@@ -26,7 +26,21 @@ describe('ConsentStatusRule', () => {
     });
   });
 
-  it('allows when consent is not revoked', () => {
+  it('blocks when consent is pending', () => {
+    const rule = new ConsentStatusRule();
+    const result = rule.evaluate({
+      ...context,
+      consentStatus: 'pending'
+    });
+
+    expect(result).toEqual({
+      decision: 'block',
+      reasonCode: 'CONSENT_PENDING_BLOCK',
+      reasonText: 'Consent status is pending'
+    });
+  });
+
+  it('allows when consent is given', () => {
     const rule = new ConsentStatusRule();
     const result = rule.evaluate({
       ...context,

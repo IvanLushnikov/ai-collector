@@ -8,8 +8,8 @@ AI Collector — это прототип продукта для compliance-firs
 - `index.html` — продуктовый dashboard прототипа (архитектура, сценарии, риски, расчет экономики).
 - `prototype.html` — кликабельный кабинет пользователя (кампании, источники, сценарии, звонки, отчеты).
 - `ROADMAP_B2B_SAAS.md` — продуктовый roadmap и стратегический план развития.
-- `TECH_BACKLOG_1SP.md` — технический backlog по задачам 1 SP для поэтапной реализации.
-- `DESIGN_BACKLOG_1SP.md` — отдельный дизайн/UX backlog для второго агента.
+- `TECH_BACKLOG_1SP.md` — единственная очередь задач 1 SP (backend и кабинет).
+- `DESIGN_BACKLOG_1SP.md` — архив закрытых UX-волн `D-001`–`D-013`.
 - `docs/decisions/0001-backend-stack.md` — зафиксированное решение по backend стэку.
 
 ## Как работать в репозитории сейчас
@@ -39,6 +39,7 @@ AI Collector — это прототип продукта для compliance-firs
 
 - `npm run verify:skills` валидирует наличие bootstrap-файлов и всех обязательных `SKILL.md`
 - `npm run test` и `npm run typecheck` сначала запускают `verify:skills`, а потом уже основной контур
+- CI (GitHub Actions): [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) на `pull_request` и `push` в `main`/`master` запускает `npm ci`, `npm run typecheck`, `npm run test`. Секреты в workflow не используются; тесты не требуют PostgreSQL service.
 
 Если `verify:skills` падает, значит skill-маршрутизация репозитория нарушена и это нужно починить до дальнейшей работы.
 
@@ -68,8 +69,15 @@ AI Collector — это прототип продукта для compliance-firs
 
 - [Roadmap B2B SaaS](./ROADMAP_B2B_SAAS.md)
 - [Technical Backlog 1 SP](./TECH_BACKLOG_1SP.md)
-- [Design Backlog 1 SP](./DESIGN_BACKLOG_1SP.md)
+- [CI](./.github/workflows/ci.yml)
+- [Design Backlog 1 SP](./DESIGN_BACKLOG_1SP.md) (архив UX, не очередь)
 - [Backend stack decision](./docs/decisions/0001-backend-stack.md)
+- [PRD](./docs/product/prd-draft.md)
+- [Карта технологических решений](./docs/architecture/2026-08-17-technology-map.md)
+- [Compliance rulebook v1](./docs/compliance/rulebook-v1.md)
+- [Live voice provider](./docs/decisions/0003-live-voice-provider.md)
+- [Speech/LLM stack](./docs/decisions/0004-speech-llm-stack.md)
+- [BYOK ASR/TTS/LLM](./docs/decisions/0005-byok-speech-llm.md)
 - [Codex Spark Design Goal](./CODEX_SPARK_DESIGN_GOAL.md)
 
 ## API документация MVP (route-level)

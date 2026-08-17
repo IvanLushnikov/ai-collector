@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ИИ-коллектор · варианты телефонии и SIP</title>
+  <meta name="description" content="Сравнение каналов исходящего звонка для controlled pilot: CPaaS, BYO SIP, OpenAI Realtime, вендорский робот. Плюсы, минусы, сложность.">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #eef2f6;
+      color: #152234;
+      font: 13px/1.45 Inter, Arial, sans-serif;
+    }
+    a { color: #1255a3; }
+    :root {
+      --ink: #152234;
+      --muted: #66768a;
+      --line: #ccd5df;
+      --panel: #fff;
+      --blue: #1769aa;
+      --green: #177c55;
+      --amber: #a45b05;
+      --red: #b23335;
+      --pale: #f5f8fb;
+    }
+    main { max-width: 1440px; margin: 0 auto; padding: 28px 24px 56px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    h2 { font-size: 15px; margin: 28px 0 10px; }
+    .lede { margin: 0 0 18px; color: var(--muted); max-width: 72rem; }
+    .meta { color: var(--muted); font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; margin-bottom: 16px; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric { background: #fff; border: 1px solid var(--line); padding: 13px 14px; }
+    .metric .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .metric .value { font: 700 22px/1.25 ui-monospace, SFMono-Regular, Consolas, monospace; margin: 5px 0 2px; }
+    .metric.ok { border-top: 3px solid var(--green); }
+    .metric.warn { border-top: 3px solid var(--amber); }
+    .metric.danger { border-top: 3px solid var(--red); }
+    .callout { border-left: 4px solid var(--green); background: #eef8f3; padding: 12px 14px; margin: 0 0 18px; }
+    .callout.warn { border-left-color: var(--amber); background: #fff8ec; }
+    .callout h3 { font-size: 13px; margin: 0 0 6px; }
+    .callout p { margin: 0; }
+    .table-wrap { overflow: auto; background: #fff; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border-bottom: 1px solid #dbe2e9; padding: 9px 10px; vertical-align: top; text-align: left; }
+    th {
+      background: #edf2f6;
+      color: #506176;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: .04em;
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:hover { background: #f7fafc; }
+    .dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; vertical-align: middle; }
+    .dot.pilot { background: var(--green); }
+    .dot.later { background: var(--blue); }
+    .dot.risk { background: var(--amber); }
+    .dot.no { background: var(--red); }
+    .tag {
+      display: inline-block;
+      border: 1px solid;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .tag.pilot { color: #126342; border-color: #99cbb7; background: #eff9f5; }
+    .tag.later { color: #155c8e; border-color: #9ac3de; background: #eef7fc; }
+    .tag.risk { color: #8a510b; border-color: #e4c18f; background: #fff8eb; }
+    .tag.no { color: #8b3032; border-color: #d9acad; background: #fff2f2; }
+    .legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 8px; }
+    .legend div { background: #fff; border: 1px solid var(--line); padding: 12px; }
+    .legend b { display: block; margin-bottom: 4px; }
+    .legend p { margin: 0; color: var(--muted); font-size: 12px; }
+    .note { margin-top: 14px; color: var(--muted); font-size: 11px; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    @media (max-width: 900px) {
+      .metrics, .legend { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; }
+      main { padding: 0; max-width: none; }
+      .table-wrap { border: 0; }
+      tbody tr:hover { background: transparent; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="meta">docs/architecture/2026-08-17-telephony-options.html · 17.08.2026 · обсуждение, не ADR и не юридическое заключение</p>
+    <h1>Варианты телефонии для ИИ-коллектора</h1>
+    <p class="lede">
+      Сравнение каналов исходящего звонка: что клиент вставляет в кабинет, плюсы, минусы,
+      сложность для текущего репозитория. Live без legal memo по автовызовам и без маркировки
+      не запускается ни в одном варианте.
+    </p>
+
+    <div class="metrics">
+      <div class="metric ok">
+        <div class="label">Для Controlled Pilot</div>
+        <div class="value">1</div>
+        <div class="detail">Платформенный Exolve Voice API</div>
+      </div>
+      <div class="metric warn">
+        <div class="label">После пилота</div>
+        <div class="value">4</div>
+        <div class="detail">BYO-аккаунт, SIP-сотрудник, LiveKit, CPaaS-шлюз</div>
+      </div>
+      <div class="metric danger">
+        <div class="label">Не берём в live</div>
+        <div class="value">3</div>
+        <div class="detail">Asterisk, OpenAI SIP, робот вендора</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h3>Рекомендация на пилот</h3>
+      <p>
+        Платформенный МТС Exolve Voice API: мы звоним, клиент даёт только направление перевода.
+        «Принеси любую SIP» — отдельный этап после пилота, через SIP-шлюз в РФ (LiveKit SIP),
+        не через OpenAI и не через голосового робота оператора.
+      </p>
+    </div>
+
+    <div class="callout warn">
+      <h3>Ключ API и SIP host/pass — не «или»</h3>
+      <p>
+        У Манго API управляет звонком, SIP несёт голос. Одного ключа недостаточно для нашего
+        сценария; одного host/pass недостаточно для перевода, CDR и записи. Универсальный SIP
+        в форме кабинета = один шлюз, не отдельный адаптер на каждого оператора.
+      </p>
+    </div>
+
+    <h2>Сравнение вариантов</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Вариант</th>
+            <th>Клиент вставляет</th>
+            <th>Плюсы</th>
+            <th>Минусы</th>
+            <th>Сложность</th>
+            <th>Закон / ПДн</th>
+            <th>Вердикт</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="dot pilot"></span><b>Платформенный Exolve Voice API</b></td>
+            <td>Только номер или очередь для перевода</td>
+            <td>Один договор, маркировка и запись у оператора, адаптер уже заложен, мозг остаётся наш</td>
+            <td>Не «любая SIP клиента»; номер может быть не их; нужен DPA и probe</td>
+            <td>Средняя · 2–4 нед. после договора</td>
+            <td>РФ-оператор; live после memo и маркировки</td>
+            <td><span class="tag pilot">Пилот</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot later"></span><b>Аккаунт клиента в Манго/Exolve, ключ API</b></td>
+            <td>Ключ API и salt, не host/pass</td>
+            <td>Звонок с договора и номеров клиента; партнёрский онбординг; без своей АТС</td>
+            <td>API без медиа не ведёт диалог; нужен ещё SIP-сотрудник или их робот</td>
+            <td>Средняя+ · 3–5 нед.</td>
+            <td>Клиент — сторона договора с оператором; оба в поручении 152‑ФЗ</td>
+            <td><span class="tag later">Позже</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot later"></span><b>Манго: API + SIP-сотрудник</b></td>
+            <td>Ключ API и SIP host/login/password сотрудника «ИИ-агент»</td>
+            <td>Реалистичный BYO Манго: управление + голос; перевод в их очередь; запись у ВАТС</td>
+            <td>Нужен тонкий SIP UA; не универсальный транк; поддержка кабинетов Манго</td>
+            <td>Высокая · 4–8 нед.</td>
+            <td>Маркировка на линии клиента; робот Манго не включать</td>
+            <td><span class="tag later">Позже</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot risk"></span><b>Любая SIP через LiveKit SIP в РФ</b></td>
+            <td>Host, логин, пароль, АОН, куда переводить</td>
+            <td>Один шлюз на Манго/Zadarma/АТС; мозг наш; ПДн в нашем контуре РФ</td>
+            <td>Эксплуатация RTP/NAT/TLS; SIP ≠ маркировка; probe обязателен; запись писать у себя</td>
+            <td>Высокая · 6–10 нед.</td>
+            <td>Шлюз в РФ; маркировку клиент подтверждает у своего оператора</td>
+            <td><span class="tag risk">После пилота</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot risk"></span><b>Любая SIP через CPaaS-шлюз (Voximplant)</b></td>
+            <td>SIP-транк в Voximplant или их номера</td>
+            <td>Не пишем SIP сами; AMD, запись, перевод из коробки</td>
+            <td>Чужой контур и DPA; риск их ASR/робота; регион хранения проверять тестом</td>
+            <td>Средняя · 3–6 нед. после DPA</td>
+            <td>152‑ФЗ только если контур и поручение подтверждены</td>
+            <td><span class="tag risk">После пилота</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot no"></span><b>Свой Asterisk / сырой SIP без шлюза</b></td>
+            <td>Любой транк в нашу АТС</td>
+            <td>Полный контроль маршрутизации и кодеков</td>
+            <td>Мы становимся АТС: HA, CDR, запись, поддержка каждого клиента; отвергнуто для пилота</td>
+            <td>Очень высокая · 3+ мес.</td>
+            <td>Маркировка и 126‑ФЗ не появляются от наличия Asterisk</td>
+            <td><span class="tag no">Не берём</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot no"></span><b>OpenAI Realtime SIP</b></td>
+            <td>Транк (часто Twilio) на sip.api.openai.com</td>
+            <td>Готовый SIP-вход, REFER, низкая задержка речи, мало своего медиакода</td>
+            <td>Не набирает исходящие сам; голос в США/ЕС; модель = мозг разговора</td>
+            <td>Низкая для демо · дни на стенд</td>
+            <td>Иностранный cloud для ПДн должника — блок live</td>
+            <td><span class="tag no">Не берём</span></td>
+          </tr>
+          <tr>
+            <td><span class="dot no"></span><b>Робот вендора (Exolve Robots, Манго)</b></td>
+            <td>Кабинет робота у оператора</td>
+            <td>Быстро «позвонить» без оркестратора</td>
+            <td>Нельзя гарантировать compliance, identity gate и наш audit</td>
+            <td>Низкая · вне нашего кода</td>
+            <td>Противоречит позиционированию и rulebook</td>
+            <td><span class="tag no">Не берём</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Как читать сложность</h2>
+    <div class="legend">
+      <div>
+        <b>Низкая</b>
+        <p>HTTP-адаптер или чужой робот. Мало своего медиакода. Не значит, что можно в live.</p>
+      </div>
+      <div>
+        <b>Средняя</b>
+        <p>Voice API + секреты + probe маркировки, записи и перевода. Совпадает с уже заложенным VoiceProviderAdapter.</p>
+      </div>
+      <div>
+        <b>Высокая</b>
+        <p>SIP user agent или LiveKit: RTP, NAT, REFER, своя запись. Это мост, не полноценная АТС.</p>
+      </div>
+    </div>
+
+    <h2>Связанные документы</h2>
+    <ul>
+      <li>План обсуждения: <code>docs/superpowers/plans/2026-08-17-pilot-telephony-prd-commercial-decisions.md</code></li>
+      <li>ADR 0003 live voice, ADR 0004 speech/LLM, ADR 0005 BYOK</li>
+      <li>Карта технологий, rulebook v1, PRD draft, открытые вопросы PRD</li>
+      <li>Биллинг v0: connected minute, successful dialog, storage</li>
+    </ul>
+    <p class="note">
+      Источник оценок: ADR 0003/0004/0005, карта технологий 17.08.2026, публичные контракты Exolve, Манго, LiveKit SIP, OpenAI Realtime SIP.
+      Срок — оценка реализации поверх текущего adapter, не календарный план и не КП вендора.
+    </p>
+  </main>
+</body>
+</html>

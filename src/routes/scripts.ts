@@ -105,9 +105,13 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
 
     const campaign = await deps.campaign.findUnique({
       where: { id: params.data.campaignId }
-    }) as { id: string; tenantId: string } | null;
+    }) as { id: string; tenantId: string; status?: string } | null;
     if (!campaign || campaign.tenantId !== params.data.tenantId) {
       return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
+    }
+
+    if (campaign.status === 'running') {
+      return reply.code(409).send({ error: 'SCRIPT_VERSION_LOCKED' });
     }
 
     const actor = await deps.user.findFirst({

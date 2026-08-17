@@ -1,6 +1,7 @@
 import {
   VoiceCallStatus,
   VoiceProviderAdapter,
+  VoiceProviderCapabilities,
   StartCallInput,
   StartCallResult,
   CallStatusResult,
@@ -103,6 +104,16 @@ export class SandboxVoiceProvider implements VoiceProviderAdapter {
 
   mapVendorStatus(status: string): VoiceCallStatus {
     return this.resolveStatus(status);
+  }
+
+  async probeCapabilities(): Promise<VoiceProviderCapabilities> {
+    return {
+      marking: false,
+      recording: false,
+      handoff: false,
+      sandboxPass: true,
+      checkedAt: new Date()
+    };
   }
 
   private getStatusFlow(configuredStatusFlow: VoiceCallStatus[] | undefined, initialStatus: VoiceCallStatus): VoiceCallStatus[] {

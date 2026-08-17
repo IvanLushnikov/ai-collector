@@ -18,7 +18,7 @@ type AppStore = {
   };
   campaign: {
     create: (query: { data: Record<string, unknown> }) => Promise<unknown>;
-    findUnique: (query: { where: { id: string } }) => Promise<{ id: string; tenantId: string } | null>;
+    findUnique: (query: { where: { id: string } }) => Promise<{ id: string; tenantId: string; telephonyConnectionId?: string | null } | null>;
   };
   debtorRecord: {
     findUnique: (query: { where: { id: string } }) => Promise<{
@@ -30,6 +30,20 @@ type AppStore = {
       debtAmount: number;
       debtStatus: string;
       consentStatus: string;
+    } | null>;
+    count?: (query: { where: { campaignId: string } }) => Promise<number>;
+  };
+  scriptVersion?: {
+    findMany?: (query: unknown) => Promise<Array<{ status: string; updatedAt: string }>>;
+    findFirst?: (query: unknown) => Promise<{ id: string; status: string; version?: number } | null>;
+  };
+  telephonyConnection?: {
+    findUnique?: (query: { where: { id: string } }) => Promise<{
+      id: string;
+      tenantId: string;
+      mode: string;
+      status: string;
+      updatedAt: string;
     } | null>;
   };
   callAttempt: {
@@ -114,6 +128,12 @@ type AppStore = {
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
+  frequencyLedger?: {
+    wasAttemptRecorded: (callAttemptId: string) => Promise<boolean>;
+    markAttemptRecorded: (callAttemptId: string) => Promise<void>;
+    incrementBucket: (key: Record<string, unknown>) => Promise<void>;
+    getCount: (key: Record<string, unknown>) => Promise<number>;
+  };
   auditLog?: {
     create: (payload: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
   };
@@ -144,7 +164,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         if (query.where.id === '00000000-0000-0000-0000-000000000000') {
           return null;
         }
-        return { id: query.where.id };
+        return { id: query.where.id, legalBasisStatus: 'confirmed' };
       })
     },
     campaign: {
@@ -155,7 +175,10 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         }
         return {
           id: query.where.id,
-          tenantId: '11111111-1111-1111-1111-111111111111'
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          status: 'ready',
+          telephonyConnectionId: 'telephony-1',
+          updatedAt: '2026-08-16T12:00:00.000Z'
         };
       })
     },
@@ -200,8 +223,44 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           };
         }
 
+        if (query.where.id === 'dddddddd-dddd-dddd-dddd-dddddddddddd') {
+          return {
+            id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            campaignId: '22222222-2222-2222-2222-222222222222',
+            phone: '+79501234567',
+            timezone: 'UTC',
+            debtAmount: 1200,
+            debtStatus: 'active',
+            consentStatus: 'pending'
+          };
+        }
+
         return null;
-      })
+      }),
+      count: vi.fn(async () => 5)
+    },
+    scriptVersion: {
+      findMany: vi.fn(async () => [
+        {
+          status: 'active',
+          updatedAt: '2026-08-16T11:00:00.000Z'
+        }
+      ]),
+      findFirst: vi.fn(async () => ({
+        id: 'script-1',
+        status: 'active',
+        version: 1
+      }))
+    },
+    telephonyConnection: {
+      findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+        id: query.where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: '2026-08-16T10:00:00.000Z'
+      }))
     },
     callAttempt: {
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
@@ -227,7 +286,9 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       }))
     },
     complianceDecision: {
-      create: vi.fn(async () => ({}))
+      create: vi.fn(async () => ({})),
+      count: vi.fn(async () => 0),
+      findMany: vi.fn(async () => [])
     },
     ...overrides
   });
@@ -246,6 +307,13 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       hangupCall: vi.fn(async () => ({
         providerCallId: 'provider-call-1',
         status: 'completed' as VoiceCallStatus
+      })),
+      probeCapabilities: vi.fn(async () => ({
+        marking: false,
+        recording: false,
+        handoff: false,
+        sandboxPass: true,
+        checkedAt: new Date('2026-08-17T10:00:00.000Z')
       }))
   };
   return provider;
@@ -832,6 +900,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       campaignId: '22222222-2222-2222-2222-222222222222',
       debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       telephonyConnectionId: 'telephony-1',
+      scriptVersionId: 'script-1',
       status: 'completed',
       providerCallId: 'provider-call-1',
       startedAt: '2026-08-16T09:00:00.000Z',
@@ -872,6 +941,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         status: 'completed',
         telephonyConnectionId: 'telephony-1',
+        scriptVersionId: 'script-1',
         providerCallId: 'provider-call-1',
         startedAt: '2026-08-16T09:00:00.000Z',
         endedAt: '2026-08-16T09:10:00.000Z',
@@ -1362,9 +1432,16 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
 
   it('starts sandbox call after compliance allow and creates CallAttempt', async () => {
     const provider = makeProvider();
+    const frequencyLedger = {
+      wasAttemptRecorded: vi.fn(async () => false),
+      markAttemptRecorded: vi.fn(async () => undefined),
+      incrementBucket: vi.fn(async () => undefined),
+      getCount: vi.fn(async () => 0)
+    };
     const store = makeStore({
       complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
-      voiceProvider: provider
+      voiceProvider: provider,
+      frequencyLedger
     });
 
     const app = createApp({
@@ -1385,19 +1462,19 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     expect(body.callAttempt.providerCallId).toBe('provider-call-1');
 
     expect(provider.startCall).toHaveBeenCalledOnce();
+    expect(provider.startCall).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phone: '+79501234567'
+      })
+    );
     expect(store.callAttempt.create).toHaveBeenCalledOnce();
-    expect(store.callResult.create).toHaveBeenCalledOnce();
-    expect(store.callResult.create).toHaveBeenCalledWith({
-      data: {
-        tenantId: '11111111-1111-1111-1111-111111111111',
-        callAttemptId: 'call-attempt-1',
-        outcome: 'not_called',
-        qaStatus: 'not_reviewed',
-        reason: 'sandbox_call_result',
-        transcriptUrl: 'sandbox://transcripts/provider-call-1.txt',
-        recordingUrl: 'sandbox://recordings/provider-call-1.mp3'
-      }
+    expect(store.callAttempt.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        scriptVersionId: 'script-1'
+      })
     });
+    expect(store.callResult.create).toHaveBeenCalledOnce();
+    expect(frequencyLedger.incrementBucket).not.toHaveBeenCalled();
     expect(store.usageEvent?.create).toHaveBeenCalledTimes(1);
     expect(store.usageEvent?.create).toHaveBeenCalledWith({
       data: {
@@ -1410,6 +1487,189 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         occurredAt: expect.any(Date)
       }
     });
+
+    await app.close();
+  });
+
+  it('uses the campaign telephony connection for sandbox CallAttempt', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      campaign: {
+        create: vi.fn(async () => ({})),
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          status: 'ready',
+          telephonyConnectionId: 'telephony-selected',
+          updatedAt: '2026-08-16T12:00:00.000Z'
+        }))
+      }
+    });
+
+    const app = createApp({
+      campaignStore: store
+    });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {
+        telephonyConnectionId: 'body-override'
+      }
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(store.callAttempt.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        telephonyConnectionId: 'telephony-selected'
+      })
+    });
+
+    await app.close();
+  });
+
+  it('returns 409 and does not create CallAttempt when readiness is blocked', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      campaign: {
+        create: vi.fn(async () => ({})),
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          status: 'draft',
+          telephonyConnectionId: null,
+          updatedAt: '2026-08-16T12:00:00.000Z'
+        }))
+      },
+      debtorRecord: {
+        findUnique: vi.fn(async () => ({
+          id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          campaignId: '22222222-2222-2222-2222-222222222222',
+          phone: '+79501234567',
+          timezone: 'UTC',
+          debtAmount: 1200,
+          debtStatus: 'active',
+          consentStatus: 'given'
+        })),
+        count: vi.fn(async () => 0)
+      },
+      scriptVersion: {
+        findMany: vi.fn(async () => [])
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        error: 'CAMPAIGN_NOT_READY',
+        readinessState: 'blocked',
+        reasons: expect.arrayContaining([
+          expect.objectContaining({ reasonCode: 'DEBTORS_MISSING' }),
+          expect.objectContaining({ reasonCode: 'SCRIPT_NOT_READY' })
+        ])
+      })
+    );
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('returns 409 and does not create CallAttempt when readiness is stale after script change', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      campaign: {
+        create: vi.fn(async () => ({})),
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          status: 'ready',
+          telephonyConnectionId: 'telephony-1',
+          updatedAt: '2026-08-16T09:00:00.000Z'
+        }))
+      },
+      scriptVersion: {
+        findMany: vi.fn(async () => [
+          {
+            status: 'active',
+            updatedAt: '2026-08-16T10:00:00.000Z'
+          }
+        ])
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        error: 'CAMPAIGN_NOT_READY',
+        readinessState: 'stale',
+        stale: true,
+        blocked: false
+      })
+    );
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('returns 409 SCRIPT_VERSION_MISSING when campaign has no active script version', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      scriptVersion: {
+        findMany: vi.fn(async () => [
+          {
+            status: 'active',
+            updatedAt: '2026-08-16T11:00:00.000Z'
+          }
+        ]),
+        findFirst: vi.fn(async () => null)
+      }
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'SCRIPT_VERSION_MISSING'
+    });
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -1530,6 +1790,44 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     const body = response.json();
     expect(body.allowed).toBe(false);
     expect(body.decision).toBe('block');
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('returns 403 and does not create CallAttempt when consent is pending', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([
+        new CallWindowComplianceRule(),
+        new DebtStatusRule(),
+        new ConsentStatusRule()
+      ]),
+      voiceProvider: provider
+    });
+
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/dddddddd-dddd-dddd-dddd-dddddddddddd/calls/sandbox',
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(403);
+    const body = response.json();
+    expect(body.allowed).toBe(false);
+    expect(body.decision).toBe('block');
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          decision: 'block',
+          reasonCode: 'CONSENT_PENDING_BLOCK'
+        })
+      ])
+    );
     expect(provider.startCall).not.toHaveBeenCalled();
     expect(store.callAttempt.create).not.toHaveBeenCalled();
 

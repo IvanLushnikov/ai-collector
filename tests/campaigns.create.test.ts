@@ -7,7 +7,7 @@ const makeCampaignStore = () => ({
       if (query.where.id === '00000000-0000-0000-0000-000000000000') {
         return null;
       }
-      return { id: query.where.id };
+      return { id: query.where.id, legalBasisStatus: 'confirmed' };
     })
   },
   user: {
@@ -21,6 +21,7 @@ const makeCampaignStore = () => ({
       status: 'draft',
       timezone: data.timezone as string,
       createdByUserId: data.createdByUserId as string,
+      telephonyConnectionId: (data.telephonyConnectionId as string | null | undefined) ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })),
@@ -44,12 +45,13 @@ const makeCampaignStore = () => ({
         createdAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
       };
     }),
-    update: vi.fn(async ({ data, where }: { data: { status: string }; where: { id: string } }) => ({
+    update: vi.fn(async ({ data, where }: { data: { status?: string; telephonyConnectionId?: string | null }; where: { id: string } }) => ({
       id: where.id,
       tenantId: '11111111-1111-1111-1111-111111111111',
       name: `Campaign ${where.id}`,
-      status: data.status,
+      status: data.status ?? 'ready',
       timezone: 'UTC',
+      telephonyConnectionId: data.telephonyConnectionId ?? null,
       createdAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
     }))
   },
@@ -76,7 +78,25 @@ const makeCampaignStore = () => ({
         status: 'active',
         updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
       }
-    ])
+    ]),
+    findUnique: vi.fn(async (query: { where: { id: string } }) => {
+      if (query.where.id === '22222222-2222-2222-2222-222222222221') {
+        return {
+          id: query.where.id,
+          tenantId: '22222222-2222-2222-2222-222222222222',
+          mode: 'production',
+          status: 'active',
+          updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+        };
+      }
+      return {
+        id: query.where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+      };
+    })
   },
   debtorRecord: {
     count: vi.fn(async () => 2)
@@ -144,6 +164,64 @@ describe('POST /campaigns', () => {
         })
       })
     });
+
+    await app.close();
+  });
+
+  it('binds a tenant telephony connection on create', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Pilot campaign',
+        timezone: 'Europe/Moscow',
+        telephonyConnectionId: '33333333-3333-3333-3333-333333333333'
+      }
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json().telephonyConnectionId).toBe('33333333-3333-3333-3333-333333333333');
+    expect(campaignStore.campaign.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        telephonyConnectionId: '33333333-3333-3333-3333-333333333333'
+      })
+    });
+
+    await app.close();
+  });
+
+  it('rejects a telephony connection from another tenant', async () => {
+    const campaignStore = makeCampaignStore();
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/campaigns',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Pilot campaign',
+        timezone: 'Europe/Moscow',
+        telephonyConnectionId: '22222222-2222-2222-2222-222222222221'
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      error: 'TELEPHONY_CONNECTION_NOT_FOUND'
+    });
+    expect(campaignStore.campaign.create).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -851,6 +929,70 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
     await app.close();
   });
 
+  it('rejects auto_paused to running through status patch', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      name: 'Campaign paused',
+      status: 'auto_paused',
+      timezone: 'UTC',
+      createdAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        status: 'running'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('INVALID_STATUS_TRANSITION');
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('rejects auto_paused to review through status patch', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      name: 'Campaign paused',
+      status: 'auto_paused',
+      timezone: 'UTC',
+      createdAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/status',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        status: 'review'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('INVALID_STATUS_TRANSITION');
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
   it('returns 400 for invalid status payload', async () => {
     const app = createApp({ campaignStore: makeCampaignStore() });
     await app.ready();
@@ -921,6 +1063,283 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
   });
 });
 
+describe('POST /tenants/:tenantId/campaigns/:campaignId/safe-resume', () => {
+  const checklist = {
+    reasonAcknowledged: true,
+    causeResolved: true,
+    ownerApproved: true
+  };
+
+  it('resumes auto_paused campaign to review and writes campaign.safe_resumed', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      name: 'Campaign paused',
+      status: 'auto_paused',
+      timezone: 'UTC',
+      createdAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/safe-resume',
+      headers: {
+        'X-User-Role': 'owner'
+      },
+      payload: {
+        targetStatus: 'review',
+        checklist
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().status).toBe('review');
+    expect(campaignStore.campaign.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'campaign-paused' },
+        data: { status: 'review' }
+      })
+    );
+    expect(campaignStore.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'campaign.safe_resumed',
+        entityType: 'campaign',
+        entityId: 'campaign-paused',
+        metadata: expect.objectContaining({
+          fromStatus: 'auto_paused',
+          toStatus: 'review',
+          checklist,
+          forceCall: false
+        })
+      })
+    });
+
+    await app.close();
+  });
+
+  it('allows compliance_officer to safe-resume to ready', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'auto_paused'
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/safe-resume',
+      headers: {
+        'X-User-Role': 'compliance_officer'
+      },
+      payload: {
+        targetStatus: 'ready',
+        checklist
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().status).toBe('ready');
+
+    await app.close();
+  });
+
+  it('rejects incomplete checklist', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'auto_paused'
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/safe-resume',
+      headers: {
+        'X-User-Role': 'owner'
+      },
+      payload: {
+        targetStatus: 'review',
+        checklist: {
+          reasonAcknowledged: true,
+          causeResolved: false,
+          ownerApproved: true
+        }
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('SAFE_RESUME_CHECKLIST_INCOMPLETE');
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('rejects collection_manager for safe-resume', async () => {
+    const app = createApp({ campaignStore: makeCampaignStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/safe-resume',
+      headers: {
+        'X-User-Role': 'collection_manager'
+      },
+      payload: {
+        targetStatus: 'review',
+        checklist
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('FORBIDDEN');
+
+    await app.close();
+  });
+
+  it('rejects targetStatus running', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'auto_paused'
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-paused/safe-resume',
+      headers: {
+        'X-User-Role': 'owner'
+      },
+      payload: {
+        targetStatus: 'running',
+        checklist
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('VALIDATION_ERROR');
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+});
+
+describe('PATCH /tenants/:tenantId/campaigns/:campaignId/telephony-connection', () => {
+  const authorizedRole = 'owner';
+
+  it('binds a tenant telephony connection on a draft campaign', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'draft',
+      telephonyConnectionId: null
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/telephony-connection',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        telephonyConnectionId: '33333333-3333-3333-3333-333333333333'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().telephonyConnectionId).toBe('33333333-3333-3333-3333-333333333333');
+    expect(campaignStore.campaign.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'campaign-1' },
+        data: { telephonyConnectionId: '33333333-3333-3333-3333-333333333333' }
+      })
+    );
+
+    await app.close();
+  });
+
+  it('rejects binding another tenant connection', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'draft',
+      telephonyConnectionId: null
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/telephony-connection',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        telephonyConnectionId: '22222222-2222-2222-2222-222222222221'
+      }
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      error: 'TELEPHONY_CONNECTION_NOT_FOUND'
+    });
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('rejects changing telephony connection while campaign is running', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'running',
+      telephonyConnectionId: '33333333-3333-3333-3333-333333333333'
+    }));
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/telephony-connection',
+      headers: {
+        'X-User-Role': authorizedRole
+      },
+      payload: {
+        telephonyConnectionId: '44444444-4444-4444-4444-444444444444'
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'TELEPHONY_CONNECTION_LOCKED'
+    });
+    expect(campaignStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+});
+
 describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () => {
   const authorizedRole = 'owner';
 
@@ -930,6 +1349,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
       id: query.where.id,
       tenantId: '11111111-1111-1111-1111-111111111111',
       status: 'ready',
+      telephonyConnectionId: 'telephony-1',
       updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
     }));
     campaignStore.debtorRecord.count = vi.fn(async () => 5);
@@ -979,9 +1399,186 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
     });
 
     expect(campaignStore.scriptVersion.findMany).toHaveBeenCalledOnce();
-    expect(campaignStore.telephonyConnection.findMany).toHaveBeenCalledOnce();
+    expect(campaignStore.telephonyConnection.findUnique).toHaveBeenCalledWith({
+      where: { id: 'telephony-1' }
+    });
     expect(campaignStore.complianceDecision.count).toHaveBeenCalledOnce();
     expect(campaignStore.complianceDecision.findMany).toHaveBeenCalledOnce();
+
+    await app.close();
+  });
+
+  it('blocks production telephony when tenant legal basis is pending', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.tenant.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      legalBasisStatus: 'pending'
+    }));
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-1',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.readinessState).toBe('blocked');
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'legal',
+          reasonCode: 'LEGAL_BASIS_NOT_CONFIRMED'
+        })
+      ])
+    );
+
+    await app.close();
+  });
+
+  it('does not add legal basis block when selected connection is sandbox', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.tenant.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      legalBasisStatus: 'pending'
+    }));
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-sandbox',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'sandbox',
+      status: 'active',
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.reasons).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          reasonCode: 'LEGAL_BASIS_NOT_CONFIRMED'
+        })
+      ])
+    );
+    expect(body.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reasonCode: 'PRODUCTION_TELEPHONY_MISSING'
+        })
+      ])
+    );
+
+    await app.close();
+  });
+
+  it('ignores other tenant production connections and uses the selected campaign connection', async () => {
+    const campaignStore = makeCampaignStore();
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      status: 'ready',
+      telephonyConnectionId: 'telephony-selected',
+      updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
+    }));
+    campaignStore.debtorRecord.count = vi.fn(async () => 5);
+    campaignStore.scriptVersion.findMany = vi.fn(async () => [
+      {
+        id: 'script-1',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T08:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findMany = vi.fn(async () => [
+      {
+        id: 'telephony-other',
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        mode: 'production',
+        status: 'active',
+        updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+      }
+    ]);
+    campaignStore.telephonyConnection.findUnique = vi.fn(async () => ({
+      id: 'telephony-selected',
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      mode: 'sandbox',
+      status: 'disabled',
+      updatedAt: new Date('2026-08-16T07:00:00.000Z').toISOString()
+    }));
+    campaignStore.complianceDecision.count = vi.fn(async () => 0);
+    campaignStore.complianceDecision.findMany = vi.fn(async () => []);
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-ready/readiness-summary',
+      headers: {
+        'X-User-Role': authorizedRole
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'telephony',
+          reasonCode: 'PRODUCTION_TELEPHONY_MISSING'
+        })
+      ])
+    );
+    expect(campaignStore.telephonyConnection.findUnique).toHaveBeenCalledWith({
+      where: { id: 'telephony-selected' }
+    });
 
     await app.close();
   });
@@ -992,6 +1589,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary', () =>
       id: query.where.id,
       tenantId: '11111111-1111-1111-1111-111111111111',
       status: 'ready',
+      telephonyConnectionId: 'telephony-1',
       updatedAt: new Date('2026-08-16T09:00:00.000Z').toISOString()
     }));
     campaignStore.debtorRecord.count = vi.fn(async () => 5);

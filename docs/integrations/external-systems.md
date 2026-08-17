@@ -14,7 +14,7 @@
 - Описание: загрузка новых/обновлённых строк должников и их состояний.
 - Endpoint (проектируемый): 
   - `POST /tenants/:tenantId/campaigns/:campaignId/debtors/import`
-- Источники полей: `externalId`, контактные поля, `debtAmount`, `debtStatus`, `consentStatus`, `phone`, `timezone`.
+- Источники полей: `externalId`, контактные поля, `debtAmount`, `debtStatus`, `consentStatus`, `phone`, `timezone`, опционально `displayName`, `agreementRef`.
 - Ожидаемый ответ:
   - количество `acceptedCount`/`rejectedCount`,
   - список ошибок с указанием номера строки и причины.

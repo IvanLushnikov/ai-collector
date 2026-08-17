@@ -1,9 +1,13 @@
 import { ComplianceRule, ComplianceRuleContext, ComplianceRuleResult } from './decision.js';
+import { isProductNonWorkingHoliday, localCalendarDate } from './russian-holidays.js';
 
 export type CallWindowRuleConfig = {
   startHour: number;
   endHour: number;
 };
+
+const WEEKDAY_WINDOW = { startHour: 8, endHour: 22, label: '08:00-22:00' } as const;
+const WEEKEND_WINDOW = { startHour: 9, endHour: 20, label: '09:00-20:00' } as const;
 
 const parseHour = (value: string): number => {
   const part = value.trim().slice(0, 2);
@@ -29,24 +33,34 @@ export const parseTimeWindow = (window: string): CallWindowRuleConfig => {
   };
 };
 
+const localWeekdayAndHour = (timezone: string, now: Date): { weekday: string; hour: number } => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+    hour: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(now);
+
+  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value);
+
+  return { weekday, hour };
+};
+
+const isWeekendDay = (weekday: string): boolean => {
+  return weekday === 'Sat' || weekday === 'Sun';
+};
+
 export class CallWindowComplianceRule implements ComplianceRule {
   readonly name = 'call-window';
 
-  constructor(
-    private readonly window = '08:00-22:00'
-  ) {}
-
   evaluate(context: ComplianceRuleContext): ComplianceRuleResult {
-    const parsed = parseTimeWindow(this.window);
-
-    const localTime = new Date().toLocaleString('en-US', {
-      timeZone: context.timezone,
-      hour: '2-digit',
-      hour12: false
-    });
-
-    const nowHour = Number(localTime);
-    const isAllowed = Number.isFinite(nowHour) && nowHour >= parsed.startHour && nowHour < parsed.endHour;
+    const now = new Date();
+    const { weekday, hour } = localWeekdayAndHour(context.timezone, now);
+    const holiday = isProductNonWorkingHoliday(localCalendarDate(context.timezone, now));
+    const weekendLike = isWeekendDay(weekday) || holiday;
+    const window = weekendLike ? WEEKEND_WINDOW : WEEKDAY_WINDOW;
+    const isAllowed = Number.isFinite(hour) && hour >= window.startHour && hour < window.endHour;
 
     if (isAllowed) {
       return { decision: 'allow' };
@@ -55,7 +69,7 @@ export class CallWindowComplianceRule implements ComplianceRule {
     return {
       decision: 'block',
       reasonCode: 'CALL_WINDOW_BLOCK',
-      reasonText: `Call window is restricted to ${this.window}`
+      reasonText: `Call window is restricted to weekday ${WEEKDAY_WINDOW.label} and weekend ${WEEKEND_WINDOW.label}`
     };
   }
 }

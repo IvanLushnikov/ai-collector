@@ -12,6 +12,14 @@ export class ConsentStatusRule implements ComplianceRule {
       };
     }
 
+    if (context.consentStatus !== 'given') {
+      return {
+        decision: 'block',
+        reasonCode: 'CONSENT_PENDING_BLOCK',
+        reasonText: 'Consent status is pending'
+      };
+    }
+
     return { decision: 'allow' };
   }
 }

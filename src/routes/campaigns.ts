@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
+import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -22,6 +23,7 @@ type CampaignDependencies = {
   };
   telephonyConnection?: {
     findMany?: (args: any) => Promise<unknown>;
+    findUnique?: (args: any) => Promise<unknown>;
   };
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
@@ -49,7 +51,8 @@ type CampaignDependencies = {
 const createCampaignSchema = z.object({
   tenantId: z.string().uuid(),
   name: z.string().min(1),
-  timezone: z.string().min(1)
+  timezone: z.string().min(1),
+  telephonyConnectionId: z.string().uuid().optional()
 });
 
 const tenantCampaignsSchema = z.object({
@@ -86,7 +89,7 @@ const allowedStatusTransitions: Record<string, string[]> = {
   review: ['ready'],
   ready: ['running'],
   running: ['auto_paused', 'completed'],
-  auto_paused: ['review'],
+  auto_paused: [],
   completed: ['archived'],
   archived: []
 };
@@ -99,6 +102,43 @@ const campaignStatusTransitionSchema = z.object({
 const campaignStatusUpdateSchema = z.object({
   status: z.enum(campaignStatusValues)
 });
+
+const campaignSafeResumeSchema = z.object({
+  targetStatus: z.enum(['review', 'ready']),
+  checklist: z.object({
+    reasonAcknowledged: z.boolean(),
+    causeResolved: z.boolean(),
+    ownerApproved: z.boolean()
+  })
+});
+
+const campaignTelephonyConnectionUpdateSchema = z.object({
+  telephonyConnectionId: z.string().uuid().nullable()
+});
+
+type TelephonyConnectionRecord = {
+  id: string;
+  tenantId: string;
+  mode: string;
+  status: string;
+  updatedAt: string;
+};
+
+const findTenantTelephonyConnection = async (
+  deps: CampaignDependencies,
+  tenantId: string,
+  telephonyConnectionId: string
+): Promise<TelephonyConnectionRecord | null> => {
+  const connection = await deps.telephonyConnection?.findUnique?.({
+    where: { id: telephonyConnectionId }
+  }) as TelephonyConnectionRecord | null | undefined;
+
+  if (!connection || connection.tenantId !== tenantId) {
+    return null;
+  }
+
+  return connection;
+};
 
 const campaignDebtorImportSchema = z.object({
   csvContent: z.string().min(1)
@@ -212,13 +252,23 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
+    let telephonyConnectionId: string | null = null;
+    if (payload.data.telephonyConnectionId) {
+      const connection = await findTenantTelephonyConnection(deps, tenantId, payload.data.telephonyConnectionId);
+      if (!connection) {
+        return reply.code(404).send({ error: 'TELEPHONY_CONNECTION_NOT_FOUND' });
+      }
+      telephonyConnectionId = connection.id;
+    }
+
   const campaign = await deps.campaign.create({
       data: {
         tenantId,
         name: payload.data.name,
         timezone: payload.data.timezone,
         status: 'draft',
-        createdByUserId: actor.id
+        createdByUserId: actor.id,
+        telephonyConnectionId
       }
     });
 
@@ -472,149 +522,15 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       tenantId: string;
       status: string;
       updatedAt: string;
+      telephonyConnectionId?: string | null;
     } | null;
 
     if (!campaign || campaign.tenantId !== params.data.tenantId) {
       return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
     }
 
-    const [rawDebtorCount, rawScriptVersions, rawTelephonyConnections, complianceBlocks, rawComplianceReasons] = await Promise.all([
-      (deps.debtorRecord?.count?.({ where: { campaignId: params.data.campaignId } }) ?? Promise.resolve(0)),
-      (deps.scriptVersion?.findMany?.({
-        where: { campaignId: params.data.campaignId },
-        select: {
-          status: true,
-          updatedAt: true
-        },
-        orderBy: { updatedAt: 'desc' }
-      }) ?? Promise.resolve([])),
-      (deps.telephonyConnection?.findMany?.({
-        where: { tenantId: params.data.tenantId },
-        select: {
-          mode: true,
-          status: true,
-          updatedAt: true
-        },
-        orderBy: { updatedAt: 'desc' }
-      }) ?? Promise.resolve([])),
-      (deps.complianceDecision?.count?.({
-        where: {
-          campaignId: params.data.campaignId,
-          decision: 'block'
-        }
-      }) ?? Promise.resolve(0)),
-      (deps.complianceDecision?.findMany?.({
-        where: {
-          campaignId: params.data.campaignId,
-          decision: 'block'
-        },
-        orderBy: {
-          checkedAt: 'desc'
-        },
-        take: 3,
-        select: {
-          id: true,
-          reasonCode: true,
-          reasonText: true,
-          checkedAt: true
-        }
-      }) ?? Promise.resolve([]))
-    ]);
-
-    const debtorRecordsCount = rawDebtorCount as number;
-    const scriptVersions = rawScriptVersions as Array<{ status: string; updatedAt: string }>;
-    const telephonyConnections = rawTelephonyConnections as Array<{ mode: string; status: string; updatedAt: string }>;
-    const complianceBlockReasons = rawComplianceReasons as Array<{
-      id: string;
-      reasonCode: string;
-      reasonText: string;
-      checkedAt: string;
-    }>;
-
-    const activeScriptVersions = scriptVersions.filter((scriptVersion) => scriptVersion.status === 'active');
-    const activeProductionTelephonyConnections = telephonyConnections.filter(
-      (connection) => connection.mode === 'production' && connection.status === 'active'
-    );
-    const campaignUpdatedAt = Date.parse(campaign.updatedAt);
-    const readinessLastUpdatedAt = Math.max(
-      campaignUpdatedAt,
-      ...scriptVersions.map((scriptVersion) => Date.parse(scriptVersion.updatedAt)),
-      ...telephonyConnections.map((connection) => Date.parse(connection.updatedAt))
-    );
-
-    const reasons: Array<{ source: string; reasonCode: string; reasonText: string; nextAction: string }> = [];
-    if (debtorRecordsCount === 0) {
-      reasons.push({
-        source: 'debtors',
-        reasonCode: 'DEBTORS_MISSING',
-        reasonText: 'No debtor records are imported for this campaign',
-        nextAction: 'Upload debtor records via CSV import'
-      });
-    }
-
-    if (activeScriptVersions.length === 0) {
-      reasons.push({
-        source: 'script',
-        reasonCode: 'SCRIPT_NOT_READY',
-        reasonText: 'No active script version is available for this campaign',
-        nextAction: 'Create and activate a script version'
-      });
-    }
-
-    if (activeProductionTelephonyConnections.length === 0) {
-      reasons.push({
-        source: 'telephony',
-        reasonCode: 'PRODUCTION_TELEPHONY_MISSING',
-        reasonText: 'No active production telephony connection is configured',
-        nextAction: 'Add or activate a production telephony connection'
-      });
-    }
-
-    if (complianceBlocks > 0) {
-      reasons.push({
-        source: 'compliance',
-        reasonCode: 'COMPLIANCE_BLOCKS_DETECTED',
-        reasonText: 'Campaign has blocking compliance decisions',
-        nextAction: 'Resolve blocking compliance reasons and re-check readiness'
-      });
-    }
-
-    if (!['review', 'ready', 'running', 'auto_paused'].includes(campaign.status)) {
-      reasons.push({
-        source: 'campaign',
-        reasonCode: 'CAMPAIGN_STATUS_INVALID',
-        reasonText: `Campaign status ${campaign.status} is not eligible for launch`,
-        nextAction: campaign.status === 'archived' || campaign.status === 'completed'
-          ? 'Restore campaign status before launch'
-          : 'Run campaign through draft → review → ready before launch'
-      });
-    }
-
-    const blocked = reasons.length > 0;
-    const stale = readinessLastUpdatedAt > campaignUpdatedAt;
-    const readinessState = blocked ? 'blocked' : stale ? 'stale' : 'ready';
-    const readinessHash = [
-      campaign.id,
-      debtorRecordsCount,
-      activeScriptVersions.length,
-      activeProductionTelephonyConnections.length,
-      complianceBlocks,
-      campaignUpdatedAt,
-      readinessLastUpdatedAt
-    ].join('|');
-
-    return reply.code(200).send({
-      campaignId: campaign.id,
-      campaignStatus: campaign.status,
-      source: 'campaign-readiness-v1',
-      timestamp: new Date().toISOString(),
-      readinessHash,
-      readinessState,
-      blocked,
-      stale,
-      reasons,
-      complianceReasons: complianceBlockReasons
-    });
+    const readiness = await evaluateCampaignReadiness(deps, campaign, params.data.tenantId);
+    return reply.code(200).send(readiness);
   });
 
   app.get(
@@ -1079,6 +995,110 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
   );
 
   app.patch(
+    '/tenants/:tenantId/campaigns/:campaignId/telephony-connection',
+    { preValidation: roleMiddleware(['owner', 'collection_manager']) },
+    async (request, reply) => {
+      const params = tenantCampaignDetailSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: params.error.issues
+        });
+      }
+
+      const payload = campaignTelephonyConnectionUpdateSchema.safeParse(request.body);
+      if (!payload.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: payload.error.issues
+        });
+      }
+
+      const tenant = await deps.tenant.findUnique({
+        where: { id: params.data.tenantId }
+      }) as { id: string } | null;
+      if (!tenant) {
+        return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
+      }
+
+      const campaign = await deps.campaign.findUnique?.({
+        where: { id: params.data.campaignId }
+      }) as {
+        id: string;
+        tenantId: string;
+        status: string;
+        telephonyConnectionId?: string | null;
+      } | null;
+
+      if (!campaign || campaign.tenantId !== params.data.tenantId) {
+        return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
+      }
+
+      if (campaign.status === 'running' || campaign.status === 'auto_paused') {
+        return reply.code(409).send({ error: 'TELEPHONY_CONNECTION_LOCKED' });
+      }
+
+      let telephonyConnectionId: string | null = payload.data.telephonyConnectionId;
+      if (telephonyConnectionId) {
+        const connection = await findTenantTelephonyConnection(deps, params.data.tenantId, telephonyConnectionId);
+        if (!connection) {
+          return reply.code(404).send({ error: 'TELEPHONY_CONNECTION_NOT_FOUND' });
+        }
+        telephonyConnectionId = connection.id;
+      }
+
+      const actor = await deps.user.findFirst({
+        where: {
+          tenantId: params.data.tenantId,
+          isActive: true,
+          status: 'active'
+        }
+      }) as { id: string } | null;
+      if (!actor) {
+        return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
+      }
+
+      const updated = await (deps.campaign.update?.({
+        where: { id: params.data.campaignId },
+        data: { telephonyConnectionId },
+        select: {
+          id: true,
+          tenantId: true,
+          name: true,
+          status: true,
+          timezone: true,
+          telephonyConnectionId: true,
+          createdAt: true
+        }
+      }) ?? Promise.resolve(null)) as {
+        id: string;
+        tenantId: string;
+        name: string;
+        status: string;
+        timezone: string;
+        telephonyConnectionId: string | null;
+        createdAt: string;
+      };
+
+      await deps.auditLog?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          userId: actor.id,
+          action: 'campaign.telephony_connection_updated',
+          entityType: 'campaign',
+          entityId: params.data.campaignId,
+          metadata: {
+            campaignId: params.data.campaignId,
+            telephonyConnectionId
+          }
+        }
+      });
+
+      return reply.code(200).send(updated);
+    }
+  );
+
+  app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/status',
     { preValidation: roleMiddleware(['owner', 'collection_manager']) },
     async (request, reply) => {
@@ -1185,6 +1205,106 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     return reply.code(200).send(updated);
   });
 
+  app.post(
+    '/tenants/:tenantId/campaigns/:campaignId/safe-resume',
+    { preValidation: roleMiddleware(['owner', 'compliance_officer']) },
+    async (request, reply) => {
+      const params = tenantCampaignDetailSchema.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: params.error.issues
+        });
+      }
+
+      const payload = campaignSafeResumeSchema.safeParse(request.body);
+      if (!payload.success) {
+        return reply.code(400).send({
+          error: 'VALIDATION_ERROR',
+          issues: payload.error.issues
+        });
+      }
+
+      const tenant = await deps.tenant.findUnique({
+        where: { id: params.data.tenantId }
+      }) as { id: string } | null;
+      if (!tenant) {
+        return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
+      }
+
+      const campaign = await deps.campaign.findUnique?.({
+        where: { id: params.data.campaignId }
+      }) as { id: string; tenantId: string; status: string } | null;
+
+      if (!campaign || campaign.tenantId !== params.data.tenantId) {
+        return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
+      }
+
+      if (campaign.status !== 'auto_paused') {
+        return reply.code(400).send({
+          error: 'INVALID_STATUS_TRANSITION',
+          from: campaign.status,
+          to: payload.data.targetStatus
+        });
+      }
+
+      const checklist = payload.data.checklist;
+      if (!checklist.reasonAcknowledged || !checklist.causeResolved || !checklist.ownerApproved) {
+        return reply.code(400).send({ error: 'SAFE_RESUME_CHECKLIST_INCOMPLETE' });
+      }
+
+      const actor = await deps.user.findFirst({
+        where: {
+          tenantId: params.data.tenantId,
+          isActive: true,
+          status: 'active'
+        }
+      }) as { id: string } | null;
+      if (!actor) {
+        return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
+      }
+
+      const updated = await (deps.campaign.update?.({
+        where: { id: params.data.campaignId },
+        data: { status: payload.data.targetStatus },
+        select: {
+          id: true,
+          tenantId: true,
+          name: true,
+          status: true,
+          timezone: true,
+          createdAt: true
+        }
+      }) ?? Promise.resolve(null)) as {
+        id: string;
+        tenantId: string;
+        name: string;
+        status: string;
+        timezone: string;
+        createdAt: string;
+      };
+
+      await deps.auditLog?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          userId: actor.id,
+          action: 'campaign.safe_resumed',
+          entityType: 'campaign',
+          entityId: params.data.campaignId,
+          metadata: {
+            campaignId: params.data.campaignId,
+            fromStatus: 'auto_paused',
+            toStatus: payload.data.targetStatus,
+            checklist,
+            forceCall: false
+          }
+        }
+      });
+
+      return reply.code(200).send(updated);
+    }
+  );
+
   app.post('/tenants/:tenantId/campaigns/:campaignId/debtors/import', async (request, reply) => {
     const params = tenantCampaignDetailSchema.safeParse(request.params);
     if (!params.success) {
@@ -1248,6 +1368,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       debtAmount: number;
       debtStatus: string;
       consentStatus: string;
+      displayName: string | null;
+      agreementRef: string | null;
+    };
+
+    const optionalIdentityField = (value: string | undefined): string | null => {
+      const trimmed = (value ?? '').trim();
+      return trimmed.length === 0 ? null : trimmed;
     };
 
     const rows = parsedRows.rows;
@@ -1275,7 +1402,9 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
             timezone: row.timezone,
             debtAmount,
             debtStatus: row.debtStatus,
-            consentStatus: row.consentStatus
+            consentStatus: row.consentStatus,
+            displayName: optionalIdentityField(row.displayName),
+            agreementRef: optionalIdentityField(row.agreementRef)
           } as DebtorImportRecordPayload
         };
       })

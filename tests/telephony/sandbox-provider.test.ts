@@ -39,4 +39,17 @@ describe('SandboxVoiceProvider', () => {
     const statusAfterSecondPoll = await provider.getCallStatus(call.providerCallId);
     expect(statusAfterSecondPoll.status).toBe('completed');
   });
+
+  it('probes sandbox capabilities without claiming live marking', async () => {
+    const provider = new SandboxVoiceProvider();
+    const capabilities = await provider.probeCapabilities();
+
+    expect(capabilities).toEqual({
+      marking: false,
+      recording: false,
+      handoff: false,
+      sandboxPass: true,
+      checkedAt: expect.any(Date)
+    });
+  });
 });

@@ -70,6 +70,9 @@
 - `403`:
   - `FORBIDDEN` для роли без доступа (для `sandbox start`: разрешены только `owner`, `collection_manager`, `operator`)
   - `COMPLIANCE_BLOCK` (`allowed: false`, список `reasons`, список `rules`)
+- `409`:
+  - `CAMPAIGN_NOT_READY` (readiness `blocked` или `stale`)
+  - `SCRIPT_VERSION_MISSING` (нет активной версии сценария)
 - `404`:
   - `TENANT_NOT_FOUND`
   - `CAMPAIGN_NOT_FOUND`
@@ -139,6 +142,7 @@
     "debtorRecordId": "uuid",
     "status": "completed",
     "telephonyConnectionId": "uuid",
+    "scriptVersionId": "uuid",
     "providerCallId": "string",
     "startedAt": "ISO-8601",
     "endedAt": "ISO-8601",

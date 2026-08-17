@@ -87,6 +87,8 @@
   - `debtAmount` (decimal)
   - `debtStatus` (enum: `active`, `closed`, `disputed`, `bankruptcy`, `contact_forbidden`)
   - `consentStatus` (enum: `pending`, `given`, `revoked`)
+  - `displayName` (string, optional, Lab identity slot)
+  - `agreementRef` (string, optional, contract number/tail)
   - `createdAt` (timestamp)
   - `updatedAt` (timestamp)
 - Уникальность:
@@ -214,6 +216,14 @@
   - N:1 `Tenant`
   - N:1 `Campaign`
   - 1:1/0:1 `CallAttempt`
+
+### FrequencyLedger
+
+- Назначение: счётчик взаимодействий кредитора и обязательства (day/week/month).
+- Поля: `tenantId`, `creditorKey`, `obligationId`, `bucket` (`day`/`week`/`month`), `periodStart`, `count`.
+- Уникальность: `(tenantId, creditorKey, obligationId, bucket, periodStart)`.
+- Lab mapping: `creditorKey` = `tenantId`, `obligationId` = `DebtorRecord.externalId`.
+- Лимит 1/2/8 — продуктовый cap, не юридический факт до memo.
 
 ## Базовые связи (обновлённый контур)
 

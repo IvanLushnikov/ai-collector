@@ -14,6 +14,7 @@ export interface Campaign {
   status: CampaignStatus;
   timezone: string;
   createdByUserId: string;
+  telephonyConnectionId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

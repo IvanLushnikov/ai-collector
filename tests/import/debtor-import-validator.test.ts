@@ -84,4 +84,17 @@ AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given`;
     expect(result.validRows).toHaveLength(1);
     expect(result.validRows[0].externalId).toBe('AB-1001');
   });
+
+  it('accepts rows without optional identity columns', () => {
+    const parsed = parseDebtorImportCsv(
+      'externalId,phone,timezone,debtAmount,debtStatus,consentStatus\nAB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given'
+    );
+
+    const result = validateDebtorImportRows(parsed.rows);
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.validRows).toHaveLength(1);
+    expect(result.validRows[0].displayName).toBeUndefined();
+    expect(result.validRows[0].agreementRef).toBeUndefined();
+  });
 });

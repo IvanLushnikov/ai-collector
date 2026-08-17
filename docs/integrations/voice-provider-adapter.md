@@ -30,10 +30,17 @@ export interface VoiceProviderAdapter {
   startCall(input: StartCallInput): Promise<StartCallResult>;
   getCallStatus(providerCallId: string): Promise<CallStatusResult>;
   hangupCall(providerCallId: string): Promise<HangupCallResult>;
-
-  // опционально, если нужно нормализовать статусы конкретного вендора
+  probeCapabilities(): Promise<VoiceProviderCapabilities>;
   mapVendorStatus?(status: VendorCallStatus): VoiceCallStatus;
 }
+
+export type VoiceProviderCapabilities = {
+  marking: boolean;
+  recording: boolean;
+  handoff: boolean;
+  sandboxPass: boolean;
+  checkedAt: Date;
+};
 ```
 
 ### `startCall(input)`
@@ -51,10 +58,14 @@ export interface VoiceProviderAdapter {
   - `providerCallId`
   - `status` — один из статусов `VoiceCallStatus`.
 
-### `hangupCall(providerCallId)`
+### `probeCapabilities()`
 
-- Вызывается для принудительного завершения.
-- Возвращает `HangupCallResult` с финальным статусом.
+Возвращает `VoiceProviderCapabilities`:
+
+- `marking`, `recording`, `handoff` — live capabilities. Sandbox ставит `false` и не притворяется live-маркировкой.
+- `sandboxPass` — явный sandbox-pass (`true` у `SandboxVoiceProvider`).
+- `checkedAt` — время проверки.
+- Без vendor-полей.
 
 ## Статусы звонка и их трактовка
 
