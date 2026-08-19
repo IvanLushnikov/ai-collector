@@ -8,6 +8,7 @@ type OutboxPrismaClient = {
   outboxEvent: {
     findMany: (args: unknown) => Promise<OutboxEvent[]>;
     update: (args: unknown) => Promise<unknown>;
+    updateMany: (args: unknown) => Promise<{ count: number }>;
   };
 };
 
@@ -29,11 +30,14 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
       orderBy: { createdAt: 'asc' },
       take: limit
     });
-    await Promise.all(events.map((event) => client.outboxEvent.update({
-      where: { id: event.id },
-      data: { lockedAt: now, lockedBy: workerId, attempts: { increment: 1 } }
-    })));
-    return events;
+    const claimed = await Promise.all(events.map(async (event) => {
+      const result = await client.outboxEvent.updateMany({
+        where: { id: event.id, processedAt: null, lockedAt: null },
+        data: { lockedAt: now, lockedBy: workerId, attempts: { increment: 1 } }
+      });
+      return result.count === 1 ? event : null;
+    }));
+    return claimed.filter((event): event is OutboxEvent => event !== null);
   },
   async markProcessed(eventId, workerId) {
     await client.outboxEvent.update({

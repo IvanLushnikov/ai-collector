@@ -7,7 +7,8 @@ describe('transactional outbox', () => {
     const outbox = createPrismaOutbox({
       outboxEvent: {
         findMany: vi.fn(async () => [{ id: 'event-1', eventType: 'campaign.status_changed', payload: {} }]),
-        update
+        update,
+        updateMany: vi.fn(async () => ({ count: 1 }))
       }
     } as any);
 
