@@ -29,6 +29,9 @@ const DEFAULT_ERROR_CODE = 'RATE_LIMIT_EXCEEDED';
 const DEFAULT_STATUS_CODE = 429;
 
 const resolveTenantId = (request: FastifyRequest): string | null => {
+  if (request.tenantContext?.tenantId) {
+    return request.tenantContext.tenantId;
+  }
   const tenantHeader = request.headers['x-tenant-id'];
   if (typeof tenantHeader === 'string' && tenantHeader.length > 0) {
     return tenantHeader;
