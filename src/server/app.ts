@@ -287,6 +287,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   const campaignStore: any = dependencies.campaignStore ?? prisma;
   const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.NODE_ENV !== 'production';
+  const allowedOrigins = env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean);
   const frequencyLedger = dependencies.frequencyLedger
     ?? (campaignStore.$transaction && campaignStore.frequencyLedger && campaignStore.frequencyLedgerAttempt
       ? createPrismaFrequencyLedgerRepository(campaignStore)
@@ -294,6 +295,22 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   app.addHook('onRequest', async (request) => {
     request.allowHeaderIdentity = allowHeaderIdentity;
+  });
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin;
+    if (!origin) return;
+    const allowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
+    if (!allowed) {
+      return reply.code(403).send({ error: 'CORS_ORIGIN_FORBIDDEN' });
+    }
+    reply.header('Access-Control-Allow-Origin', origin);
+    reply.header('Access-Control-Allow-Credentials', 'true');
+    reply.header('Vary', 'Origin');
+    if (request.method === 'OPTIONS') {
+      reply.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+      reply.header('Access-Control-Allow-Headers', 'Content-Type,Accept');
+      return reply.code(204).send();
+    }
   });
 
   const rateLimitConfig = dependencies.rateLimit ?? {

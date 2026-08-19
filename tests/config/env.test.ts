@@ -45,9 +45,19 @@ describe('credentials and platform speech env', () => {
     const parsed = parseEnv({
       ...required,
       NODE_ENV: 'production',
-      CREDENTIALS_ENCRYPTION_KEY: validDek
+      CREDENTIALS_ENCRYPTION_KEY: validDek,
+      CORS_ORIGINS: 'https://cabinet.example.ru'
     });
     expect(parsed.CREDENTIALS_ENCRYPTION_KEY).toBe(validDek);
+  });
+
+  it('does not allow wildcard CORS in production cookie session mode', () => {
+    expect(() => parseEnv({
+      ...required,
+      NODE_ENV: 'production',
+      CREDENTIALS_ENCRYPTION_KEY: validDek,
+      CORS_ORIGINS: '*'
+    })).toThrow(/CORS_ORIGINS/);
   });
 
   it('uses a test fixture when encryption key is omitted in test', () => {
