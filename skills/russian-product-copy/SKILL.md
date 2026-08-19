@@ -113,6 +113,31 @@ Describe consequences explicitly. Do not rely on «Вы уверены?» alone.
 
 Calm, clear, human, professional. No slang, forced humor, or hype.
 
+### Public landing (`public/index.html`)
+
+GitHub Pages landing sells **ИИ-коллектор** as a product, not security or compliance as a standalone offer.
+
+**Primary message:** automation of collection campaigns — base, scenario, outbound calls, outcomes.
+
+**Secondary message:** control is built into the process (restriction checks, operator handoff, action log). Do not lead with safety slogans.
+
+| Avoid as hero headline | Prefer |
+|---|---|
+| Звонки только там, где это разрешено | ИИ-коллектор для телефонного взыскания |
+| Безопасный обзвон / контур безопасности | Автоматизация кампаний взыскания |
+| «Что покажем на демо» as a separate hero block | Inline demo form in hero (`#demo-form`) |
+
+**Layout pattern (B2B SaaS):**
+
+- Hero: two columns — product copy left, compact demo form right.
+- Value strip below hero: 3 equal cards (campaigns, dialogues/outcomes, in-process control).
+- No orphan side panel that breaks the grid; no modal-only demo form on desktop.
+- Sticky bottom CTA — mobile only.
+
+**Tone for landing:** businesslike, slightly lively; short sentences; no prototype jargon, no hype, no bureaucratic Russian.
+
+When editing landing copy, read [PRODUCT_LANGUAGE.md](../../PRODUCT_LANGUAGE.md) and align with [ru-ai-collector-product-design](../ru-ai-collector-product-design/SKILL.md) for layout decisions.
+
 ### Bureaucratic Russian
 
 Avoid: осуществить, произвести, имеется, является, в рамках, посредством, данный, вышеуказанный, необходимо выполнить.
