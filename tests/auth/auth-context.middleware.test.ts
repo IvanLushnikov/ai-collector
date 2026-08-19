@@ -173,6 +173,38 @@ describe('authContextMiddleware', () => {
     await app.close();
   });
 
+  it('rejects a cookie-authenticated mutation without a trusted Origin when CSRF protection is enabled', async () => {
+    const campaignStore = makeStore();
+    const app = createApp({ campaignStore, csrfProtection: true, csrfAllowedOrigins: ['https://cabinet.example.test'] });
+    await app.ready();
+
+    const registered = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        organizationName: 'ООО МКК ФинЛиния',
+        name: 'Анна Котова',
+        email: 'anna-csrf@example.com',
+        password: 'strong-password'
+      }
+    });
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/campaigns',
+      headers: { cookie: sessionCookie(registered) },
+      payload: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Пилот',
+        timezone: 'Europe/Moscow'
+      }
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error).toBe('CSRF_ORIGIN_REQUIRED');
+    await app.close();
+  });
+
   it('keeps header-based RBAC when no session cookie is present', async () => {
     const campaignStore = makeStore();
     await campaignStore.user.create({

@@ -227,6 +227,21 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Backend публикует единственный versioned contract для используемых UI API.
 - Breaking changes требуют новой версии, а не неявно ломают кабинет.
 
+### T-261: Защитить cookie-сессии от cross-origin mutation
+
+Статус: `done`
+
+Что сделано:
+
+- Для production cookie-authenticated `POST`/`PUT`/`PATCH`/`DELETE` добавлена fail-closed проверка явного trusted `Origin`.
+- Не затронуты безопасные методы и service/worker requests без browser session.
+- Middleware и интеграция с Fastify покрыты regression tests; тестовый override не меняет production default.
+
+Критерии готовности:
+
+- Cookie mutation без `Origin` получает machine-readable 403.
+- Только origin из explicit CORS allowlist может выполнить mutation в production.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.

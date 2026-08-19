@@ -17,6 +17,7 @@ import { registerSupportAccessRoutes } from '../routes/support-access.js';
 import { prisma } from '../db/client.js';
 import { tenantContextMiddleware } from './middleware/tenant-context.js';
 import { authContextMiddleware } from './middleware/auth-context.js';
+import { createCsrfOriginMiddleware } from './middleware/csrf-origin.js';
 import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
@@ -153,6 +154,8 @@ const createRateLimitAuditEntry = async (
 export type AppDependencies = {
   campaignStore?: any;
   allowHeaderIdentity?: boolean;
+  csrfProtection?: boolean;
+  csrfAllowedOrigins?: readonly string[];
   frequencyLedger?: FrequencyLedgerRepository;
   rateLimit?: {
     maxRequests: number;
@@ -350,6 +353,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);
+  app.addHook('preHandler', createCsrfOriginMiddleware({
+    enabled: dependencies.csrfProtection ?? env.NODE_ENV === 'production',
+    allowedOrigins: dependencies.csrfAllowedOrigins ?? allowedOrigins
+  }));
 
   registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
   registerCampaignRoutes(app as any, campaignStore as any);
