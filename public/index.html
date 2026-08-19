@@ -162,6 +162,12 @@
       border: 1px solid var(--line);
     }
 
+    .btn-secondary:hover,
+    .btn-secondary:focus-visible {
+      background: var(--surface-muted);
+      border-color: #b0bed0;
+    }
+
     .hero {
       padding: 56px 0 28px;
     }
@@ -173,7 +179,7 @@
       box-shadow: var(--shadow);
       padding: clamp(28px, 4vw, 56px);
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      grid-template-columns: minmax(0, 1.2fr) minmax(min(280px, 100%), 0.8fr);
       gap: 28px;
       align-items: center;
     }
