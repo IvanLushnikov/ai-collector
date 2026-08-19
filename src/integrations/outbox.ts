@@ -18,6 +18,8 @@ export type OutboxStore = {
   markFailed: (eventId: string, workerId: string, error: string) => Promise<void>;
 };
 
+const OUTBOX_LEASE_MS = 60_000;
+
 /**
  * Durable delivery adapter. Claiming is deliberately short-lived; consumers
  * must be idempotent because a process can die after an external side effect.
@@ -25,14 +27,23 @@ export type OutboxStore = {
 export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => ({
   async claimAvailable(workerId, limit) {
     const now = new Date();
+    const leaseExpiredAt = new Date(now.getTime() - OUTBOX_LEASE_MS);
     const events = await client.outboxEvent.findMany({
-      where: { processedAt: null, availableAt: { lte: now }, lockedAt: null },
+      where: {
+        processedAt: null,
+        availableAt: { lte: now },
+        OR: [{ lockedAt: null }, { lockedAt: { lt: leaseExpiredAt } }]
+      },
       orderBy: { createdAt: 'asc' },
       take: limit
     });
     const claimed = await Promise.all(events.map(async (event) => {
       const result = await client.outboxEvent.updateMany({
-        where: { id: event.id, processedAt: null, lockedAt: null },
+        where: {
+          id: event.id,
+          processedAt: null,
+          OR: [{ lockedAt: null }, { lockedAt: { lt: leaseExpiredAt } }]
+        },
         data: { lockedAt: now, lockedBy: workerId, attempts: { increment: 1 } }
       });
       return result.count === 1 ? event : null;
@@ -40,20 +51,16 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
     return claimed.filter((event): event is OutboxEvent => event !== null);
   },
   async markProcessed(eventId, workerId) {
-    await client.outboxEvent.update({
-      where: { id: eventId },
+    await client.outboxEvent.updateMany({
+      where: { id: eventId, processedAt: null, lockedBy: workerId },
       data: { processedAt: new Date(), lockedAt: null, lockedBy: null, lastError: null },
-      // The worker id is intentionally recorded in the claim; a production
-      // deployment also protects this update with a conditional SQL claim.
     });
-    void workerId;
   },
   async markFailed(eventId, workerId, error) {
-    await client.outboxEvent.update({
-      where: { id: eventId },
+    await client.outboxEvent.updateMany({
+      where: { id: eventId, processedAt: null, lockedBy: workerId },
       data: { lockedAt: null, lockedBy: null, lastError: error, availableAt: new Date(Date.now() + 30_000) }
     });
-    void workerId;
   }
 });
 

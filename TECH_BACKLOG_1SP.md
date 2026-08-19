@@ -188,6 +188,8 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 Что сделано:
 
 - Добавлена durable схема `OutboxEvent` и базовый Prisma dispatch adapter с retry state.
+- Create/status campaign mutations пишут outbox events в той же транзакции, что domain change и audit.
+- Claim использует conditional update; 60-секундная lease может быть reclaimed, а finish/fail разрешены только владельцу актуальной lease.
 
 Осталось:
 
