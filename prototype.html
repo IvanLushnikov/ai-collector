@@ -977,12 +977,12 @@
       ip:''
     }
   ];
-  let callCards=[...localCallCards];
-  let callsSource='local';
+  let callCards=[];
+  let callsSource='loading';
   let callsErrorNotice='';
   let callsLoadInProgress=false;
-  let auditLogItems=[...localAuditLog];
-  let auditLogSource='local';
+  let auditLogItems=[];
+  let auditLogSource='loading';
   let auditLogErrorNotice='';
   let auditLogLoadInProgress=false;
   const callAttemptDetailCache = new Map();
@@ -1165,9 +1165,9 @@
   async function loadCallsFromApi() {
     const context = getCampaignContext();
     if (!context?.tenantId || !context?.campaignId) {
-      callsSource='local';
-      callsErrorNotice='Кампания не найдена. Показаны примеры звонков.';
-      callCards=[...localCallCardsWithSource];
+      callsSource='error';
+      callsErrorNotice='Контекст кампании не найден. Звонки не показаны.';
+      callCards=[];
       setCallsNotice(callsErrorNotice, false);
       return;
     }
@@ -1198,9 +1198,9 @@
       callsErrorNotice='';
       setCallsNotice('Данные звонков из API кампании.', true);
     } catch (error) {
-      callsSource='local';
-      callsErrorNotice=`API звонков недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}. Используем демо-данные.`;
-      callCards=[...localCallCardsWithSource];
+      callsSource='error';
+      callsErrorNotice=`API звонков недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}. Данные не показаны.`;
+      callCards=[];
       setCallsNotice(callsErrorNotice, false);
     } finally {
       callsLoadInProgress=false;
@@ -1272,9 +1272,9 @@
   async function loadAuditLogFromApi() {
     const context = getCampaignContext();
     if (!context?.tenantId || !context?.campaignId) {
-      auditLogSource='local';
-      auditLogErrorNotice='Контекст кампании не найден. Показываем демо-события.';
-      auditLogItems=[...localAuditLog];
+      auditLogSource='error';
+      auditLogErrorNotice='Контекст кампании не найден. Журнал действий не показан.';
+      auditLogItems=[];
       setAuditNotice(auditLogErrorNotice, false);
       return;
     }
@@ -1309,9 +1309,9 @@
       auditLogErrorNotice='';
       setAuditNotice('Данные журнала загружены из API кампании.', true);
     } catch (error) {
-      auditLogSource='local';
-      auditLogErrorNotice=`API журнала недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}. Используем демо-события.`;
-      auditLogItems=[...localAuditLog];
+      auditLogSource='error';
+      auditLogErrorNotice=`API журнала недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}. События не показаны.`;
+      auditLogItems=[];
       setAuditNotice(auditLogErrorNotice, false);
     } finally {
       auditLogLoadInProgress=false;
