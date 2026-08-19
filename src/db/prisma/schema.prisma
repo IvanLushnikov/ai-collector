@@ -29,6 +29,7 @@ enum CampaignStatus {
   review
   ready
   running
+  manual_paused
   auto_paused
   completed
   archived

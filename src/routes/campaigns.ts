@@ -83,6 +83,7 @@ const campaignStatusValues = [
   'review',
   'ready',
   'running',
+  'manual_paused',
   'auto_paused',
   'completed',
   'archived'
@@ -92,7 +93,8 @@ const allowedStatusTransitions: Record<string, string[]> = {
   draft: ['review'],
   review: ['ready'],
   ready: ['running'],
-  running: ['auto_paused', 'completed'],
+  running: ['manual_paused', 'auto_paused', 'completed'],
+  manual_paused: ['running', 'completed'],
   auto_paused: [],
   completed: ['archived'],
   archived: []

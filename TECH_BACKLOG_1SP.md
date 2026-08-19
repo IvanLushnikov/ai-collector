@@ -145,6 +145,28 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Trigger отклоняет update/delete из application connection.
 - API tests доказывают, что mutation path использует transaction.
 
+### T-256: Перевести ручную паузу кампании на server-authoritative status
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить отдельный `manual_paused` status и допустимые переходы в backend.
+- Писать ручную паузу/продолжение через существующий status API с audit trail.
+- Не менять состояние кампании в кабинете, пока сервер не подтвердил mutation.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`, `src/db/migrations/*`
+- `src/routes/campaigns.ts`
+- `prototype.html`, `tests/*`
+
+Критерии готовности:
+
+- Ручная пауза и продолжение сохраняются в БД и аудите.
+- При API error UI не показывает успешную смену статуса.
+- Автопауза не получает one-click resume.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
@@ -6596,6 +6618,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: `T-256` done: добавлен `CampaignStatus.manual_paused` и migration `0027`; backend допускает `running ↔ manual_paused` и фиксирует оба перехода в audit; кабинет отправляет PATCH status и обновляет UI только по ответу сервера, с явной ошибкой без локального fallback. Автопауза остаётся без one-click resume. Проверка: `npm run typecheck`; targeted tests (67/67).
 
 - 19.08.2026: `T-255` done: migration `0026` добавляет trigger append-only для `AuditLog`; script version, campaign review status и audit append объединены в одну Prisma transaction (DI path сохраняет unit tests). Проверка: `npm run typecheck`; `vitest run tests/scripts.api.test.ts` (14/14).
 

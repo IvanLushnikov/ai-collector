@@ -3958,22 +3958,54 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     }
     openConfirmLaunch();
   });
+  async function persistCampaignStatus(status) {
+    const context=getCampaignContext();
+    if (!context?.tenantId || !context?.campaignId) {
+      toast('Не удалось изменить статус','Контекст кампании не найден. Статус не изменён.');
+      return false;
+    }
+    const pauseButton=q('#pauseCampaign');
+    const resumeButton=q('#resumeCampaign');
+    if (pauseButton) pauseButton.disabled=true;
+    if (resumeButton) resumeButton.disabled=true;
+    try {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/status`,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status})
+      });
+      const body=await response.json().catch(()=>null);
+      if (!response.ok || !body?.status) {
+        toast('Не удалось изменить статус', body?.message || 'Сервер не подтвердил изменение. Статус кампании не изменён.');
+        return false;
+      }
+      setCampaignState(body.status,{actor:'operator',reason:'подтверждено сервером',pausedBy:body.status === 'manual_paused' ? 'operator' : null});
+      return true;
+    } catch (error) {
+      toast('Не удалось изменить статус','Нет связи с сервером. Статус кампании не изменён.');
+      return false;
+    } finally {
+      if (pauseButton) pauseButton.disabled=false;
+      if (resumeButton) resumeButton.disabled=false;
+    }
+  }
   q('#pauseCampaign').addEventListener('click',()=>{
     const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
     openConfirm(
       'Приостановить кампанию?',
       `Приостановить «${name}»? Новые звонки не создаются.`,
       'Приостановить кампанию',
-      ()=>{
-        setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
-        toast('Кампания приостановлена','Новые звонки не создаются.');
+      async ()=>{
+        const saved = await persistCampaignStatus('manual_paused');
+        if (saved) toast('Кампания приостановлена','Новые звонки не создаются.');
       }
     );
   });
   q('#resumeCampaign')?.addEventListener('click',()=>{
     if (campaignLifecycle.status === 'manual_paused') {
-      setCampaignState('running',{actor:'operator',reason:'продолжение после ручной паузы'});
-      toast('Обзвон продолжен','Кампания снова создаёт звонки.');
+      persistCampaignStatus('running').then((saved)=>{
+        if (saved) toast('Обзвон продолжен','Кампания снова создаёт звонки.');
+      });
       return;
     }
     toast('Продолжить нельзя','После остановки системой откройте Обзор и разберите причину. Одним нажатием продолжить нельзя.');
