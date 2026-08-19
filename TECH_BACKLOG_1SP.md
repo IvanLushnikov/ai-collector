@@ -181,6 +181,20 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Дедупликация не хранится только в process memory.
 - Проверка adapter покрыта тестом.
 
+### T-258: Ввести transactional outbox для внешних side effects
+
+Статус: `doing`
+
+Что сделано:
+
+- Добавлена durable схема `OutboxEvent` и базовый Prisma dispatch adapter с retry state.
+
+Осталось:
+
+- Добавлять outbox event атомарно с domain mutation.
+- Заменить optimistic claim на conditional SQL claim/lease для нескольких workers.
+- Подключить consumer к конкретному provider/webhook flow.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.

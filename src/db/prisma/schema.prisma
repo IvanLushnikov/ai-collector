@@ -196,6 +196,7 @@ model Tenant {
   providerCredentials ProviderCredential[]
   credentialSecrets CredentialSecret[]
   webhookInboxEvents WebhookInboxEvent[]
+  outboxEvents OutboxEvent[]
 }
 
 model Role {
@@ -573,4 +574,25 @@ model WebhookInboxEvent {
   createdAt    DateTime @default(now())
 
   @@unique([tenantId, sourceSystem, eventId])
+}
+
+model OutboxEvent {
+  id             String   @id @default(uuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventType      String
+  aggregateType  String
+  aggregateId    String
+  payload        Json
+  idempotencyKey String   @unique
+  attempts       Int      @default(0)
+  availableAt    DateTime @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  processedAt    DateTime?
+  lastError      String?
+  createdAt      DateTime @default(now())
+
+  @@index([processedAt, availableAt])
+  @@index([tenantId, createdAt])
 }
