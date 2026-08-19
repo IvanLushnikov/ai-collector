@@ -635,4 +635,28 @@ describe('PATCH /tenants/:tenantId/telephony-connections/:connectionId', () => {
 
     await app.close();
   });
+
+  it('updates the connection and its audit event in one transaction when supported', async () => {
+    const appStore = makeStore();
+    const transaction = vi.fn(async (callback: (transactionStore: unknown) => Promise<unknown>) => callback({
+      telephonyConnection: appStore.telephonyConnection,
+      auditLog: appStore.auditLog
+    }));
+    (appStore as any).$transaction = transaction;
+    const app = createApp({ campaignStore: appStore as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/tenants/11111111-1111-1111-1111-111111111111/telephony-connections/${connectionId}`,
+      headers: { 'x-user-role': 'owner' },
+      payload: { displayName: 'Новая линия' }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(appStore.telephonyConnection.update).toHaveBeenCalledOnce();
+    expect(appStore.auditLog?.create).toHaveBeenCalledOnce();
+    await app.close();
+  });
 });
