@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { UsageLedgerItem } from '../domain/usage-event/index.js';
 import type { UsageEventType } from '../domain/usage-event/index.js';
 import { calculateUsageLedgerTotals } from '../domain/usage-ledger/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type UsageDependencies = {
   tenant: {
@@ -15,6 +15,8 @@ type UsageDependencies = {
   usageEvent?: {
     findMany?: (args: {
       where: { tenantId: string; campaignId: string };
+      skip?: number;
+      take?: number;
       orderBy?: { occurredAt: 'asc' | 'desc' };
       select?: {
         id?: true;
@@ -76,7 +78,7 @@ export const registerUsageRoutes = (app: FastifyInstance, deps: UsageDependencie
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/usage-events',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('reports', 'read') },
     async (request, reply) => {
     const params = tenantCampaignUsageSchema.safeParse(request.params);
     if (!params.success) {
@@ -133,7 +135,7 @@ export const registerUsageRoutes = (app: FastifyInstance, deps: UsageDependencie
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/usage-events/totals',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('reports', 'read') },
     async (request, reply) => {
     const params = tenantCampaignUsageSchema.safeParse(request.params);
     if (!params.success) {

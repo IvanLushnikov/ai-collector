@@ -11,4 +11,10 @@ describe('prototype pause confirmation', () => {
     expect(html).not.toContain('id="pauseCampaign">Пауза');
     expect(html).toContain('Продолжить обзвон');
   });
+
+  it('keeps manual pause as a local UI state, not an API enum', () => {
+    expect(html).toContain("setCampaignState('manual_paused'");
+    expect(html).not.toContain("status: 'manual_paused'");
+    expect(html).not.toContain("status: 'stopped'");
+  });
 });

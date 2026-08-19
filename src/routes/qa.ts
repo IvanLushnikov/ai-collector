@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { isCallResultQaStatus } from '../domain/call-result/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type QaStatus = 'approved' | 'flagged';
 
@@ -39,7 +40,7 @@ const qaUpdateSchema = z.object({
 export const registerQaRoutes = (app: FastifyInstance, deps: QaDependencies): void => {
   app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer']) },
+    { preValidation: authorizeZone('calls', 'write') },
     async (request, reply) => {
     const params = tenantCampaignCallSchema.safeParse(request.params);
     if (!params.success) {
@@ -131,21 +132,15 @@ export const registerQaRoutes = (app: FastifyInstance, deps: QaDependencies): vo
       qaStatus: string;
     };
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
     await deps.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
-        userId: actor.id,
+        userId: actorId,
         action: 'call.qa_updated',
         entityType: 'callResult',
         entityId: updatedResult.id,

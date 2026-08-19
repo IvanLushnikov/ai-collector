@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type TelephonyDependencies = {
   tenant: {
@@ -79,7 +80,7 @@ type TelephonyConnectionRow = {
 export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDependencies): void => {
   app.get(
     '/tenants/:tenantId/telephony-connections',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'integration_admin']) },
+    { preValidation: authorizeZone('integrations', 'read') },
     async (request, reply) => {
     const params = tenantSchema.safeParse(request.params);
     if (!params.success) {
@@ -127,7 +128,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
 
   app.post(
     '/tenants/:tenantId/telephony-connections',
-    { preValidation: roleMiddleware(['owner', 'integration_admin']) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
     const params = tenantSchema.safeParse(request.params);
     if (!params.success) {
@@ -152,14 +153,8 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
@@ -176,7 +171,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
     await deps.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
-        userId: actor.id,
+        userId: actorId,
         action: 'telephony_connection.created',
         entityType: 'telephonyConnection',
         entityId: connection.id,
@@ -204,7 +199,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
 
   app.patch(
     '/tenants/:tenantId/telephony-connections/:connectionId',
-    { preValidation: roleMiddleware(['owner', 'integration_admin']) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = telephonyConnectionParamsSchema.safeParse(request.params);
       if (!params.success) {
@@ -252,14 +247,8 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
         }
       }
 
-      const actor = await deps.user.findFirst({
-        where: {
-          tenantId: params.data.tenantId,
-          isActive: true,
-          status: 'active'
-        }
-      }) as { id: string } | null;
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -271,7 +260,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'telephony_connection.updated',
           entityType: 'telephonyConnection',
           entityId: updated.id,

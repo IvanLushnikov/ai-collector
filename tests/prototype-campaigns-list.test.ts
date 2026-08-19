@@ -16,4 +16,8 @@ describe('prototype campaigns list on home', () => {
     expect(home).toContain('приостановлена системой');
     expect(html).not.toContain('id="campaigns"');
   });
+
+  it('loads home campaigns from GET /tenants/:tenantId/campaigns (не demo/local)', () => {
+    expect(html).toContain('`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns`');
+  });
 });

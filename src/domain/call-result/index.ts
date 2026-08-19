@@ -17,6 +17,8 @@ export const isCallResultQaStatus = (value: unknown): value is CallResultQaStatu
   typeof value === 'string' && validQaStatuses.includes(value as CallResultQaStatus)
 );
 
+export type PaymentOutcome = 'none' | 'promised' | 'received' | 'unmatched';
+
 export interface CallResult {
   id: string;
   tenantId: string;
@@ -25,6 +27,9 @@ export interface CallResult {
   qaStatus: CallResultQaStatus;
   ptpAmount?: number;
   ptpDate?: Date;
+  paymentOutcome?: PaymentOutcome;
+  paymentReceivedAt?: Date | null;
+  paymentAmount?: number | null;
   reason?: string;
   transcriptUrl?: string;
   recordingUrl?: string;

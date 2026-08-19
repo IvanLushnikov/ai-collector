@@ -11,7 +11,7 @@ const confirmedProductionProbe = {
   handoffWindowEnd: '18:00'
 };
 
-const makeCampaignStore = () => ({
+const makeCampaignStore = (): any => ({
   tenant: {
     findUnique: vi.fn(async (query: { where: { id: string } }) => {
       if (query.where.id === '00000000-0000-0000-0000-000000000000') {

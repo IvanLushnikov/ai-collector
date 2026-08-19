@@ -1,4 +1,4 @@
-import { fastify, FastifyInstance } from 'fastify';
+import { fastify } from 'fastify';
 import { env } from '../config/env.js';
 import { serializeUnknownError } from '../logging/logger.js';
 import { registerCampaignRoutes } from '../routes/campaigns.js';
@@ -11,8 +11,12 @@ import { registerUsageRoutes } from '../routes/usage.js';
 import { registerTelephonyRoutes } from '../routes/telephony.js';
 import { registerTenantRoutes } from '../routes/tenants.js';
 import { registerProviderCredentialRoutes } from '../routes/provider-credentials.js';
+import { registerAuthRoutes } from '../routes/auth.js';
+import { registerTenantUserRoutes } from '../routes/tenant-users.js';
+import { registerSupportAccessRoutes } from '../routes/support-access.js';
 import { prisma } from '../db/client.js';
 import { tenantContextMiddleware } from './middleware/tenant-context.js';
+import { authContextMiddleware } from './middleware/auth-context.js';
 import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
@@ -141,7 +145,7 @@ const createRateLimitAuditEntry = async (
 };
 
 export type AppDependencies = {
-  campaignStore?: CampaignDependencies;
+  campaignStore?: any;
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
@@ -262,7 +266,7 @@ type TenantDependencies = CampaignDependencies & {
   };
 };
 
-export const createApp = (dependencies: AppDependencies = {}): FastifyInstance => {
+export const createApp = (dependencies: AppDependencies = {}): any => {
   const app = fastify({
     logger: env.NODE_ENV === 'test'
       ? false
@@ -271,9 +275,9 @@ export const createApp = (dependencies: AppDependencies = {}): FastifyInstance =
           err: serializeUnknownError
         }
       }
-  });
+  } as any);
 
-  const campaignStore = dependencies.campaignStore ?? prisma;
+  const campaignStore: any = dependencies.campaignStore ?? prisma;
 
   const rateLimitConfig = dependencies.rateLimit ?? {
     maxRequests: env.API_RATE_LIMIT_MAX_REQUESTS,
@@ -309,31 +313,35 @@ export const createApp = (dependencies: AppDependencies = {}): FastifyInstance =
     message: 'AI Collector API is running'
   }));
 
+  app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);
 
-  registerCampaignRoutes(app, campaignStore);
-  registerComplianceRoutes(app, campaignStore as CampaignStoreWithComplianceRouteDeps);
-  registerCallRoutes(app, {
+  registerAuthRoutes(app as any, campaignStore as any);
+  registerCampaignRoutes(app as any, campaignStore as any);
+  registerComplianceRoutes(app as any, campaignStore as any);
+  registerCallRoutes(app as any, {
     ...(campaignStore as AppCallDependencies),
     voiceProviderResolver: (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
       sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
       mango: new MangoVoiceProvider()
     })
   });
-  registerQaRoutes(app, campaignStore as AppQaDependencies);
-  registerScriptRoutes(app, campaignStore as AppScriptDependencies);
-  registerReportRoutes(app, campaignStore as CampaignStoreWithReportRouteDeps);
-  registerUsageRoutes(app, campaignStore as CampaignStoreWithUsageRouteDeps);
-  registerTelephonyRoutes(app, campaignStore as TelephonyDependencies);
-  registerTenantRoutes(app, campaignStore as TenantDependencies);
-  registerProviderCredentialRoutes(app, {
+  registerQaRoutes(app as any, campaignStore as any);
+  registerScriptRoutes(app as any, campaignStore as any);
+  registerReportRoutes(app as any, campaignStore as any);
+  registerUsageRoutes(app as any, campaignStore as any);
+  registerTelephonyRoutes(app as any, campaignStore as any);
+  registerTenantRoutes(app as any, campaignStore as any);
+  registerTenantUserRoutes(app as any, campaignStore as any);
+  registerProviderCredentialRoutes(app as any, {
     ...(campaignStore as any),
-    providerCredential: (campaignStore as any).providerCredential ?? prisma.providerCredential,
-    secretStore: (campaignStore as any).secretStore ?? createPrismaCredentialSecretStore(prisma),
+    providerCredential: (campaignStore as any).providerCredential ?? (prisma as any).providerCredential,
+    secretStore: (campaignStore as any).secretStore ?? createPrismaCredentialSecretStore(prisma as any),
     dek: (campaignStore as any).dek,
     speechProbe: (campaignStore as any).speechProbe,
     platformEnv: (campaignStore as any).platformEnv
   });
+  registerSupportAccessRoutes(app as any, campaignStore as any);
 
   return app;
 };

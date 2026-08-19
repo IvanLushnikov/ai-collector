@@ -13,7 +13,7 @@
 - Слишком крупная → `split` и несколько новых 1 SP.
 - `blocked` — только внешний договор, ключ, legal memo или доступ.
 - Поля «Где менять» у открытых задач держать в актуальных путях (`src/`, `tests/`, `docs/`).
-- Исторические id `T-065`/`T-066` встречаются дважды (API-docs и UX). Не перенумеровывать закрытое. Новые задачи — следующие свободные после последней `T-*` (сейчас `T-243+`).
+- Исторические id `T-065`/`T-066` встречаются дважды (API-docs и UX). Не перенумеровывать закрытое. Новые задачи — следующие свободные после последней `T-*` (сейчас `T-244+`).
 
 ## Статусы
 
@@ -25,14 +25,14 @@
 
 Есть в коде:
 
-- Домен Lab: Tenant, User, Role, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog, SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent.
+- Домен Lab: Tenant, User, Role, Session, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog, SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent.
 - API: кампании, CSV/XLSX-импорт, sandbox-звонок, отчёт, usage, QA, scripts, telephony connections, audit-logs, readiness-summary, review-items (вычисляемые), BYOK credentials, billing settings.
 - Compliance pilot-ready (Lab): окно будни `08:00–22:00` / выходные и праздники РФ 2026–2027 `09:00–20:00` по timezone; `consent` given/pending/revoked; `debtStatus` block-список; `FREQUENCY_LIMIT_BLOCK` 1/2/8; `SUPPRESSION_BLOCK`; `Tenant.legalBasisStatus` (production без `confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`). Fail-closed до звонка.
 - Телефония: `VoiceProviderAdapter` + sandbox + скелеты Exolve/Mango (без HTTP). Production probe gates на marking/recording/handoff. Safe-resume: `POST .../safe-resume`.
 - Речь/диалог (скелеты): ASR/TTS/LLM adapters + fake, Yandex/GigaChat skeleton без HTTP, BYOK envelope/store, DialogueStateMachine, extractor, golden set, identity gate в LLM tests.
 - Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
-- Auth: заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
-- UI: `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs); запуск/аналитика/список кампаний/импорт — ещё demo/local.
+- Auth: cookie-сессия `ac_session` (`POST /auth/register|login|logout`, `GET /auth/me`) + fallback заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
+- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
 - Биллинг v0: connected minute из usage + тариф tenant/env.
 - `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
 
@@ -42,7 +42,7 @@
 - Маршрут `POST .../calls/live` (контракт в docs, guards есть, реализации нет).
 - Runtime wiring orchestrator (ASR→state machine→LLM→TTS) в live/sandbox path end-to-end.
 - CDR reconciliation, payment outcome / kept PTP, complaint rate, holdout/control для пилота.
-- SSO/OIDC (только ADR 0002), real auth вместо mock headers.
+- SSO/OIDC (только ADR 0002). Email/password web-auth есть (`T-244`); header-based режим сохранён как fallback.
 - Клиентский кабинет как единый API-backed flow (волна 12: `T-232`–`T-238`).
 - Admin-контур: речь/BYOK, внутренняя очередь QA (убран из клиентского меню в `T-229`).
 - `npm run typecheck` — ~147 ошибок; CI красный на typecheck при зелёных тестах (`T-230`).
@@ -69,11 +69,11 @@
 8. **Adjacent** — закрыта (`T-196`, `T-199`, `T-200`, `T-204`). Logger `T-204` done.
 9. **UX-волна кабинета (аудит 17.08.2026)** — закрыта (`T-205`–`T-228`).
 10. **Кабинет клиента CJ (18.08.2026)** — закрыта (`T-229`). Спека `docs/superpowers/specs/2026-08-18-client-cabinet-cj-design.md`.
-11. **Tech hygiene (19.08.2026)** — `T-230` (`todo`), `T-231` (`done`). Первая: `T-230`.
-12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`todo`).
-13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`todo`).
+11. **Tech hygiene (19.08.2026)** — `T-230` (`done`), `T-231` (`done`).
+12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`done`).
+13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`done`).
 
-Первая `todo`: **T-230** (typecheck / CI).  
+Первая `todo`: нет.  
 Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
 
 ## Закрытые волны (не переписывать)
@@ -5985,7 +5985,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-230: Починить npm run typecheck
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6035,7 +6035,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-232: Главная — список кампаний из API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6057,7 +6057,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-233: Мастер — создание кампании через POST /campaigns
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6078,7 +6078,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-234: Вкладка «База» — импорт через API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6099,7 +6099,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-235: Запуск, пауза, стоп через PATCH status
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6121,7 +6121,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-236: Аналитика из report API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6142,7 +6142,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-237: Тестовый звонок через sandbox API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6162,7 +6162,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-238: Overview KPI только из API
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6185,7 +6185,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ### T-239: POST .../calls/live — skeleton маршрута
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6206,7 +6206,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ### T-240: Wire call orchestrator к call path
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6226,7 +6226,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ### T-241: Tenant-level analytics endpoint
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6246,7 +6246,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ### T-242: Payment outcome в домене и отчёте
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6267,7 +6267,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ### T-243: CDR reconciliation stub
 
-Статус: `todo`
+Статус: `done`
 
 Что сделать:
 
@@ -6285,9 +6285,263 @@ Live-трафик не включать до legal memo и разблокиро�
 - Тест на mismatch → audit/event stub, без auto-delete.
 - Live HTTP не требуется.
 
+### T-244: Лендинг и web-регистрация/вход
+
+Статус: `done`
+
+Что сделать:
+
+- Статические `landing.html`, `register.html`, `login.html`, `privacy.html`, `terms.html`.
+- `dev-gateway`: `/` → `/landing.html`, прокси `/auth/*`.
+- Backend: `POST /auth/register|login|logout`, `GET /auth/me`, `User.passwordHash` (argon2), таблица `Session`, `authContextMiddleware`.
+- `prototype.html`: `/auth/me`, заголовки из currentAuth, выход.
+
+Где менять:
+
+- `src/routes/auth.ts`
+- `src/server/middleware/auth-context.ts`
+- `src/server/middleware/tenant-context.ts`
+- `src/server/middleware/rbac.ts`
+- `src/db/prisma/schema.prisma`
+- `scripts/dev-gateway.mjs`
+- `landing.html`, `register.html`, `login.html`, `privacy.html`, `terms.html`, `prototype.html`
+- `tests/auth/*`, `tests/landing-auth-pages.test.ts`, `tests/prototype-auth-session.test.ts`
+
+Критерии готовности:
+
+- `/` открывает лендинг, CTA ведёт в регистрацию.
+- После регистрации/входа — кабинет.
+- Создание кампании шлёт tenant/role из сессии.
+- Header-based fallback сохранён.
+
+## P1. RBAC SaaS v1
+
+Источник: `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md`, план внедрения: `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`. Эта волна упрощает старую RBAC-модель до B2B SaaS v1: `tenant_owner`, `campaign_manager`, `tenant_viewer`, `platform_admin`, `support_engineer`.
+
+### T-245: Синхронизировать decision doc RBAC с SaaS v1 ролями
+
+Статус: `done`
+
+Что сделать:
+
+- Обновить `docs/security/rbac.md` под упрощённую модель из спеки.
+- Зафиксировать канонические роли SaaS v1 и legacy alias mapping для старых значений `owner`, `collection_manager`, `operator`, `integration_admin`, `qa_analyst`, `compliance_officer`.
+- Убрать из decision doc обязательность enterprise-ролей для v1 и вынести их в раздел `позже`.
+
+Где менять:
+
+- `docs/security/rbac.md`
+- `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- В `docs/security/rbac.md` описаны только актуальные роли SaaS v1 и таблица alias-совместимости.
+- Документ явно различает `tenant` и `platform` контуры.
+- Из документа понятно, что `support_engineer` не получает постоянный доступ к данным клиента.
+
+### T-246: Ввести canonical role normalization для header/auth context
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить слой нормализации роли, который преобразует старые значения `X-User-Role` в канонические роли SaaS v1.
+- Подготовить тот же контракт для будущего auth context, чтобы route-код не зависел от сырого header значения.
+- Добавить тесты на alias, неизвестную роль и отсутствие роли.
+
+Где менять:
+
+- `src/server/middleware/*role*`
+- `src/server/app.ts`
+- `tests/*rbac*`
+- `tests/*api.test.ts`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- В request context попадает одна каноническая роль из набора SaaS v1.
+- Старые роли через alias продолжают работать предсказуемо.
+- Неизвестная роль и отсутствие роли дают прежний отказ доступа.
+
+### T-247: Добавить единый authorizer по зонам доступа
+
+Статус: `done`
+
+Что сделать:
+
+- Ввести единый authorizer для зон `campaigns`, `calls`, `reports`, `integrations`, `users`, `audit_logs`.
+- Зафиксировать в коде минимальную матрицу SaaS v1: `tenant_owner`, `campaign_manager`, `tenant_viewer`, `platform_admin`, `support_engineer`.
+- Сохранить backend как источник истины: route-level проверки должны вызывать authorizer, а не хранить локальные списки ролей.
+
+Где менять:
+
+- `src/server/authz/*` или `src/domain/authz/*`
+- `src/server/middleware/*role*`
+- `tests/*rbac*`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- В проекте есть один переиспользуемый authorizer вместо разрозненных списков ролей по endpoints.
+- Матрица доступа в коде соответствует SaaS v1 спеке.
+- Unit-тесты покрывают как минимум успешный доступ и отказ для каждой зоны доступа.
+
+### T-248: Перевести campaign/calls/report/audit endpoints на SaaS v1 authorizer
+
+Статус: `done`
+
+Что сделать:
+
+- Заменить локальные RBAC-списки ролей в `campaigns`, `calls`, `reports`, `usage`, `compliance`, `audit-logs` на вызовы authorizer.
+- Свести доступы к SaaS v1 модели с alias-совместимостью для существующих тестов и mock-header режима.
+- Обновить документацию endpoint-ов там, где сейчас перечислены устаревшие роли.
+
+Где менять:
+
+- `src/routes/campaigns.ts`
+- `src/routes/calls.ts`
+- `src/routes/reports.ts`
+- `src/routes/usage.ts`
+- `src/routes/compliance.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/calls/sandbox-call.api.test.ts`
+- `tests/campaign-audit-log.api.test.ts`
+- `tests/reports/campaign-report.api.test.ts`
+- `docs/calls-api.md`
+- `docs/reports-api.md`
+- `docs/compliance-api.md`
+- `docs/audit-logs-api.md`
+- `docs/security/rbac.md`
+- `README.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Перечисленные endpoints проверяют доступ через единый authorizer.
+- В документации не осталось устаревших ролей как основного контракта v1.
+- Regression-тесты подтверждают доступ `tenant_owner`/`campaign_manager`/`tenant_viewer` согласно SaaS v1 матрице.
+
+### T-249: Упростить права на интеграции и credentials под SaaS v1
+
+Статус: `done`
+
+Что сделать:
+
+- Зафиксировать, какие integration/credentials действия доступны только `tenant_owner`, а какие допустимы `campaign_manager`.
+- Привести `telephony` и `provider credentials` endpoints к этой модели.
+- Сохранить audit trail для критичных действий: создание, обновление, ротация, disable.
+
+Где менять:
+
+- `src/routes/telephony*.ts`
+- `src/routes/provider-credentials*.ts`
+- `tests/telephony.routes.test.ts`
+- `tests/provider-credentials.api.test.ts`
+- `docs/security/rbac.md`
+- `README.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Для integration/credentials endpoints задокументирован один простой контракт SaaS v1.
+- `tenant_owner` проходит критичные действия, роль без прав получает `FORBIDDEN`.
+- Audit trail не ослаблен относительно текущего поведения.
+
+### T-250: Разрешать роль пользователя из membership-модели
+
+Статус: `done`
+
+Что сделать:
+
+- Подключить разрешение канонической tenant-роли из membership-связи пользователя и tenant.
+- Сохранить `X-User-Role` как dev fallback до завершения real auth волны.
+- Явно развести `tenant` и `platform` membership, чтобы platform-роль не подменяла tenant-роль.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/user/*`
+- `src/server/middleware/*auth*`
+- `src/server/middleware/*role*`
+- `tests/domain-tenant.test.ts`
+- `tests/*auth*`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- При наличии membership роль определяется из данных приложения, а не только из mock-header.
+- `platform_admin` без tenant membership не становится `tenant_owner`.
+- Header-based dev fallback продолжает работать.
+
+### T-251: Добавить минимальный tenant users API и аудит изменения ролей
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить минимальный API списка пользователей организации и смены роли внутри tenant.
+- Разрешить управление пользователями только роли `tenant_owner`.
+- Логировать изменение роли и состава пользователей tenant в `AuditLog`.
+
+Где менять:
+
+- `src/routes/tenant-users.ts`
+- `src/server/app.ts`
+- `src/domain/audit-log/*`
+- `tests/*tenant-user*`
+- `docs/security/rbac.md`
+- `README.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Список пользователей tenant доступен только с корректным tenant context.
+- Смена роли доступна только `tenant_owner`.
+- Каждое изменение роли оставляет audit event.
+
+### T-252: Добавить минимальный support access path
+
+Статус: `done`
+
+Что сделать:
+
+- Зафиксировать и реализовать минимальный `SupportAccessGrant` или эквивалентный механизм временного доступа поддержки.
+- Ограничить `support_engineer` доступом только через явный support path, а не постоянной platform-ролью.
+- Логировать выдачу, использование и отзыв support-доступа.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/*support*`
+- `src/routes/*support*`
+- `tests/*support*`
+- `docs/security/rbac.md`
+- `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- У поддержки нет постоянного tenant-доступа по умолчанию.
+- Временный доступ требует явного grant и проверяется сервером.
+- Audit log фиксирует жизненный цикл support-доступа.
+
 ## Журнал изменений плана
 
+- 19.08.2026: после упрощения спеки `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md` добавлена отдельная волна `P1. RBAC SaaS v1` (`T-245`–`T-252`) и сохранён план `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`; новая очередь покрывает канонические роли, role normalization, единый authorizer, миграцию существующих endpoints, membership-based role resolution, tenant user management и support access path.
+
+- 19.08.2026: `T-245`–`T-252` done: `docs/security/rbac.md` синхронизирован с SaaS v1; добавлены canonical role normalization и единый zone-based authorizer; routes `campaigns/calls/reports/usage/compliance/telephony/provider-credentials/tenants` переведены на новый доступ; введены `TenantMembership` / `PlatformMembership` / `SupportAccessGrant`; добавлены `tenant users API` и `support access` routes; session tenant scope сверяется с `:tenantId`, а роль берётся из membership, а не из stale snapshot. Проверка: `npm run typecheck`; `npm run test -- tests/auth/auth-context.middleware.test.ts tests/auth/register-login.api.test.ts tests/provider-credentials.api.test.ts tests/telephony.routes.test.ts tests/campaigns.create.test.ts tests/tenant-users.api.test.ts tests/support-access.api.test.ts`.
+
+- 19.08.2026: `T-244` done: лендинг, email/password auth, cookie-сессия и переход в `prototype.html`. Проверка: `npx vitest run tests/auth tests/landing-auth-pages.test.ts tests/prototype-auth-session.test.ts tests/prototype-wizard-create.test.ts tests/campaigns.create.test.ts`.
+
 - 19.08.2026: Ревью backlog; добавлены волны 11–13 (`T-230`–`T-243`), обновлена шапка as-is (19.08.2026), внешние блокеры legal/DPA зафиксированы. `T-231` done: ROADMAP §8, technology-map §2, prd-open-questions §6–7. Первая `todo`: `T-230`. Коммит: `T-229` + backlog.
+
+- 19.08.2026: `T-230` done: `npm run typecheck` (0 ошибок) и `npm run test` (391/391) прошли после ослабления типов в тестах и точечных правок в `src/` для совместимости с актуальными дженериками Fastify/Prisma. Изменено: `src/server/app.ts`, `src/server/index.ts`, `src/routes/campaigns.ts`, `src/routes/usage.ts`, `src/routes/reports.ts`, `src/reports/campaign-report.ts` и тесты `tests/*`.
+
+- 19.08.2026: `T-232` done: в `prototype.html` добавлена загрузка списка кампаний через `fetch(${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns)` и рендер строк в `#homeCampaignsBody` (с обработкой empty/error и обновлением кликов/checkbox через делегирование). Тест обновлён/добавлен для проверки отсутствия demo/local. Проверка: `npm run test -- tests/prototype-campaigns-list.test.ts tests/prototype-home-risk.test.ts`.
+- 19.08.2026: `T-233` done: в `prototype.html` обновлён `#wizardCreate` — теперь делает `POST ${reportApiBaseUrl}/campaigns` с заголовками `X-Tenant-Id`/`X-User-Role` и при успехе проставляет `campaignWorkspace.dataset.campaignId` перед переходом на вкладки. На ошибках показывается inline error в `campaignStatePanel` (wizardStepStates.campaign.status/reasons). Добавлен тест `tests/prototype-wizard-create.test.ts`. Проверка: `npm run test -- tests/prototype-wizard-create.test.ts tests/prototype-nav.test.ts`.
+- 19.08.2026: `T-234` done: импорт на шаге «База» в `prototype.html` переведён на `POST /tenants/:tenantId/campaigns/:campaignId/debtors/import` с `csvContent`/`xlsxBase64`; счётчики и список ошибок теперь строятся по `acceptedCount`, `rejectedCount`, `errors`, а copy явно разделяет «принято в базу» и «допущено к звонку». Обновлены метрики вкладки «База» и тесты `tests/prototype-import-mapping.test.ts`, `tests/prototype-import-report.test.ts`. Проверка: `npm run test -- tests/prototype-import-mapping.test.ts tests/prototype-import-report.test.ts tests/prototype-nav.test.ts`.
+- 19.08.2026: `T-235`–`T-243` done: кабинет бьёт в PATCH status / report / sandbox; live skeleton `POST .../calls/live` (403 без флага); orchestrator stub без дубля usage; `GET /tenants/:tenantId/analytics/summary`; payment outcome в CallResult+report; CDR reconciliation stub. Проверка: `npm run typecheck`; `npm run test` (429/429).
 
 - 18.08.2026: `T-229` done; клиентский кабинет пересобран по CJ-спеке. Проверка: `npm run test -- tests/prototype-*.test.ts`.
 

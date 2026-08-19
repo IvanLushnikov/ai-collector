@@ -3,8 +3,11 @@ import { z } from 'zod';
 import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
 import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 type CampaignDependencies = {
   tenant: {
@@ -180,7 +183,7 @@ const tenantCampaignReviewItemResolveSchema = z.object({
   notes: z.string().max(4000).optional()
 });
 
-const toIsoString = (value: string | Date | null): string => new Date(value).toISOString();
+const toIsoString = (value: string | Date | null): string => new Date(value as any).toISOString();
 
 type ReviewItemType = 'qa' | 'compliance';
 
@@ -226,8 +229,36 @@ const campaignAuditLogQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(1000).default(0)
 });
 
+const reviewItemRoleMiddleware = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> => {
+  const canonicalRole = request.authContext?.role ?? request.userRole;
+  if (canonicalRole === 'tenant_owner' || canonicalRole === 'campaign_manager') {
+    return;
+  }
+
+  const roleHeader = request.headers['x-user-role'];
+  const rawRole = (Array.isArray(roleHeader) ? roleHeader[0] : roleHeader)?.trim().toLowerCase();
+  const headerRole = typeof rawRole === 'string' ? normalizeRole(rawRole) : null;
+  if (headerRole === 'tenant_owner' || headerRole === 'campaign_manager') {
+    request.userRole = headerRole;
+    return;
+  }
+  if (rawRole === 'qa_analyst' || rawRole === 'compliance_officer') {
+    return;
+  }
+
+  return reply.code(typeof rawRole === 'string' && rawRole ? 403 : 401).send({
+    error: typeof rawRole === 'string' && rawRole ? 'FORBIDDEN' : 'USER_ROLE_MISSING',
+    message: typeof rawRole === 'string' && rawRole
+      ? 'User role is not allowed for this endpoint'
+      : 'X-User-Role header is required'
+  });
+};
+
 export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDependencies): void => {
-  app.post('/campaigns', { preValidation: roleMiddleware(['owner', 'collection_manager']) }, async (request, reply) => {
+  app.post('/campaigns', { preValidation: authorizeZone('campaigns', 'write') }, async (request, reply) => {
     const payload = createCampaignSchema.safeParse(request.body);
     if (!payload.success) {
       return reply.code(400).send({
@@ -245,14 +276,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
@@ -271,7 +296,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         name: payload.data.name,
         timezone: payload.data.timezone,
         status: 'draft',
-        createdByUserId: actor.id,
+        createdByUserId: actorId,
         telephonyConnectionId
       }
     });
@@ -280,7 +305,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       await deps.auditLog.create({
         data: {
           tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'campaign.created',
           entityType: 'campaign',
           entityId: (campaign as { id: string }).id,
@@ -299,7 +324,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/campaigns',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('campaigns', 'read') },
     async (request, reply) => {
     const params = tenantCampaignsSchema.safeParse(request.params);
     if (!params.success) {
@@ -349,7 +374,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/audit-logs',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('audit_logs', 'read') },
     async (request, reply) => {
     const params = tenantAuditLogSchema.safeParse(request.params);
     if (!params.success) {
@@ -433,7 +458,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('campaigns', 'read') },
     async (request, reply) => {
     const params = tenantCampaignDetailSchema.safeParse(request.params);
     if (!params.success) {
@@ -502,7 +527,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/readiness-summary',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('campaigns', 'read') },
     async (request, reply) => {
     const params = tenantCampaignReadinessSchema.safeParse(request.params);
     if (!params.success) {
@@ -519,7 +544,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const campaign = await deps.campaign.findUnique({
+    const campaign = await deps.campaign.findUnique!({
       where: { id: params.data.campaignId }
     }) as {
       id: string;
@@ -539,7 +564,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/audit-logs',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer', 'integration_admin']) },
+    { preValidation: authorizeZone('audit_logs', 'read') },
     async (request, reply) => {
     const params = tenantCampaignAuditLogSchema.safeParse(request.params);
     if (!params.success) {
@@ -556,7 +581,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const campaign = await deps.campaign.findUnique({
+    const campaign = await deps.campaign.findUnique!({
       where: { id: params.data.campaignId }
     }) as { id: string; tenantId: string } | null;
 
@@ -629,7 +654,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/review-items',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer']) },
+    { preValidation: reviewItemRoleMiddleware },
     async (request, reply) => {
     const params = tenantCampaignReadinessSchema.safeParse(request.params);
     if (!params.success) {
@@ -654,7 +679,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const campaign = await deps.campaign.findUnique({
+    const campaign = await deps.campaign.findUnique!({
       where: { id: params.data.campaignId }
     }) as { id: string; tenantId: string } | null;
     if (!campaign || campaign.tenantId !== params.data.tenantId) {
@@ -746,7 +771,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       ...complianceDecisionRaw.map((item) => item.debtorRecordId)
     ]);
 
-    const rawRetryCounts = await Promise.all(
+    const rawRetryCounts = (await Promise.all(
       [...debtorRecordIds].map(async (debtorRecordId) => [
         debtorRecordId,
         await (deps.callAttempt?.count?.({
@@ -757,7 +782,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           }
         }) ?? Promise.resolve(0))
       ])
-    );
+    )) as Array<[string, number]>;
 
     const retryCountByDebtor = new Map<string, number>(rawRetryCounts);
 
@@ -804,7 +829,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/review-items/:itemId/resolve',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'qa_analyst', 'compliance_officer']) },
+    { preValidation: reviewItemRoleMiddleware },
     async (request, reply) => {
       const params = tenantCampaignReviewItemSchema.safeParse(request.params);
       if (!params.success) {
@@ -836,21 +861,15 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
       }
 
-      const campaign = await deps.campaign.findUnique({
+      const campaign = await deps.campaign.findUnique!({
         where: { id: params.data.campaignId }
       }) as { id: string; tenantId: string } | null;
       if (!campaign || campaign.tenantId !== params.data.tenantId) {
         return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
       }
 
-      const actor = await deps.user.findFirst({
-        where: {
-          tenantId: params.data.tenantId,
-          isActive: true,
-          status: 'active'
-        }
-      }) as { id: string } | null;
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -896,7 +915,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         await deps.auditLog?.create?.({
           data: {
             tenantId: params.data.tenantId,
-            userId: actor.id,
+            userId: actorId,
             action: 'review_item.resolved',
             entityType: 'callResult',
             entityId: updatedCallResult.id,
@@ -967,7 +986,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'review_item.resolved',
           entityType: 'complianceDecision',
           entityId: rawComplianceDecision[0].id,
@@ -1000,7 +1019,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/telephony-connection',
-    { preValidation: roleMiddleware(['owner', 'collection_manager']) },
+    { preValidation: authorizeZone('campaigns', 'write') },
     async (request, reply) => {
       const params = tenantCampaignDetailSchema.safeParse(request.params);
       if (!params.success) {
@@ -1051,14 +1070,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         telephonyConnectionId = connection.id;
       }
 
-      const actor = await deps.user.findFirst({
-        where: {
-          tenantId: params.data.tenantId,
-          isActive: true,
-          status: 'active'
-        }
-      }) as { id: string } | null;
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -1087,7 +1100,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'campaign.telephony_connection_updated',
           entityType: 'campaign',
           entityId: params.data.campaignId,
@@ -1104,7 +1117,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/status',
-    { preValidation: roleMiddleware(['owner', 'collection_manager']) },
+    { preValidation: authorizeZone('campaigns', 'write') },
     async (request, reply) => {
     const params = campaignStatusTransitionSchema.safeParse(request.params);
     if (!params.success) {
@@ -1129,15 +1142,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
@@ -1194,7 +1200,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     await deps.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
-        userId: actor.id,
+        userId: actorId,
         action: 'campaign.status_updated',
         entityType: 'campaign',
         entityId: params.data.campaignId,
@@ -1257,14 +1263,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         return reply.code(400).send({ error: 'SAFE_RESUME_CHECKLIST_INCOMPLETE' });
       }
 
-      const actor = await deps.user.findFirst({
-        where: {
-          tenantId: params.data.tenantId,
-          isActive: true,
-          status: 'active'
-        }
-      }) as { id: string } | null;
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -1291,7 +1291,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'campaign.safe_resumed',
           entityType: 'campaign',
           entityId: params.data.campaignId,
@@ -1309,7 +1309,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     }
   );
 
-  app.post('/tenants/:tenantId/campaigns/:campaignId/debtors/import', async (request, reply) => {
+  app.post('/tenants/:tenantId/campaigns/:campaignId/debtors/import', { preValidation: authorizeZone('campaigns', 'write') }, async (request, reply) => {
     const params = tenantCampaignDetailSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({

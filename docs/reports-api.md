@@ -18,14 +18,15 @@
 
 ## RBAC
 
-Для доступа к `GET /tenants/:tenantId/campaigns/:campaignId/report` необходим заголовок `X-User-Role` со значением:
+Для доступа к `GET /tenants/:tenantId/campaigns/:campaignId/report` нужен role context с read-доступом к зоне `reports`.
 
-- `owner`
-- `collection_manager`
-- `operator`
-- `qa_analyst`
-- `compliance_officer`
-- `integration_admin`
+Канонические роли SaaS v1:
+
+- `tenant_owner`
+- `campaign_manager`
+- `tenant_viewer`
+
+Legacy aliases в header-based dev/test режиме продолжают приниматься и нормализуются на backend.
 
 ### GET: отчёт кампании
 
@@ -56,3 +57,11 @@
 - `404` — `TENANT_NOT_FOUND` или `CAMPAIGN_NOT_FOUND`
 - `401` — `USER_ROLE_MISSING`
 - `403` — `FORBIDDEN`
+
+## Tenant analytics summary
+
+`GET /tenants/:tenantId/analytics/summary`
+
+RBAC тот же, что у campaign report. Агрегирует report-метрики по кампаниям tenant (`limit` v0, default 20).
+
+Успешный ответ содержит KPI UI «Аналитика»: `attemptedCalls` (Обзвонено), `completedCalls` (Соединилось), `ptpCount` (Обещания), `costPerCall` (Стоимость).

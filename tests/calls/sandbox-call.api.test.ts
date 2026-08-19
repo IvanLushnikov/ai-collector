@@ -125,6 +125,7 @@ type AppStore = {
         checkedAt: string;
       }>
     >;
+    count?: (args: any) => Promise<number>;
   };
   complianceEngine?: ComplianceEngine;
   voiceProvider?: VoiceProviderAdapter;
@@ -137,17 +138,18 @@ type AppStore = {
   auditLog?: {
     create: (payload: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
   };
+  sandboxCallsQueueEnabled?: boolean;
 };
 
 const injectWithOwnerRole = (
-  app: ReturnType<typeof createApp>,
-  request: Parameters<ReturnType<typeof createApp>['inject']>[0]
+  app: any,
+  request: any
 ) => {
   return app.inject({
     ...request,
     headers: {
       'x-user-role': 'owner',
-      ...(request.headers ?? {})
+      ...((request?.headers as Record<string, unknown> | undefined) ?? {})
     }
   });
 };
@@ -1872,7 +1874,9 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
           callAttemptId: 'call-attempt-1',
           providerCallId: 'provider-call-1',
           callStatus: 'queued',
-          decision: 'allow'
+          decision: 'allow',
+          orchestratorState: 'end',
+          usageEventsCreated: 0
         }
       }
     });

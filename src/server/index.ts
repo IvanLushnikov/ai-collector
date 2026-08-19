@@ -8,7 +8,7 @@ app.listen({
   port: env.PORT
 }).then(() => {
   app.log.info(`AI Collector API listening on ${env.HOST}:${env.PORT}`);
-}).catch((err) => {
-  app.log.error(err);
+}).catch((err: unknown) => {
+  app.log.error(err as any);
   process.exit(1);
 });

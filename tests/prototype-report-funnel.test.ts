@@ -17,4 +17,10 @@ describe('prototype analytics', () => {
     expect(html).toMatch(/data-screen-link="analytics"[^>]*>Аналитика/);
     expect(html).not.toContain('data-camp-view="report"');
   });
+
+  it('loads analytics from campaign report API instead of hardcoded byCampaign only', () => {
+    expect(html).toContain('async function renderAnalytics');
+    expect(html).toContain('/report');
+    expect(html).toContain("q('#analyticsNotice')");
+  });
 });

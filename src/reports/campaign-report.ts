@@ -3,6 +3,7 @@ import {
   calculateCostFromMinutes,
   defaultCampaignBillingRates
 } from '../domain/billing/index.js';
+import type { UsageEventType } from '../domain/usage-event/index.js';
 
 export type CampaignReport = {
   totalRecords: number;
@@ -10,6 +11,7 @@ export type CampaignReport = {
   completedCalls: number;
   blockedCalls: number;
   ptpCount: number;
+  paidAfterPtpCount: number;
   connectedMinutes: number;
   costPerCall: number | null;
   costPerPtp: number | null;
@@ -25,7 +27,7 @@ type UsageEventWhere = {
 type UsageEventRecord = {
   tenantId: string;
   campaignId: string;
-  eventType: string;
+  eventType: UsageEventType;
   quantity: number;
   unit: string;
   sourceId: string;
@@ -52,6 +54,7 @@ type CampaignReportDependencies = {
           campaignId: string;
         };
         outcome: string;
+        paymentOutcome?: string;
       };
     }) => Promise<number>;
   };
@@ -121,7 +124,7 @@ export const createCampaignReport = async (
     .filter((item) => item.eventType === 'call_completed' && item.unit === 'minute')
     .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
 
-  const [totalRecords, attemptedCalls, completedCallsFallback, blockedCalls, ptpCount] = await Promise.all([
+  const [totalRecords, attemptedCalls, completedCallsFallback, blockedCalls, ptpCount, paidAfterPtpCount] = await Promise.all([
     deps.debtorRecord.count({
       where: whereAttemptScope
     }),
@@ -155,6 +158,16 @@ export const createCampaignReport = async (
         },
         outcome: 'ptp_created'
       }
+    }),
+    deps.callResult.count({
+      where: {
+        tenantId: args.tenantId,
+        callAttempt: {
+          campaignId: args.campaignId
+        },
+        outcome: 'ptp_created',
+        paymentOutcome: 'received'
+      }
     })
   ]);
 
@@ -186,6 +199,7 @@ export const createCampaignReport = async (
     completedCalls: finalizedCompletedCalls,
     blockedCalls,
     ptpCount,
+    paidAfterPtpCount,
     connectedMinutes,
     costPerCall,
     costPerPtp

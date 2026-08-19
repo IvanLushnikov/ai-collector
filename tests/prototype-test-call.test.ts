@@ -10,4 +10,10 @@ describe('prototype test call', () => {
     expect(html).toContain('Проверить соединение');
     expect(html).toContain('Кампания не запущена');
   });
+
+  it('checks connection through sandbox call API', () => {
+    expect(html).toContain('/calls/sandbox');
+    expect(html).toContain("method:'POST'");
+    expect(html).toContain('id="runTestCall"');
+  });
 });

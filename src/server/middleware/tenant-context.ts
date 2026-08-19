@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 
-type TenantSource = 'header' | 'path' | 'body';
+type TenantSource = 'header' | 'path' | 'body' | 'auth';
 
 export type TenantContext = {
   tenantId: string;
@@ -45,13 +45,35 @@ export const tenantContextMiddleware = async (
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> => {
-  if (request.url === '/' || request.url.startsWith('/healthz')) {
+  const path = request.url.split('?')[0] ?? request.url;
+  if (path === '/' || path.startsWith('/healthz') || path.startsWith('/auth') || path.startsWith('/support')) {
     return;
   }
 
   const headerTenantId = getHeaderTenantId(request);
   const pathTenantId = getPathTenantId(request);
   const bodyTenantId = getBodyTenantId(request);
+  const authTenantId = request.authContext?.tenantId ?? request.tenantContext?.tenantId ?? null;
+
+  if (authTenantId) {
+    const requestedTenantId = pathTenantId ?? bodyTenantId ?? headerTenantId;
+    if (requestedTenantId && requestedTenantId !== authTenantId) {
+      return reply.code(403).send({
+        error: 'TENANT_SCOPE_MISMATCH',
+        message: 'Authenticated tenant does not match request tenant scope.'
+      });
+    }
+
+    request.tenantContext = {
+      tenantId: authTenantId,
+      source: 'auth'
+    };
+    return;
+  }
+
+  if (request.tenantContext) {
+    return;
+  }
 
   if (headerTenantId) {
     request.tenantContext = {

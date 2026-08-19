@@ -3,23 +3,16 @@ import { defaultCampaignBillingRates } from '../../src/domain/billing/index.js';
 import { createApp } from '../../src/server/app.js';
 
 describe('GET /tenants/:tenantId/campaigns/:campaignId/report', () => {
-  const injectWithRole = async (
-    app: { inject: (request: Parameters<(typeof app)['inject']>[0]) => ReturnType<(typeof app)['inject']> },
-    request: Parameters<(typeof app)['inject']>[0],
-    userRole = 'owner'
-  ) =>
+  const injectWithRole = async (app: any, request: any, userRole = 'owner') =>
     app.inject({
       ...request,
       headers: {
-        ...(request.headers ?? {}),
+        ...(request?.headers ?? {}),
         'x-user-role': userRole
       }
     });
 
-  const injectWithOwnerRole = async (
-    app: { inject: (request: Parameters<(typeof app)['inject']>[0]) => ReturnType<(typeof app)['inject']> },
-    request: Parameters<(typeof app)['inject']>[0]
-  ) => injectWithRole(app, request, 'owner');
+  const injectWithOwnerRole = async (app: any, request: any) => injectWithRole(app, request, 'owner');
 
   const makeCampaignStore = () => ({
     tenant: {
@@ -161,6 +154,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/report', () => {
       completedCalls: 2,
       blockedCalls: 1,
       ptpCount: 4,
+      paidAfterPtpCount: 4,
       connectedMinutes: 3,
       costPerCall: expectedCostPerCall,
       costPerPtp: expectedCostPerPtp

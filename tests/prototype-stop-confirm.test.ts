@@ -10,4 +10,10 @@ describe('prototype stop confirmation', () => {
     expect(html).not.toContain("setCampaignState('stopped'");
     expect(html).toContain("label:'завершена'");
   });
+
+  it('stops via PATCH completed and does not invent a stopped enum', () => {
+    expect(html).toContain("status: 'completed'");
+    expect(html).toContain('/status');
+    expect(html).not.toContain("status: 'stopped'");
+  });
 });

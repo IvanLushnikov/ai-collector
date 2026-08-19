@@ -10,7 +10,7 @@ import {
   createInMemoryFrequencyLedgerRepository,
   type FrequencyLedgerRepository
 } from '../domain/frequency-ledger/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type ComplianceDependencies = {
   tenant: {
@@ -47,15 +47,6 @@ const tenantCampaignComplianceDecisionsQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(1000).default(0),
   decision: z.enum(['allow', 'block']).optional()
 });
-
-const complianceRouteRoles = [
-  'owner',
-  'collection_manager',
-  'operator',
-  'qa_analyst',
-  'compliance_officer',
-  'integration_admin'
-] as const;
 
 const createEngine = (deps: ComplianceDependencies): ComplianceEngine => {
   if (deps.complianceEngine) {
@@ -129,7 +120,7 @@ type ComplianceDecisionListRaw = {
 export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceDependencies): void => {
   app.post(
     '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/compliance/check',
-    { preValidation: roleMiddleware(complianceRouteRoles) },
+    { preValidation: authorizeZone('calls', 'read') },
     async (request, reply) => {
     const params = tenantCampaignDebtorComplianceSchema.safeParse(request.params);
     if (!params.success) {
@@ -195,7 +186,7 @@ export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceD
 
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/compliance-decisions',
-    { preValidation: roleMiddleware(complianceRouteRoles) },
+    { preValidation: authorizeZone('calls', 'read') },
     async (request, reply) => {
     const params = tenantCampaignComplianceDecisionsSchema.safeParse(request.params);
     if (!params.success) {

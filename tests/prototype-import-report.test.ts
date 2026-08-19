@@ -13,4 +13,11 @@ describe('prototype import report', () => {
     expect(html).toContain('Продолжить с принятыми записями');
     expect(html).toContain('Исправить файл');
   });
+
+  it('imports debtors through campaign API and reads acceptedCount / rejectedCount from response', () => {
+    expect(html).toContain('/debtors/import');
+    expect(html).toContain('acceptedCount');
+    expect(html).toContain('rejectedCount');
+    expect(html).toContain('errors');
+  });
 });

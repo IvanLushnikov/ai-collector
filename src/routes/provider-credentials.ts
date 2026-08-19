@@ -2,16 +2,14 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import type { ProviderCredential } from '../domain/provider-credential/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone } from '../server/authz/index.js';
 import type { CredentialSecretStore } from '../secrets/credential-store.js';
 import { encryptSecret, parseDekHex, secretHintFromKey } from '../secrets/envelope.js';
 import { isSpeechProviderAllowed } from '../speech/credentials/allowlist.js';
 import { fakeSpeechCredentialProbe } from '../speech/credentials/fake-probe.js';
 import type { SpeechCredentialProbe } from '../speech/credentials/probe.js';
 import { resolveSpeechCredential, type PlatformSpeechEnv } from '../speech/credentials/resolve.js';
-
-const WRITE_ROLES = ['owner', 'integration_admin'] as const;
-const READ_ROLES = ['owner', 'integration_admin', 'collection_manager'] as const;
 
 type ProviderCredentialDependencies = {
   tenant: {
@@ -121,15 +119,6 @@ const platformEnvOf = (deps: ProviderCredentialDependencies): PlatformSpeechEnv 
     YANDEX_FOLDER_ID: env.YANDEX_FOLDER_ID
   };
 
-const findActor = async (deps: ProviderCredentialDependencies, tenantId: string) =>
-  deps.user.findFirst({
-    where: {
-      tenantId,
-      isActive: true,
-      status: 'active'
-    }
-  }) as Promise<{ id: string } | null>;
-
 export const registerProviderCredentialRoutes = (
   app: FastifyInstance,
   deps: ProviderCredentialDependencies
@@ -138,7 +127,7 @@ export const registerProviderCredentialRoutes = (
 
   app.get(
     '/tenants/:tenantId/provider-credentials',
-    { preValidation: roleMiddleware(READ_ROLES) },
+    { preValidation: authorizeZone('integrations', 'read') },
     async (request, reply) => {
       const params = tenantSchema.safeParse(request.params);
       if (!params.success) {
@@ -162,7 +151,7 @@ export const registerProviderCredentialRoutes = (
 
   app.post(
     '/tenants/:tenantId/provider-credentials',
-    { preValidation: roleMiddleware(WRITE_ROLES) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = tenantSchema.safeParse(request.params);
       if (!params.success) {
@@ -193,8 +182,8 @@ export const registerProviderCredentialRoutes = (
         return reply.code(409).send({ error: 'CREDENTIAL_ALREADY_EXISTS' });
       }
 
-      const actor = await findActor(deps, params.data.tenantId);
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -230,7 +219,7 @@ export const registerProviderCredentialRoutes = (
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'provider_credential.created',
           entityType: 'providerCredential',
           entityId: created.id,
@@ -253,7 +242,7 @@ export const registerProviderCredentialRoutes = (
 
   app.patch(
     '/tenants/:tenantId/provider-credentials/:credentialId',
-    { preValidation: roleMiddleware(WRITE_ROLES) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = credentialParamsSchema.safeParse(request.params);
       if (!params.success) {
@@ -277,8 +266,8 @@ export const registerProviderCredentialRoutes = (
         return reply.code(404).send({ error: 'PROVIDER_CREDENTIAL_NOT_FOUND' });
       }
 
-      const actor = await findActor(deps, params.data.tenantId);
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -314,7 +303,7 @@ export const registerProviderCredentialRoutes = (
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: rotated ? 'provider_credential.rotated' : 'provider_credential.updated',
           entityType: 'providerCredential',
           entityId: updated.id,
@@ -337,7 +326,7 @@ export const registerProviderCredentialRoutes = (
 
   app.post(
     '/tenants/:tenantId/provider-credentials/:credentialId/disable',
-    { preValidation: roleMiddleware(WRITE_ROLES) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = credentialParamsSchema.safeParse(request.params);
       if (!params.success) {
@@ -356,8 +345,8 @@ export const registerProviderCredentialRoutes = (
         return reply.code(404).send({ error: 'PROVIDER_CREDENTIAL_NOT_FOUND' });
       }
 
-      const actor = await findActor(deps, params.data.tenantId);
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -369,7 +358,7 @@ export const registerProviderCredentialRoutes = (
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'provider_credential.disabled',
           entityType: 'providerCredential',
           entityId: updated.id,
@@ -392,7 +381,7 @@ export const registerProviderCredentialRoutes = (
 
   app.post(
     '/tenants/:tenantId/provider-credentials/:credentialId/probe',
-    { preValidation: roleMiddleware(WRITE_ROLES) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = credentialParamsSchema.safeParse(request.params);
       if (!params.success) {
@@ -411,8 +400,8 @@ export const registerProviderCredentialRoutes = (
         return reply.code(404).send({ error: 'PROVIDER_CREDENTIAL_NOT_FOUND' });
       }
 
-      const actor = await findActor(deps, params.data.tenantId);
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -456,7 +445,7 @@ export const registerProviderCredentialRoutes = (
       await deps.auditLog?.create?.({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'provider_credential.probed',
           entityType: 'providerCredential',
           entityId: updated.id,

@@ -23,7 +23,7 @@ const MIME = {
   '.csv': 'text/csv; charset=utf-8'
 };
 
-const API_PREFIXES = ['/tenants', '/campaigns', '/healthz'];
+const API_PREFIXES = ['/tenants', '/campaigns', '/healthz', '/auth'];
 
 const shouldProxy = (pathname) => API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
@@ -82,7 +82,7 @@ const server = http.createServer((req, res) => {
   const pathname = decodeURIComponent(url.pathname);
 
   if (pathname === '/') {
-    res.writeHead(302, { Location: '/prototype.html' });
+    res.writeHead(302, { Location: '/landing.html' });
     res.end();
     return;
   }
@@ -105,6 +105,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`dev-gateway listening on http://${HOST}:${PORT}`);
+  console.log(`landing: http://${HOST}:${PORT}/landing.html`);
   console.log(`prototype: http://${HOST}:${PORT}/prototype.html`);
   console.log(`api proxy: ${API_ORIGIN}`);
 });

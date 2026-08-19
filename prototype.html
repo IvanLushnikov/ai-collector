@@ -35,10 +35,10 @@
       <button data-screen="analytics">Аналитика</button>
       <button data-screen="auditLog">Журнал действий</button>
     </nav>
-    <div class="side-user"><b>Анна Котова</b><small>Руководитель взыскания</small></div>
+    <div class="side-user"><b id="sideUserName">Пользователь</b><small id="sideUserRole">Кабинет организации</small><button type="button" id="logoutButton" class="btn link" style="color:#9ec2d8;padding:8px 0">Выйти</button></div>
   </aside>
   <div class="work">
-    <header class="topbar"><div class="crumb"><b id="crumb">Главная</b><span>ООО МКК «ФинЛиния» · Москва</span></div><div class="top-actions"><div class="search"><input placeholder="Найти кампанию"></div><button class="btn primary" data-open-wizard>Создать кампанию</button><button class="btn">Помощь</button></div></header>
+    <header class="topbar"><div class="crumb"><b id="crumb">Главная</b><span id="orgCrumb">Организация</span></div><div class="top-actions"><div class="search"><input placeholder="Найти кампанию"></div><button class="btn primary" data-open-wizard>Создать кампанию</button><button class="btn">Помощь</button></div></header>
     <main>
       <div id="globalScreens">
         <section class="screen active" id="home">
@@ -167,12 +167,12 @@
           </div>
           <div class="notice danger" id="campaignInternalClosed" hidden>Запуск сейчас недоступен. Обратитесь к администратору.</div>
           <div class="grid g4" style="margin-bottom:16px">
-            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign="c-loans"><small>Обзвонено</small><strong id="campaignOverviewProcessedValue">6 800</strong><span id="campaignOverviewProcessedSub">из 10 000 записей</span></button>
-            <button class="metric ok metric-link" data-screen-link="analytics" data-analytics-campaign="c-loans"><small>Соединилось</small><strong id="campaignOverviewCompletedValue">3 102</strong><span id="campaignOverviewCompletedSub">из попыток</span></button>
-            <button class="metric warn metric-link" data-screen-link="analytics" data-analytics-campaign="c-loans"><small>Обещания</small><strong id="campaignOverviewPtpValue">142</strong><span id="campaignOverviewPtpSub">из завершённых разговоров</span></button>
-            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign="c-loans"><small>Стоимость</small><strong id="campaignOverviewCostValue">86 200 ₽</strong><span id="campaignOverviewCostSub">демо · период выборки</span></button>
+            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Обзвонено</small><strong id="campaignOverviewProcessedValue">н/д</strong><span id="campaignOverviewProcessedSub">из API отчёта</span></button>
+            <button class="metric ok metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Соединилось</small><strong id="campaignOverviewCompletedValue">н/д</strong><span id="campaignOverviewCompletedSub">из попыток</span></button>
+            <button class="metric warn metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Обещания</small><strong id="campaignOverviewPtpValue">н/д</strong><span id="campaignOverviewPtpSub">из завершённых разговоров</span></button>
+            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Стоимость</small><strong id="campaignOverviewCostValue">н/д</strong><span id="campaignOverviewCostSub">ожидаем данные отчёта</span></button>
           </div>
-          <p style="margin:-6px 0 16px"><button class="btn link" data-screen-link="analytics" data-analytics-campaign="c-loans">Аналитика</button></p>
+          <p style="margin:-6px 0 16px"><button class="btn link" data-screen-link="analytics" data-analytics-campaign="" id="overviewAnalyticsLink">Аналитика</button></p>
           <div class="grid g2">
             <div class="panel"><div class="panel-head"><div class="panel-title">Готовность к запуску</div></div>
               <div class="panel-body readiness">
@@ -201,8 +201,8 @@
           <div class="page-head"><div><h1>База кампании</h1><p>Файл или обмен по API. Принято в базу — не то же самое, что можно звонить: допуск проверяется перед звонком.</p></div>
             <div class="head-actions"><button class="btn" id="openApiSourceFromBase">Получать из API</button><button class="btn primary" data-open-wizard-step="2">Загрузить файл</button></div>
           </div>
-          <div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Загружено</small><strong>10 000</strong><span>записей</span></div><div class="metric ok"><small>Принято в базу</small><strong>8 740</strong><span>ещё не допуск к звонку</span></div><div class="metric warn"><small>Ошибки файла</small><strong>176</strong><span>строки с ошибками</span></div><div class="metric warn"><small>Правила исключений</small><strong>1 084</strong><span>не ошибки загрузки</span></div></div>
-          <div class="panel"><div class="panel-head"><div><div class="panel-title">займы_14_08.csv</div><div class="panel-sub">загружен Анной Котовой · 14 августа 09:12</div></div><span class="tag run">проверено</span></div>
+          <div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Загружено</small><strong id="campaignBaseLoadedCount">10 000</strong><span>записей</span></div><div class="metric ok"><small>Принято в базу</small><strong id="campaignBaseAcceptedCount">8 740</strong><span>ещё не допуск к звонку</span></div><div class="metric warn"><small>Ошибки файла</small><strong id="campaignBaseRejectedCount">176</strong><span>строки с ошибками</span></div><div class="metric warn"><small>Пока не допущено к звонку</small><strong id="campaignBaseEligibilityHoldCount">1 084</strong><span>проверяется отдельно</span></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title" id="campaignBaseFileTitle">займы_14_08.csv</div><div class="panel-sub" id="campaignBaseFileMeta">загружен Анной Котовой · 14 августа 09:12</div></div><span class="tag run" id="campaignBaseFileStatus">проверено</span></div>
             <div class="notice" style="margin:12px">Допуск к звонку не равен приёму в базу: перед звонком система ещё проверит ограничения.</div>
             <div class="table-wrap"><table><thead><tr><th>Поле файла</th><th>Поле системы</th><th>Заполнено</th><th>Проверка</th></tr></thead><tbody><tr><td>client_id</td><td>Номер клиента</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>phone</td><td>Телефон</td><td>99,8%</td><td><span class="tag run">готово</span></td></tr><tr><td>timezone</td><td>Часовой пояс</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_amount</td><td>Сумма долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_status</td><td>Статус долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>consent_status</td><td>Статус согласия</td><td>100%</td><td><span class="tag run">готово</span></td></tr></tbody></table></div>
           </div>
@@ -231,7 +231,7 @@
               <div class="field"><label>Одновременных звонков</label><input value="45"></div>
               <div class="field"><label>Маркировка</label><input value="ФинЛиния · Финансы" readonly></div>
               <div class="field"><label>Номер для проверки</label><input value="+7 912 000-00-00"></div>
-              <div class="field full"><button class="btn" id="runTestCall">Проверить соединение</button></div>
+              <div class="field full"><button class="btn" id="runTestCall" data-test-debtor-id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa">Проверить соединение</button></div>
               <div class="notice" id="testCallResult" style="grid-column:1/-1">Последняя проверка: успешно · 14 августа 09:24. Кампания не запущена.</div>
             </div>
           </div>
@@ -253,7 +253,7 @@
 <div class="overlay" id="overlay"></div>
 <div class="modal" id="campaignWizard" aria-hidden="true"><div class="modal-head"><div><h2>Создание кампании</h2><p>Кампания, база, сценарий и телефония. Запуск — на Обзоре.</p></div><button class="close" data-close>×</button></div><div class="modal-body"><div class="wizard-nav"><button class="wizard-step-btn active" data-wstep="1">1. Кампания</button><button class="wizard-step-btn" data-wstep="2">2. База</button><button class="wizard-step-btn" data-wstep="3">3. Сценарий</button><button class="wizard-step-btn" data-wstep="4">4. Телефония</button></div><div class="wizard-content">
   <div class="wizard-pane active" data-wpane="1"><h3>Основные параметры</h3><p>Название, продукт и сегмент кампании.</p><div class="wizard-state state-empty" id="campaignStatePanel"><span class="status-pill state-empty" id="campaignStateBadge">Не выполнено</span><div><b>Состояние параметров</b><small id="campaignStateText">Заполните параметры кампании, чтобы перейти к следующим шагам.</small><ul class="state-reasons" id="campaignStateReasons"></ul></div></div><div class="form-grid"><div class="field full"><label>Название кампании</label><input id="wizardName" value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select id="wizardProduct"><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select id="wizardSegment"><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Время в будни</label><input id="wizardWeekdays" value="08:30–20:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div><div class="field"><label>Время в выходные</label><input id="wizardWeekends" value="09:30–19:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div></div></div>
-  <div class="wizard-pane" data-wpane="2"><h3>Загрузка базы должников</h3><p>Поддерживаются CSV и XLSX. Система проверит обязательные поля и исключения.</p><div class="wizard-state state-empty" id="baseStatePanel"><span class="status-pill state-empty" id="baseStateBadge">Не запущено</span><div><b>Статус импорта</b><small id="baseStateText">Файл базы не выбран. Для проверки запускайте шаг импорта после загрузки.</small><ul class="state-reasons" id="baseStateReasons"></ul></div></div><div class="dropzone"><b id="uploadTitle">Перетащите файл сюда</b><p id="uploadText">До 100 МБ · телефон, номер клиента, сумма и срок просрочки</p><input id="baseFile" type="file" accept=".csv,.xlsx" hidden><button class="btn" id="chooseFile">Выбрать файл</button> <button class="btn" id="loadDemoBase">Загрузить пример</button></div><div id="mappingBlock" style="display:none;margin-top:18px"><div class="notice" id="importReportNotice">Пример базы: найдено 10 000, готовы 8 740, исправить 1 176, дубли 84. Это пример, не боевой импорт.</div><div class="grid g4" id="importReportCounts" style="margin:12px 0"><div class="metric info"><small>Найдено</small><strong id="importFoundCount">10 000</strong></div><div class="metric ok"><small>Готовы</small><strong id="importReadyCount">8 740</strong></div><div class="metric warn"><small>Исправить</small><strong id="importFixCount">1 176</strong></div><div class="metric info"><small>Дубли</small><strong id="importDupCount">84</strong></div></div><ul class="state-reasons" id="importRowReasons"><li>Строка 12: нет часового пояса</li><li>Строка 41: дубль номера клиента</li></ul><div class="mapping"><span>client_id</span><b>→</b><select><option>Номер клиента</option></select></div><div class="mapping"><span>phone</span><b>→</b><select><option>Телефон</option></select></div><div class="mapping"><span>timezone</span><b>→</b><select><option>Часовой пояс</option></select></div><div class="mapping"><span>debt_amount</span><b>→</b><select><option>Сумма долга</option></select></div><div class="mapping"><span>debt_status</span><b>→</b><select><option>Статус долга</option></select></div><div class="mapping"><span>consent_status</span><b>→</b><select><option>Статус согласия</option></select></div><div class="row-actions" style="margin-top:12px"><button class="btn primary" id="importContinueAccepted">Продолжить с принятыми записями</button><button class="btn" id="importFixFile">Исправить файл</button></div></div></div>
+  <div class="wizard-pane" data-wpane="2"><h3>Загрузка базы должников</h3><p>Поддерживаются CSV и XLSX. Система проверит обязательные поля и исключения.</p><div class="wizard-state state-empty" id="baseStatePanel"><span class="status-pill state-empty" id="baseStateBadge">Не запущено</span><div><b>Статус импорта</b><small id="baseStateText">Файл базы не выбран. Для проверки запускайте шаг импорта после загрузки.</small><ul class="state-reasons" id="baseStateReasons"></ul></div></div><div class="dropzone"><b id="uploadTitle">Перетащите файл сюда</b><p id="uploadText">До 100 МБ · телефон, номер клиента, сумма и срок просрочки</p><input id="baseFile" type="file" accept=".csv,.xlsx" hidden><button class="btn" id="chooseFile">Выбрать файл</button> <button class="btn" id="loadDemoBase">Загрузить пример</button></div><div id="mappingBlock" style="display:none;margin-top:18px"><div class="notice" id="importReportNotice">Пример базы: найдено 10 000, готовы 8 740, исправить 1 176, дубли 84. Это пример, не боевой импорт.</div><div class="notice" id="importAcceptedVsEligibleNotice" style="margin-top:12px">Принято в базу — ещё не допуск к звонку. Перед звонком система отдельно проверит ограничения.</div><div class="grid g4" id="importReportCounts" style="margin:12px 0"><div class="metric info"><small>Найдено</small><strong id="importFoundCount">10 000</strong></div><div class="metric ok"><small>Принято в базу</small><strong id="importReadyCount">8 740</strong></div><div class="metric warn"><small>Отклонено</small><strong id="importFixCount">1 176</strong></div><div class="metric info"><small>Ошибки по строкам</small><strong id="importDupCount">84</strong></div></div><ul class="state-reasons" id="importRowReasons"><li>Строка 12: нет часового пояса</li><li>Строка 41: дубль номера клиента</li></ul><div class="mapping"><span>client_id</span><b>→</b><select><option>Номер клиента</option></select></div><div class="mapping"><span>phone</span><b>→</b><select><option>Телефон</option></select></div><div class="mapping"><span>timezone</span><b>→</b><select><option>Часовой пояс</option></select></div><div class="mapping"><span>debt_amount</span><b>→</b><select><option>Сумма долга</option></select></div><div class="mapping"><span>debt_status</span><b>→</b><select><option>Статус долга</option></select></div><div class="mapping"><span>consent_status</span><b>→</b><select><option>Статус согласия</option></select></div><div class="row-actions" style="margin-top:12px"><button class="btn primary" id="importContinueAccepted">Продолжить с принятыми записями</button><button class="btn" id="importFixFile">Исправить файл</button></div></div></div>
   <div class="wizard-pane" data-wpane="4"><h3>Телефония</h3><p>Выберите подключённый контур или добавьте новый.</p><div class="wizard-state state-empty" id="telephonyStatePanel"><span class="status-pill state-empty" id="telephonyStateBadge">Не проверено</span><div><b>Статус соединения</b><small id="telephonyStateText">Укажите поставщика, затем выполните тестовый звонок для подтверждения.</small><ul class="state-reasons" id="telephonyStateReasons"></ul></div></div><div class="grid g2"><button class="provider selected" data-select-provider><div class="card-top"><h3>МТС Exolve</h3><span class="tag run">готово</span></div><p>+7 495 •••-42-18 · маркировка включена · 100 линий</p></button><button class="provider" data-select-provider><div class="card-top"><h3>Mango Office</h3><span class="tag draft">подключить</span></div><p>Потребуется адрес голосового шлюза, учётные данные и тестовый звонок.</p></button></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Одновременных звонков</label><input value="45"></div><div class="field"><label>Остановка при ожидании оператора</label><select><option>40 секунд</option></select></div></div><button class="btn" data-phone-test style="margin-top:14px">Проверить соединение</button></div>
   <div class="wizard-pane" data-wpane="3"><h3>Сценарий</h3><p>Шаблон, голос, первая фраза, длительность и перевод оператору.</p><div class="wizard-state state-empty" id="scriptStatePanel"><span class="status-pill state-empty" id="scriptStateBadge">Не проверено</span><div><b>Сценарий</b><small id="scriptStateText">Выберите шаблон. После создания его можно уточнить на вкладке «Сценарий».</small><ul class="state-reasons" id="scriptStateReasons"></ul></div></div><div class="grid g3"><button class="script-card selected" data-select-script data-script-check="ready"><h3>Мягкое взыскание</h3><p>Информирование, причина неоплаты и обещание платежа.</p></button><button class="script-card" data-select-script data-script-check="partial"><h3>Работа с возражениями</h3><p>Спор по долгу и сложная жизненная ситуация.</p></button><button class="script-card" data-select-script data-script-check="ready"><h3>Короткое информирование</h3><p>Короткий звонок без предложения графика.</p></button></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Голос</label><select><option>Анна · нейтральный</option><option>Михаил · спокойный</option></select></div><div class="field"><label>Максимальная длительность</label><select><option>4 минуты</option><option>6 минут</option></select></div><div class="field full"><label>Первая фраза</label><textarea>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния».</textarea></div><div class="field full"><label>Перевод оператору</label><select><option>По первому запросу</option></select></div></div></div>
 </div></div><div class="modal-foot"><button class="btn" data-close>Сохранить черновик</button><div class="foot-right"><button class="btn" id="wizardBack">Назад</button><button class="btn primary" id="wizardNext">Далее</button><button class="btn success" id="wizardCreate" style="display:none">Создать кампанию</button></div></div></div>
@@ -684,6 +684,52 @@
   ];
   const screenNames={home:'Главная',sources:'Источники',telephony:'Телефония',analytics:'Аналитика',auditLog:'Журнал действий'};
   const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
+  const currentAuth={ tenantId:'', role:'', userName:'', tenantName:'', email:'' };
+  function apiHeaders(extra){
+    const headers=Object.assign({ Accept:'application/json' }, extra || {});
+    if (currentAuth.tenantId) headers['X-Tenant-Id']=currentAuth.tenantId;
+    if (currentAuth.role) headers['X-User-Role']=currentAuth.role;
+    return headers;
+  }
+  function apiFetch(url, options){
+    const next=options || {};
+    return fetch(url, Object.assign({}, next, {
+      credentials:'include',
+      headers: apiHeaders(next.headers)
+    }));
+  }
+  function applyAuthToChrome(){
+    const nameEl=q('#sideUserName');
+    const roleEl=q('#sideUserRole');
+    const orgEl=q('#orgCrumb');
+    if (nameEl) nameEl.textContent=currentAuth.userName || 'Пользователь';
+    if (roleEl) roleEl.textContent=currentAuth.tenantName || 'Кабинет организации';
+    if (orgEl) orgEl.textContent=currentAuth.tenantName || 'Организация';
+    const workspace=q('#campaignWorkspace');
+    if (workspace && currentAuth.tenantId) {
+      workspace.dataset.tenantId=currentAuth.tenantId;
+    }
+  }
+  async function bootstrapCabinetAuth(){
+    try {
+      const response=await apiFetch(`${reportApiBaseUrl}/auth/me`);
+      const body=await response.json().catch(()=>({}));
+      if (!body?.authenticated) {
+        window.location.href='/login.html';
+        return false;
+      }
+      currentAuth.tenantId=body.tenant?.id || '';
+      currentAuth.role=body.role || '';
+      currentAuth.userName=body.user?.name || '';
+      currentAuth.tenantName=body.tenant?.name || '';
+      currentAuth.email=body.user?.email || '';
+      applyAuthToChrome();
+      return true;
+    } catch {
+      window.location.href='/login.html';
+      return false;
+    }
+  }
   const reportRoleMeta={
     collection_manager:{
       label:'Менеджер кампании',
@@ -1040,7 +1086,7 @@
     }
 
     const request = (async () => {
-      const response=await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/calls/${callAttemptId}`, {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/calls/${callAttemptId}`, {
         headers: { Accept: 'application/json' }
       });
       if (!response.ok) {
@@ -1135,7 +1181,7 @@
     callsErrorNotice='';
     setCallsNotice('Загружаем звонки кампании…', true);
     try {
-      const response=await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/calls`, {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/calls`, {
         headers: { Accept: 'application/json' }
       });
       if (!response.ok) {
@@ -1244,7 +1290,7 @@
     auditLogErrorNotice='';
     setAuditNotice('Загружаем журнал действий кампании…', true);
     try {
-      const response=await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs`, {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs`, {
         headers:{ Accept:'application/json' }
       });
       if (!response.ok) {
@@ -1354,7 +1400,7 @@
       return null;
     }
     return {
-      tenantId: workspace.dataset.tenantId || '',
+      tenantId: currentAuth.tenantId || workspace.dataset.tenantId || '',
       campaignId: workspace.dataset.campaignId || '',
       campaignName: workspace.dataset.campaignName || ''
     };
@@ -1524,7 +1570,7 @@
 
     const request = (async () => {
       try {
-        const response = await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/readiness-summary`, {
+        const response = await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/readiness-summary`, {
           headers: { Accept: 'application/json' }
         });
         if (!response.ok) {
@@ -1582,6 +1628,16 @@
       complianceBlocks: blockedCalls,
       source: callsSource
     };
+  }
+
+  async function fetchCampaignReportSnapshot(tenantId, campaignId) {
+    const response = await apiFetch(`${reportApiBaseUrl}/tenants/${tenantId}/campaigns/${campaignId}/report`, {
+      headers: { Accept: 'application/json' }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return parseReportSnapshotFromApi(await response.json());
   }
 
   function parseReportSnapshotFromApi(body) {
@@ -1965,38 +2021,47 @@
 
   async function loadCampaignReport() {
     const context = getCampaignContext();
+    const setIf=(id, text, className)=>{
+      const el=q(id);
+      if (!el) return;
+      if (className) el.className=className;
+      if (text !== undefined) el.textContent=text;
+    };
     if (!context || !context.tenantId || !context.campaignId) {
-      q('#reportCampaignName').textContent = context?.campaignName || 'Кампания';
-      q('#reportNotice').className = 'notice warn';
-      q('#reportNotice').textContent = 'API отчёта недоступен: контекст кампании не найден.';
-      q('#reportTag').className = 'tag warn';
-      q('#reportTag').textContent = 'ошибка';
-      renderReportSnapshot(getReportSnapshotFromCalls(), 'local', 'Контекст кампании не найден, используем локальный срез.');
+      setIf('#reportCampaignName', context?.campaignName || 'Кампания');
+      setIf('#reportNotice', 'API отчёта недоступен: контекст кампании не найден.', 'notice warn');
+      setIf('#reportTag', 'ошибка', 'tag warn');
+      const local=getReportSnapshotFromCalls();
+      currentCampaignReportSnapshot=local;
+      syncCampaignOverviewMetricsFromReport({ ...local, source:'local' });
       return;
     }
 
-    q('#reportCampaignName').textContent = context.campaignName || 'Кампания';
-    q('#reportNotice').className = 'notice';
-    q('#reportNotice').textContent = 'Загрузка данных отчёта…';
-    q('#reportTag').className = 'tag warn';
-    q('#reportTag').textContent = 'загрузка';
+    setIf('#reportCampaignName', context.campaignName || 'Кампания');
+    setIf('#reportNotice', 'Загрузка данных отчёта…', 'notice');
+    setIf('#reportTag', 'загрузка', 'tag warn');
+    const progress=q('#campaignProgressLabel');
 
     try {
-      const response = await fetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/report`, {
-        headers: { Accept: 'application/json' }
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      const snapshot = await fetchCampaignReportSnapshot(context.tenantId, context.campaignId);
+      currentCampaignReportSnapshot=snapshot;
+      syncCampaignOverviewMetricsFromReport(snapshot);
+      if (progress) {
+        progress.textContent=`Обзвонили ${formatMetric(snapshot.attemptedCalls)} из ${formatMetric(snapshot.totalRecords)}`;
       }
-      const body = await response.json();
-      const snapshot = parseReportSnapshotFromApi(body);
-      renderReportSnapshot(snapshot, 'live');
+      if (q('#reportNotice')) {
+        renderReportSnapshot(snapshot, 'live');
+      }
     } catch (error) {
-      q('#reportNotice').className = 'notice warn';
-      q('#reportNotice').textContent = `API отчёта недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}. Показаны локальные метрики прототипа.`;
-      q('#reportTag').className = 'tag warn';
-      q('#reportTag').textContent = 'ошибка';
-      renderReportSnapshot(getReportSnapshotFromCalls(), 'local', q('#reportNotice').textContent);
+      const message=`API отчёта недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}.`;
+      setIf('#reportNotice', `${message} Показаны локальные метрики прототипа.`, 'notice warn');
+      setIf('#reportTag', 'ошибка', 'tag warn');
+      const local=getReportSnapshotFromCalls();
+      currentCampaignReportSnapshot={ ...local, source:'local' };
+      syncCampaignOverviewMetricsFromReport(currentCampaignReportSnapshot);
+      if (q('#reportNotice')) {
+        renderReportSnapshot(getReportSnapshotFromCalls(), 'local', q('#reportNotice').textContent);
+      }
     }
   }
  function setPanelStatus(panelId, badgeId, statusTextId, reasonsId, state, mainText, reasons) {
@@ -3060,27 +3125,77 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   function toast(title,text){q('#toastTitle').textContent=title;q('#toastText').textContent=text;q('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>q('#toast').classList.remove('show'),2800)}
   function closeAll(){qa('.modal.open,.drawer.open').forEach(x=>x.classList.remove('open'));q('#overlay').classList.remove('open');qa('.modal').forEach(x=>x.setAttribute('aria-hidden','true'))}
   function openLayer(el){closeAll();el.classList.add('open');el.setAttribute?.('aria-hidden','false');q('#overlay').classList.add('open')}
-  function renderAnalytics() {
-    const filter=q('#analyticsCampaignFilter')?.value || 'all';
+  async function renderAnalytics() {
     const reached=q('#analyticsReached');
     const connected=q('#analyticsConnected');
     const promises=q('#analyticsPromises');
     const cost=q('#analyticsCost');
     const empty=q('#analyticsEmpty');
     const metrics=q('#analyticsMetrics');
-    const byCampaign={
-      all:{reached:'8 984',connected:'4 210',promises:'186',cost:'128 400 ₽',base:'15 700'},
-      'c-loans':{reached:'6 800',connected:'3 102',promises:'142',cost:'86 200 ₽',base:'10 000'},
-      'c-installment':{reached:'1 974',connected:'908',promises:'31',cost:'32 100 ₽',base:'4 200'}
+    const notice=q('#analyticsNotice');
+    const errorBox=q('#analyticsError');
+    const applyFallback=()=>{
+      const filter=q('#analyticsCampaignFilter')?.value || 'all';
+      const byCampaign={
+        all:{reached:'8 984',connected:'4 210',promises:'186',cost:'128 400 ₽',base:'15 700'},
+        'c-loans':{reached:'6 800',connected:'3 102',promises:'142',cost:'86 200 ₽',base:'10 000'},
+        'c-installment':{reached:'1 974',connected:'908',promises:'31',cost:'32 100 ₽',base:'4 200'}
+      };
+      const data=byCampaign[filter] || byCampaign.all;
+      if (reached) reached.textContent=data.reached;
+      if (connected) connected.textContent=data.connected;
+      if (promises) promises.textContent=data.promises;
+      if (cost) cost.textContent=data.cost;
+      if (reached) reached.parentElement.querySelector('span').textContent=`из ${data.base} записей в базе · демо`;
+      if (notice) { notice.hidden=false; notice.textContent='Демо. Цифры не из боевого учёта.'; }
+      if (empty) empty.hidden=true;
+      if (metrics) metrics.hidden=false;
     };
-    const data=byCampaign[filter] || byCampaign.all;
-    if (reached) reached.textContent=data.reached;
-    if (connected) connected.textContent=data.connected;
-    if (promises) promises.textContent=data.promises;
-    if (cost) cost.textContent=data.cost;
-    if (reached) reached.parentElement.querySelector('span').textContent=`из ${data.base} записей в базе`;
-    if (empty) empty.hidden=true;
-    if (metrics) metrics.hidden=false;
+
+    const context=getCampaignContext();
+    if (!context?.tenantId) {
+      applyFallback();
+      return;
+    }
+
+    try {
+      const listResponse=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!listResponse.ok) throw new Error(`HTTP ${listResponse.status}`);
+      const campaigns=await listResponse.json();
+      const filterEl=q('#analyticsCampaignFilter');
+      const previous=filterEl?.value || 'all';
+      if (filterEl && Array.isArray(campaigns)) {
+        filterEl.innerHTML='<option value="all">Все кампании</option>' + campaigns.map((item)=>`<option value="${item.id}">${item.name}</option>`).join('');
+        if ([...filterEl.options].some((option)=>option.value===previous)) {
+          filterEl.value=previous;
+        }
+      }
+      const selected=filterEl?.value || 'all';
+      const targets=Array.isArray(campaigns)
+        ? (selected==='all' ? campaigns : campaigns.filter((item)=>item.id===selected))
+        : [];
+      const reports=await Promise.all(targets.map((item)=>fetchCampaignReportSnapshot(context.tenantId, item.id)));
+      const attempted=reports.reduce((sum,item)=>sum + (Number(item.attemptedCalls)||0), 0);
+      const completed=reports.reduce((sum,item)=>sum + (Number(item.completedCalls)||0), 0);
+      const ptp=reports.reduce((sum,item)=>sum + (Number(item.ptpCount)||0), 0);
+      const records=reports.reduce((sum,item)=>sum + (Number(item.totalRecords)||0), 0);
+      const costValues=reports.map((item)=>Number(item.costPerCall)).filter((value)=>Number.isFinite(value));
+      const totalCost=costValues.length ? costValues.reduce((sum,value)=>sum + value, 0) : null;
+      if (reached) reached.textContent=formatMetric(attempted);
+      if (connected) connected.textContent=formatMetric(completed);
+      if (promises) promises.textContent=formatMetric(ptp);
+      if (cost) cost.textContent=totalCost === null ? 'н/д' : `${totalCost.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₽`;
+      if (reached) reached.parentElement.querySelector('span').textContent=`из ${formatMetric(records)} записей в базе`;
+      if (notice) notice.hidden=true;
+      if (errorBox) errorBox.hidden=true;
+      if (empty) empty.hidden=reports.length>0;
+      if (metrics) metrics.hidden=false;
+    } catch {
+      if (errorBox) errorBox.hidden=false;
+      applyFallback();
+    }
   }
 
   function applyHomeCampaignFilter() {
@@ -3097,6 +3212,125 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     if (filterEmpty) filterEmpty.hidden = visible>0 || filter==='all';
     if (tableEmpty) tableEmpty.hidden = rows.length>0;
     syncHomeBulkButtons();
+  }
+
+  async function loadHomeCampaignsFromApi() {
+    const tbody=q('#homeCampaignsBody');
+    if (!tbody) {
+      return;
+    }
+
+    const context=getCampaignContext();
+    if (!context || !context.tenantId) {
+      return;
+    }
+
+    const homeErrorNotice=q('#homeCampaignsError');
+    const previousHtml=tbody.innerHTML;
+
+    try {
+      if (homeErrorNotice) {
+        homeErrorNotice.hidden=true;
+      }
+
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const campaigns=await response.json();
+      if (!Array.isArray(campaigns) || campaigns.length===0) {
+        tbody.innerHTML='';
+        return;
+      }
+
+      const formatRuInt=(value)=> {
+        const n=Number(value);
+        return Number.isFinite(n) ? n.toLocaleString('ru-RU') : '—';
+      };
+
+      const rowsByCampaignId=new Map();
+      tbody.innerHTML='';
+
+      for (const c of campaigns) {
+        const campaignId=String(c.id || '');
+        const status=String(c.status || '');
+        const name=String(c.name || 'Кампания');
+
+        const tr=document.createElement('tr');
+        tr.setAttribute('data-campaign-status',status);
+        tr.setAttribute('data-campaign-id',campaignId);
+
+        const tdSelect=document.createElement('td');
+        const checkbox=document.createElement('input');
+        checkbox.type='checkbox';
+        checkbox.className='campaign-row-check';
+        checkbox.dataset.campaignId=campaignId;
+        checkbox.setAttribute('aria-label',`Выбрать кампанию ${name}`);
+        tdSelect.appendChild(checkbox);
+
+        const tdName=document.createElement('td');
+        const btn=document.createElement('button');
+        btn.className='campaign-name-link';
+        btn.dataset.openCampaign='overview';
+        btn.dataset.campaignId=campaignId;
+        btn.textContent=name;
+        tdName.appendChild(btn);
+
+        const tdStatus=document.createElement('td');
+        const statusSpan=document.createElement('span');
+        const statusMeta={
+          running:{ cls:'tag run', text:'работает', progress:`Обзвонили 0 из 0` },
+          manual_paused:{ cls:'tag warn', text:'приостановлена', progress:`Обзвонили 0 из 0` },
+          auto_paused:{ cls:'tag warn', text:'приостановлена системой', progress:`Обзвонили 0 из 0` },
+          draft:{ cls:'tag draft', text:'черновик', progress:'База не загружена' },
+          ready:{ cls:'tag info', text:'готова к запуску', progress:`Обзвонили 0 из 0` },
+          completed:{ cls:'tag stop', text:'завершена', progress:`Обзвонили 0 из 0` }
+        };
+        const meta=statusMeta[status] || { cls:'tag info', text:'—', progress:`Обзвонили 0 из 0` };
+        statusSpan.className=meta.cls;
+        statusSpan.textContent=meta.text;
+        tdStatus.appendChild(statusSpan);
+
+        const tdProgress=document.createElement('td');
+        tdProgress.textContent=meta.progress;
+
+        tr.appendChild(tdSelect);
+        tr.appendChild(tdName);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdProgress);
+        tbody.appendChild(tr);
+
+        rowsByCampaignId.set(campaignId,tdProgress);
+      }
+
+      await Promise.all(campaigns.map(async (c)=>{
+        const campaignId=String(c.id || '');
+        const el=rowsByCampaignId.get(campaignId);
+        if (!el) return;
+        try {
+          const r=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${campaignId}/report`, {
+            headers: { Accept: 'application/json' }
+          });
+          if (!r.ok) {
+            return;
+          }
+          const report=await r.json();
+          const attempted=report.attemptedCalls ?? 0;
+          const total=report.totalRecords ?? 0;
+          el.textContent=`Обзвонили ${formatRuInt(attempted)} из ${formatRuInt(total)}`;
+        } catch {
+          // Keep placeholder text
+        }
+      }));
+    } catch {
+      tbody.innerHTML=previousHtml;
+      if (homeErrorNotice) {
+        homeErrorNotice.hidden=false;
+      }
+    }
   }
 
   function selectedHomeRows() {
@@ -3165,9 +3399,10 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       renderAuditLog();
     }
     if (id === 'analytics') {
-      renderAnalytics();
+      await renderAnalytics();
     }
     if (id === 'home') {
+      await loadHomeCampaignsFromApi();
       applyHomeCampaignFilter();
     }
     window.scrollTo(0,0);
@@ -3178,9 +3413,16 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     });
   });
   qa('[data-screen-link]').forEach(b=>b.addEventListener('click',()=>{
-    const campaignId=b.dataset.analyticsCampaign;
+    const campaignId=b.dataset.analyticsCampaign || q('#campaignWorkspace')?.dataset.campaignId || '';
     if (campaignId && q('#analyticsCampaignFilter')) {
-      q('#analyticsCampaignFilter').value = campaignId === 'c-loans' ? 'c-loans' : campaignId;
+      const filter=q('#analyticsCampaignFilter');
+      if (![...filter.options].some((option)=>option.value===campaignId)) {
+        const option=document.createElement('option');
+        option.value=campaignId;
+        option.textContent=q('#campaignWorkspace')?.dataset.campaignName || 'Кампания';
+        filter.appendChild(option);
+      }
+      filter.value = campaignId;
     }
     showScreen(b.dataset.screenLink);
   }));
@@ -3190,8 +3432,15 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     window.scrollTo(0,0);
     if (id === 'overview') {
       await refreshCampaignReadinessSummary();
+      await loadCampaignReport();
       syncCampaignOverviewReadinessPanel();
       syncCampaignLaunchReadinessPanel();
+      const workspace=q('#campaignWorkspace');
+      qa('[data-screen-link="analytics"]').forEach((link)=>{
+        if (workspace?.dataset.campaignId) {
+          link.dataset.analyticsCampaign=workspace.dataset.campaignId;
+        }
+      });
       return;
     }
     if (id === 'calls') {
@@ -3204,12 +3453,26 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   renderCampaignActivityLog();
   setCampaignState(campaignLifecycle.status,{actor:'system',reason:'инициализация экрана кампании',force:true});
   function openCampaign(tab='overview'){q('#globalScreens').style.display='none';q('#campaignWorkspace').classList.add('active');qa('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen==='home'));q('#crumb').textContent='Кампания';showCampaignTab(tab)}
-  qa('[data-open-campaign]').forEach(b=>b.addEventListener('click',()=>openCampaign(b.dataset.openCampaign)));
+  q('#homeCampaignsBody')?.addEventListener('click',(event)=>{
+    const btn=event.target?.closest?.('[data-open-campaign]');
+    if (!btn) return;
+    const workspace=q('#campaignWorkspace');
+    if (workspace && btn.dataset?.campaignId) {
+      workspace.dataset.campaignId=btn.dataset.campaignId;
+      workspace.dataset.campaignName=(btn.textContent || '').trim();
+    }
+    openCampaign(btn.dataset.openCampaign);
+  });
   qa('[data-camp-tab]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTab)));
   qa('[data-camp-tab-link]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTabLink)));
   q('#backCampaigns').addEventListener('click',()=>showScreen('home'));
   q('#campaignsStatusFilter')?.addEventListener('change',applyHomeCampaignFilter);
-  qa('#homeCampaignsBody .campaign-row-check').forEach((box)=>box.addEventListener('change',syncHomeBulkButtons));
+  q('#homeCampaignsBody')?.addEventListener('change',(event)=>{
+    const target=event.target;
+    if (target && target.classList?.contains?.('campaign-row-check')) {
+      syncHomeBulkButtons();
+    }
+  });
   q('#bulkPauseCampaigns')?.addEventListener('click',()=>applyHomeBulk('pause'));
   q('#bulkResumeCampaigns')?.addEventListener('click',()=>applyHomeBulk('resume'));
   q('#bulkStopCampaigns')?.addEventListener('click',()=>applyHomeBulk('stop'));
@@ -3291,32 +3554,137 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     wizardStep=Math.min(4,wizardStep+1);
     renderWizard();
   });q('#wizardBack').addEventListener('click',()=>{wizardStep=Math.max(1,wizardStep-1);renderWizard()});
-  function baseReady(name='пример_базы.csv'){
-    q('#uploadTitle').textContent=name;
-    const backendResponse = wizardBackendSim.import.fromFile(name);
-    q('#uploadText').textContent='Идёт валидация по API-контракту импорта.';
-    q('#mappingBlock').style.display='block';
-    setWizardBaseState('loading',0,0,0,['Идёт проверка файла.']);
-    setTimeout(()=>{
-      setWizardBaseState(
-        backendResponse.status === 'ready' ? 'ready' : backendResponse.status === 'partial' ? 'partial' : backendResponse.status,
-        backendResponse.totalRows || 0,
-        backendResponse.acceptedRows || 0,
-        backendResponse.rejectedRows || 0,
-        wizardBackendSim.summarizeBlockingReasons(backendResponse)
-      );
-      if (backendResponse.status === 'ready') {
-        toast('Импорт завершён','Сервис вернул статус ready и допустил базу к readiness.');
-      } else if (backendResponse.status === 'partial') {
-        toast('Импорт частично принят','Сервис вернул partial-success. Нужна проверка risk-исключений.');
-      } else if (backendResponse.status === 'review') {
-        toast('Импорт в review','Часть записей требует ручного подтверждения при импорте.');
-      } else {
-        toast('Импорт не завершён','Проверьте blocking reasons и повторите загрузку.');
-      }
-    },700);
+  function formatImportFieldLabel(field='') {
+    const map={externalId:'номер клиента',phone:'телефон',timezone:'часовой пояс',debtAmount:'сумма долга',debtStatus:'статус долга',consentStatus:'статус согласия'};
+    return map[String(field)] || 'поле';
   }
-	  q('#chooseFile').addEventListener('click',()=>q('#baseFile').click());q('#baseFile').addEventListener('change',e=>{if(e.target.files[0])baseReady(e.target.files[0].name)});q('#loadDemoBase').addEventListener('click',()=>baseReady('пример_чистый.csv'));
+  function formatImportErrorReason(item={}) {
+    const row=Number(item?.row);
+    const rowLabel=Number.isFinite(row) && row > 0 ? `Строка ${row}` : 'Строка';
+    const fieldLabel=formatImportFieldLabel(item?.field);
+    const message=String(item?.message || '').trim();
+    if (/required/i.test(message)) return `${rowLabel}: заполните поле «${fieldLabel}».`;
+    if (/duplicate/i.test(message)) return `${rowLabel}: найден дубль в поле «${fieldLabel}».`;
+    if (/invalid/i.test(message)) return `${rowLabel}: проверьте поле «${fieldLabel}». Значение не прошло проверку.`;
+    return `${rowLabel}: ${message || `проверьте поле «${fieldLabel}».`}`;
+  }
+  function applyImportSummary(summary={}, fileName='') {
+    const accepted=Number(summary.acceptedCount) || 0;
+    const rejected=Number(summary.rejectedCount) || 0;
+    const errors=Array.isArray(summary.errors) ? summary.errors : [];
+    const total=accepted + rejected;
+    const setText=(id,value)=>{const el=q(`#${id}`); if (el) el.textContent=String(value);};
+    setText('importFoundCount', total.toLocaleString('ru-RU'));
+    setText('importReadyCount', accepted.toLocaleString('ru-RU'));
+    setText('importFixCount', rejected.toLocaleString('ru-RU'));
+    setText('importDupCount', errors.length.toLocaleString('ru-RU'));
+    setText('campaignBaseLoadedCount', total.toLocaleString('ru-RU'));
+    setText('campaignBaseAcceptedCount', accepted.toLocaleString('ru-RU'));
+    setText('campaignBaseRejectedCount', rejected.toLocaleString('ru-RU'));
+    setText('campaignBaseEligibilityHoldCount', 'н/д');
+    if (fileName) {
+      setText('campaignBaseFileTitle', fileName);
+      setText('uploadTitle', fileName);
+    }
+    setText('campaignBaseFileMeta', 'загружено только что через API импорта');
+    const rowReasons=q('#importRowReasons');
+    if (rowReasons) {
+      rowReasons.textContent='';
+      const lines=errors.length ? errors.map((item)=>formatImportErrorReason(item)) : ['Ошибок по строкам не найдено.'];
+      for (const text of lines) {
+        const li=document.createElement('li');
+        li.textContent=text;
+        rowReasons.appendChild(li);
+      }
+    }
+    const reportNotice=q('#importReportNotice');
+    if (reportNotice) {
+      reportNotice.className='notice';
+      reportNotice.textContent=errors.length
+        ? `Импорт завершён: принято в базу ${accepted.toLocaleString('ru-RU')}, отклонено ${rejected.toLocaleString('ru-RU')}. Исправьте строки с ошибками и повторите загрузку.`
+        : `Импорт завершён: принято в базу ${accepted.toLocaleString('ru-RU')} из ${total.toLocaleString('ru-RU')} записей.`;
+    }
+    const baseStatus=q('#campaignBaseFileStatus');
+    if (baseStatus) {
+      baseStatus.className=errors.length ? 'tag warn' : 'tag run';
+      baseStatus.textContent=errors.length ? 'частично принято' : 'проверено';
+    }
+    const baseEmpty=q('#campaignBaseEmpty');
+    if (baseEmpty) baseEmpty.hidden=true;
+    const mapping=q('#mappingBlock');
+    if (mapping) mapping.style.display='block';
+  }
+  function readImportPayload(file) {
+    if (!file) {
+      return Promise.resolve({csvContent:'externalId,phone,timezone,debtAmount,debtStatus,consentStatus\nEX-001,+79990000001,Europe/Moscow,12500,overdue,confirmed\nEX-002,+79990000002,Europe/Moscow,8700,overdue,confirmed'});
+    }
+    const lowerName=String(file.name || '').toLowerCase();
+    const isXlsx=lowerName.endsWith('.xlsx');
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(new Error('Не удалось прочитать файл.'));
+      reader.onload=()=>{
+        const result=reader.result;
+        if (isXlsx) {
+          const raw=typeof result === 'string' ? result : '';
+          const base64=raw.includes(',') ? raw.split(',').pop() : raw;
+          resolve({xlsxBase64: base64 || ''});
+          return;
+        }
+        resolve({csvContent: typeof result === 'string' ? result : ''});
+      };
+      if (isXlsx) reader.readAsDataURL(file); else reader.readAsText(file, 'utf-8');
+    });
+  }
+  async function baseReady(fileOrName='пример_базы.csv'){
+    const context=getCampaignContext();
+    const tenantId=context?.tenantId || '';
+    const campaignId=context?.campaignId || '';
+    const file=typeof File !== 'undefined' && fileOrName instanceof File ? fileOrName : null;
+    const fileName=file?.name || String(fileOrName || 'пример_базы.csv');
+    q('#uploadTitle').textContent=fileName;
+    q('#uploadText').textContent='Идёт загрузка и проверка файла через API импорта.';
+    q('#mappingBlock').style.display='block';
+    setWizardBaseState('loading',0,0,0,['Идёт проверка файла через API импорта.']);
+    if (!tenantId || !campaignId) {
+      setWizardBaseState('error',0,0,0,['Не найден контекст кампании для импорта базы.']);
+      toast('Импорт не выполнен','Сначала откройте нужную кампанию.');
+      return;
+    }
+    try{
+      const payload=await readImportPayload(file);
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/import`,{
+        method:'POST',
+        headers:{Accept:'application/json','Content-Type':'application/json','X-User-Role':currentAuth.role},
+        body: JSON.stringify(payload)
+      });
+      const body=await response.json().catch(()=>({}));
+      if (!response.ok) {
+        const message=body?.message || body?.error || `HTTP ${response.status}`;
+        setWizardBaseState('error',0,0,0,[`Не удалось загрузить базу. ${message}`]);
+        const reportNotice=q('#importReportNotice');
+        if (reportNotice) {
+          reportNotice.className='notice warn';
+          reportNotice.textContent=`Не удалось загрузить базу. ${message}`;
+        }
+        toast('Импорт не выполнен','Проверьте файл и повторите загрузку.');
+        return;
+      }
+      applyImportSummary(body, fileName);
+      setWizardBaseState(body.rejectedCount > 0 ? 'partial' : 'ready', body.acceptedCount + body.rejectedCount, body.acceptedCount, body.rejectedCount, (body.errors || []).map((item)=>formatImportErrorReason(item)));
+      toast(body.rejectedCount > 0 ? 'Импорт частично принят' : 'Импорт завершён', body.rejectedCount > 0 ? 'Часть строк отклонена. Ошибки показаны ниже.' : 'База принята и отображена по ответу API.');
+    } catch (error) {
+      const message=error instanceof Error ? error.message : 'Неизвестная ошибка';
+      setWizardBaseState('error',0,0,0,[`Не удалось загрузить базу. ${message}`]);
+      const reportNotice=q('#importReportNotice');
+      if (reportNotice) {
+        reportNotice.className='notice warn';
+        reportNotice.textContent=`Не удалось загрузить базу. ${message}`;
+      }
+      toast('Импорт не выполнен','Проверьте подключение к API и повторите загрузку.');
+    }
+  }
+	  q('#chooseFile').addEventListener('click',()=>q('#baseFile').click());q('#baseFile').addEventListener('change',e=>{if(e.target.files[0])baseReady(e.target.files[0])});q('#loadDemoBase').addEventListener('click',()=>baseReady('пример_чистый.csv'));
 	  q('#wizardName')?.addEventListener('input',scheduleCampaignValidation);
 	  q('#wizardProduct')?.addEventListener('change',scheduleCampaignValidation);
 	  q('#wizardSegment')?.addEventListener('change',scheduleCampaignValidation);
@@ -3341,7 +3709,68 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     toast('Запуск только с Обзора', 'Создайте кампанию и запустите её в шапке Обзора.');
   });
   q('#wizardRequestApproval')?.addEventListener('click',()=>{closeAll();openCampaign('overview');setCampaignState('draft',{actor:'operator',reason:'черновик'});toast('Черновик сохранён','Запуск — в шапке Обзора.');});
-  q('#wizardCreate').addEventListener('click',()=>{closeAll();openCampaign('overview');setCampaignState('draft',{actor:'operator',reason:'кампания создана'});toast('Кампания создана','Проверьте готовность на Обзоре и запустите кампанию там.');});
+  q('#wizardCreate').addEventListener('click',async()=>{
+    const btn=q('#wizardCreate');
+    if (btn) btn.disabled=true;
+    const workspace=q('#campaignWorkspace');
+    const tenantId=currentAuth.tenantId || workspace?.dataset?.tenantId || '';
+    const name=(q('#wizardName')?.value || '').trim();
+    const timezone='Europe/Moscow';
+
+    const setInlineError=(message='Не удалось создать кампанию.')=>{
+      wizardStepStates.campaign.status='error';
+      wizardStepStates.campaign.reasons=[message];
+      updateWizardReadiness();
+      renderWizard();
+    };
+
+    try{
+      if (!tenantId || !name) {
+        setInlineError(!tenantId ? 'Контекст организации не найден.' : 'Укажите название кампании.');
+        return;
+      }
+
+      // Только успех реального API создаёт кампанию и переводит к вкладкам.
+      const response=await apiFetch(`${reportApiBaseUrl}/campaigns`,{
+        method:'POST',
+        headers:{
+          Accept:'application/json',
+          'Content-Type':'application/json',
+          'X-Tenant-Id':tenantId,
+          'X-User-Role':currentAuth.role
+        },
+        body: JSON.stringify({ tenantId, name, timezone })
+      });
+
+      if (!response.ok) {
+        let apiError='Не удалось создать кампанию.';
+        try{
+          const body=await response.json();
+          apiError=typeof body?.error==='string' ? `API: ${body.error}` : `API: HTTP ${response.status}`;
+        }catch{
+          apiError=`API: HTTP ${response.status}`;
+        }
+        setInlineError(apiError);
+        return;
+      }
+
+      const created=await response.json();
+      if (workspace) {
+        workspace.dataset.campaignId=created?.id || '';
+        workspace.dataset.campaignName=created?.name || name;
+      }
+
+      closeAll();
+      openCampaign('overview');
+      setCampaignState('draft',{actor:'operator',reason:'кампания создана',force:true});
+      toast('Кампания создана','Проверьте готовность на Обзоре и запустите кампанию там.');
+    } catch (e) {
+      const message=e instanceof Error ? e.message : 'Неизвестная ошибка при создании кампании.';
+      setInlineError(message);
+    } finally {
+      if (btn) btn.disabled=false;
+    }
+  });
   qa('[data-open-phone]').forEach(b=>b.addEventListener('click',()=>openLayer(q('#phoneModal'))));
   q('#openApiSource')?.addEventListener('click',()=>openLayer(q('#apiSourceModal')));
   q('#openApiSourceFromBase')?.addEventListener('click',()=>openLayer(q('#apiSourceModal')));
@@ -3411,13 +3840,59 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     pendingConfirm=onOk;
     openLayer(q('#confirmActionModal'));
   }
+  async function patchCampaignStatus(status) {
+    const context=getCampaignContext();
+    if (!context?.tenantId || !context?.campaignId) {
+      return { ok:false, message:'Контекст кампании не найден.' };
+    }
+    try {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/status`,{
+        method:'PATCH',
+        headers:{
+          Accept:'application/json',
+          'Content-Type':'application/json',
+          'X-User-Role':currentAuth.role
+        },
+        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed' } : { status })
+      });
+      const body=await response.json().catch(()=>({}));
+      if (!response.ok) {
+        const code=body?.error || `HTTP ${response.status}`;
+        return { ok:false, statusCode:response.status, message:`Не удалось изменить статус. ${code}` };
+      }
+      return { ok:true, campaign: body };
+    } catch (error) {
+      return { ok:false, message: error instanceof Error ? error.message : 'Не удалось изменить статус.' };
+    }
+  }
+  async function launchCampaignViaApi() {
+    const current=campaignLifecycle.status;
+    const chain=current==='draft' ? ['review','ready','running']
+      : current==='review' ? ['ready','running']
+      : current==='ready' ? ['running']
+      : current==='running' ? []
+      : null;
+    if (!chain) {
+      return { ok:false, message:'Запуск из текущего статуса недоступен.' };
+    }
+    for (const status of chain) {
+      const result=await patchCampaignStatus(status);
+      if (!result.ok) return result;
+    }
+    return { ok:true };
+  }
   function openConfirmLaunch(){
     const name=q('#campaignWorkspace')?.dataset.campaignName || q('#wizardName')?.value || 'Кампания';
     openConfirm(
       'Запустить кампанию?',
       `«${name}» будет ограничено запущена. Новые звонки пойдут по правилам продукта. При риске система остановит создание новых звонков.`,
       'Запустить кампанию',
-      ()=>{
+      async ()=>{
+        const result=await launchCampaignViaApi();
+        if (!result.ok) {
+          toast('Запуск не выполнен', result.message || 'Статус кампании не изменён.');
+          return;
+        }
         closeAll();
         openCampaign('overview');
         setCampaignState('running',{actor:'operator',reason:'запуск подтверждён'});
@@ -3430,14 +3905,36 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     pendingConfirm=null;
     if (fn) fn();
   });
-  q('#runTestCall')?.addEventListener('click',()=>{
-    const number=q('#runTestCall')?.closest('.panel-body')?.querySelector('input')?.value || '';
+  q('#runTestCall')?.addEventListener('click',async()=>{
+    const context=getCampaignContext();
     const result=q('#testCallResult');
+    const debtorId=q('#runTestCall')?.dataset.testDebtorId || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     if (result) result.textContent='Идёт проверка соединения…';
-    setTimeout(()=>{
-      if (result) result.textContent=`Проверка соединения завершена. Номер: ${number || 'не указан'}. Итог: соединение установлено. Кампания не запущена.`;
+    if (!context?.tenantId || !context?.campaignId) {
+      if (result) result.textContent='Не удалось проверить соединение: не найден контекст кампании. Кампания не запущена.';
+      toast('Проверка не выполнена','Кампания не переведена в работу.');
+      return;
+    }
+    try {
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/${debtorId}/calls/sandbox`,{
+        method:'POST',
+        headers:{Accept:'application/json','Content-Type':'application/json','X-User-Role':currentAuth.role},
+        body: JSON.stringify({})
+      });
+      const body=await response.json().catch(()=>({}));
+      if (!response.ok) {
+        const message=body?.message || body?.error || `HTTP ${response.status}`;
+        if (result) result.textContent=`Проверка соединения не прошла: ${message}. Кампания не запущена.`;
+        toast('Проверка не выполнена','Кампания не переведена в работу.');
+        return;
+      }
+      if (result) result.textContent=`Проверка соединения завершена. Итог из API: ${body.status || 'успешно'}. Кампания не запущена.`;
       toast('Проверка соединения','Кампания не переведена в работу.');
-    },900);
+    } catch (error) {
+      const message=error instanceof Error ? error.message : 'неизвестная ошибка';
+      if (result) result.textContent=`Проверка соединения не прошла: ${message}. Кампания не запущена.`;
+      toast('Проверка не выполнена','Кампания не переведена в работу.');
+    }
   });
   q('#launchCampaign')?.addEventListener('click',async()=>{
     const launchButton=q('#launchCampaign');
@@ -3488,7 +3985,12 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       'Остановить кампанию?',
       `Остановить «${name}»? Для продолжения нужен новый запуск.`,
       'Остановить кампанию',
-      ()=>{
+      async ()=>{
+        const result=await patchCampaignStatus('completed');
+        if (!result.ok) {
+          toast('Остановка не выполнена', result.message || 'Статус кампании не изменён.');
+          return;
+        }
         setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
         toast('Кампания завершена','Новые звонки не начнутся. Для продолжения нужен новый запуск.');
       }
@@ -3497,6 +3999,17 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   q('#saveCampaignSettings')?.addEventListener('click',()=>{toast('Сохранено','Параметры кампании обновлены.');});
   q('.search input')?.addEventListener('keydown',e=>{if(e.key==='Enter'){showScreen('home');toast('Поиск выполнен',e.target.value?`Показаны кампании по запросу «${e.target.value}».`:'Показаны все кампании.')}});
   document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const text=b.textContent.trim();if(text==='Помощь')toast('Помощь по запуску','Последовательно настройте базу, телефонию, сценарий и выполните тестовый звонок.');if(text==='Настроить обмен')toast('Настройка обмена','Укажите адрес системы, способ авторизации, расписание и сопоставление полей.');if(text==='Подключить'&&!b.hasAttribute('data-open-phone'))toast('Источник будет подключён','Следующий шаг — реквизиты защищённой папки и тестовая загрузка.');if(text==='Продолжить редактирование'||text==='+ Новый сценарий')openCampaign('scenario');if(text==='Настроить'&&b.closest('.provider'))openLayer(q('#phoneModal'));if(text.includes('Выгрузить'))toast('Файл подготовлен','Демонстрационная выгрузка сформирована без персональных данных.');if(text==='Продолжить настройку')openWizard(1)});
+  q('#logoutButton')?.addEventListener('click', async ()=>{
+    try {
+      await apiFetch(`${reportApiBaseUrl}/auth/logout`, { method:'POST' });
+    } catch {
+      // redirect anyway
+    }
+    window.location.href='/login.html';
+  });
+  bootstrapCabinetAuth().then((ok)=>{
+    if (ok) loadHomeCampaignsFromApi();
+  });
   qa('[data-close]').forEach(b=>b.addEventListener('click',closeAll));q('#overlay').addEventListener('click',closeAll);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
 })();
 </script>

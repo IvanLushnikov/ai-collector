@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { env } from '../config/env.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type TenantBillingDependencies = {
   tenant: {
@@ -34,7 +35,7 @@ const tenantBillingSettingsUpdateSchema = z.object({
 });
 
 export const registerTenantRoutes = (app: FastifyInstance, deps: TenantBillingDependencies): void => {
-  app.get('/tenants/:tenantId/billing/settings', async (request, reply) => {
+  app.get('/tenants/:tenantId/billing/settings', { preValidation: authorizeZone('integrations', 'read') }, async (request, reply) => {
     const params = tenantSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -58,7 +59,7 @@ export const registerTenantRoutes = (app: FastifyInstance, deps: TenantBillingDe
 
   app.patch(
     '/tenants/:tenantId/billing/settings',
-    { preValidation: roleMiddleware(['owner', 'integration_admin']) },
+    { preValidation: authorizeZone('integrations', 'write') },
     async (request, reply) => {
       const params = tenantSchema.safeParse(request.params);
       if (!params.success) {
@@ -83,14 +84,8 @@ export const registerTenantRoutes = (app: FastifyInstance, deps: TenantBillingDe
         return reply.code(404).send({ error: 'TENANT_NOT_FOUND' });
       }
 
-      const actor = await deps.user.findFirst({
-        where: {
-          tenantId: params.data.tenantId,
-          isActive: true,
-          status: 'active'
-        }
-      });
-      if (!actor) {
+      const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+      if (!actorId) {
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
@@ -104,7 +99,7 @@ export const registerTenantRoutes = (app: FastifyInstance, deps: TenantBillingDe
       await deps.auditLog?.create({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'tenant.billing_settings_updated',
           entityType: 'tenant',
           entityId: params.data.tenantId,

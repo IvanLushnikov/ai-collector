@@ -11,4 +11,9 @@ describe('prototype import mapping', () => {
     expect(mapping).toContain('Статус согласия');
     expect(mapping).not.toContain('будут допущены после исключений');
   });
+
+  it('keeps separate copy for accepted into base vs admitted to calls', () => {
+    expect(mapping).toContain('Принято в базу');
+    expect(mapping).toContain('ещё не допуск к звонку');
+  });
 });

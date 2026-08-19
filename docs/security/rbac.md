@@ -1,87 +1,65 @@
-# RBAC (роль и права) для MVP Lab AI-коллектора
+# RBAC SaaS v1 для AI collector
 
-Документ описывает минимальные роли и права для MVP Lab (`P1. RBAC и audit log`) с сохранением tenant isolation.
+Документ фиксирует текущий backend-контракт ролей и зон доступа для SaaS v1. Источник истины для проверок находится в серверном authorizer; UI и docs повторяют этот контракт, но не заменяют его.
 
-Роли:
+## Канонические роли
 
-- `owner` — владелец tenant.
-- `collection_manager` — руководитель взыскания.
-- `operator` — оператор обзвона.
-- `qa_analyst` — аналитик качества.
-- `compliance_officer` — специалист compliance/юрист.
-- `integration_admin` — администратор интеграций.
+Tenant-контур:
 
-## Матрица прав (минимальный набор для MVP)
+- `tenant_owner`
+- `campaign_manager`
+- `tenant_viewer`
 
-| Роль | campaigns | debtors import | call start (sandbox) | scripts | telephony | provider credentials | reports | compliance | users/roles | audit log |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `owner` | create, update, pause/resume, close campaigns | import, re-import, update mapping | test call, run sandbox campaign waves | create/update/version scripts | connect, test, replace | create, rotate, disable, probe, read | read all tenant metrics | view decision logs and blocked reasons; open review items, approve/reject/escalate/requeue | read all, invite users, assign roles | read |
-| `collection_manager` | create, update, pause/resume, close own campaigns | import/update lists for managed campaigns | run sandbox calls during campaign setup/tests | create/update scripts for campaign | connect/test sandbox provider | read status only | read own and campaign reports | view compliance decisions, act on review queue items (approve/reject/escalate/requeue) | read users/roles | read |
-| `operator` | read campaigns assigned for shift | read only | run sandbox test calls | read | read connected profile | no access | read own/operator dashboard and logs of own attempts | read outcomes and refusal codes | no access | no access |
-| `qa_analyst` | read campaigns and settings | no write | no write | read scripts and scenarios | read | no access | read QA dashboards, call outcomes, outcome shares | read compliance history for sampled calls; add notes/evidence comments to review items; suggest resolution direction | no access | read |
-| `compliance_officer` | read campaigns and safety status | read | no direct call launch; validate safety workflows | read | read provider configs | no access | read audits and incident analytics | block/unblock calls by decision reason; annotate review items; execute manual review decisions (approve/reject/escalate/requeue) | no access | read |
-| `integration_admin` | read campaigns | read base metadata only | no call actions | read/update provider test artifacts | create/update provider credentials, callback and masking config | create, rotate, disable, probe, read | read usage/telephony impact metrics | read compliance errors | no user edits | read provider-level audit events |
+Platform-контур:
 
-## Endpoint-level доступ (MVP)
+- `platform_admin`
+- `support_engineer`
 
-Все эндпоинты ниже используют заголовок `X-User-Role` и возвращают:
+## Legacy alias mapping
 
-- `401 USER_ROLE_MISSING` при отсутствии `X-User-Role`;
-- `403 FORBIDDEN` при роли без доступа.
+Для совместимости в header-based dev/test режиме backend продолжает принимать старые значения `X-User-Role` и нормализует их:
 
-### Calls
+| Legacy role | Canonical role |
+|---|---|
+| `owner` | `tenant_owner` |
+| `collection_manager` | `campaign_manager` |
+| `operator` | `tenant_viewer` |
+| `qa_analyst` | `tenant_viewer` |
+| `compliance_officer` | `tenant_viewer` |
+| `integration_admin` | `tenant_owner` |
 
-- `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox`  
-  Доступ: `owner`, `collection_manager`, `operator`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/calls`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `PATCH /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa`  
-  Доступ: `owner`, `collection_manager`, `qa_analyst`, `compliance_officer`.
+Legacy aliases нужны только как переходный слой. Для новых интеграций и auth-context используйте канонические роли.
 
-### Campaigns
+## Зоны доступа
 
-- `GET /tenants/:tenantId/campaigns`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `PATCH /tenants/:tenantId/campaigns/:campaignId/status`  
-  Доступ: `owner`, `collection_manager`.
+| Role | campaigns | calls | reports | integrations | users | audit_logs |
+|---|---|---|---|---|---|---|
+| `tenant_owner` | write | write | read | write | write | read |
+| `campaign_manager` | write | write | read | read | none | read |
+| `tenant_viewer` | read | read | read | none | none | read |
+| `platform_admin` | none по tenant-данным | none | none | none | none | none |
+| `support_engineer` | none без grant | none без grant | none без grant | none | none | none без grant |
 
-### Отчётность и проверки
+## Специальные правила
 
-- `GET /tenants/:tenantId/campaigns/:campaignId/usage-events`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/usage-events/totals`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/report`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/readiness-summary`  
-  Доступ: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
+- `platform_admin` не получает автоматический доступ к tenant-данным.
+- `support_engineer` работает только через явный `SupportAccessGrant`, который ограничен tenant, сроком жизни и аудитом.
+- При аутентифицированной cookie-сессии tenant из сессии обязан совпадать с `:tenantId`/body/header запроса. Иначе backend возвращает `TENANT_SCOPE_MISMATCH`.
+- Роль из активной сессии не считается окончательной: при наличии `TenantMembership` backend использует актуальную membership-роль, а не устаревший snapshot в `Session`.
 
-### Логи аудита
+## Маршруты v1
 
-- `GET /tenants/:tenantId/audit-logs`  
-  Доступ: `owner`, `collection_manager`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-- `GET /tenants/:tenantId/campaigns/:campaignId/audit-logs`  
-  Доступ: `owner`, `collection_manager`, `qa_analyst`, `compliance_officer`, `integration_admin`.
+- Campaign routes, calls, reports, usage, compliance, telephony, provider credentials и billing settings проверяют доступ через единый zone-based authorizer.
+- Review items и `safe-resume` сохраняют более узкие route-level правила поверх общей модели, чтобы не расширить права legacy-ролей во время перехода.
+- `GET /tenants/:tenantId/users` и `PATCH /tenants/:tenantId/users/:userId/role` доступны только `tenant_owner`.
+- `POST /support/access-grants` и `POST /support/access-grants/:grantId/revoke` доступны только `platform_admin`.
 
-### Provider credentials
+## Audit expectations
 
-- `GET /tenants/:tenantId/provider-credentials`  
-  Доступ: `owner`, `integration_admin`, `collection_manager`.
-- `POST /tenants/:tenantId/provider-credentials`  
-  Доступ: `owner`, `integration_admin`.
-- `PATCH /tenants/:tenantId/provider-credentials/:credentialId`  
-  Доступ: `owner`, `integration_admin`.
-- `POST /tenants/:tenantId/provider-credentials/:credentialId/disable`  
-  Доступ: `owner`, `integration_admin`.
-- `POST /tenants/:tenantId/provider-credentials/:credentialId/probe`  
-  Доступ: `owner`, `integration_admin`.
+Критичные действия должны писать audit event. В текущей реализации это покрывает как минимум:
 
-### Примечания по MVP
-
-- Все write-действия должны дополнительно проверять `tenantId` из middleware (в дальнейшем T-042) и запрещать cross-tenant доступ.
-- Любые действия с созданием/изменением кампаний, вызовом sandbox call и изменениями интеграций должны попадать в аудит-события, когда будет внедрён `audit log` (согласно roadmap P1).
-- Роль `owner` является операционной и иерархической ролью; остальные роли не перезаписывают её разрешения, а реализуются как минимальные разрешения для их зоны ответственности.
+- изменение статуса кампании и `safe-resume`
+- изменение telephony connection
+- создание/обновление/ротацию/probe/disable credentials
+- смену роли пользователя tenant
+- выдачу и отзыв support-доступа

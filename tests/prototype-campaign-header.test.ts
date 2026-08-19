@@ -15,4 +15,12 @@ describe('prototype campaign header', () => {
     expect(html).toMatch(/resumeButton\.style\.display = nextStatus === 'manual_paused' \? 'inline-flex' : 'none'/);
     expect(html).not.toMatch(/openReasonButton\.style\.display = nextStatus === 'auto_paused'/);
   });
+
+  it('fills overview KPI from report API and keeps analytics campaign filter', () => {
+    expect(html).toContain('syncCampaignOverviewMetricsFromReport');
+    expect(html).toContain("id === 'overview'");
+    expect(html).toContain('loadCampaignReport');
+    expect(html).toContain('data-analytics-campaign');
+    expect(html).toContain('н/д');
+  });
 });

@@ -27,7 +27,7 @@ type CampaignStore = {
   };
 };
 
-const makeCampaignStore = (overrides: Partial<CampaignStore> = {}): CampaignStore => ({
+const makeCampaignStore = (overrides: Partial<CampaignStore> = {}): any => ({
   tenant: {
     findUnique: vi.fn(async (query: { where: { id: string } }) => {
       if (query.where.id === '00000000-0000-0000-0000-000000000000') {
@@ -57,23 +57,23 @@ const makeCampaignStore = (overrides: Partial<CampaignStore> = {}): CampaignStor
 });
 
 const injectWithRole = (
-  app: Awaited<ReturnType<typeof createApp>>,
-  request: Parameters<typeof app.inject>[0],
+  app: any,
+  request: any,
   role: string
 ) => {
   return app.inject({
     ...request,
     headers: {
       'x-user-role': role,
-      ...(request.headers ?? {})
+      ...((request?.headers as Record<string, unknown> | undefined) ?? {})
     }
   });
 };
 
-const injectWithOwnerRole = (app: Awaited<ReturnType<typeof createApp>>, request: Parameters<typeof app.inject>[0]) =>
+const injectWithOwnerRole = (app: any, request: any) =>
   injectWithRole(app, request, 'owner');
 
-const injectWithOperatorRole = (app: Awaited<ReturnType<typeof createApp>>, request: Parameters<typeof app.inject>[0]) =>
+const injectWithOperatorRole = (app: any, request: any) =>
   injectWithRole(app, request, 'operator');
 
 describe('GET /tenants/:tenantId/campaigns/:campaignId/audit-logs', () => {

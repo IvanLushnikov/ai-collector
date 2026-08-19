@@ -8,9 +8,10 @@
 - Важно: sandbox-вызов перед стартом всегда проходит через compliance engine.
 - По каждому звонку фиксируются `CallAttempt`, `CallResult`, `ComplianceDecision` (если включён compliance-log), `UsageEvent` (для sandbox-старта).
 - `identityVerified` на попытке по умолчанию `false`. Sandbox не ставит true, пока нет state machine.
-- Роли доступа (через `X-User-Role`):
-  - sandbox start: `owner`, `collection_manager`, `operator`.
-  - список/карточка звонков: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
+- Роли доступа:
+  - канонические роли SaaS v1: `tenant_owner`, `campaign_manager`, `tenant_viewer`.
+  - legacy aliases в header-based dev/test режиме: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
+  - sandbox start требует write-доступ к зоне `calls`; список/карточка звонков требуют read-доступ к зоне `calls`.
 
 ## POST: Запустить sandbox-звонок
 
@@ -69,7 +70,7 @@
   - `INVALID_DEBT_AMOUNT`
 - `401` — `USER_ROLE_MISSING`
 - `403`:
-  - `FORBIDDEN` для роли без доступа (для `sandbox start`: разрешены только `owner`, `collection_manager`, `operator`)
+  - `FORBIDDEN` для роли без доступа (для `sandbox start`: фактически `tenant_owner` / `campaign_manager`; legacy aliases нормализуются)
   - `COMPLIANCE_BLOCK` (`allowed: false`, список `reasons`, список `rules`)
 - `409`:
   - `CAMPAIGN_NOT_READY` (readiness `blocked` или `stale`; для sandbox-канала production/probe/legalBasis не требуются)
@@ -83,15 +84,15 @@
   - `CAMPAIGN_NOT_FOUND`
   - `DEBTOR_RECORD_NOT_FOUND`
 
-Для роли доступа к `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox` допустимы:
+Для доступа к `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox` допустимы:
 
-- `owner`
-- `collection_manager`
-- `operator`
+- `tenant_owner`
+- `campaign_manager`
+- `tenant_viewer`
 
 ## Sandbox vs live
 
-| | Sandbox `POST .../calls/sandbox` | Live `POST .../calls/live` (ещё не реализован) |
+| | Sandbox `POST .../calls/sandbox` | Live `POST .../calls/live` (skeleton, T-239) |
 |---|---|---|
 | Соединение | только `TelephonyConnection.mode=sandbox` | только `mode=production` |
 | Провайдер | `sandbox` через `VoiceProviderResolver`; неизвестный → `UNKNOWN_VOICE_PROVIDER` | live-адаптер (Exolve/Mango), без fallback на sandbox |
@@ -101,20 +102,20 @@
 | Feature-flag | не нужен | `LIVE_CALLS_ENABLED=true` (T-148); иначе старт запрещён |
 | Вендорский робот | не используется | **не используется**: диалог — наш state machine / LLM, не Exolve Robots / Mango NLU |
 
-## POST: Запустить live-звонок (контракт, без кода маршрута)
+## POST: Запустить live-звонок (skeleton)
 
 `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live`
 
-Маршрут в этой версии **не реализуется**. Ниже — fail-closed контракт для следующих задач.
+Маршрут реализован как fail-closed skeleton: при `LIVE_CALLS_ENABLED=false` ответ `403 LIVE_CALLS_DISABLED`. При включённом флаге и sandbox-соединении создаётся `CallAttempt` по тем же правилам, что sandbox POST (без HTTP Exolve).
 
 ### Назначение
 
 Боевой исходящий вызов через `VoiceProviderAdapter` выбранного production-соединения. Вендорский голосовой робот не является мозгом продукта (ADR 0003).
 
-### Права доступа (планируемые)
+### Права доступа
 
-- `owner`
-- `collection_manager`
+- `tenant_owner`
+- `campaign_manager`
 
 Оператор не стартует live из этого API в v1.
 

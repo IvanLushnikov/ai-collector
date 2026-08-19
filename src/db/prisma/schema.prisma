@@ -105,6 +105,13 @@ enum CallResultQaStatus {
   flagged
 }
 
+enum PaymentOutcome {
+  none
+  promised
+  received
+  unmatched
+}
+
 enum UsageEventType {
   call_started
   call_completed
@@ -169,6 +176,9 @@ model Tenant {
 
   users     User[]
   roles     Role[]
+  sessions  Session[]
+  tenantMemberships TenantMembership[]
+  supportAccessGrants SupportAccessGrant[]
   campaigns Campaign[]
   debtors   DebtorRecord[]
   scripts   ScriptVersion[]
@@ -207,6 +217,7 @@ model User {
   role      Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
   email     String
   name      String
+  passwordHash String?
   status    UserStatus @default(active)
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
@@ -215,8 +226,70 @@ model User {
   campaigns Campaign[]      @relation("CampaignCreator")
   scripts   ScriptVersion[] @relation("ScriptCreator")
   auditLogs AuditLog[]
+  sessions  Session[]
+  tenantMemberships TenantMembership[]
+  platformMemberships PlatformMembership[]
+  supportAccessGrants SupportAccessGrant[]
 
   @@unique([tenantId, email])
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roleName   String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+model TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
+model PlatformMembership {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleName])
+}
+
+model SupportAccessGrant {
+  id            String   @id @default(uuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedByUserId String
+  reason        String
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, userId, expiresAt])
 }
 
 model Campaign {
@@ -376,6 +449,9 @@ model CallResult {
   reason        String?
   transcriptUrl  String?
   recordingUrl   String?
+  paymentOutcome PaymentOutcome @default(none)
+  paymentReceivedAt DateTime?
+  paymentAmount Decimal?
   createdAt     DateTime          @default(now())
 }
 

@@ -8,7 +8,7 @@ describe('createCampaignReport', () => {
   const tenantId = '11111111-1111-1111-1111-111111111111';
   const campaignId = '22222222-2222-2222-2222-222222222222';
 
-  const makeDeps = () => ({
+  const makeDeps = (): any => ({
     debtorRecord: {
       count: vi.fn(async ({ where }: { where: { tenantId: string; campaignId: string } }) => {
         expect(where.tenantId).toBe(tenantId);
@@ -29,10 +29,13 @@ describe('createCampaignReport', () => {
       })
     },
     callResult: {
-      count: vi.fn(async ({ where }: { where: { tenantId: string; callAttempt: { campaignId: string }; outcome: string } }) => {
+      count: vi.fn(async ({ where }: { where: { tenantId: string; callAttempt: { campaignId: string }; outcome: string; paymentOutcome?: string } }) => {
         expect(where.tenantId).toBe(tenantId);
         expect(where.callAttempt.campaignId).toBe(campaignId);
         expect(where.outcome).toBe('ptp_created');
+        if (where.paymentOutcome === 'received') {
+          return 1;
+        }
         return 4;
       })
     },
@@ -99,6 +102,7 @@ describe('createCampaignReport', () => {
       completedCalls: 4,
       blockedCalls: 2,
       ptpCount: 4,
+      paidAfterPtpCount: 1,
       connectedMinutes: 6,
       costPerCall: expectedCostPerCall,
       costPerPtp: expectedCostPerPtp
@@ -120,7 +124,6 @@ describe('createCampaignReport', () => {
 
   it('falls back to call_attempt.completed when usage events store does not provide usage metrics', async () => {
     const deps = makeDeps();
-    // @ts-expect-error intentionally emulate missing optional usageEvent counter
     deps.usageEvent = undefined;
 
     const report = await createCampaignReport(deps, {

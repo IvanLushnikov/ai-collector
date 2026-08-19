@@ -30,6 +30,19 @@ describe('sandbox call jobs', () => {
       campaignId: 'c1',
       debtorRecordId: 'd1',
       campaignStatus: 'ready'
-    })).resolves.toEqual({ ok: true, job: 'calls.sandbox_start' });
+    })).resolves.toEqual({
+      ok: true,
+      job: 'calls.sandbox_start',
+      orchestratorState: 'end',
+      usageEventsCreated: 0
+    });
+  });
+
+  it('runs one orchestrator turn without duplicating usage events', async () => {
+    const { runSandboxOrchestratorStub } = await import('../../src/jobs/worker.js');
+    expect(runSandboxOrchestratorStub({ alreadyRecordedUsage: true })).toEqual({
+      state: 'end',
+      usageEventsCreated: 0
+    });
   });
 });

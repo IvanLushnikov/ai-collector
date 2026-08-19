@@ -99,15 +99,10 @@ AI Collector — это прототип продукта для compliance-firs
 - Дополнительно для `GET /tenants/:tenantId/campaigns/:campaignId/calls` доступны query-параметры фильтрации: `outcome` (`not_called`, `no_answer`, `callback_requested`, `wrong_number`, `ptp_created`, `handoff`, `dispute`, `blocked`, `error`) и `qaStatus` (`not_reviewed`, `approved`, `flagged`).
 - Для `GET /tenants/:tenantId/campaigns/:campaignId/usage-events` параметры пагинации также такие же: `limit` от `1` до `100` (по умолчанию `20`), `offset` — от `0` до `1000`.
 - Для `GET /tenants/:tenantId/campaigns/:campaignId/usage-events/totals` пагинации нет: endpoint возвращает агрегированные метрики по `eventType/unit` в формате массива: `[ { eventType, unit, totalQuantity } ]`.
-- Для `GET /tenants/:tenantId/campaigns`, `GET /tenants/:tenantId/campaigns/:campaignId`, `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox`, `GET /tenants/:tenantId/campaigns/:campaignId/calls`, `PATCH /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa` и `PATCH /tenants/:tenantId/campaigns/:campaignId/status` обязательна `X-User-Role`.
-  - Для sandbox-start роли: `owner`, `collection_manager`, `operator`.
-  - Для чтения звонков: `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-  - Для QA-обновления статуса звонка: `owner`, `collection_manager`, `qa_analyst`, `compliance_officer`.
-  - Для смены статуса кампании: `owner`, `collection_manager`.
-  - Для tenant-audit и campaign-audit logs: `owner`, `collection_manager`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-  - Для чтения кампаний (список и карточка): `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
-  - Иначе: `USER_ROLE_MISSING`/`FORBIDDEN`.
-- Для `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/compliance/check` и `GET /tenants/:tenantId/campaigns/:campaignId/compliance-decisions` также требуется `X-User-Role` с ролями `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin` (иначе `USER_ROLE_MISSING`/`FORBIDDEN`).
+- Для RBAC SaaS v1 backend использует канонические роли `tenant_owner`, `campaign_manager`, `tenant_viewer`, `platform_admin`, `support_engineer`.
+- Header-based `X-User-Role` сохранён как dev/test fallback и нормализует legacy значения `owner`, `collection_manager`, `operator`, `qa_analyst`, `compliance_officer`, `integration_admin`.
+- Для большинства tenant-scoped endpoint-ов доступ проверяется через единый zone-based authorizer (`campaigns`, `calls`, `reports`, `integrations`, `users`, `audit_logs`).
+- `support_engineer` не получает tenant-доступ автоматически: нужен явный `SupportAccessGrant`.
 
 Эти документы содержат контрактные описания MVP endpoints для запуска, мониторинга и управления вызовами:
 

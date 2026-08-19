@@ -21,7 +21,8 @@ import {
   isTerminalCallStatus
 } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { resolveActorId } from '../server/authz/actor.js';
+import { authorizeZone } from '../server/authz/index.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import { maskSensitiveFields } from '../logging/mask.js';
 import {
@@ -30,7 +31,7 @@ import {
   type VoiceProviderResolver
 } from '../telephony/voice-provider/resolver.js';
 import { shouldEnqueueSandboxCall } from '../jobs/sandbox-enqueue.js';
-import { canRunSandboxStartJob } from '../jobs/worker.js';
+import { canRunSandboxStartJob, runSandboxOrchestratorStub } from '../jobs/worker.js';
 import { createSandboxStartJob } from '../jobs/queue.js';
 import { isLiveCallsEnabled } from '../config/env.js';
 import { assertSpeechCredentialsReady } from '../speech/credentials/assert-ready.js';
@@ -84,6 +85,7 @@ type CallDependencies = {
   frequencyLedger?: FrequencyLedgerRepository;
   suppressionLookup?: SuppressionLookup;
   sandboxCallsQueueEnabled?: boolean;
+  liveCallsEnabled?: boolean;
 };
 
 const tenantCampaignDebtorCallSchema = z.object({
@@ -299,7 +301,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
   app.post(
     '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/sandbox',
-    { preValidation: roleMiddleware(['owner', 'collection_manager', 'operator']) },
+    { preValidation: authorizeZone('calls', 'write') },
     async (request, reply) => {
     const params = tenantCampaignDebtorCallSchema.safeParse(request.params);
     if (!params.success) {
@@ -376,15 +378,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       return reply.code(404).send({ error: 'DEBTOR_RECORD_NOT_FOUND' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
@@ -410,7 +405,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     });
 
     if (decision.decision === 'block') {
-      await createAuditEvent(deps, actor, params.data.tenantId, {
+      await createAuditEvent(deps, { id: actorId }, params.data.tenantId, {
         action: 'call.sandbox_blocked',
         entityType: 'debtorRecord',
         entityId: debtorRecord.id,
@@ -567,7 +562,9 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       });
     }
 
-    await createAuditEvent(deps, actor, params.data.tenantId, {
+    const orchestrator = runSandboxOrchestratorStub({ alreadyRecordedUsage: true });
+
+    await createAuditEvent(deps, { id: actorId }, params.data.tenantId, {
       action: 'call.sandbox_started',
       entityType: 'callAttempt',
       entityId: callAttemptId,
@@ -577,7 +574,9 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         callAttemptId,
         providerCallId: providerCall.providerCallId,
         callStatus: providerCall.status,
-        decision: decision.decision
+        decision: decision.decision,
+        orchestratorState: orchestrator.state,
+        usageEventsCreated: orchestrator.usageEventsCreated
       }
     });
 
@@ -592,17 +591,34 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     });
   });
 
+  app.post(
+    '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live',
+    { preValidation: authorizeZone('calls', 'write') },
+    async (request, reply) => {
+      const liveEnabled = deps.liveCallsEnabled ?? isLiveCallsEnabled();
+      if (!liveEnabled) {
+        return reply.code(403).send({ error: 'LIVE_CALLS_DISABLED' });
+      }
+
+      const sandboxUrl = request.url.replace(/\/calls\/live\/?(\?.*)?$/, '/calls/sandbox$1');
+      const proxied = await app.inject({
+        method: 'POST',
+        url: sandboxUrl,
+        headers: request.headers,
+        payload: request.body ?? {}
+      });
+      const contentType = proxied.headers['content-type'];
+      if (typeof contentType === 'string') {
+        reply.header('content-type', contentType);
+      }
+      return reply.code(proxied.statusCode).send(proxied.json ? proxied.json() : proxied.body);
+    }
+  );
+
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/calls',
     {
-      preValidation: roleMiddleware([
-        'owner',
-        'collection_manager',
-        'operator',
-        'qa_analyst',
-        'compliance_officer',
-        'integration_admin'
-      ])
+      preValidation: authorizeZone('calls', 'read')
     },
     async (request, reply) => {
     const params = tenantCampaignCallsSchema.safeParse(request.params);
@@ -690,14 +706,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
   app.get(
     '/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId',
     {
-      preValidation: roleMiddleware([
-        'owner',
-        'collection_manager',
-        'operator',
-        'qa_analyst',
-        'compliance_officer',
-        'integration_admin'
-      ])
+      preValidation: authorizeZone('calls', 'read')
     },
     async (request, reply) => {
     const params = tenantCampaignCallSchema.safeParse(request.params);
