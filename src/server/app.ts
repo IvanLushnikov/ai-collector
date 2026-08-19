@@ -24,6 +24,7 @@ import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
 import { MangoVoiceProvider } from '../telephony/mango/index.js';
 import { createVoiceProviderResolver, type VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 import { createPrismaCredentialSecretStore } from '../secrets/credential-store.js';
+import { openApiV1 } from '../contracts/openapi-v1.js';
 import {
   createInMemoryFrequencyLedgerRepository,
   createPrismaFrequencyLedgerRepository,
@@ -328,6 +329,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     status: 'ok',
     message: 'AI Collector API is running'
   }));
+  app.get('/openapi/v1.json', async () => openApiV1);
 
   app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);

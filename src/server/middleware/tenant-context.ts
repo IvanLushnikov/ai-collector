@@ -47,7 +47,7 @@ export const tenantContextMiddleware = async (
   reply: FastifyReply
 ): Promise<void> => {
   const path = request.url.split('?')[0] ?? request.url;
-  if (path === '/' || path.startsWith('/healthz') || path.startsWith('/auth') || path.startsWith('/support')) {
+  if (path === '/' || path.startsWith('/healthz') || path.startsWith('/auth') || path.startsWith('/support') || path.startsWith('/openapi/')) {
     return;
   }
 
