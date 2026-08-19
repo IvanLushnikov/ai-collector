@@ -332,7 +332,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);
 
-  registerAuthRoutes(app as any, campaignStore as any);
+  registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
   registerCampaignRoutes(app as any, campaignStore as any);
   registerComplianceRoutes(app as any, { ...(campaignStore as any), frequencyLedger });
   registerCallRoutes(app as any, {

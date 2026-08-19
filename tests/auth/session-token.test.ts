@@ -28,6 +28,11 @@ describe('session token', () => {
     expect(cookie.toLowerCase()).toContain('path=/');
   });
 
+  it('adds Secure when requested by the production cookie policy', () => {
+    expect(buildSessionCookie('deadbeef', 3600, true)).toMatch(/; Secure$/);
+    expect(buildExpiredSessionCookie(true)).toMatch(/; Secure$/);
+  });
+
   it('builds an expired cookie for logout', () => {
     const cookie = buildExpiredSessionCookie();
     expect(cookie).toContain(`${SESSION_COOKIE_NAME}=`);

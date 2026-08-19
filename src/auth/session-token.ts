@@ -29,22 +29,24 @@ export const parseCookieHeader = (header: string | undefined, name: string): str
   return null;
 };
 
-export const buildSessionCookie = (raw: string, maxAgeSec: number = SESSION_TTL_SECONDS): string => {
+export const buildSessionCookie = (raw: string, maxAgeSec: number = SESSION_TTL_SECONDS, secure = false): string => {
   return [
     `${SESSION_COOKIE_NAME}=${raw}`,
     'Path=/',
     `Max-Age=${maxAgeSec}`,
     'HttpOnly',
-    'SameSite=Lax'
+    'SameSite=Lax',
+    ...(secure ? ['Secure'] : [])
   ].join('; ');
 };
 
-export const buildExpiredSessionCookie = (): string => {
+export const buildExpiredSessionCookie = (secure = false): string => {
   return [
     `${SESSION_COOKIE_NAME}=`,
     'Path=/',
     'Max-Age=0',
     'HttpOnly',
-    'SameSite=Lax'
+    'SameSite=Lax',
+    ...(secure ? ['Secure'] : [])
   ].join('; ');
 };
