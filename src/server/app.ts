@@ -379,6 +379,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   registerProviderCredentialRoutes(app as any, {
     ...(campaignStore as any),
     providerCredential: (campaignStore as any).providerCredential ?? (prisma as any).providerCredential,
+    credentialSecret: (campaignStore as any).credentialSecret,
     secretStore: (campaignStore as any).secretStore ?? createPrismaCredentialSecretStore(prisma as any),
     dek: (campaignStore as any).dek,
     speechProbe: (campaignStore as any).speechProbe,

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/server/app.js';
 import type { ProviderCredential } from '../src/domain/provider-credential/index.js';
 import { createInMemoryCredentialSecretStore } from '../src/secrets/credential-store.js';
@@ -377,6 +377,46 @@ describe('Provider Credentials API', () => {
     });
     expect(owner.statusCode).toBe(201);
 
+    await app.close();
+  });
+
+  it('creates the credential, encrypted secret and audit event in one transaction when supported', async () => {
+    const store = makeStore();
+    const transaction = vi.fn(async (callback: (transactionStore: unknown) => Promise<unknown>) => callback({
+      providerCredential: store.providerCredential,
+      credentialSecret: {
+        upsert: vi.fn(async ({ create }: { create: Record<string, unknown> }) => ({
+          id: randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...create
+        })),
+        findUnique: vi.fn(),
+        deleteMany: vi.fn()
+      },
+      auditLog: store.auditLog
+    }));
+    (store as any).$transaction = transaction;
+    const app = createApp({ campaignStore: store as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/tenants/${TENANT_ID}/provider-credentials`,
+      headers: headers(),
+      payload: {
+        capability: 'asr',
+        provider: 'yandex_speechkit',
+        mode: 'byok',
+        displayName: 'SpeechKit',
+        apiKey: API_KEY
+      }
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(store.credentials).toHaveLength(1);
+    expect(store.audit).toHaveLength(1);
     await app.close();
   });
 });

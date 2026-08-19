@@ -335,6 +335,21 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Production Prisma path не может подтвердить создание или изменение соединения без попытки audit append в той же транзакции.
 - API tests доказывают transactional path для POST и PATCH.
 
+### T-268: Атомарно сохранять BYOK credential, secret и audit при создании
+
+Статус: `done`
+
+Что сделано:
+
+- Production Prisma path создаёт `ProviderCredential`, encrypted `CredentialSecret` и `provider_credential.created` audit append в одной `$transaction`.
+- Инъекционный test path сохраняет свой secret store и не требует PostgreSQL.
+- API test доказывает transactional creation для BYOK credential.
+
+Критерии готовности:
+
+- Успешный API-ответ не может зафиксировать credential без соответствующего encrypted secret и audit append в Prisma transaction.
+- В ответе и аудите не появляется api key.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
