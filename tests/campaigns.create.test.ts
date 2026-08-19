@@ -189,6 +189,13 @@ describe('POST /campaigns', () => {
         })
       })
     });
+    expect(campaignStore.outboxEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        eventType: 'campaign.created',
+        aggregateId: 'campaign-1',
+        idempotencyKey: 'campaign.created:campaign-1'
+      })
+    });
 
     await app.close();
   });
