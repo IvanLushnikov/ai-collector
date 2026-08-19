@@ -10,21 +10,17 @@ const extractInlineScript = (source: string): string => {
 };
 
 describe('prototype navigation', () => {
-  it('exposes client cabinet menu without admin or duplicate campaign list', () => {
-    expect(html).toMatch(/data-screen="home">Главная/);
-    expect(html).toMatch(/data-screen="sources">Источники/);
-    expect(html).toMatch(/data-screen="telephony">Телефония/);
-    expect(html).toMatch(/data-screen="analytics">Аналитика/);
-    expect(html).toMatch(/data-screen="auditLog">Журнал действий/);
+  it('exposes client cabinet menu without admin, sources, or duplicate campaign list', () => {
+    expect(html).toMatch(/data-screen="home"[^>]*>[\s\S]*?Главная/);
+    expect(html).not.toMatch(/data-screen="sources"/);
+    expect(html).toMatch(/data-screen="telephony"[^>]*>[\s\S]*?Телефония/);
+    expect(html).toMatch(/data-screen="analytics"[^>]*>[\s\S]*?Аналитика/);
+    expect(html).toMatch(/data-screen="auditLog"[^>]*>[\s\S]*?Журнал действий/);
     expect(html).not.toMatch(/data-screen="campaigns"/);
-    expect(html).not.toMatch(/data-screen="speech"/);
-    expect(html).not.toMatch(/data-screen="scripts"/);
-    expect(html).not.toMatch(/data-screen="reviewQueue"/);
+    expect(html).not.toContain('id="sources"');
     expect(html).toContain('id="telephony"');
     expect(html).toContain('id="analytics"');
-    expect(html).not.toContain('id="speech"');
-    expect(html).not.toContain('id="scripts"');
-    expect(html).not.toContain('id="reviewQueue"');
+    expect(html).toContain('id="sidebarToggle"');
   });
 
   it('parses the inline cabinet script so sidebar screens can run', () => {

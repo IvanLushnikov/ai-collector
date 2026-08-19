@@ -1,5 +1,15 @@
 # AI Collector (MVP Lab)
 
+## Публичный сайт
+
+Публичный лендинг пилота публикуется через GitHub Pages из папки `public/`.
+
+Сайт: https://ivanlushnikov.github.io/ai-collector/
+
+Форма заявки не содержит секретов: браузер отправляет данные на Cloudflare Worker (`lead-relay`), который делает `repository_dispatch` в приватный репозиторий `IvanLushnikov/ai-collector-back`. Telegram-токены живут только в секретах приватного репозитория.
+
+Инструкция по настройке: [docs/operations/github-pages-setup.md](./docs/operations/github-pages-setup.md)
+
 AI Collector — это прототип продукта для compliance-first обзвона и работы с коллекшн-кампаниями B2B (MVP Lab).
 Цель текущей итерации — превратить статический прототип в управляемую backend-first платформу с моделью данных, API, compliance, импортом базы, журналом решений и отчетностью из реальных событий.
 

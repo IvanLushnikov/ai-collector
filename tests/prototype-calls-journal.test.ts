@@ -5,13 +5,18 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 const calls = html.match(/data-camp-view="calls"[\s\S]*?<\/section>/)?.[0] ?? html;
 
 describe('prototype calls journal', () => {
-  it('keeps attempt status separate from conversation result and evidence state', () => {
-    expect(calls).toContain('Время');
+  it('expands debtor rows inline with a single conversation result column', () => {
     expect(calls).toContain('Должник');
-    expect(calls).toContain('Статус попытки');
     expect(calls).toContain('Результат разговора');
-    expect(calls).toContain('Решение');
-    expect(calls).toContain('Запись / расшифровка');
+    expect(calls).not.toContain('Статус попытки');
+    expect(calls).not.toMatch(/<th[^>]*>Исход<\/th>/);
+    expect(html).toContain('debtor-link');
+    expect(html).toContain('data-call-action="toggle"');
+    expect(html).toContain('call-expand-row');
+    expect(html).toContain('value="handoff">Перевод оператору');
+    expect(html).not.toContain('value="transferred"');
+    expect(calls).not.toContain('>Карточка<');
+    expect(html).toContain('Звонков пока нет');
   });
 
   it('maps list compliance statuses and keeps not checked decisions neutral', () => {
@@ -23,5 +28,8 @@ describe('prototype calls journal', () => {
     expect(html).toContain("if (decision === 'allow') return 'state-ready';");
     expect(html).toContain("if (decision === 'block') return 'state-blocked';");
     expect(html).toContain("return 'state-empty';");
+    expect(html).toContain('formatDialStatusLabel(item.dialStatus || item.status)');
+    expect(html).toContain('formatConversationStatusLabel(item.conversationStatus)');
+    expect(html).toContain('formatEvidenceStatusLabel(item)');
   });
 });

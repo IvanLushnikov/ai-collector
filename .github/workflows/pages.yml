@@ -1,0 +1,50 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'public/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject relay URL
+        env:
+          LEAD_RELAY_URL: ${{ vars.LEAD_RELAY_URL }}
+        run: |
+          if [ -n "$LEAD_RELAY_URL" ]; then
+            # Insert <meta name="lead-relay-url"> into public/index.html before </head>
+            sed -i "s|</head>|  <meta name=\"lead-relay-url\" content=\"${LEAD_RELAY_URL}\">\n</head>|" public/index.html
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
