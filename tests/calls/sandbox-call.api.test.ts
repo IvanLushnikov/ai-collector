@@ -350,6 +350,39 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
     await app.close();
   });
 
+  it('does not create usage evidence when a concurrent idempotent request loses the database race', async () => {
+    const provider = makeProvider();
+    const usageCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: 'usage-1', ...data }));
+    const findFirst = vi.fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'existing-attempt', status: 'queued' });
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      callAttempt: {
+        create: vi.fn(async () => { throw { code: 'P2002' }; }),
+        findFirst,
+        findUnique: vi.fn(async () => null),
+        findMany: vi.fn(async () => [])
+      },
+      usageEvent: { create: usageCreate }
+    });
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      headers: { 'idempotency-key': 'concurrent-request-1' },
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ replayed: true });
+    expect(usageCreate).not.toHaveBeenCalled();
+    await app.close();
+  });
+
   const makeProvider = (options: { initialStatus?: VoiceCallStatus } = {}) => {
     const initialStatus = options.initialStatus ?? 'queued';
     const provider: VoiceProviderAdapter = {

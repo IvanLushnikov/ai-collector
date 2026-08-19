@@ -266,6 +266,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 - Sandbox/live start требуют валидный `Idempotency-Key` до выполнения provider side effect.
 - `CallAttempt` хранит ключ с tenant-scoped unique constraint; повтор возвращает уже созданную попытку без нового набора.
+- При race, проигравший unique constraint не создаёт usage/audit evidence второй раз.
 - Ключ передаётся voice adapter и queued job, опубликован в OpenAPI; кабинет создаёт ключ для тестового звонка.
 
 Критерии готовности:

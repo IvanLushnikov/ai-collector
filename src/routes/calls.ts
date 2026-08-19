@@ -530,13 +530,6 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       idempotencyKey
     });
 
-    await createUsageEvent(deps.usageEvent, {
-      tenantId: params.data.tenantId,
-      campaignId: params.data.campaignId,
-      eventType: 'call_started',
-      sourceId: `sandbox-call:${providerCall.providerCallId}:started`
-    });
-
     let created: unknown;
     try {
       created = await deps.callAttempt.create({
@@ -569,6 +562,12 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
     }
 
     const callAttemptId = (created as { id: string }).id;
+    await createUsageEvent(deps.usageEvent, {
+      tenantId: params.data.tenantId,
+      campaignId: params.data.campaignId,
+      eventType: 'call_started',
+      sourceId: `sandbox-call:${providerCall.providerCallId}:started`
+    });
     const telephonyMode = telephonyConnection?.mode ?? 'sandbox';
 
     if (
