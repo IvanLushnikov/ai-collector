@@ -2,365 +2,1005 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AI-коллектор · Product decision dashboard</title>
-  <meta name="description" content="Compliance-first голосовой AI-агент раннего взыскания: продуктовая гипотеза, регулирование, архитектура, рынок и unit-экономика.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ИИ-коллектор — управляемый пилот телефонного процесса</title>
+  <meta name="description" content="ИИ-коллектор помогает запускать управляемый телефонный процесс с проверкой ограничений, передачей специалисту и журналом действий.">
   <style>
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#eef2f6;color:#152234;font:13px/1.45 Inter,Arial,sans-serif}button,input,select{font:inherit}a{color:#1255a3;text-decoration:none}a:hover{text-decoration:underline}
-    :root{--ink:#152234;--muted:#66768a;--line:#ccd5df;--panel:#fff;--nav:#122033;--nav2:#1b2b40;--blue:#1769aa;--cyan:#1786a5;--green:#177c55;--amber:#a45b05;--red:#b23335;--pale:#f5f8fb;--shadow:0 1px 2px rgba(24,41,61,.08)}
-    .app{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}.side{position:sticky;top:0;height:100vh;overflow:auto;background:var(--nav);color:#dbe6f2;border-right:1px solid #0d1826;padding:18px 12px}.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;border-bottom:1px solid #2c3d51}.brand-mark{width:32px;height:32px;display:grid;place-items:center;background:#e6eef7;color:#102033;font-weight:800}.brand b{display:block;font-size:14px}.brand small{color:#8fa3ba}.side-label{margin:20px 8px 7px;color:#7f94ac;text-transform:uppercase;font-size:10px;font-weight:700;letter-spacing:.09em}.nav{display:grid;gap:3px}.nav button{border:0;text-align:left;color:#b9c8d8;background:transparent;padding:9px 10px;cursor:pointer;border-left:3px solid transparent}.nav button:hover{background:var(--nav2);color:#fff}.nav button.active{background:#213650;color:#fff;border-left-color:#55b6db}.nav-num{display:inline-block;width:23px;color:#7790aa;font:11px ui-monospace,monospace}.side-foot{margin-top:24px;padding:12px 8px;border-top:1px solid #2c3d51;color:#8ea1b7;font-size:11px}.side-foot b{color:#d9e5f0}
-    .workspace{min-width:0}.top{height:58px;position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;box-shadow:var(--shadow)}.top-title{font-weight:700}.top-sub{color:var(--muted);font-size:11px}.top-right{display:flex;align-items:center;gap:8px}.status{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--pale);padding:5px 8px;font-size:11px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;background:var(--amber)}.status.draft .dot{background:var(--amber)}.status.fact .dot{background:var(--green)}
-    main{padding:22px 24px 48px;max-width:1560px;margin:0 auto}.screen{display:none}.screen.active{display:block}.page-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 16px}.page-head h1{font-size:19px;margin:0 0 3px}.page-head p{margin:0;color:var(--muted)}.asof{color:var(--muted);font:11px ui-monospace,monospace}
-    .grid{display:grid;gap:12px}.grid>*{min-width:0}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}.panel{min-width:0;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);margin-bottom:12px}.panel-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f8fafc}.panel-title{font-weight:700}.panel-body{padding:14px}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.small{font-size:11px}.nowrap{white-space:nowrap}.right{text-align:right}.center{text-align:center}
-    .metric{background:#fff;border:1px solid var(--line);padding:13px 14px;box-shadow:var(--shadow)}.metric .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.metric .value{font:700 23px/1.25 ui-monospace,monospace;margin:5px 0 2px}.metric .detail{font-size:11px;color:var(--muted)}.metric.blocked{border-top:3px solid var(--red)}.metric.warn{border-top:3px solid var(--amber)}.metric.ok{border-top:3px solid var(--green)}.metric.model{border-top:3px solid var(--blue)}
-    .tag{display:inline-block;border:1px solid;padding:2px 6px;font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:800;white-space:nowrap}.fact{color:#126342;border-color:#99cbb7;background:#eff9f5}.conclusion{color:#155c8e;border-color:#9ac3de;background:#eef7fc}.hyp{color:#8a510b;border-color:#e4c18f;background:#fff8eb}.vendor{color:#68478e;border-color:#c9b9db;background:#f7f2fb}.unknown{color:#8b3032;border-color:#d9acad;background:#fff2f2}.critical{color:#fff;border-color:var(--red);background:var(--red)}
-    .callout{border-left:4px solid var(--blue);background:#eef6fc;padding:11px 13px;margin:10px 0}.callout.warn{border-left-color:var(--amber);background:#fff8ec}.callout.danger{border-left-color:var(--red);background:#fff1f1}.callout.good{border-left-color:var(--green);background:#eef8f3}.callout h3{font-size:13px;margin:0 0 5px}.callout p{margin:0}.decision{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center}.decision-score{background:#16304a;color:#fff;padding:18px 10px;text-align:center;overflow-wrap:anywhere}.decision-score strong{display:block;font:800 20px/1.15 ui-monospace,monospace}.decision-score span{font-size:10px;color:#bcd0e2}.decision h2{font-size:16px;margin:0 0 6px}.decision p{margin:0;color:#405169}
-    table{width:100%;border-collapse:collapse;font-size:11px}th,td{border-bottom:1px solid #dbe2e9;padding:8px 9px;vertical-align:top;text-align:left}th{position:sticky;top:58px;background:#edf2f6;color:#506176;text-transform:uppercase;font-size:9px;letter-spacing:.05em;z-index:1}tbody tr:hover{background:#f7fafc}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.table-wrap{overflow:auto;max-width:100%}.table-note{padding:9px 12px;background:#fbfcfd;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}
-    .progress{height:7px;background:#e2e8ef;overflow:hidden}.progress span{display:block;height:100%;background:var(--blue)}.funnel{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.fstep{border:1px solid var(--line);padding:10px;background:#fff;position:relative}.fstep:not(:last-child):after{content:"›";position:absolute;right:-7px;top:20px;color:#76889d;background:#eef2f6;z-index:1}.fstep b{display:block;font:700 18px ui-monospace,monospace}.fstep small{color:var(--muted)}
-    .check-list{display:grid;gap:7px}.check{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:start;padding:9px;border:1px solid var(--line);background:#fff}.check i{width:15px;height:15px;border:1px solid #7a8da3;display:grid;place-items:center;font-style:normal;font-size:10px}.check.ok i{background:var(--green);border-color:var(--green);color:white}.check.stop i{background:var(--red);border-color:var(--red);color:white}.check b{display:block;font-size:11px}.check small{color:var(--muted)}
-    .cjm{display:grid;grid-template-columns:120px repeat(6,minmax(130px,1fr));gap:4px;min-width:920px}.cjm>div{border:1px solid var(--line);background:#fff;padding:9px}.cjm .head{background:#e9eff5;font-weight:700}.cjm .lane{background:#172b42;color:#fff;font-weight:700}.cjm small{display:block;color:var(--muted);margin-top:4px}
-    .transcript{display:grid;gap:8px}.line{display:grid;grid-template-columns:90px 1fr;gap:10px}.speaker{font:700 10px ui-monospace,monospace;text-transform:uppercase;color:var(--muted)}.bubble{padding:9px 11px;border:1px solid var(--line);background:#f8fafc}.line.debtor .bubble{border-left:3px solid var(--amber)}.line.agent .bubble{border-left:3px solid var(--blue)}.extract{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.extract div{border:1px solid var(--line);padding:8px;background:#f8fafc}.extract small{display:block;color:var(--muted)}
-    .arch{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:relative}.arch-box{border:1px solid #aebdca;background:#fff;padding:11px;min-height:92px}.arch-box b{display:block;margin-bottom:4px}.arch-box small{color:var(--muted)}.arch-box.core{border-top:3px solid var(--blue)}.arch-box.control{border-top:3px solid var(--red)}.arch-box.data{border-top:3px solid var(--green)}.arch-flow{grid-column:1/-1;background:#172b42;color:#dbe8f4;padding:10px;text-align:center;font:11px ui-monospace,monospace}.arch-note{border:1px dashed #95a7ba;padding:9px;background:#f7fafc}
-    .option{border:1px solid var(--line);background:#fff}.option h3{font-size:13px;margin:0;padding:10px 12px;border-bottom:1px solid var(--line);background:#f5f8fb}.option dl{display:grid;grid-template-columns:95px 1fr;margin:0}.option dt,.option dd{margin:0;padding:7px 9px;border-bottom:1px solid #e3e8ed}.option dt{color:var(--muted);font-size:10px}.option dd{font-size:11px}
-    .model-toggle{display:flex;flex-wrap:wrap;gap:5px}.model-toggle button,.seg-toggle button{border:1px solid #aab8c6;background:#fff;color:#33465b;padding:7px 10px;cursor:pointer}.model-toggle button.active,.seg-toggle button.active{background:#1c4f79;border-color:#1c4f79;color:#fff}.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.field{border:1px solid var(--line);background:#f8fafc;padding:8px}.field label{display:flex;justify-content:space-between;gap:6px;color:#56677c;font-size:10px;margin-bottom:5px}.field input,.field select{width:100%;border:1px solid #aebbc8;background:#fff;padding:6px;color:var(--ink)}.field input[type=range]{padding:0;border:0}.field output{font-family:ui-monospace,monospace;color:var(--ink)}.control-group{grid-column:1/-1;font-size:10px;text-transform:uppercase;color:#607287;font-weight:800;letter-spacing:.05em;margin-top:5px;border-bottom:1px solid var(--line);padding-bottom:4px}.formula{background:#15283d;color:#dce9f5;padding:11px 12px;font:11px/1.7 ui-monospace,monospace;overflow:auto}.formula b{color:#7dd0ef}.econ-hero{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.econ-hero .metric{padding:10px}.econ-hero .value{font-size:17px}.negative{color:var(--red)!important}.positive{color:var(--green)!important}
-    .risk{border:1px solid var(--line);background:#fff;padding:12px;border-left:4px solid var(--red)}.risk h3{font-size:12px;margin:0 0 5px}.risk p{font-size:11px;margin:0;color:#526377}.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.phase{border:1px solid var(--line);background:#fff}.phase .phase-head{padding:10px;background:#172b42;color:white}.phase .phase-head small{display:block;color:#a9bfd3}.phase ul{margin:0;padding:10px 10px 10px 26px;font-size:11px}.phase li{margin-bottom:5px}.source-list{counter-reset:src;display:grid;gap:5px}.source{display:grid;grid-template-columns:34px 1fr 100px;gap:8px;border-bottom:1px solid var(--line);padding:7px 0}.source:before{counter-increment:src;content:counter(src,decimal-leading-zero);color:#8092a5;font:11px ui-monospace,monospace}.source time{text-align:right;color:var(--muted);font:10px ui-monospace,monospace}
-    @media(max-width:1150px){.g4,.g5{grid-template-columns:repeat(2,1fr)}.arch{grid-template-columns:repeat(2,1fr)}.econ-hero{grid-template-columns:repeat(3,1fr)}.controls{grid-template-columns:repeat(3,1fr)}.roadmap{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:780px){.app{display:block}.side{position:static;height:auto}.nav{grid-template-columns:repeat(2,1fr)}.side-label,.side-foot{display:none}.top{position:static;padding:0 12px}.top-right .status:not(:first-child){display:none}main{padding:14px}.g2,.g3,.g4,.g5,.arch,.roadmap{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,1fr)}.econ-hero{grid-template-columns:repeat(2,1fr)}.funnel{grid-template-columns:1fr}.fstep:after{display:none}.decision{grid-template-columns:1fr}.extract{grid-template-columns:1fr}.source{grid-template-columns:28px 1fr}.source time{display:none}.page-head{align-items:start;flex-direction:column}.top-sub{display:none}}
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-muted: #eef3f9;
+      --ink: #142033;
+      --muted: #5f6e82;
+      --line: #d7e0ea;
+      --accent: #195fc7;
+      --accent-strong: #144b9c;
+      --accent-soft: #e9f1ff;
+      --success-soft: #edf7f1;
+      --shadow: 0 18px 40px rgba(20, 32, 51, 0.08);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --container: 1120px;
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 24px;
+      --space-5: 32px;
+      --space-6: 48px;
+      --space-7: 72px;
+      --sticky-height: 88px;
+      --font-body: Inter, Arial, sans-serif;
+      --font-title: Inter, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font: 16px/1.6 var(--font-body);
+      color: var(--ink);
+      background: linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
+      padding-bottom: calc(var(--sticky-height) + 24px);
+    }
+    body.modal-open { overflow: hidden; }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .container {
+      width: min(calc(100% - 32px), var(--container));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      background: rgba(244, 247, 251, 0.92);
+      border-bottom: 1px solid rgba(215, 224, 234, 0.9);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 78px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand-copy span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .header-nav a {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 700;
+      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .btn:focus-visible,
+    .header-nav a:focus-visible,
+    summary:focus-visible,
+    .modal-close:focus-visible,
+    input:focus-visible {
+      outline: 3px solid rgba(25, 95, 199, 0.22);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(25, 95, 199, 0.22);
+    }
+
+    .btn-primary:hover,
+    .btn-primary:focus-visible {
+      background: var(--accent-strong);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .hero {
+      padding: 56px 0 28px;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: clamp(28px, 4vw, 56px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--font-title);
+      font-size: clamp(38px, 6vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 18px 0 0;
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 660px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .hero-facts,
+    .proof-list,
+    .benefits-grid,
+    .roles-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 32px;
+    }
+
+    .fact-card,
+    .side-panel,
+    .step-card,
+    .trust-card,
+    .benefit-card,
+    .role-card,
+    .cta-panel,
+    details {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+    }
+
+    .fact-card,
+    .step-card,
+    .trust-card,
+    .benefit-card,
+    .role-card {
+      padding: 18px;
+    }
+
+    .fact-card strong,
+    .side-panel strong,
+    .step-card strong,
+    .trust-card strong,
+    .benefit-card strong,
+    .role-card strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .fact-card span,
+    .side-panel p,
+    .step-card p,
+    .trust-card p,
+    .benefit-card p,
+    .role-card p,
+    .section-lead,
+    .faq-intro {
+      color: var(--muted);
+    }
+
+    .side-panel {
+      padding: 22px;
+      background: linear-gradient(180deg, #fbfdff 0%, #f4f8fd 100%);
+    }
+
+    .side-panel ul {
+      padding-left: 18px;
+      margin: 18px 0 0;
+      color: var(--muted);
+    }
+
+    .side-panel li + li { margin-top: 8px; }
+
+    main section {
+      padding: 34px 0;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2,
+    .cta-panel h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .section-lead {
+      max-width: 760px;
+      margin: 10px 0 0;
+      font-size: 17px;
+    }
+
+    .section-tag {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      padding-bottom: 8px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .step-card {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .step-index {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .trust-layout,
+    .cta-repeat {
+      display: grid;
+      gap: 16px;
+    }
+
+    .trust-layout {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .cta-repeat {
+      margin-top: 24px;
+      justify-items: start;
+    }
+
+    .benefits-grid,
+    .roles-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .role-card small {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .faq-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    details {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: '+';
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--surface-muted);
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    details[open] summary::after { content: '−'; }
+
+    .faq-answer {
+      padding: 0 22px 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .cta-panel {
+      padding: clamp(28px, 4vw, 44px);
+      display: grid;
+      gap: 18px;
+      background: linear-gradient(180deg, #f9fbff 0%, #eef4fb 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .cta-panel p {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .sticky-cta {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      height: var(--sticky-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 16px 18px;
+      background: rgba(244, 247, 251, 0.94);
+      border-top: 1px solid rgba(215, 224, 234, 0.95);
+    }
+
+    .sticky-shell {
+      width: min(100%, 1120px);
+      background: rgba(20, 32, 51, 0.96);
+      color: #fff;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 10px 10px 18px;
+      box-shadow: 0 16px 34px rgba(20, 32, 51, 0.26);
+    }
+
+    .sticky-copy {
+      min-width: 0;
+    }
+
+    .sticky-copy strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .sticky-copy span {
+      display: block;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .sticky-shell .btn-primary {
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .site-footer {
+      padding: 8px 0 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(20, 32, 51, 0.58);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .modal-overlay[hidden] { display: none; }
+
+    .modal {
+      width: min(100%, 520px);
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 28px 60px rgba(20, 32, 51, 0.28);
+      padding: 28px;
+      position: relative;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .modal-subtitle {
+      margin: 12px 0 0;
+      color: var(--muted);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .modal-form {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .modal-form label {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .modal-form input {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0 14px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .modal-note {
+      color: var(--muted);
+      font-size: 13px;
+      margin: -2px 0 0;
+    }
+
+    .form-success {
+      background: var(--success-soft);
+      border: 1px solid #cfe6d8;
+      color: #1b5b37;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      .hero-card,
+      .trust-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-facts,
+      .steps-grid,
+      .benefits-grid,
+      .roles-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 760px) {
+      :root {
+        --sticky-height: 116px;
+      }
+
+      .header-inner {
+        align-items: start;
+        flex-direction: column;
+        padding: 14px 0;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 12px 16px;
+      }
+
+      .header-nav .btn {
+        width: 100%;
+      }
+
+      .hero {
+        padding-top: 28px;
+      }
+
+      .hero p,
+      .cta-panel p {
+        font-size: 16px;
+      }
+
+      .sticky-shell {
+        border-radius: 24px;
+        align-items: stretch;
+        flex-direction: column;
+        padding: 14px;
+      }
+
+      .sticky-shell .btn-primary {
+        width: 100%;
+      }
+
+      .modal {
+        padding: 22px;
+      }
+    }
   </style>
 </head>
 <body>
-<div class="app">
-  <aside class="side">
-    <div class="brand"><div class="brand-mark">AC</div><div><b>AI-коллектор</b><small>decision workspace</small></div></div>
-    <div class="side-label">Продукт</div>
-    <nav class="nav" aria-label="Разделы исследования">
-      <button class="active" data-screen="overview"><span class="nav-num">01</span>Overview</button>
-      <button data-screen="icp"><span class="nav-num">02</span>ICP и сегменты</button>
-      <button data-screen="cjm"><span class="nav-num">03</span>CJM</button>
-      <button data-screen="call"><span class="nav-num">04</span>Сценарий звонка</button>
-      <button data-screen="compliance"><span class="nav-num">05</span>Compliance</button>
-      <button data-screen="architecture"><span class="nav-num">06</span>Архитектура</button>
-      <button data-screen="competitors"><span class="nav-num">07</span>Конкуренты</button>
-      <button data-screen="economics"><span class="nav-num">08</span>Калькулятор</button>
-      <button data-screen="pilot"><span class="nav-num">09</span>Пилот / go-no-go</button>
-      <button data-screen="risks"><span class="nav-num">10</span>Риски / вопросы</button>
-    </nav>
-    <div class="side-foot"><b>Статус:</b> продуктовая гипотеза<br>Цены и нормы проверены 14.08.2026.<br>Не является юридическим заключением.</div>
-  </aside>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="ИИ-коллектор">
+        <span class="brand-mark">ИИ</span>
+        <span class="brand-copy">
+          <strong>ИИ-коллектор</strong>
+          <span>Маркетинговый прототип для ограниченного пилота</span>
+        </span>
+      </a>
+      <nav class="header-nav" aria-label="Навигация по лендингу">
+        <a href="#how-it-works">Как это работает</a>
+        <a href="#trust">Доверие</a>
+        <a href="#benefits">Преимущества</a>
+        <a href="#faq">FAQ</a>
+        <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+      </nav>
+    </div>
+  </header>
 
-  <div class="workspace">
-    <header class="top"><div><div class="top-title">Compliance-first soft collection</div><div class="top-sub">РФ · банки / МФО / ПКО · cloud / on-prem</div></div><div class="top-right"><span class="status draft"><span class="dot"></span>Decision draft</span><span class="status fact"><span class="dot"></span>Sources checked</span><span class="status">v1 · 14.08.2026</span></div></header>
-    <main>
-      <section class="screen active" id="overview">
-        <div class="page-head"><div><h1>Overview / инвестиционный тезис</h1><p>Первый экран — операционный срез пилота; все цифры ниже помечены как модель, а не реальные результаты.</p></div><span class="asof">DATA STATUS · ILLUSTRATIVE</span></div>
-        <div class="grid g5">
-          <div class="metric model"><div class="label">База кампании</div><div class="value">10 000</div><div class="detail">модель small pilot</div></div>
-          <div class="metric model"><div class="label">Допустимо к звонку</div><div class="value">8 740</div><div class="detail">после suppression / лимитов</div></div>
-          <div class="metric model"><div class="label">Успешные диалоги</div><div class="value">3 084</div><div class="detail">сценарное допущение</div></div>
-          <div class="metric warn"><div class="label">PTP</div><div class="value">1 172</div><div class="detail">гипотеза, подтвердить пилотом</div></div>
-          <div class="metric ok"><div class="label">Нарушения</div><div class="value">0</div><div class="detail">обязательный hard gate</div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Draft campaign · DPD 1–30 · контроль допуска</div><span class="tag hyp">модель</span></div><div class="panel-body">
-          <div class="funnel"><div class="fstep"><small>Загружено</small><b>10 000</b><small>100%</small></div><div class="fstep"><small>После compliance</small><b>8 740</b><small>87,4%</small></div><div class="fstep"><small>Ответили</small><b>4 284</b><small>49,0% eligible</small></div><div class="fstep"><small>Успешный диалог</small><b>3 084</b><small>72,0% answered</small></div><div class="fstep"><small>PTP</small><b>1 172</b><small>38,0% dialogs</small></div></div>
-        </div></div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Рекомендация</div></div><div class="panel-body"><div class="decision"><div class="decision-score"><strong>PILOT GO</strong><span>conditional · no scale yet</span></div><div><h2>Идти в discovery + controlled pilot, не в масштабный build.</h2><p>Ценность — не «робот дешевле оператора», а доказуемо безопасное исполнение policy: лимиты, time window, идентификация AI-агента, перевод на человека, suppression, полная доказательная цепочка и структурированный результат.</p></div></div><div class="callout good"><h3>Условия GO</h3><p>Юрист подтверждает допустимый call-flow и основание массовых вызовов; пилот проходит с нулём подтверждённых нарушений; качество на реальных обезличенных диалогах достигает согласованных порогов; contribution margin положительна в измеренном профиле трафика.</p></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Что исправлено относительно входного концепта</div></div><div class="panel-body"><div class="check-list"><div class="check ok"><i>✓</i><div><b>Робот обязан раскрыться</b><small>Ст. 7 ФЗ‑230 уже требует сообщать об автоматизированном интеллектуальном агенте.</small></div><span class="tag fact">факт</span></div><div class="check ok"><i>✓</i><div><b>Human handoff — обязательное требование</b><small>Должнику обеспечивается возможность продолжить взаимодействие с физическим лицом.</small></div><span class="tag fact">факт</span></div><div class="check stop"><i>!</i><div><b>«Все конкуренты без LLM» опровергнуто</b><small>Exolve, MANGO OFFICE, Fromtech, Skorozvon и Robovoice публично описывают AI/LLM-функции; глубина не доказана.</small></div><span class="tag conclusion">вывод</span></div><div class="check stop"><i>!</i><div><b>TAM / uplift / ROI не подтверждены</b><small>Исходные ₽15–22 млрд, −60%, ROI 314:1 и recovery claims остаются гипотезами.</small></div><span class="tag unknown">не доказано</span></div></div></div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Продуктовая гипотеза из концепта → проверяемая формулировка</div></div><div class="panel-body"><div class="grid g3"><div class="callout"><h3>Проблема</h3><p>Раннее взыскание требует массовых контактов, но операторский процесс дорог, неоднороден и создаёт compliance-риск.</p></div><div class="callout"><h3>Решение</h3><p>Голосовой AI-агент ведёт ограниченный soft-диалог, извлекает PTP/причину/следующее действие и пишет полный audit trail.</p></div><div class="callout"><h3>Проверка ценности</h3><p>Сравнение с текущей контрольной группой по payment conversion, жалобам, нарушениям и полной стоимости результата — не по дозвону.</p></div></div></div></div>
-      </section>
-
-      <section class="screen" id="icp">
-        <div class="page-head"><div><h1>ICP и сегменты</h1><p>Сегментация по боли, инфраструктуре и длине сделки — не только по размеру организации.</p></div><span class="asof">RECOMMENDED BEACHHEAD · МФО</span></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Приоритет сегментов</div></div><div class="table-wrap"><table><thead><tr><th>Сегмент</th><th>Триггер покупки</th><th>Что продаём</th><th>Длина входа</th><th>Критичный барьер</th><th>Приоритет</th></tr></thead><tbody>
-          <tr><td><b>МФО, DPD 1–30</b></td><td>Большой поток, давление себестоимости, повторяемый сценарий</td><td>Cloud/private cloud pilot + compliance API</td><td>8–16 недель <span class="tag hyp">оценка</span></td><td>Массовые вызовы, ПДн, доказательство kept PTP/payment</td><td><span class="tag conclusion">Beachhead</span></td></tr>
-          <tr><td><b>Банк вне top‑5</b></td><td>Нужен отечественный стек и controlled automation</td><td>Private cloud/on-prem, интеграция с АБС/collection</td><td>6–12 месяцев <span class="tag hyp">оценка</span></td><td>ИБ, закупка, on-prem speech/LLM, SLA</td><td>Стратегический</td></tr>
-          <tr><td><b>Средняя ПКО</b></td><td>White-label, маржа портфеля, нехватка операторов</td><td>Tenant-aware platform + сценарии + audit export</td><td>3–6 месяцев <span class="tag hyp">оценка</span></td><td>Ответственность между ПКО, кредитором и вендором</td><td>Второй</td></tr>
-          <tr><td><b>Top‑5 банк</b></td><td>Замена/дополнение in-house</td><td>Отдельные компоненты: compliance, extractor, QA</td><td>12+ месяцев <span class="tag hyp">оценка</span></td><td>Высокий switching cost, собственные платформы</td><td>Не beachhead</td></tr>
-        </tbody></table></div></div>
-        <div class="grid g3">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Economic buyer</div></div><div class="panel-body"><b>Head of Collection / COO</b><p class="muted">Покупает стоимость результата и управляемость портфеля. Нужны cost per payment, complaint rate, SLA, capacity.</p></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Blockers</div></div><div class="panel-body"><b>Legal + CISO + Telecom</b><p class="muted">Могут остановить сделку независимо от ROI: правовое основание, ИСПДн, трассировка, операторские ограничения.</p></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Operators / QA</div></div><div class="panel-body"><b>Supervisor / human queue</b><p class="muted">Получает перевод с контекстом, разбирает исключения, размечает ошибки и обновляет policy/scenario.</p></div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">MVP: что входит / что исключено</div></div><div class="grid g2 panel-body"><div><div class="callout good"><h3>Входит</h3><p>DPD 1–30; одна продуктовая линия; верификация личности; информирование о долге; причины неоплаты; PTP дата/сумма; безопасные согласованные варианты; human handoff; suppression; запись/транскрипт/result JSON; webhook/SFTP; операционный dashboard.</p></div></div><div><div class="callout danger"><h3>Не входит</h3><p>Hard collection; угрозы последствий вне утверждённого текста; индивидуальная реструктуризация без eligibility API; юридические консультации; работа с третьими лицами; автоматическое принятие кредитных решений; обещание recovery uplift.</p></div></div></div></div>
-      </section>
-
-      <section class="screen" id="cjm">
-        <div class="page-head"><div><h1>CJM должника и оператора</h1><p>Два связанных пути: безопасный self-service и быстрое принятие исключений человеком.</p></div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Service blueprint</div><span class="tag hyp">целевой процесс</span></div><div class="panel-body table-wrap"><div class="cjm">
-          <div class="head">Этап</div><div class="head">1. Eligibility</div><div class="head">2. Дозвон</div><div class="head">3. Верификация</div><div class="head">4. Диалог</div><div class="head">5. Исход</div><div class="head">6. Follow-up</div>
-          <div class="lane">Должник</div><div>Не получает запрещённый контакт<small>timezone / limits / opt-out</small></div><div>Видит бренд звонка<small>не «неизвестный» номер</small></div><div>Подтверждает личность<small>до раскрытия долга</small></div><div>Понимает цель, может перебить / запросить человека</div><div>Обещает платёж, отказывается или просит помощь</div><div>Получает согласованное подтверждение / канал оплаты</div>
-          <div class="lane">AI-агент</div><div>Получает только минимальный контекст</div><div>Представляет AI, кредитора, ID агента</div><div>Не раскрывает долг третьему лицу</div><div>Следует policy, guardrails и approved offers</div><div>Извлекает PTP / reason / risk / next action</div><div>Пишет result + evidence + события</div>
-          <div class="lane">Оператор</div><div>Видит объём и очередь исключений</div><div>Готов к transfer SLA</div><div>Получает verified status</div><div>Подключается по просьбе/неуверенности/риску</div><div>Подтверждает нестандартное решение</div><div>Контролирует follow-up и complaints</div>
-          <div class="lane">Backstage</div><div>Compliance Engine</div><div>Voice Orchestrator + маркировка</div><div>Identity policy</div><div>ASR/TTS + LLM + policy tools</div><div>Result Extractor + CRM/АБС</div><div>Audit storage + BI</div>
-        </div></div></div>
-        <div class="grid g2"><div class="panel"><div class="panel-head"><div class="panel-title">Happy path</div></div><div class="panel-body"><ol><li>Запись допущена Compliance Engine.</li><li>Вызов маркирован, робот представился и прошёл верификацию.</li><li>Должник подтвердил сумму и дату возможного платежа.</li><li>Eligibility API подтвердил допустимый вариант.</li><li>PTP записан в collection system; подтверждение отправлено согласованным каналом.</li></ol></div></div><div class="panel"><div class="panel-head"><div class="panel-title">Exception path</div></div><div class="panel-body"><ol><li>Третье лицо / спор личности → никаких сведений о долге, завершение.</li><li>Запрос человека / вопрос вне policy → transfer.</li><li>Уязвимость, медицинские обстоятельства, жалоба, агрессия → stop + specialist queue.</li><li>Неуверенность ASR/LLM → уточнение один раз, затем handoff.</li><li>Технический сбой → безопасное завершение, не retry «сразу».</li></ol></div></div></div>
-      </section>
-
-      <section class="screen" id="call">
-        <div class="page-head"><div><h1>Сценарий звонка</h1><p>Не свободный «продавец долга», а LLM внутри строгой state machine и разрешённых действий.</p></div></div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Пример транскрипта</div><span class="tag hyp">синтетический пример</span></div><div class="panel-body transcript">
-            <div class="line agent"><div class="speaker">AI · 00:02</div><div class="bubble">Здравствуйте. Я автоматизированный интеллектуальный агент «Альфа‑1», код A‑104, звоню от имени Банка N. Могу я поговорить с Иваном Сергеевичем?</div></div>
-            <div class="line debtor"><div class="speaker">Клиент · 00:11</div><div class="bubble">Да, это я.</div></div>
-            <div class="line agent"><div class="speaker">AI · 00:14</div><div class="bubble">Для защиты информации назовите, пожалуйста, последние две цифры года рождения.</div></div>
-            <div class="line debtor"><div class="speaker">Клиент · 00:20</div><div class="bubble">Восемьдесят семь. Сейчас оплатить всё не могу, зарплата будет в пятницу.</div></div>
-            <div class="line agent"><div class="speaker">AI · 00:28</div><div class="bubble">Спасибо. По договору есть просроченная задолженность 18 400 рублей. Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div></div>
-            <div class="line debtor"><div class="speaker">Клиент · 00:39</div><div class="bubble">Да, восемь тысяч в пятницу. Но хочу уточнить остаток у человека.</div></div>
-            <div class="line agent"><div class="speaker">AI · 00:46</div><div class="bubble">Зафиксировал обещание платежа. Перевожу на специалиста и передам ему контекст разговора.</div></div>
-          </div></div>
-          <div>
-            <div class="panel"><div class="panel-head"><div class="panel-title">Карточка результата</div><span class="tag conclusion">result JSON</span></div><div class="panel-body"><div class="extract"><div><small>Outcome</small><b>PTP + HANDOFF</b></div><div><small>PTP date</small><b>21.08.2026</b></div><div><small>PTP amount</small><b>8 000 ₽</b></div><div><small>Reason</small><b>cashflow / salary</b></div><div><small>Debt disputed</small><b>no</b></div><div><small>Human requested</small><b>yes</b></div><div><small>Identity</small><b>verified</b></div><div><small>Confidence</small><b>0.94</b></div><div><small>Next best action</small><b>operator now</b></div></div><div class="callout warn"><p><b>Важно:</b> confidence — технический сигнал, а не объяснение правомерности. Для аудита сохраняются версия сценария, policy decisions, tool calls и точные фрагменты доказательств.</p></div></div></div>
-            <div class="panel"><div class="panel-head"><div class="panel-title">Guardrails разговора</div></div><div class="panel-body check-list"><div class="check ok"><i>✓</i><div><b>Разрешено</b><small>Фактическая информация, approved offers, уточнение даты/суммы, перевод.</small></div></div><div class="check stop"><i>!</i><div><b>Запрещено</b><small>Угрозы, стыд, давление, выдуманные последствия, обход отказа, раскрытие третьему лицу.</small></div></div><div class="check stop"><i>!</i><div><b>Stop conditions</b><small>Жалоба, уязвимость, спор личности/долга, неизвестный legal question, handoff request.</small></div></div></div></div>
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-card">
+        <div>
+          <span class="eyebrow">Управляемый пилот вместо обещаний «автоматизировать всё»</span>
+          <h1>ИИ-коллектор для управляемого телефонного процесса</h1>
+          <p>Показываем, как устроен запуск, где выполняется проверка ограничений, когда требуется проверка специалистом и как фиксируется журнал действий без потери контекста.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+            <a class="btn btn-secondary" href="#how-it-works">Посмотреть структуру пилота</a>
+          </div>
+          <div class="hero-facts">
+            <div class="fact-card">
+              <strong>Проверка ограничений</strong>
+              <span>Перед каждым действием видно, что разрешено, а что требует отдельной проверки.</span>
+            </div>
+            <div class="fact-card">
+              <strong>Передача специалисту</strong>
+              <span>Спорные случаи не продавливаются автоматически и передаются с понятным контекстом.</span>
+            </div>
+            <div class="fact-card">
+              <strong>Журнал действий</strong>
+              <span>По итогам можно восстановить цепочку шагов и причин принятых решений.</span>
+            </div>
           </div>
         </div>
-      </section>
+        <aside class="side-panel" aria-label="Что входит в демо">
+          <strong>Что увидите на демо</strong>
+          <p>Не рекламную абстракцию, а цельный сценарий ограниченного пилота: запуск, проверку ограничений, выделение случаев на проверку и итоговую фиксацию результата.</p>
+          <ul>
+            <li>Как готовится ограниченный пилот и что контролируется на запуске.</li>
+            <li>Как система отделяет допустимые действия от тех, что требуют проверки.</li>
+            <li>Как выглядит передача специалисту без потери истории шага.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
 
-      <section class="screen" id="compliance">
-        <div class="page-head"><div><h1>Compliance ФЗ‑230</h1><p>Продуктовые требования по действующим публичным нормам. Не юридическое заключение.</p></div><span class="asof">CHECKED · 14.08.2026</span></div>
-        <div class="grid g4">
-          <div class="metric blocked"><div class="label">Контакты</div><div class="value">1 / 2 / 8</div><div class="detail">сутки / неделя / месяц</div></div>
-          <div class="metric blocked"><div class="label">Рабочие дни</div><div class="value">08–22</div><div class="detail">местное время должника</div></div>
-          <div class="metric blocked"><div class="label">Выходные</div><div class="value">09–20</div><div class="detail">и нерабочие праздники</div></div>
-          <div class="metric warn"><div class="label">Хранение</div><div class="value">≥ 1,5 года</div><div class="detail">для обязанностей по ст. 17/17.1; подтвердить применимость</div></div>
-        </div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Blocking checklist перед каждым вызовом</div></div><div class="panel-body check-list">
-            <div class="check stop"><i>1</i><div><b>Frequency ledger</b><small>Единый счётчик кредитора/представителя по самостоятельному обязательству; не только внутри одной кампании.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>2</i><div><b>Time window + timezone</b><small>8:00–22:00 рабочие; 9:00–20:00 выходные/праздники по месту жительства/пребывания.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>3</i><div><b>Suppression / legal status</b><small>Отказ от взаимодействия, представитель, льготный период, банкротство, ограничения дееспособности и другие запреты.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>4</i><div><b>AI disclosure</b><small>Условное имя и ID агента, кредитор/представитель, факт просрочки; сообщать, что переговоры ведёт AI.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>5</i><div><b>Human continuation</b><small>Доступная очередь физического лица, transfer reason и SLA; не «оставьте заявку на завтра» без одобрения юриста.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>6</i><div><b>Third-party privacy</b><small>До верификации не раскрывать долг. Передача третьим лицам — только при надлежащем отдельном согласии и в пределах закона.</small></div><span class="tag fact">ФЗ‑230</span></div>
-            <div class="check stop"><i>7</i><div><b>Call marking / telecom consent</b><small>Договор на отображение инициатора; доказательство основания массовых/автоматических вызовов и учёт отказа абонента.</small></div><span class="tag fact">126‑ФЗ</span></div>
-            <div class="check stop"><i>8</i><div><b>Auditability</b><small>Запись, сообщения, события допуска, версия policy/scenario, результат, неизменяемые timestamps и экспорт для проверки.</small></div><span class="tag fact">контроль</span></div>
-          </div></div>
+    <section id="how-it-works">
+      <div class="container">
+        <div class="section-head">
           <div>
-            <div class="panel"><div class="panel-head"><div class="panel-title">152‑ФЗ → требования к продукту</div></div><div class="panel-body"><ul><li>Зафиксировать роли: банк/МФО как оператор ПДн; поставщик как лицо, обрабатывающее ПДн по поручению — подтвердить договором.</li><li>Цели, состав данных, операции, сроки, уничтожение, субподрядчики и меры защиты — в поручении на обработку.</li><li>Первичная запись/систематизация/накопление/хранение/уточнение/извлечение ПДн граждан РФ — базы в РФ, с учётом исключений закона.</li><li>Data minimization: агент получает только поля текущего шага; debt amount не уходит в ASR/LLM до верификации, если архитектура позволяет.</li><li>RBAC, MFA, tenant isolation, шифрование, KMS/HSM, журнал доступа, DLP/export controls, резервирование и проверяемое удаление.</li><li>Отдельно классифицировать аудио и голосовые признаки: обычная запись не автоматически равна биометрической обработке, но voice biometrics меняет режим и должна быть отдельно согласована с юристом/ИБ.</li></ul></div></div>
-            <div class="callout danger"><h3>Коллизия, которую нельзя решать продуктовым предположением</h3><p>Ст. 44.1‑1 закона о связи требует предварительного согласия на массовые/автоматические вызовы; ФЗ‑230 регулирует допустимое взыскание. Юристы должны подтвердить основание именно для портфеля клиента, текст согласия в договоре, учёт операторского отказа и изменения, вступающие в силу позднее.</p></div>
-            <div class="panel"><div class="panel-head"><div class="panel-title">Отчётность ФССП</div></div><div class="panel-body"><p>ПКО уже представляют отчёт по форме Минюста. Федеральный закон №20‑ФЗ от 11.02.2026 добавил обязанность кредитных и микрофинансовых организаций представлять отчёт о деятельности по возврату; порядок, форма, сроки и периодичность определяются уполномоченным органом по согласованию с Банком России.</p><p class="muted small">Продуктовое следствие: хранить полный event ledger и проектировать выгрузку, но не обещать готовый «отчёт ФССП для банков/МФО», пока применимая форма и маппинг не подтверждены.</p></div></div>
+            <h2>Как это работает</h2>
+            <p class="section-lead">Лендинг описывает управляемый сценарий пилота: от подготовки процесса до фиксации результата и случаев, где требуется проверка специалистом.</p>
+          </div>
+          <span class="section-tag">7 коротких шагов</span>
+        </div>
+        <div class="steps-grid">
+          <article class="step-card">
+            <div class="step-index">01</div>
+            <div>
+              <strong>Подключаем сценарий и контекст пилота</strong>
+              <p>Определяем, какие задачи решаем, какие данные нужны и где проходит граница ограниченного пилота.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">02</div>
+            <div>
+              <strong>Проверка ограничений перед действиями</strong>
+              <p>Система учитывает требования и ограничения для каждого случая до перехода к следующему шагу.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">03</div>
+            <div>
+              <strong>Готовим допустимые контакты и расписание</strong>
+              <p>Учитываем правила по времени, исключения и рамки ограниченного запуска без лишних обещаний.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">04</div>
+            <div>
+              <strong>Ведём управляемый диалог</strong>
+              <p>Процесс остаётся предсказуемым: шаги заданы заранее, отклонения не скрываются.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">05</div>
+            <div>
+              <strong>Выделяем спорные ситуации для проверки</strong>
+              <p>Если возникает риск или неопределённость, система переводит кейс в режим проверки.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">06</div>
+            <div>
+              <strong>Передаём специалисту, где нужно</strong>
+              <p>Передача идёт вместе с контекстом, чтобы решение принималось по фактам, а не по догадке.</p>
+            </div>
+          </article>
+          <article class="step-card">
+            <div class="step-index">07</div>
+            <div>
+              <strong>Показываем результат и журнал действий</strong>
+              <p>Видно, что было выполнено, какие решения приняты и на чём они основывались.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="trust">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Почему нам можно доверять</h2>
+            <p class="section-lead">Мы не строим страницу вокруг обещания «всё сделает ИИ». Основной акцент — на управляемости, понятных причинах решений и контролируемом запуске.</p>
+          </div>
+          <span class="section-tag">Контроль и прозрачность</span>
+        </div>
+        <div class="trust-layout">
+          <article class="trust-card">
+            <strong>Понятные причины решений</strong>
+            <p>Пользователь видит, что разрешено, что требует проверки и по какой причине следующий шаг остановлен или передан специалисту.</p>
+          </article>
+          <article class="trust-card">
+            <strong>Контроль процесса</strong>
+            <p>Система не заменяет специалиста там, где нужен человеческий контроль, и не маскирует сложные случаи под обычный поток.</p>
+          </article>
+          <article class="trust-card">
+            <strong>Журнал действий по фактам</strong>
+            <p>Можно восстановить цепочку шагов, решений и последствий без отдельного расследования по разрозненным источникам.</p>
+          </article>
+          <article class="trust-card">
+            <strong>Предсказуемый пилот</strong>
+            <p>Запуск ограниченный: сначала подтверждаем готовность процесса, а затем масштабируем только то, что можно объяснить и проверить.</p>
+          </article>
+        </div>
+        <div class="cta-repeat">
+          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="benefits">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Преимущества</h2>
+            <p class="section-lead">Лендинг собран вокруг реальных критериев пилота: сначала допустимость действия, затем работа со сценарием, затем понятный результат.</p>
+          </div>
+          <span class="section-tag">4 доказательных пункта</span>
+        </div>
+        <div class="benefits-grid">
+          <article class="benefit-card">
+            <strong>Проверка ограничений перед действиями</strong>
+            <p>Сначала оценивается допустимость каждого шага, затем выполняется управляемое действие в границах пилота.</p>
+          </article>
+          <article class="benefit-card">
+            <strong>Передача специалисту там, где нужна проверка</strong>
+            <p>Спорные и рискованные ситуации не скрываются: они переходят на проверку с понятным объяснением причины.</p>
+          </article>
+          <article class="benefit-card">
+            <strong>Журнал действий по фактам</strong>
+            <p>Можно восстановить, что произошло, какие решения были приняты и на чём они основывались.</p>
+          </article>
+          <article class="benefit-card">
+            <strong>Ограниченный пилот вместо обещаний «сразу в масштаб»</strong>
+            <p>Демо показывает контролируемый сценарий и критерии готовности, а не витрину с абстрактными цифрами.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="roles">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Кому подходит</h2>
+            <p class="section-lead">Страница ориентирована на роли, которым важны управляемость процесса, видимость причин решений и работа в контуре специалиста.</p>
+          </div>
+          <span class="section-tag">4 сценария</span>
+        </div>
+        <div class="roles-grid">
+          <article class="role-card">
+            <small>Роль</small>
+            <strong>Руководитель взыскания / операционный руководитель</strong>
+            <p>Получает предсказуемый пилот, понятные рамки запуска и видимость того, что происходит по ходу процесса.</p>
+          </article>
+          <article class="role-card">
+            <small>Роль</small>
+            <strong>Юристы и руководители по рискам</strong>
+            <p>Видят, что система делает только то, что можно объяснить, проверить и подтвердить по журналу действий.</p>
+          </article>
+          <article class="role-card">
+            <small>Роль</small>
+            <strong>Супервизор и специалисты контроля качества</strong>
+            <p>Работают с кейсами, которые требуют проверки, и получают контекст без необходимости собирать его вручную.</p>
+          </article>
+          <article class="role-card">
+            <small>Роль</small>
+            <strong>Администратор интеграций</strong>
+            <p>Понимает, как данные и события проходят в управляемом контуре без обещаний функций, которых нет в текущем пилоте.</p>
+          </article>
+        </div>
+        <div class="cta-repeat">
+          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>FAQ</h2>
+            <p class="faq-intro">Короткие ответы на вопросы, которые обычно возникают перед обсуждением пилота и демонстрации сценария.</p>
+          </div>
+          <span class="section-tag">6 вопросов</span>
+        </div>
+        <div class="faq-wrap">
+          <details>
+            <summary>Что будет на демо “ИИ-коллектора”?</summary>
+            <div class="faq-answer">Покажем контролируемый сценарий работы: как запускаются шаги, где выполняется проверка ограничений, как фиксируется журнал действий и как оформляется передача специалисту при необходимости.</div>
+          </details>
+          <details>
+            <summary>Как система принимает решения “разрешено / требуется проверка”?</summary>
+            <div class="faq-answer">Решение основано на заданных ограничениях и правилах для каждого случая. Если есть риск или неопределённость, действие переводится в режим проверки специалистом.</div>
+          </details>
+          <details>
+            <summary>Что происходит, если ситуация спорная или есть риск?</summary>
+            <div class="faq-answer">Спорные кейсы не продавливаются автоматически: они выделяются для проверки, а специалист получает контекст, чтобы принять решение по понятной причине.</div>
+          </details>
+          <details>
+            <summary>Мы сможем остановить пилот, если потребуется?</summary>
+            <div class="faq-answer">Да, пилот проектируется как контролируемый запуск. При необходимости сценарий можно приостановить и уточнить критерии готовности до продолжения.</div>
+          </details>
+          <details>
+            <summary>Какие результаты вы показываете по итогам?</summary>
+            <div class="faq-answer">По фактам: что было выполнено, какие решения приняты и на чём они основывались. Мы не подменяем это обещаниями цифр без подтверждения.</div>
+          </details>
+          <details>
+            <summary>Кому подходит “ИИ-коллектор” по процессу и ролям?</summary>
+            <div class="faq-answer">Руководителям взыскания, специалистам контроля качества, юридическим службам и администраторам интеграций — там, где ключевыми являются управляемость, прозрачные причины решений и работа в контуре специалиста.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="cta-panel">
+          <h2>Готовы обсудить пилот и увидеть проверку ограничений в действии?</h2>
+          <p>Покажем управляемый сценарий, журнал действий и передачу специалисту там, где требуется проверка.</p>
+          <div>
+            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
           </div>
         </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Вопросы юристам до pilot approval</div></div><div class="panel-body grid g3"><div>1. Кто юридически инициирует вызов и кто несёт ответственность: кредитор, ПКО, платформа, оператор связи?</div><div>2. Что считается состоявшимся контактом для 1/2/8 в каждом пограничном call-state?</div><div>3. Достаточен ли call-flow идентификации до раскрытия суммы долга?</div><div>4. Как исполняется human continuation вне часов очереди и при перегрузке?</div><div>5. Как согласовать требования хранения ФЗ‑230, 152‑ФЗ, банковских политик и договоров?</div><div>6. Какое согласие покрывает массовые вызовы и как синхронизировать операторский отказ?</div><div>7. Допустимы ли success fee / оплата за payment для выбранной договорной роли?</div><div>8. Какие сообщения/ссылки после звонка считаются отдельным взаимодействием?</div><div>9. Какие поля и формат требуются для отчётности ФССП в конкретном сегменте?</div></div></div>
-      </section>
+      </div>
+    </section>
+  </main>
 
-      <section class="screen" id="architecture">
-        <div class="page-head"><div><h1>Технологическая архитектура</h1><p>Compliance Engine располагается до оркестратора звонка и имеет право физически заблокировать вызов.</p></div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Target architecture</div><span class="tag conclusion">целевой дизайн</span></div><div class="panel-body arch">
-          <div class="arch-box core"><b>Campaign Manager</b><small>Импорт базы, сегменты, DPD, расписание, приоритеты, retries, capacity.</small></div>
-          <div class="arch-box control"><b>Compliance Engine</b><small>1/2/8, timezone, consent/opt-out, suppression, legal holds, audit decision.</small></div>
-          <div class="arch-box core"><b>Voice Orchestrator</b><small>SIP/оператор, dial states, AMD, marking, retries, concurrency, CDR.</small></div>
-          <div class="arch-box control"><b>Human Handoff</b><small>Очередь, skill routing, reason, context transfer, SLA, fallback.</small></div>
-          <div class="arch-flow">eligible record → policy permit → marked call → identity gate → bounded dialogue → result / handoff → system of record</div>
-          <div class="arch-box core"><b>ASR / TTS</b><small>Русский язык, шум, числа/даты, barge-in, confidence, latency budget, fallback.</small></div>
-          <div class="arch-box control"><b>LLM Dialogue Engine</b><small>State machine + reasoner, allowlisted tools, guardrails, safe completion, prompt/policy version.</small></div>
-          <div class="arch-box data"><b>Result Extractor</b><small>PTP date/amount, reason, objection, risk, disposition, next best action + evidence spans.</small></div>
-          <div class="arch-box data"><b>Integrations</b><small>CRM, АБС/core, collection system, BI, webhook, SFTP, batch/API idempotency.</small></div>
-          <div class="arch-box data"><b>Storage & Audit</b><small>Audio, transcript, events, policy/scenario versions, access journal, retention/deletion.</small></div>
-          <div class="arch-box data"><b>Analytics</b><small>Answer/contact/PTP/kept PTP/payment, complaints, violations, cost per outcome, cohorts.</small></div>
-          <div class="arch-box control"><b>Security plane</b><small>RBAC/MFA, tenant isolation, encryption, secrets, SIEM, backups, DLP, admin approvals.</small></div>
-          <div class="arch-box core"><b>Deployment</b><small>Cloud, private cloud, on-prem, hybrid telephony; independent speech/LLM provider adapters.</small></div>
-          <div class="arch-note" style="grid-column:1/-1"><b>Latency budget:</b> замерять end-to-end turn latency (telephony → ASR partial → policy/tool → LLM → TTS first audio), p50/p95 и долю перебиваний. «Низкая latency» без целевого SLA и реальных записей — не доказательство.</div>
-        </div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Варианты сборки</div></div><div class="panel-body grid g2">
-          <div class="option"><h3>1. Быстрый MVP на существующем voice engine</h3><dl><dt>Срок</dt><dd>12–16 недель до controlled pilot <span class="tag hyp">оценка</span></dd><dt>Reuse</dt><dd>Телефония, ASR/TTS streaming, dialogue runtime, запись, базовая аналитика.</dd><dt>New</dt><dd>Compliance ledger, identity gate, collection states, extractor, client adapters.</dd><dt>Команда</dt><dd>PM/collection SME, solution architect, 2 backend, conversation designer, ML/LLM, QA, DevOps/SRE, legal/IB part-time.</dd><dt>Риск</dt><dd>Скрытые зависимости текущего движка; реальная готовность reuse не проверена.</dd><dt>До пилота</dt><dd>Legal sign-off, red-team, golden dialogues, load/latency, fail-safe, call marking, restore drill.</dd></dl></div>
-          <div class="option"><h3>2. Enterprise / on-prem для банка</h3><dl><dt>Срок</dt><dd>9–15 месяцев <span class="tag hyp">оценка</span></dd><dt>Reuse</dt><dd>Доменные контракты, policy DSL, extractor schemas, UI, test corpus.</dd><dt>New</dt><dd>On-prem deploy, local ASR/TTS/LLM, HA/DR, KMS/HSM, SIEM, offline updates, bank adapters.</dd><dt>Команда</dt><dd>MVP team + platform/SRE, security, DB/infra, integration lead, support L2/L3.</dd><dt>Риск</dt><dd>Качество локальных моделей, capacity, длинная ИБ/закупка, bespoke forks.</dd><dt>До пилота</dt><dd>Threat model, НДВ/secure SDLC по требованиям банка, performance, DR/RPO/RTO, access review.</dd></dl></div>
-          <div class="option"><h3>3. Партнёрская версия через телефонию / интегратора</h3><dl><dt>Срок</dt><dd>16–24 недели <span class="tag hyp">оценка</span></dd><dt>Reuse</dt><dd>Voice engine, APIs, compliance, white-label-able dashboard.</dd><dt>New</dt><dd>Partner provisioning, billing/reconciliation, CDR mapping, marking contracts, support routing.</dd><dt>Команда</dt><dd>MVP team + partner manager, billing engineer, joint support owner.</dd><dt>Риск</dt><dd>Размытая ответственность, CDR mismatch, маржа, vendor lock-in, антиспам.</dd><dt>До пилота</dt><dd>End-to-end money/contract/SIP/marking test, dispute runbook, synthetic + live CDR reconciliation.</dd></dl></div>
-          <div class="option"><h3>4. White-label для ПКО</h3><dl><dt>Срок</dt><dd>20–28 недель <span class="tag hyp">оценка</span></dd><dt>Reuse</dt><dd>Campaign, dialogue, compliance, audit, analytics.</dd><dt>New</dt><dd>Multi-tenant branding, creditor-level ledgers, per-tenant policies, billing, export.</dd><dt>Команда</dt><dd>MVP team + multi-tenant platform, product ops, compliance ops.</dd><dt>Риск</dt><dd>Кросс-кредиторные лимиты, data isolation, настройка «опасных» сценариев клиентом.</dd><dt>До пилота</dt><dd>Tenant isolation test, four-eyes policy publish, creditor attribution, regulator evidence export.</dd></dl></div>
-        </div></div>
-      </section>
+  <footer class="site-footer">
+    <div class="container">ИИ-коллектор · статический прототип маркетингового лендинга</div>
+  </footer>
 
-      <section class="screen" id="competitors">
-        <div class="page-head"><div><h1>Конкуренты и публичные цены</h1><p>Тарифы приведены в исходных единицах; «не указано» не означает «не включено».</p></div><span class="asof">PUBLIC PAGES · 14.08.2026</span></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Проверенные публичные предложения</div></div><div class="table-wrap"><table><thead><tr><th>Игрок</th><th>Публичная цена</th><th>Единица</th><th>Что заявлено включённым</th><th>Отдельно / неизвестно</th><th>Источник</th></tr></thead><tbody>
-          <tr><td><b>МТС Exolve Robots</b></td><td>AI от 6,5 ₽; NLP от 4,75 ₽; interactive от 2,75 ₽; turnkey от 52 000 ₽</td><td>₽/мин + setup</td><td>AI/NLP по выбранному уровню; на продуктовой странице — ASR/TTS, запись, CRM, аналитика.</td><td>Телефония, номер, marking, сроки хранения, transcript и речевая аналитика имеют отдельные тарифные строки; состав конкретного пакета подтвердить.</td><td><a href="https://exolve.ru/tariffs/robots/">robots</a> · <a href="https://community.exolve.ru/tariffs/voice/">voice</a></td></tr>
-          <tr><td><b>Zvonobot</b></td><td>от 2 ₽/мин исходящего; neural conversation 0,28 ₽/сек; создание от 80 000 ₽; CRM от 20 000 ₽; номер 300 ₽/сутки</td><td>₽/мин, ₽/сек, setup, ₽/сутки</td><td>Сценарий, отчёт, CRM/API и transfer описаны как возможности.</td><td>Какие строки суммируются, запись/хранение/транскрипция/маркировка — подтвердить офертой.</td><td><a href="https://zvonobot.ru/">official</a></td></tr>
-          <tr><td><b>Fromtech</b></td><td>от 2,25 ₽/мин</td><td>₽/мин</td><td>ЛК, запись и хранение, транскрибация, аналитика, SIP-интеграция, поддержка.</td><td>Телефония прямо не включена; GenAI/on-prem и внедрение — по запросу.</td><td><a href="https://www.fromtech.ru/golosovoy-robot/">official</a></td></tr>
-          <tr><td><b>MANGO OFFICE</b></td><td>робот 4,5 ₽/мин; многоканальный робот 1 000 ₽/мес; API до 8 000 ₽/мес; «Базовый» 6 500 ₽/мес с 08.12.2025</td><td>₽/мин + подписки</td><td>NLU-сценарий; no-code; transfer; отчёты. LLM/RAG заявлены для «ИИ Сотрудника».</td><td>Цена LLM-сотрудника, телефония, номер, внедрение, marking и точный состав тарифа — подтвердить.</td><td><a href="https://www.mango-office.ru/products/contact-center/tariffs/">tariffs</a> · <a href="https://www.mango-office.ru/products/contact-center/ai/voice-robot/">robot</a></td></tr>
-          <tr><td><b>TWIN</b></td><td><b>PRICE NOT PUBLIC</b></td><td>Формула ₽/мин</td><td>Публичная billing wiki показывает посекундный расчёт: тариф/60 × длительность.</td><td>Числовой тариф, telecom, ASR/TTS/NLP/LLM, запись, хранение, API, setup — запросить КП.</td><td><a href="https://wiki.twin24.ai/billing/monthly-reports">billing wiki</a></td></tr>
-          <tr><td><b>Neuro.net Nebo</b></td><td>4,5 ₽ за звонок, где подняли трубку</td><td>₽/answered call</td><td>100 тестовых звонков / 14 дней.</td><td>Длительность, telecom, ASR/TTS/NLP/LLM, запись, хранение, интеграции и enterprise collection — не раскрыты.</td><td><a href="https://neuro.net/ru/nebo/">official</a></td></tr>
-          <tr><td><b>Skorozvon</b></td><td>сценарный 0,04 ₽/сек (=2,4 ₽/мин); hybrid 5 ₽/мин; AI — <b>PRICE NOT PUBLIC</b></td><td>₽/сек, ₽/мин</td><td>Запись, база, retries, transfer, CRM; для hybrid — настройка аналитиками.</td><td>Цены указаны без НДС; телефония, marking, API/допуслуги и exact AI scope проверить.</td><td><a href="https://skorozvon.ru/solutions/golosovoy-robot">official</a></td></tr>
-          <tr><td><b>Robovoice</b></td><td>11 800 ₽ / 2 000 мин / 3 месяца</td><td>пакет минут</td><td>Полный функционал платформы, неограниченные линии, посекундная тарификация, e-mail support; публично заявлены NLU/TTS/LLM, cloud/on-prem.</td><td>Эффективная цена зависит от утилизации; telecom, marking, storage policy, integration/on-prem — подтвердить.</td><td><a href="https://robo-voice.ru/">official</a></td></tr>
-        </tbody></table></div><div class="table-note">PRICE NOT PUBLIC означает отсутствие найденной публичной числовой цены на проверенной странице, а не отсутствие коммерческого предложения.</div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Матрица состава публичного тарифа</div><span class="tag unknown">уточнять в КП</span></div><div class="table-wrap"><table><thead><tr><th>Игрок</th><th>Телефония</th><th>ASR / TTS</th><th>NLP / LLM</th><th>Запись / хранение</th><th>Транскрипт / аналитика</th><th>SIP / API</th><th>Поддержка</th></tr></thead><tbody>
-          <tr><td><b>Exolve</b></td><td>отдельные voice tariffs</td><td>заявлено</td><td>отдельные уровни 4,75 / 6,5 ₽</td><td>отдельно по сроку; 1 мес. 0 ₽</td><td>отдельные тарифные строки</td><td>API/SIP заявлены</td><td>не раскрыто в цене</td></tr>
-          <tr><td><b>Zvonobot</b></td><td>2 ₽/мин строка; суммирование уточнить</td><td>neural product заявлен</td><td>neural conversation; scope уточнить</td><td>не раскрыто</td><td>отчёт заявлен; transcript не раскрыт</td><td>API/CRM заявлены</td><td>24/7 заявлена</td></tr>
-          <tr><td><b>Fromtech</b></td><td><b>не включена</b></td><td>ASR/TTS/NLU заявлены</td><td>GenAI — по запросу</td><td>включено</td><td>включено</td><td>SIP включён; интеграции заявлены</td><td>включена</td></tr>
-          <tr><td><b>MANGO OFFICE</b></td><td>отдельный телеком-контур</td><td>заявлено</td><td>NLU в robot; LLM/RAG — отдельный AI employee</td><td>состав тарифа уточнить</td><td>отчёты заявлены; речевая аналитика отдельна</td><td>API до 8 000 ₽/мес или по плану</td><td>не раскрыто в строке 4,5 ₽</td></tr>
-          <tr><td><b>TWIN</b></td><td>не раскрыто</td><td>не раскрыто</td><td>не раскрыто</td><td>не раскрыто</td><td>billing fields, не состав услуги</td><td>не раскрыто</td><td>не раскрыто</td></tr>
-          <tr><td><b>Neuro.net Nebo</b></td><td>не раскрыто</td><td>голосовой робот заявлен; состав не раскрыт</td><td>не раскрыто</td><td>не раскрыто</td><td>не раскрыто</td><td>не раскрыто</td><td>не раскрыто</td></tr>
-          <tr><td><b>Skorozvon</b></td><td>scope robot price не подтверждён</td><td>заявлено</td><td>hybrid заявлен; AI — PRICE NOT PUBLIC</td><td>запись заявлена; storage terms не раскрыты</td><td>analytics в platform; scope уточнить</td><td>CRM/API и допуслуги</td><td>по плану / допуслугам</td></tr>
-          <tr><td><b>Robovoice</b></td><td>не раскрыто</td><td>заявлено</td><td>NLU/LLM заявлены</td><td>retention не раскрыт</td><td>dashboard/analytics заявлены</td><td>интеграции — по запросу</td><td>e-mail в Starter</td></tr>
-        </tbody></table></div><div class="table-note">«Заявлено» — vendor claim на публичной странице, не результат технического теста. Пустые или нераскрытые условия не заполняются предположениями.</div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Нормализация коммерческих единиц</div><div class="seg-toggle"><label class="small">Средний диалог <input id="normDuration" type="number" min="0.2" step="0.1" value="2.4" style="width:58px"> мин</label> &nbsp; <label class="small">успешность <input id="normSuccess" type="number" min="1" max="100" step="1" value="72" style="width:52px">%</label></div></div><div class="table-wrap"><table><thead><tr><th>Тариф</th><th>Исходная единица</th><th class="num">Норм. ₽ / 1 мин соединения</th><th class="num">Норм. ₽ / успешный диалог</th><th>Ограничение сравнения</th></tr></thead><tbody id="normTable"></tbody></table></div><div class="table-note mono">Для ₽/мин: cost_per_success = tariff_per_min × avg_connected_minutes ÷ successful_dialog_rate. Для ₽/answered call: cost_per_min = tariff_per_answer ÷ avg_minutes; cost_per_success = tariff_per_answer ÷ success_rate. Setup, telecom и extras не добавляются без подтверждения состава.</div></div>
-        <div class="callout warn"><h3>Конкурентный вывод</h3><p>Нельзя утверждать, что рынок состоит только из «скриптовых звонилок»: несколько игроков публично заявляют LLM/RAG/GenAI. Защищаемый дифференциатор должен быть доказан тестом: compliance enforcement, качество на collection corpus, auditability, on-prem и стоимость полного результата.</p></div>
-      </section>
-
-      <section class="screen" id="economics">
-        <div class="page-head"><div><h1>Калькулятор маржи</h1><p>Все суммы — модель за один месячный batch, без НДС; one-time fee/cost амортизируются на выбранный срок.</p></div><span class="asof">TRANSPARENT JS MODEL</span></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Тарифная модель</div><div class="model-toggle" id="modelToggle"><button data-model="pass" class="active">1 · Pass-through</button><button data-model="bundle">2 · Bundled / мин</button><button data-model="contact">3 · Успешный контакт</button><button data-model="subscription">4 · Подписка</button><button data-model="enterprise">5 · Enterprise</button><button data-model="successfee">6 · Success fee</button></div></div><div class="panel-body"><div class="formula" id="modelFormula"></div></div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Входные параметры</div><div class="seg-toggle"><button data-volume="10000">Small · 10k</button><button data-volume="100000" class="active">Mid · 100k</button><button data-volume="1000000">Enterprise · 1m</button></div></div><div class="panel-body controls" id="controls">
-          <div class="control-group">Объём и воронка</div>
-          <div class="field"><label>N_records <output data-out="N">100 000</output></label><input data-key="N" type="range" min="10000" max="1000000" step="10000" value="100000"></div>
-          <div class="field"><label>attempts / record <output data-out="attempts">1,8</output></label><input data-key="attempts" type="range" min="1" max="4" step="0.1" value="1.8"></div>
-          <div class="field"><label>answer_rate <output data-out="answer">34%</output></label><input data-key="answer" type="range" min="5" max="80" step="1" value="34"></div>
-          <div class="field"><label>avg_connected_minutes <output data-out="avgMin">2,4</output></label><input data-key="avgMin" type="range" min="0.4" max="8" step="0.1" value="2.4"></div>
-          <div class="field"><label>successful_dialog_rate <output data-out="success">72%</output></label><input data-key="success" type="range" min="10" max="95" step="1" value="72"></div>
-          <div class="field"><label>ptp_rate / dialog <output data-out="ptp">38%</output></label><input data-key="ptp" type="range" min="1" max="80" step="1" value="38"></div>
-          <div class="field"><label>kept_ptp_rate <output data-out="kept">55%</output></label><input data-key="kept" type="range" min="1" max="95" step="1" value="55"></div>
-          <div class="field"><label>avg_debt, ₽</label><input data-key="avgDebt" type="number" min="0" step="1000" value="35000"></div>
-          <div class="field"><label>recovered / kept PTP, ₽</label><input data-key="recovered" type="number" min="0" step="500" value="8000"></div>
-          <div class="control-group">Прямой COGS</div>
-          <div class="field"><label>telecom ₽/connected min</label><input data-key="telecom" type="number" min="0" step="0.05" value="1.35"></div>
-          <div class="field"><label>robot platform ₽/min</label><input data-key="platform" type="number" min="0" step="0.05" value="1.20"></div>
-          <div class="field"><label>ASR ₽/min</label><input data-key="asr" type="number" min="0" step="0.05" value="0.60"></div>
-          <div class="field"><label>TTS ₽/min</label><input data-key="tts" type="number" min="0" step="0.05" value="0.45"></div>
-          <div class="field"><label>LLM ₽/connected min</label><input data-key="llmMin" type="number" min="0" step="0.05" value="0.90"></div>
-          <div class="field"><label>LLM ₽/answered dialog</label><input data-key="llmDialog" type="number" min="0" step="0.05" value="0.35"></div>
-          <div class="field"><label>call marking ₽/attempt</label><input data-key="marking" type="number" min="0" step="0.01" value="0.30"></div>
-          <div class="field"><label>recording storage ₽/min</label><input data-key="storage" type="number" min="0" step="0.01" value="0.12"></div>
-          <div class="control-group">Fixed / commercial assumptions</div>
-          <div class="field"><label>support ₽/month</label><input data-key="support" type="number" min="0" step="10000" value="160000"></div>
-          <div class="field"><label>account management ₽/month</label><input data-key="account" type="number" min="0" step="10000" value="120000"></div>
-          <div class="field"><label>implementation cost, ₽</label><input data-key="impl" type="number" min="0" step="100000" value="900000"></div>
-          <div class="field"><label>integration cost, ₽</label><input data-key="integration" type="number" min="0" step="100000" value="700000"></div>
-          <div class="field"><label>amortization, months</label><input data-key="months" type="number" min="1" max="36" step="1" value="12"></div>
-          <div class="field"><label>partner revshare, %</label><input data-key="revshare" type="number" min="0" max="60" step="1" value="0"></div>
-          <div class="field"><label>VAT, % (invoice only)</label><input data-key="vat" type="number" min="0" max="40" step="1" value="22"></div>
-          <div class="field"><label>bad debt, % revenue</label><input data-key="baddebt" type="number" min="0" max="30" step="0.5" value="1"></div>
-          <div class="field"><label>SLA penalties, % revenue</label><input data-key="sla" type="number" min="0" max="30" step="0.5" value="0.5"></div>
-          <div class="field"><label>refunds/credits, % revenue</label><input data-key="refund" type="number" min="0" max="30" step="0.5" value="0.5"></div>
-          <div class="field"><label>price discount <output data-out="discount">0%</output></label><input data-key="discount" type="range" min="0" max="60" step="1" value="0"></div>
-        </div><div class="table-note">Проверить двойной счёт: если robot platform уже включает ASR/TTS/LLM/запись, соответствующие строки COGS нужно обнулить. Default costs — гипотеза, не фактический COGS поставщика.</div></div>
-        <div class="econ-hero" id="econHero"></div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">6 моделей · текущий профиль</div></div><div class="table-wrap"><table><thead><tr><th>Модель</th><th class="num">Выручка</th><th class="num">COGS</th><th class="num">GM ₽</th><th class="num">GM %</th><th class="num">Contribution</th></tr></thead><tbody id="pricingTable"></tbody></table></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Цена для целевой gross margin</div></div><div class="table-wrap"><table><thead><tr><th>Цель</th><th>Требуемая основная цена</th><th>Комментарий</th></tr></thead><tbody id="minPriceTable"></tbody></table></div><div class="table-note">Решается численно при текущем объёме, COGS, setup allocation и expected revenue leakage; contribution costs в GM не входят.</div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">3 объёма × 3 профиля диалога · выбранный тариф</div></div><div class="table-wrap"><table><thead><tr><th>Объём</th><th>Профиль</th><th class="num">Минуты</th><th class="num">Усп. диалоги</th><th class="num">PTP</th><th class="num">Kept PTP</th><th class="num">Revenue</th><th class="num">COGS</th><th class="num">GM %</th><th class="num">Contribution</th></tr></thead><tbody id="matrixTable"></tbody></table></div></div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Чувствительность</div></div><div class="table-wrap"><table><thead><tr><th>Изменение</th><th class="num">GM %</th><th class="num">Contribution</th><th class="num">Δ contribution</th></tr></thead><tbody id="sensitivityTable"></tbody></table></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Граница убыточности</div></div><div class="panel-body" id="lossThreshold"></div></div>
-        </div>
-      </section>
-
-      <section class="screen" id="pilot">
-        <div class="page-head"><div><h1>Пилот и go / no-go</h1><p>Пилот измеряет причинный эффект и безопасность, а не демонстрирует красивый разговор.</p></div></div>
-        <div class="roadmap">
-          <div class="phase"><div class="phase-head"><b>0 · Discovery</b><small>4–6 недель</small></div><ul><li>Legal/IB/telecom mapping</li><li>Анонимизированный corpus</li><li>Baseline funnel + COGS</li><li>Integration contracts</li><li>Gate: data + owner + legal path</li></ul></div>
-          <div class="phase"><div class="phase-head"><b>1 · MVP lab</b><small>8–10 недель</small></div><ul><li>Compliance ledger</li><li>One scenario / one product</li><li>Golden set + red-team</li><li>Synthetic SIP / CDR</li><li>Gate: safety + extraction</li></ul></div>
-          <div class="phase"><div class="phase-head"><b>2 · Controlled pilot</b><small>6–8 недель</small></div><ul><li>10k records, DPD 1–30</li><li>Randomized holdout</li><li>Daily QA / complaint review</li><li>Payment observation window</li><li>Gate: zero violations + CM&gt;0</li></ul></div>
-          <div class="phase"><div class="phase-head"><b>3 · Scale / enterprise</b><small>6–12+ месяцев</small></div><ul><li>100k → 1m records</li><li>HA/DR, on-prem path</li><li>Multi-product / tenant</li><li>FSSP evidence export</li><li>Gate: SLA + audited controls</li></ul></div>
-        </div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Дизайн пилота</div></div><div class="panel-body"><ol><li><b>Population:</b> один кредитный продукт, DPD 1–30, только допустимые контакты, исключить уязвимые и спорные кейсы по policy.</li><li><b>Randomization:</b> AI vs текущий процесс / holdout, стратификация по DPD, балансу, региону, prior contacts.</li><li><b>Primary safety:</b> confirmed violation rate = 0; complaint rate не хуже control с заранее заданным non-inferiority margin.</li><li><b>Primary value:</b> payment conversion / recovered amount в фиксированное окно, а не PTP alone.</li><li><b>Secondary:</b> answer/contact/success/PTP/kept PTP, handoff, latency, ASR/extractor accuracy, cost per payment.</li><li><b>Observation:</b> окно для kept PTP/payment фиксируется до запуска; late payments не «подтягиваются» выборочно.</li></ol></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Go / no-go gates</div></div><div class="panel-body check-list"><div class="check stop"><i>G1</i><div><b>Compliance</b><small>0 подтверждённых нарушений; 100% вызовов имеют permit event и replayable audit.</small></div></div><div class="check stop"><i>G2</i><div><b>Dialogue quality</b><small>Порог ASR/extraction/handoff утверждён на размеченном collection corpus до live pilot.</small></div></div><div class="check stop"><i>G3</i><div><b>Economics</b><small>Положительный contribution margin на invoice-grade CDR и measured vendor COGS.</small></div></div><div class="check stop"><i>G4</i><div><b>Value</b><small>Payment outcome не хуже control; uplift нужен для scale, но не обещается заранее.</small></div></div><div class="check stop"><i>G5</i><div><b>Operations</b><small>Human queue выдерживает p95 transfer SLA; incident/rollback и suppression sync протестированы.</small></div></div></div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Обязательные проверки до live traffic</div></div><div class="panel-body grid g3"><div>Legal memo по ФЗ‑230 / 126‑ФЗ / 152‑ФЗ и конкретному договору.</div><div>Golden set реальных обезличенных диалогов + независимая разметка.</div><div>Adversarial: угрозы, третье лицо, уязвимость, шум, перебивания, prompt injection.</div><div>1/2/8 race conditions, timezone, holidays, multi-campaign/multi-creditor limits.</div><div>Telecom: caller ID, marking, blocking/antispam, AMD, retries, CDR reconciliation.</div><div>Human transfer: queue overflow, no-agent, dropped transfer, context completeness.</div><div>Fail-safe: ASR/LLM/TTS/API outage, stale debt, duplicate event, retry storm.</div><div>Security: threat model, pentest, RBAC, tenant isolation, secrets, export and deletion.</div><div>Load/latency, capacity cost, backup restore, RPO/RTO, audit export reproducibility.</div></div></div>
-      </section>
-
-      <section class="screen" id="risks">
-        <div class="page-head"><div><h1>Риски, open questions и источники</h1><p>Красные риски должны иметь владельца, решение и проверяемый exit criterion.</p></div></div>
-        <div class="grid g3">
-          <div class="risk"><h3>ФЗ‑230 / compliance</h3><p>Один пропущенный контакт вне общего ledger превращает «compliance-first» в ложное обещание. Нужен hard deny и независимый audit.</p></div>
-          <div class="risk"><h3>ПДн / on-prem</h3><p>Cloud может не пройти ИБ банка; on-prem ухудшает модель/операции и создаёт дорогие forks. Нужен deployment decision до КП.</p></div>
-          <div class="risk"><h3>Качество диалога</h3><p>Шум, числа, даты, перебивания, эмоции и нестандартные ответы опаснее обычного NLU. Проверять на реальном collection corpus.</p></div>
-          <div class="risk"><h3>LLM / ASR / TTS COGS</h3><p>Двойной счёт bundle-компонентов и длинные диалоги быстро съедают маржу. Нужны invoice-grade usage records.</p></div>
-          <div class="risk"><h3>Телеком / антиспам</h3><p>Маркировка, согласие на массовые вызовы, блокировки, репутация номеров и per-attempt fees меняют answer rate и COGS.</p></div>
-          <div class="risk"><h3>Ответственность</h3><p>В цепочке кредитор—ПКО—AI-вендор—оператор связи легко размывается владелец нарушения и компенсации.</p></div>
-          <div class="risk"><h3>Recovery / PTP claims</h3><p>Вендорские кейсы не дают causal proof. PTP может расти без payment; сравнение требует holdout и фиксированного окна.</p></div>
-          <div class="risk"><h3>Success fee</h3><p>Атрибуция платежа, clawback, стимулирование давления и договорная роль создают юридический и коммерческий риск.</p></div>
-          <div class="risk"><h3>Reuse voice engine</h3><p>«Движок уже готов» — гипотеза до code/infra audit, load test и оценки gaps по policy, on-prem и поддержке.</p></div>
-        </div>
-        <div class="grid g2">
-          <div class="panel"><div class="panel-head"><div class="panel-title">Нужно проверить до комитета</div></div><div class="panel-body"><ol><li>Живой владелец beachhead и 3–5 design partners с объёмом/DPD/baseline.</li><li>Фактический состав и COGS переиспользуемого voice engine.</li><li>Legal path массовых вызовов и AI call-flow.</li><li>Требования банков к cloud/private/on-prem и российским speech/LLM.</li><li>Baseline: answer, duration, contact, PTP, kept PTP, payment, complaints, operator cost.</li><li>Полные КП телеком/marking/number/recording/transcription/support.</li><li>Кто обеспечивает human queue и платит за transfer minutes.</li><li>Форма/сроки отчётности ФССП для конкретного сегмента.</li><li>Срок закупки, интеграции и security review.</li><li>Цена пилота и критерии конвертации в контракт.</li></ol></div></div>
-          <div class="panel"><div class="panel-head"><div class="panel-title">Нельзя обещать клиенту без доказательств</div></div><div class="panel-body check-list"><div class="check stop"><i>!</i><div><b>Recovery / payment uplift</b><small>Ни 40%, ни 87%, ни любое другое значение до controlled pilot.</small></div></div><div class="check stop"><i>!</i><div><b>PTP 53–64%</b><small>Это vendor claim из концепта, не независимый benchmark.</small></div></div><div class="check stop"><i>!</i><div><b>«Ноль нарушений гарантирован»</b><small>Можно обещать controls/SLA, но не абсолют при внешних данных и системах.</small></div></div><div class="check stop"><i>!</i><div><b>«В 3–4 раза дешевле оператора»</b><small>Только после full-cost baseline и invoice-grade трафика.</small></div></div><div class="check stop"><i>!</i><div><b>«Все конкуренты скриптовые»</b><small>Публичные материалы уже показывают LLM/RAG/GenAI предложения.</small></div></div><div class="check stop"><i>!</i><div><b>«On-prem готов» / «интеграция готова»</b><small>Только после подтверждённого deployment и end-to-end test.</small></div></div></div></div>
-        </div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Что заявлял входной концепт, но публично не подтверждено в этом исследовании</div></div><div class="panel-body"><span class="tag unknown">данных недостаточно</span> TAM ₽15–22 млрд за 3 года; «warm leads: top‑30 банков + 15 МФО»; 45 000 операторов; ₽59 млрд расходов на взыскание; ₽60–80 за AI-контакт против ₽180; ROI 314:1; все market/recovery/PTP цифры без точной методологии; готовность Tovie/AI Recruiter к локализации; «рынок LLM-взыскания пуст»; сроки локализации как простой переупаковки.</div></div>
-        <div class="panel"><div class="panel-head"><div class="panel-title">Публичные источники</div><span class="asof">проверено 14.08.2026</span></div><div class="panel-body source-list">
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_200497/89ed8935f0c77db72c94afba79dd97160ca915a4/">ФЗ‑230, ст. 7 — время, частота, AI disclosure, handoff</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_200497/d273bf73ebb15b14ee63a919fb795a39c21d260a/">ФЗ‑230, ст. 6 — запреты и третьи лица</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_200497/4f8fa57d11f8ccf48891d5d46db3ed5d42e431ad/">ФЗ‑230, ст. 8 — отказ/ограничение взаимодействия</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_310994/55829282093a94c91865d3bc2c77b3999ff0cf07/">Изменения №137‑ФЗ — срок хранения 1,5 года</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_310994/4c1fe7f1d20748757a4c974b70991fc6f4bb19cb/">Изменения №20‑ФЗ — отчётность кредитных и МФО</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://government.ru/news/56060/">Постановление Правительства №1300 — маркировка бизнес-звонков</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_43224/b5a11e1f308ded9f4b94bf885bcf76ed577f9576/">126‑ФЗ, ст. 44.1‑1 — массовые вызовы</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.consultant.ru/document/cons_doc_LAW_61801/cbf4e15b7c330f9372e876cdf2bc928bad7950ef/">152‑ФЗ, ст. 18 — обязанности при сборе ПДн и локализация</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://exolve.ru/tariffs/robots/">МТС Exolve — тарифы Robots</a> · <a href="https://community.exolve.ru/tariffs/voice/">voice extras</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://zvonobot.ru/">Zvonobot — публичные тарифные строки</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.fromtech.ru/golosovoy-robot/">Fromtech — стоимость и состав</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.mango-office.ru/products/contact-center/tariffs/">MANGO OFFICE — тарифы Contact Center</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://wiki.twin24.ai/billing/monthly-reports">TWIN — billing formula</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://neuro.net/ru/nebo/">Neuro.net Nebo — 4,5 ₽ за answered call</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://skorozvon.ru/solutions/golosovoy-robot">Skorozvon — сценарный / hybrid / AI</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://robo-voice.ru/">Robovoice — пакет 2 000 минут</a></div><time>14.08.2026</time></div>
-          <div class="source"><div><a href="https://www.nalog.gov.ru/new2026/">ФНС — основная ставка НДС 22% с 01.01.2026</a></div><time>14.08.2026</time></div>
-        </div></div>
-      </section>
-    </main>
+  <div class="sticky-cta" aria-label="Быстрый переход к назначению демо">
+    <div class="sticky-shell">
+      <div class="sticky-copy">
+        <strong>Показать ограниченный пилот без лишнего шума</strong>
+        <span>Откроем форму и договоримся о демонстрации сценария.</span>
+      </div>
+      <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+    </div>
   </div>
-</div>
 
-<script>
-(() => {
-  const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>[...r.querySelectorAll(s)];
-  const rub=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number.isFinite(n)?n:0);
-  const num=(n,d=0)=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:d}).format(Number.isFinite(n)?n:0);
-  const pct=n=>`${num(n*100,1)}%`;
-  qa('.nav button').forEach(b=>b.addEventListener('click',()=>{qa('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');qa('.screen').forEach(x=>x.classList.remove('active'));q(`#${b.dataset.screen}`).classList.add('active');window.scrollTo(0,0)}));
+  <div class="modal-overlay" id="demoModalOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+      <button class="modal-close" id="demoModalClose" type="button" aria-label="Закрыть">×</button>
+      <h2 id="demoModalTitle">Назначить демо</h2>
+      <p class="modal-subtitle">Оставьте контакты, и мы свяжемся, чтобы показать управляемый сценарий работы ИИ-коллектора.</p>
+      <form class="modal-form" id="demoForm">
+        <label>
+          <span>Имя</span>
+          <input id="demoName" name="name" type="text" autocomplete="name" required>
+        </label>
+        <label>
+          <span>Компания</span>
+          <input name="company" type="text" autocomplete="organization" required>
+        </label>
+        <label>
+          <span>Email</span>
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          <span>Телефон</span>
+          <input name="phone" type="tel" autocomplete="tel" required>
+        </label>
+        <button class="btn btn-primary" type="submit">Отправить</button>
+        <p class="modal-note">Это демонстрационная форма прототипа без реальной отправки на сервер.</p>
+        <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+      </form>
+    </div>
+  </div>
 
-  const normVendors=[
-    ['Exolve · AI','6,5 ₽/мин','min',6.5,'AI platform; telecom/extras scope уточнить'],
-    ['Zvonobot · neural','0,28 ₽/сек','min',16.8,'Возможна дополнительная строка исходящего 2 ₽/мин'],
-    ['Fromtech','от 2,25 ₽/мин','min',2.25,'Телефония исключена'],
-    ['MANGO OFFICE · robot','4,5 ₽/мин','min',4.5,'LLM employee и telecom scope уточнить'],
-    ['TWIN','PRICE NOT PUBLIC','none',0,'Числовой тариф отсутствует'],
-    ['Neuro.net Nebo','4,5 ₽/answered call','answer',4.5,'Цена не зависит от длины в публичной формулировке'],
-    ['Skorozvon · hybrid','5 ₽/мин','min',5,'AI-robot отдельно PRICE NOT PUBLIC'],
-    ['Robovoice · full utilization','11 800 ₽ / 2 000 мин','min',5.9,'При неполной утилизации эффективная цена выше']
-  ];
-  function drawNorm(){const d=Math.max(.1,+q('#normDuration').value||2.4),s=Math.max(.01,(+q('#normSuccess').value||72)/100);q('#normTable').innerHTML=normVendors.map(v=>{let pm=null,ps=null;if(v[2]==='min'){pm=v[3];ps=v[3]*d/s}else if(v[2]==='answer'){pm=v[3]/d;ps=v[3]/s}return `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td><td class="num">${pm===null?'—':rub(pm)}</td><td class="num">${ps===null?'PRICE NOT PUBLIC':rub(ps)}</td><td>${v[4]}</td></tr>`}).join('')}
-  q('#normDuration').addEventListener('input',drawNorm);q('#normSuccess').addEventListener('input',drawNorm);drawNorm();
+  <script>
+    (() => {
+      const overlay = document.getElementById('demoModalOverlay');
+      const closeButton = document.getElementById('demoModalClose');
+      const form = document.getElementById('demoForm');
+      const success = document.getElementById('demoSuccess');
+      const firstInput = document.getElementById('demoName');
+      let lastActive = null;
 
-  const modelDefs={
-    pass:{name:'Pass-through телефония + AI/мин',setup:700000,ai:10,formula:'revenue = connected_minutes × (telecom_cost + <b>10 ₽ AI fee</b>) + setup_fee / months'},
-    bundle:{name:'Bundled «всё включено»',setup:700000,price:15,formula:'revenue = connected_minutes × <b>15 ₽ bundled price</b> + setup_fee / months'},
-    contact:{name:'За успешный контакт',setup:700000,price:55,formula:'revenue = successful_dialogs × <b>55 ₽</b> + setup_fee / months'},
-    subscription:{name:'Подписка + минуты + overage',setup:700000,monthly:700000,included:50000,overage:13,formula:'revenue = <b>700 000 ₽ monthly</b> + max(0, minutes − 50 000) × 13 ₽ + setup_fee / months'},
-    enterprise:{name:'Enterprise / on-prem',setup:6000000,monthly:1500000,usage:3.5,formula:'revenue = <b>1 500 000 ₽ license</b> + connected_minutes × 3,5 ₽ + 6 000 000 ₽ setup / months'},
-    successfee:{name:'Base usage + success fee',setup:700000,base:3,fee:.08,formula:'revenue = minutes × 3 ₽ + <b>8% × recovered_amount</b> + setup_fee / months · риск атрибуции и стимулов'}
-  };
-  let selected='pass';
-  const state={};
-  function read(){qa('[data-key]').forEach(i=>state[i.dataset.key]=+i.value);['answer','success','ptp','kept','revshare','vat','baddebt','sla','refund','discount'].forEach(k=>state[k]=(state[k]||0)/100);return state}
-  function calc(s=read(),model=selected,override){
-    const d={...modelDefs[model]};if(override!==undefined){if(model==='pass')d.ai=override;if(model==='bundle'||model==='contact')d.price=override;if(model==='subscription'||model==='enterprise')d.monthly=override;if(model==='successfee')d.fee=override}
-    const attempts=s.N*s.attempts,answered=attempts*s.answer,minutes=answered*s.avgMin,success=answered*s.success,ptp=success*s.ptp,kept=ptp*s.kept,recovered=kept*s.recovered;
-    let recurring=0;if(model==='pass')recurring=minutes*(s.telecom+d.ai);if(model==='bundle')recurring=minutes*d.price;if(model==='contact')recurring=success*d.price;if(model==='subscription')recurring=d.monthly+Math.max(0,minutes-d.included)*d.overage;if(model==='enterprise')recurring=d.monthly+minutes*d.usage;if(model==='successfee')recurring=minutes*d.base+recovered*d.fee;
-    const listRevenue=recurring+d.setup/Math.max(1,s.months),leakage=1-s.baddebt-s.sla-s.refund,netRevenue=listRevenue*(1-s.discount)*Math.max(0,leakage);
-    const cogs=minutes*(s.telecom+s.platform+s.asr+s.tts+s.llmMin+s.storage)+answered*s.llmDialog+attempts*s.marking+(s.impl+s.integration)/Math.max(1,s.months);
-    const gp=netRevenue-cogs,gm=netRevenue?gp/netRevenue:0,partner=netRevenue*s.revshare,contribution=gp-s.support-s.account-partner;
-    return {attempts,answered,minutes,success,ptp,kept,recovered,listRevenue,netRevenue,cogs,gp,gm,partner,contribution,invoice:listRevenue*(1+s.vat),d};
-  }
-  function primaryLabel(model,val){if(model==='pass')return `${num(val,2)} ₽ AI/мин + telecom`;if(model==='bundle')return `${num(val,2)} ₽/мин bundled`;if(model==='contact')return `${num(val,2)} ₽/усп. контакт`;if(model==='subscription')return `${rub(val)}/мес`;if(model==='enterprise')return `${rub(val)}/мес license`;return `${num(val*100,1)}% recovered + 3 ₽/мин`}
-  function primaryCurrent(model){const d=modelDefs[model];return model==='pass'?d.ai:model==='bundle'||model==='contact'?d.price:model==='subscription'||model==='enterprise'?d.monthly:d.fee}
-  function requiredPrice(target){let lo=0,hi=selected==='successfee'?2: selected==='subscription'||selected==='enterprise'?100000000:10000;for(let i=0;i<70;i++){const mid=(lo+hi)/2;if(calc(read(),selected,mid).gm>=target)hi=mid;else lo=mid}return hi}
-  function requiredContributionPrice(){let lo=0,hi=selected==='successfee'?2:selected==='subscription'||selected==='enterprise'?100000000:10000;const s={...read(),discount:0};if(calc(s,selected,0).contribution>=0)return 0;if(calc(s,selected,hi).contribution<0)return Infinity;for(let i=0;i<70;i++){const mid=(lo+hi)/2;if(calc(s,selected,mid).contribution>=0)hi=mid;else lo=mid}return hi}
-  function breakEven(){const base=read();if(calc({...base,N:1},selected).contribution>=0)return 1;if(calc({...base,N:10000000},selected).contribution<0)return Infinity;let lo=1,hi=10000000;for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(calc({...base,N:mid},selected).contribution>=0)hi=mid;else lo=mid}return Math.ceil(hi)}
-  function discountThreshold(){const s={...read(),discount:0};if(calc(s,selected).contribution<=0)return 0;let lo=0,hi=.99;for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(calc({...s,discount:mid},selected).contribution>0)lo=mid;else hi=mid}return hi}
-  function refreshOutputs(){const s=read();qa('[data-out]').forEach(o=>{const k=o.dataset.out,v=s[k];if(['answer','success','ptp','kept','discount'].includes(k))o.textContent=pct(v);else o.textContent=num(v,k==='N'?0:1)})}
-  function drawHero(){const r=calc();const be=breakEven();q('#econHero').innerHTML=[['Минуты',num(r.minutes)],['Выручка',rub(r.netRevenue)],['COGS',rub(r.cogs)],['Gross margin',pct(r.gm),r.gm<.5?'negative':'positive'],['Contribution',rub(r.contribution),r.contribution<0?'negative':'positive'],['Break-even records',Number.isFinite(be)?num(be):'> 10 млн']].map(x=>`<div class="metric"><div class="label">${x[0]}</div><div class="value ${x[2]||''}">${x[1]}</div></div>`).join('')}
-  function drawPricing(){q('#pricingTable').innerHTML=Object.keys(modelDefs).map(m=>{const r=calc(read(),m);return `<tr><td><b>${modelDefs[m].name}</b></td><td class="num">${rub(r.netRevenue)}</td><td class="num">${rub(r.cogs)}</td><td class="num ${r.gp<0?'negative':''}">${rub(r.gp)}</td><td class="num ${r.gm<.5?'negative':'positive'}">${pct(r.gm)}</td><td class="num ${r.contribution<0?'negative':'positive'}">${rub(r.contribution)}</td></tr>`}).join('')}
-  function drawMinPrice(){q('#minPriceTable').innerHTML=[.5,.6,.7].map(t=>{const v=requiredPrice(t);const impossible=selected==='successfee'&&v>1;return `<tr><td><b>${num(t*100)}% GM</b></td><td>${impossible?'&gt;100% · практически недостижимо':primaryLabel(selected,v)}</td><td>${selected==='pass'?'telecom pass-through остаётся в revenue':selected==='successfee'?'success fee зависит от атрибуции payment':'при текущем объёме и leakage'}</td></tr>`}).join('')}
-  const volumes=[[10000,'Small · 10k'],[100000,'Mid · 100k'],[1000000,'Enterprise · 1m']],profiles=[['Короткий информирующий',.8,.82,.18],['Стандартный soft collection',2.4,.72,.38],['Длинный сложный',5.5,.58,.46]];
-  function drawMatrix(){const s=read();q('#matrixTable').innerHTML=volumes.flatMap(v=>profiles.map(p=>{const r=calc({...s,N:v[0],avgMin:p[1],success:p[2],ptp:p[3]},selected);return `<tr><td>${v[1]}</td><td>${p[0]} <span class="mono muted">${p[1]}m</span></td><td class="num">${num(r.minutes)}</td><td class="num">${num(r.success)}</td><td class="num">${num(r.ptp)}</td><td class="num">${num(r.kept)}</td><td class="num">${rub(r.netRevenue)}</td><td class="num">${rub(r.cogs)}</td><td class="num ${r.gm<.5?'negative':'positive'}">${pct(r.gm)}</td><td class="num ${r.contribution<0?'negative':'positive'}">${rub(r.contribution)}</td></tr>`})).join('')}
-  function drawSensitivity(){const s=read(),base=calc(s,selected);const cases=[['Baseline',{}],['answer_rate −20%',{answer:s.answer*.8}],['answer_rate +20%',{answer:Math.min(.99,s.answer*1.2)}],['avg duration −20%',{avgMin:s.avgMin*.8}],['avg duration +20%',{avgMin:s.avgMin*1.2}],['LLM cost −20%',{llmMin:s.llmMin*.8,llmDialog:s.llmDialog*.8}],['LLM cost +20%',{llmMin:s.llmMin*1.2,llmDialog:s.llmDialog*1.2}],['telecom −20%',{telecom:s.telecom*.8}],['telecom +20%',{telecom:s.telecom*1.2}],['price discount +10 п.п.',{discount:Math.min(.9,s.discount+.1)}],['price discount +20 п.п.',{discount:Math.min(.9,s.discount+.2)}]];q('#sensitivityTable').innerHTML=cases.map(c=>{const r=calc({...s,...c[1]},selected),delta=r.contribution-base.contribution;return `<tr><td>${c[0]}</td><td class="num ${r.gm<.5?'negative':'positive'}">${pct(r.gm)}</td><td class="num ${r.contribution<0?'negative':'positive'}">${rub(r.contribution)}</td><td class="num ${delta<0?'negative':'positive'}">${delta>=0?'+':''}${rub(delta)}</td></tr>`}).join('')}
-  function drawThreshold(){const t=discountThreshold(),r=calc(),floor=requiredContributionPrice();q('#lossThreshold').innerHTML=`<div class="callout ${r.contribution<0?'danger':'warn'}"><h3>${r.contribution<0?'Текущий сценарий уже убыточен по contribution':'Допустимый discount до contribution = 0'}</h3><p><b>${r.contribution<0?'0%':pct(t)}</b> при прочих текущих параметрах. Break-even основная цена: <b>${Number.isFinite(floor)?primaryLabel(selected,floor):'выше диапазона модели'}</b>.</p></div><p class="small muted">Gross margin может оставаться положительной при отрицательной contribution из-за support, account management и partner revshare. Проверяйте границу отдельно для каждого volume/profile.</p>`}
-  function drawFormula(){q('#modelFormula').innerHTML=`<b>${modelDefs[selected].name}</b><br>${modelDefs[selected].formula}<br>recognized_revenue = list_revenue × (1 − discount) × (1 − bad_debt − SLA_penalties − refunds)<br>COGS = minutes × (telecom + platform + ASR + TTS + LLM/min + storage) + answered × LLM/dialog + attempts × marking + (implementation + integration)/months<br>gross_margin = (recognized_revenue − COGS) / recognized_revenue<br>contribution = gross_profit − support − account_management − partner_revshare`}
-  function drawAll(){refreshOutputs();drawFormula();drawHero();drawPricing();drawMinPrice();drawMatrix();drawSensitivity();drawThreshold()}
-  qa('[data-key]').forEach(i=>i.addEventListener('input',drawAll));qa('#modelToggle button').forEach(b=>b.addEventListener('click',()=>{qa('#modelToggle button').forEach(x=>x.classList.remove('active'));b.classList.add('active');selected=b.dataset.model;drawAll()}));qa('[data-volume]').forEach(b=>b.addEventListener('click',()=>{qa('[data-volume]').forEach(x=>x.classList.remove('active'));b.classList.add('active');q('[data-key=N]').value=b.dataset.volume;drawAll()}));drawAll();
-})();
-</script>
+      function openModal() {
+        lastActive = document.activeElement;
+        success.hidden = true;
+        form.reset();
+        overlay.hidden = false;
+        document.body.classList.add('modal-open');
+        window.requestAnimationFrame(() => {
+          firstInput.focus();
+        });
+      }
+
+      function closeModal() {
+        overlay.hidden = true;
+        document.body.classList.remove('modal-open');
+        if (lastActive && typeof lastActive.focus === 'function') {
+          lastActive.focus();
+        }
+      }
+
+      document.querySelectorAll('[data-cta="demo"]').forEach((button) => {
+        button.addEventListener('click', openModal);
+      });
+
+      closeButton.addEventListener('click', closeModal);
+
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+          closeModal();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !overlay.hidden) {
+          closeModal();
+        }
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) {
+          return;
+        }
+        success.hidden = false;
+      });
+    })();
+  </script>
 </body>
 </html>
