@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ИИ-коллектор — кампании взыскания с проверкой перед звонком</title>
-  <meta name="description" content="ИИ-коллектор помогает запускать телефонные кампании взыскания: проверка ограничений перед звонком, перевод оператору и журнал действий.">
+  <title>ИИ-коллектор — автоматизация телефонного взыскания</title>
+  <meta name="description" content="ИИ-коллектор помогает запускать кампании взыскания: база, сценарий, обзвон и результат. Контроль ограничений и журнал действий встроены в процесс.">
   <style>
     :root {
-      --bg: #f5f7f9;
+      --bg: #f4f6f8;
       --surface: #ffffff;
-      --ink: #17212f;
-      --muted: #5a6b7d;
-      --line: #d7e0ea;
-      --accent: #1a5fad;
-      --accent-strong: #154d8c;
-      --accent-soft: #eaf2fb;
-      --success-soft: #edf7f1;
-      --radius: 12px;
-      --container: 1080px;
+      --ink: #0f1724;
+      --muted: #5c6b7a;
+      --line: #dde4ec;
+      --accent: #1565c0;
+      --accent-strong: #0d4a8f;
+      --accent-soft: #e8f1fb;
+      --hero-bg: linear-gradient(165deg, #f8fafc 0%, #eef3f8 48%, #f4f6f8 100%);
+      --shadow: 0 16px 40px rgba(15, 23, 36, 0.08);
+      --radius: 14px;
+      --container: 1120px;
       --sticky-height: 0px;
-      --font: Inter, "Segoe UI", Arial, sans-serif;
+      --font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -31,7 +32,6 @@
       background: var(--bg);
       padding-bottom: var(--sticky-height);
     }
-    body.modal-open { overflow: hidden; }
     a { color: inherit; text-decoration: none; }
     button, input { font: inherit; }
     button { cursor: pointer; }
@@ -45,7 +45,8 @@
       position: sticky;
       top: 0;
       z-index: 20;
-      background: rgba(245, 247, 249, 0.96);
+      background: rgba(248, 250, 252, 0.92);
+      backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--line);
     }
 
@@ -61,13 +62,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      min-width: 0;
     }
 
     .brand-mark {
       width: 36px;
       height: 36px;
-      border-radius: 8px;
+      border-radius: 10px;
       display: grid;
       place-items: center;
       background: var(--ink);
@@ -104,20 +104,20 @@
 
     .btn {
       border: 0;
-      border-radius: 8px;
-      padding: 11px 16px;
+      border-radius: 10px;
+      padding: 12px 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
+      transition: background 0.15s ease;
     }
 
     .btn:focus-visible,
     .header-nav a:focus-visible,
     summary:focus-visible,
-    .modal-close:focus-visible,
     input:focus-visible {
-      outline: 3px solid rgba(26, 95, 173, 0.28);
+      outline: 3px solid rgba(21, 101, 192, 0.28);
       outline-offset: 2px;
     }
 
@@ -137,20 +137,28 @@
       border: 1px solid var(--line);
     }
 
+    .btn-block { width: 100%; }
+
     .hero {
-      padding: 40px 0 12px;
+      padding: 56px 0 24px;
+      background: var(--hero-bg);
+      border-bottom: 1px solid var(--line);
     }
 
-    .hero-card {
+    .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
-      gap: 28px;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+      gap: 32px;
       align-items: start;
     }
 
     .eyebrow {
       display: inline-block;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
       color: var(--muted);
       font-size: 13px;
       font-weight: 600;
@@ -158,39 +166,98 @@
 
     .hero h1 {
       margin: 0;
-      font-size: clamp(28px, 4.2vw, 44px);
-      line-height: 1.12;
+      font-size: clamp(32px, 4.8vw, 52px);
+      line-height: 1.08;
       letter-spacing: -0.03em;
-      max-width: 16ch;
+      max-width: 14ch;
     }
 
     .hero-lead {
-      margin: 14px 0 0;
-      font-size: 17px;
+      margin: 16px 0 0;
+      font-size: 18px;
       color: var(--muted);
-      max-width: 560px;
+      max-width: 520px;
     }
 
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 22px;
+    .hero-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 15px;
     }
 
-    .hero-facts {
+    .hero-form-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 2px);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .hero-form-card h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-form-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .demo-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .demo-form label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .demo-form input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      background: #fff;
+    }
+
+    .form-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .form-success {
+      background: #edf7f1;
+      border: 1px solid #cfe6d8;
+      color: #1b5b37;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .value-strip {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 28px;
+      gap: 14px;
+      margin-top: 36px;
     }
 
-    .fact-card,
-    .side-panel,
+    .value-card,
     .step-card,
-    .trust-card,
     .benefit-card,
     .role-card,
+    .control-card,
     .cta-panel,
     details {
       background: var(--surface);
@@ -198,85 +265,81 @@
       border-radius: var(--radius);
     }
 
-    .fact-card,
+    .value-card,
     .step-card,
-    .trust-card,
     .benefit-card,
-    .role-card {
-      padding: 16px;
+    .role-card,
+    .control-card {
+      padding: 18px;
     }
 
-    .fact-card strong,
-    .side-panel strong,
+    .value-card strong,
     .step-card strong,
-    .trust-card strong,
     .benefit-card strong,
-    .role-card strong {
+    .role-card strong,
+    .control-card strong {
       display: block;
       font-size: 16px;
       line-height: 1.3;
     }
 
-    .fact-card span,
-    .side-panel p,
+    .value-card span,
     .step-card p,
-    .trust-card p,
     .benefit-card p,
     .role-card p,
+    .control-card p,
     .section-lead,
     .faq-intro {
       color: var(--muted);
     }
 
-    .side-panel {
-      padding: 20px;
+    main section { padding: 56px 0; }
+
+    main section:nth-of-type(even) {
+      background: #fff;
+      border-block: 1px solid var(--line);
     }
 
-    .side-panel ul {
-      padding-left: 18px;
-      margin: 14px 0 0;
-      color: var(--muted);
-    }
-
-    .side-panel li + li { margin-top: 8px; }
-
-    main section { padding: 28px 0; }
-
-    .section-head { margin-bottom: 16px; }
+    .section-head { margin-bottom: 24px; }
 
     .section-head h2,
     .cta-panel h2 {
       margin: 0;
-      font-size: clamp(24px, 3.4vw, 32px);
-      line-height: 1.15;
+      font-size: clamp(26px, 3.6vw, 36px);
+      line-height: 1.12;
       letter-spacing: -0.02em;
     }
 
     .section-lead {
-      max-width: 680px;
-      margin: 8px 0 0;
-      font-size: 16px;
+      max-width: 640px;
+      margin: 10px 0 0;
+      font-size: 17px;
     }
 
     .steps-grid,
     .benefits-grid,
-    .roles-grid {
+    .roles-grid,
+    .control-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
+    }
+
+    .control-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .step-card {
       display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 12px;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
       align-items: start;
     }
 
     .step-index {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       background: var(--accent-soft);
       color: var(--accent);
       display: grid;
@@ -285,29 +348,26 @@
       font-size: 13px;
     }
 
-    .trust-layout {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .cta-repeat { margin-top: 20px; }
+    .cta-repeat { margin-top: 24px; }
 
     .role-card small {
       display: inline-block;
       margin-bottom: 8px;
       color: var(--accent);
       font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .faq-wrap { display: grid; gap: 8px; }
+    .faq-wrap { display: grid; gap: 10px; }
 
     details { overflow: hidden; }
 
     summary {
       list-style: none;
       cursor: pointer;
-      padding: 14px 16px;
+      padding: 16px 18px;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -319,9 +379,9 @@
 
     summary::after {
       content: '+';
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
       background: var(--bg);
       display: grid;
       place-items: center;
@@ -331,20 +391,21 @@
     details[open] summary::after { content: '−'; }
 
     .faq-answer {
-      padding: 0 16px 16px;
+      padding: 0 18px 18px;
       color: var(--muted);
       font-size: 15px;
     }
 
     .cta-panel {
-      padding: 28px;
+      padding: 32px;
       display: grid;
-      gap: 12px;
+      gap: 14px;
+      background: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
     }
 
     .cta-panel p {
       margin: 0;
-      max-width: 640px;
+      max-width: 560px;
       color: var(--muted);
     }
 
@@ -355,12 +416,12 @@
       bottom: 0;
       z-index: 30;
       padding: 12px 16px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.96);
       border-top: 1px solid var(--line);
     }
 
     .sticky-shell {
-      width: min(100%, 1080px);
+      width: min(100%, var(--container));
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -378,7 +439,7 @@
     .sticky-copy span { color: var(--muted); }
 
     .site-footer {
-      padding: 16px 0 24px;
+      padding: 20px 0 28px;
       color: var(--muted);
       font-size: 14px;
     }
@@ -393,100 +454,21 @@
 
     .footer-row nav { display: flex; gap: 14px; }
 
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      background: rgba(23, 33, 47, 0.56);
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .modal-overlay[hidden] { display: none; }
-
-    .modal {
-      width: min(100%, 480px);
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 24px;
-      position: relative;
-    }
-
-    .modal h2 {
-      margin: 0;
-      font-size: 24px;
-    }
-
-    .modal-subtitle {
-      margin: 10px 0 0;
-      color: var(--muted);
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #fff;
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    .modal-form {
-      display: grid;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    .modal-form label {
-      display: grid;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .modal-form input {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 0 12px;
-    }
-
-    .modal-note {
-      color: var(--muted);
-      font-size: 13px;
-      margin: 0;
-    }
-
-    .form-success {
-      background: var(--success-soft);
-      border: 1px solid #cfe6d8;
-      color: #1b5b37;
-      border-radius: 8px;
-      padding: 12px;
-      font-weight: 600;
-    }
-
     @media (min-width: 761px) {
-      .sticky-cta {
-        display: none;
-      }
+      .sticky-cta { display: none; }
     }
 
     @media (max-width: 980px) {
-      .hero-card,
-      .trust-layout,
-      .hero-facts,
+      .hero-grid,
+      .value-strip,
+      .control-grid,
       .steps-grid,
       .benefits-grid,
       .roles-grid {
         grid-template-columns: 1fr;
       }
+
+      .hero h1 { max-width: none; }
     }
 
     @media (max-width: 760px) {
@@ -500,11 +482,12 @@
 
       .header-nav { width: 100%; justify-content: flex-start; }
 
-      .hero { padding-top: 24px; }
+      .hero { padding-top: 32px; }
 
-      .hero h1 { max-width: none; }
-
-      .sticky-shell { flex-direction: column; align-items: stretch; }
+      .sticky-shell {
+        flex-direction: column;
+        align-items: stretch;
+      }
 
       .sticky-shell .btn-primary { width: 100%; }
     }
@@ -517,55 +500,72 @@
         <span class="brand-mark">ИИ</span>
         <span class="brand-copy">
           <strong>ИИ-коллектор</strong>
-          <span>Кабинет для кампаний взыскания</span>
+          <span>Автоматизация телефонного взыскания</span>
         </span>
       </a>
       <nav class="header-nav" aria-label="Навигация по лендингу">
         <a href="#how-it-works">Как это работает</a>
-        <a href="#benefits">Преимущества</a>
+        <a href="#benefits">Возможности</a>
         <a href="#faq">FAQ</a>
-        <a href="login.html">Войти в кабинет</a>
+        <a href="login.html">Войти</a>
         <a href="register.html">Создать аккаунт</a>
-        <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+        <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
       </nav>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
-      <div class="container hero-card">
-        <div>
-          <span class="eyebrow">Запуск под контролем, без лишних обещаний</span>
-          <h1>Звонки только там, где это разрешено</h1>
-          <p class="hero-lead">ИИ-коллектор помогает запустить кампанию, проверяет ограничения перед звонком и передаёт спорные случаи оператору. В журнале действий видно, что произошло и почему.</p>
-          <div class="hero-actions">
-            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
-            <a class="btn btn-secondary" href="#how-it-works">Как это работает</a>
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Для МФО, банков и ПКО</span>
+            <h1>ИИ-коллектор для телефонного взыскания</h1>
+            <p class="hero-lead">Запускайте кампании, ведите диалоги и собирайте результат. Проверка ограничений, перевод оператору и журнал действий уже встроены в процесс.</p>
+            <a class="hero-link" href="#how-it-works">Как устроен продукт →</a>
           </div>
-          <div class="hero-facts">
-            <div class="fact-card">
-              <strong>Проверка ограничений</strong>
-              <span>Перед звонком сразу видно: можно, нельзя или нужна проверка.</span>
-            </div>
-            <div class="fact-card">
-              <strong>Перевод оператору</strong>
-              <span>Спорный случай не уходит в звонок автоматически.</span>
-            </div>
-            <div class="fact-card">
-              <strong>Журнал действий</strong>
-              <span>Можно восстановить шаги и причины решений.</span>
-            </div>
-          </div>
+
+          <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
+            <h2>Назначить демо</h2>
+            <p>Покажем кампанию, сценарий и результат на вашем примере.</p>
+            <form class="demo-form" id="demoForm">
+              <label>
+                <span>Имя</span>
+                <input id="demoName" name="name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                <span>Компания</span>
+                <input name="company" type="text" autocomplete="organization" required>
+              </label>
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" required>
+              </label>
+              <label>
+                <span>Телефон</span>
+                <input name="phone" type="tel" autocomplete="tel" required>
+              </label>
+              <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
+              <p class="form-note">Демо-форма: заявка не отправляется на сервер.</p>
+              <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+            </form>
+          </aside>
         </div>
-        <aside class="side-panel" aria-label="Что входит в демо">
-          <strong>Что покажем на демо</strong>
-          <p>На демо пройдём один полный сценарий: от подготовки кампании до фиксации результата.</p>
-          <ul>
-            <li>Как выглядит запуск без обещания «сразу в масштаб».</li>
-            <li>Где система останавливает недопустимое действие.</li>
-            <li>Как оператор получает весь контекст без ручной сборки истории.</li>
-          </ul>
-        </aside>
+
+        <div class="value-strip">
+          <article class="value-card">
+            <strong>Кампании и база</strong>
+            <span>Загрузите базу, настройте сценарий и запустите обзвон в одном кабинете.</span>
+          </article>
+          <article class="value-card">
+            <strong>Диалоги и результат</strong>
+            <span>ИИ ведёт разговор, фиксирует исход и обещания платежа.</span>
+          </article>
+          <article class="value-card">
+            <strong>Контроль в процессе</strong>
+            <span>Ограничения, журнал действий и перевод оператору — без отдельного «контура безопасности».</span>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -573,88 +573,58 @@
       <div class="container">
         <div class="section-head">
           <h2>Как это работает</h2>
-          <p class="section-lead">Логика простая: сначала допустимость действия, затем звонок, затем журнал.</p>
+          <p class="section-lead">От базы до результата — один управляемый процесс, а не набор разрозненных инструментов.</p>
         </div>
         <div class="steps-grid">
           <article class="step-card">
             <div class="step-index">01</div>
             <div>
-              <strong>Собираем кампанию и сценарий</strong>
-              <p>Фиксируем задачу, данные и границу запуска.</p>
+              <strong>Создаёте кампанию</strong>
+              <p>Задача, база должников и сценарий диалога — в одном месте.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">02</div>
             <div>
-              <strong>Проверяем ограничения перед звонком</strong>
-              <p>Система проверяет правила конкретного случая до следующего шага.</p>
+              <strong>Загружаете базу</strong>
+              <p>CSV или XLSX с проверкой обязательных полей.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">03</div>
             <div>
-              <strong>Готовим контакты и расписание</strong>
-              <p>Учитываем время звонков и исключения.</p>
+              <strong>Настраиваете телефонию</strong>
+              <p>Подключаете исходящий контур и проверяете соединение.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">04</div>
             <div>
-              <strong>Ведём управляемый диалог</strong>
-              <p>Шаги заданы заранее, отклонения не скрываются.</p>
+              <strong>Запускаете обзвон</strong>
+              <p>ИИ ведёт диалог по сценарию, фиксирует исход.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">05</div>
             <div>
-              <strong>Выделяем спорные ситуации</strong>
-              <p>Если есть риск или неопределённость, кейс уходит на проверку.</p>
+              <strong>Проверяете ограничения</strong>
+              <p>Перед звонком система оценивает допустимость действия.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">06</div>
             <div>
-              <strong>Переводим оператору, где нужно</strong>
-              <p>Оператор получает контекст и принимает решение по фактам.</p>
+              <strong>Переводите оператору</strong>
+              <p>Спорные случаи уходят человеку с полным контекстом.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">07</div>
             <div>
-              <strong>Показываем результат и журнал</strong>
-              <p>Видно, что сделано, какое решение принято и почему.</p>
+              <strong>Смотрите результат</strong>
+              <p>Журнал звонков, исходы и отчёт по кампании.</p>
             </div>
           </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="trust">
-      <div class="container">
-        <div class="section-head">
-          <h2>Почему можно доверять</h2>
-          <p class="section-lead">Мы не обещаем, что «всё сделает ИИ». Фокус — на контроле, понятных причинах и прозрачном запуске.</p>
-        </div>
-        <div class="trust-layout">
-          <article class="trust-card">
-            <strong>Понятные причины</strong>
-            <p>Видно, что разрешено, что требует проверки и почему шаг остановлен.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Контроль процесса</strong>
-            <p>Там, где нужен оператор, система не пытается заменить человека.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Журнал по фактам</strong>
-            <p>Цепочку шагов можно восстановить без поиска по разным источникам.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Предсказуемый запуск</strong>
-            <p>Сначала проверяем готовность процесса, затем расширяем объём.</p>
-          </article>
-        </div>
-        <div class="cta-repeat">
-          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
         </div>
       </div>
     </section>
@@ -662,25 +632,51 @@
     <section id="benefits">
       <div class="container">
         <div class="section-head">
-          <h2>Преимущества</h2>
-          <p class="section-lead">Сначала проверка допустимости, затем сценарий и результат, который можно показать команде.</p>
+          <h2>Что получает команда</h2>
+          <p class="section-lead">Продукт для операционной работы: меньше ручной рутины, больше прозрачности по кампании.</p>
         </div>
         <div class="benefits-grid">
           <article class="benefit-card">
-            <strong>Проверка ограничений перед действиями</strong>
-            <p>Каждый шаг сначала проверяется, затем выполняется в заданных рамках.</p>
+            <strong>Автоматизация обзвона</strong>
+            <p>ИИ ведёт диалог по сценарию, команда контролирует процесс, а не каждый звонок вручную.</p>
           </article>
           <article class="benefit-card">
-            <strong>Перевод оператору, когда нужна проверка</strong>
-            <p>Спорные случаи не скрываются: оператор сразу видит причину.</p>
+            <strong>Кампании в одном кабинете</strong>
+            <p>База, сценарий, телефония, звонки и отчёт — без переключения между системами.</p>
           </article>
           <article class="benefit-card">
-            <strong>Журнал действий по фактам</strong>
-            <p>Можно быстро восстановить, что произошло и почему принято решение.</p>
+            <strong>Результат по фактам</strong>
+            <p>Исходы звонков, обещания платежа и прогресс кампании видны сразу.</p>
           </article>
           <article class="benefit-card">
-            <strong>Запуск без обещания «сразу в масштаб»</strong>
-            <p>Демо показывает управляемый сценарий и критерии готовности.</p>
+            <strong>Контроль без отдельного «контура»</strong>
+            <p>Проверка ограничений и журнал действий встроены в обычный рабочий процесс.</p>
+          </article>
+        </div>
+        <div class="cta-repeat">
+          <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="control">
+      <div class="container">
+        <div class="section-head">
+          <h2>Контроль — часть процесса, не отдельный продукт</h2>
+          <p class="section-lead">Безопасность не продаём отдельно. Она следует из того, как устроен обзвон.</p>
+        </div>
+        <div class="control-grid">
+          <article class="control-card">
+            <strong>Проверка перед звонком</strong>
+            <p>Система оценивает допустимость действия до следующего шага.</p>
+          </article>
+          <article class="control-card">
+            <strong>Перевод оператору</strong>
+            <p>Спорный случай не уходит в автоматический обзвон.</p>
+          </article>
+          <article class="control-card">
+            <strong>Журнал действий</strong>
+            <p>Можно восстановить, что произошло и почему принято решение.</p>
           </article>
         </div>
       </div>
@@ -690,32 +686,29 @@
       <div class="container">
         <div class="section-head">
           <h2>Кому подходит</h2>
-          <p class="section-lead">Для команд, которым важны контроль процесса и прозрачные причины решений.</p>
+          <p class="section-lead">Командам, которым нужен управляемый обзвон, а не «чёрный ящик с ИИ».</p>
         </div>
         <div class="roles-grid">
           <article class="role-card">
             <small>Роль</small>
             <strong>Руководитель взыскания</strong>
-            <p>Понятные рамки запуска и ясная картина по ходу кампании.</p>
+            <p>Запуск кампаний, прогресс и результат в одном месте.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Юристы и руководители по рискам</strong>
-            <p>Каждое действие можно объяснить и подтвердить по журналу.</p>
+            <strong>Операционный менеджер</strong>
+            <p>Настройка базы, сценария и телефонии без лишних шагов.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Супервизор и контроль качества</strong>
-            <p>Кейсы на проверку приходят с контекстом, без ручной сборки истории.</p>
+            <strong>Юристы и риск-менеджмент</strong>
+            <p>Действия можно проверить по журналу и ограничениям.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
             <strong>Администратор интеграций</strong>
-            <p>Понятно, как данные проходят контур, без лишних обещаний по функциям.</p>
+            <p>Понятный контур данных и подключений.</p>
           </article>
-        </div>
-        <div class="cta-repeat">
-          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
         </div>
       </div>
     </section>
@@ -724,32 +717,28 @@
       <div class="container">
         <div class="section-head">
           <h2>FAQ</h2>
-          <p class="faq-intro">Коротко отвечаем на частые вопросы перед демо.</p>
+          <p class="faq-intro">Коротко — перед демо.</p>
         </div>
         <div class="faq-wrap">
           <details>
-            <summary>Что будет на демо ИИ-коллектора?</summary>
-            <div class="faq-answer">Покажем рабочий сценарий: шаги кампании, проверку ограничений, журнал действий и перевод оператору, если нужна проверка.</div>
+            <summary>Что покажете на демо?</summary>
+            <div class="faq-answer">Кампанию от базы до результата: сценарий, обзвон, проверку ограничений и перевод оператору.</div>
           </details>
           <details>
-            <summary>Как система решает «разрешено / нужна проверка»?</summary>
-            <div class="faq-answer">По заданным ограничениям и правилам конкретного случая. Если есть риск или неопределённость, действие уходит на проверку оператору.</div>
+            <summary>Это полностью автоматический обзвон?</summary>
+            <div class="faq-answer">Нет. ИИ автоматизирует диалог, но спорные случаи остаются на операторе. Запуск управляемый.</div>
           </details>
           <details>
-            <summary>Что происходит, если ситуация спорная?</summary>
-            <div class="faq-answer">Кейс не продавливается автоматически. Оператор получает контекст и принимает решение на основе фактов.</div>
+            <summary>Как работает проверка ограничений?</summary>
+            <div class="faq-answer">Перед звонком система смотрит правила конкретного случая. Если есть риск — действие уходит на проверку.</div>
           </details>
           <details>
-            <summary>Можно ли остановить запуск?</summary>
-            <div class="faq-answer">Да. Запуск можно приостановить, уточнить критерии готовности и продолжить работу позже.</div>
+            <summary>Можно ли остановить кампанию?</summary>
+            <div class="faq-answer">Да. Кампанию можно приостановить и возобновить, когда процесс готов.</div>
           </details>
           <details>
-            <summary>Какие результаты вы показываете?</summary>
-            <div class="faq-answer">По фактам: что выполнено, какие решения приняты и почему. Без цифр, которые нельзя подтвердить.</div>
-          </details>
-          <details>
-            <summary>Кому это подходит?</summary>
-            <div class="faq-answer">Руководителям взыскания, контролю качества, юридическим службам и администраторам интеграций — там, где важны контроль и журнал действий.</div>
+            <summary>Какие результаты видны по итогам?</summary>
+            <div class="faq-answer">Исходы звонков, обещания платежа, прогресс кампании и журнал действий — по фактам, без «магических» цифр.</div>
           </details>
         </div>
       </div>
@@ -758,10 +747,10 @@
     <section>
       <div class="container">
         <div class="cta-panel">
-          <h2>Готовы посмотреть сценарий в работе?</h2>
-          <p>Покажем кампанию в действии: проверку перед звонком, журнал и перевод оператору там, где нужна проверка.</p>
+          <h2>Посмотреть ИИ-коллектор в работе</h2>
+          <p>30 минут — и вы увидите, как кампания проходит от базы до результата.</p>
           <div>
-            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+            <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
           </div>
         </div>
       </div>
@@ -781,87 +770,17 @@
   <div class="sticky-cta" aria-label="Назначить демо">
     <div class="sticky-shell">
       <div class="sticky-copy">
-        <strong>Показать сценарий на демо</strong>
-        <span>Оставьте контакты, и мы согласуем время.</span>
+        <strong>Назначить демо</strong>
+        <span>Форма заявки — вверху страницы.</span>
       </div>
-      <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="demoModalOverlay" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
-      <button class="modal-close" id="demoModalClose" type="button" aria-label="Закрыть">×</button>
-      <h2 id="demoModalTitle">Назначить демо</h2>
-      <p class="modal-subtitle">Оставьте контакты, и мы покажем сценарий работы ИИ-коллектора.</p>
-      <form class="modal-form" id="demoForm">
-        <label>
-          <span>Имя</span>
-          <input id="demoName" name="name" type="text" autocomplete="name" required>
-        </label>
-        <label>
-          <span>Компания</span>
-          <input name="company" type="text" autocomplete="organization" required>
-        </label>
-        <label>
-          <span>Email</span>
-          <input name="email" type="email" autocomplete="email" required>
-        </label>
-        <label>
-          <span>Телефон</span>
-          <input name="phone" type="tel" autocomplete="tel" required>
-        </label>
-        <button class="btn btn-primary" type="submit">Отправить</button>
-        <p class="modal-note">Демо-форма: заявка не отправляется на сервер.</p>
-        <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-      </form>
+      <a class="btn btn-primary" href="#demo-form">Перейти к форме</a>
     </div>
   </div>
 
   <script>
     (() => {
-      const overlay = document.getElementById('demoModalOverlay');
-      const closeButton = document.getElementById('demoModalClose');
       const form = document.getElementById('demoForm');
       const success = document.getElementById('demoSuccess');
-      const firstInput = document.getElementById('demoName');
-      let lastActive = null;
-
-      function openModal() {
-        lastActive = document.activeElement;
-        success.hidden = true;
-        form.reset();
-        overlay.hidden = false;
-        document.body.classList.add('modal-open');
-        window.requestAnimationFrame(() => {
-          firstInput.focus();
-        });
-      }
-
-      function closeModal() {
-        overlay.hidden = true;
-        document.body.classList.remove('modal-open');
-        if (lastActive && typeof lastActive.focus === 'function') {
-          lastActive.focus();
-        }
-      }
-
-      document.querySelectorAll('[data-cta="demo"]').forEach((button) => {
-        button.addEventListener('click', openModal);
-      });
-
-      closeButton.addEventListener('click', closeModal);
-
-      overlay.addEventListener('click', (event) => {
-        if (event.target === overlay) {
-          closeModal();
-        }
-      });
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !overlay.hidden) {
-          closeModal();
-        }
-      });
 
       form.addEventListener('submit', (event) => {
         event.preventDefault();
