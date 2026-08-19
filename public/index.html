@@ -566,7 +566,6 @@
       font-weight: 600;
     }
 
-
     .footer-row {
       display: flex;
       justify-content: space-between;
@@ -658,6 +657,8 @@
         <a href="#trust">Доверие</a>
         <a href="#benefits">Преимущества</a>
         <a href="#faq">FAQ</a>
+        <a href="login.html">Войти в кабинет</a>
+        <a href="register.html">Создать аккаунт</a>
         <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
       </nav>
     </div>
@@ -672,6 +673,7 @@
           <p>Показываем, как устроен запуск, где выполняется проверка ограничений, когда требуется проверка специалистом и как фиксируется журнал действий без потери контекста.</p>
           <div class="hero-actions">
             <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+            <a class="btn btn-secondary" href="login.html">Войти в кабинет</a>
             <a class="btn btn-secondary" href="#how-it-works">Посмотреть структуру пилота</a>
           </div>
           <div class="hero-facts">
@@ -964,14 +966,6 @@
     </div>
   </div>
 
-    <script>
-    (function () {
-      var base = document.createElement('base');
-      var path = location.pathname.replace(/\/[^/]*$/, '/');
-      base.href = path || '/';
-      document.head.insertBefore(base, document.head.firstChild);
-    })();
-  </script>
   <script>
     (() => {
       const overlay = document.getElementById('demoModalOverlay');
@@ -1018,43 +1012,12 @@
         }
       });
 
-      const relayMeta = document.querySelector('meta[name="lead-relay-url"]');
-      const relayUrl = relayMeta ? relayMeta.getAttribute('content') : '';
-
-      form.addEventListener('submit', async (event) => {
+      form.addEventListener('submit', (event) => {
         event.preventDefault();
         if (!form.reportValidity()) {
           return;
         }
-
-        const payload = {
-          organization: form.company.value.trim(),
-          name: form.name.value.trim(),
-          email: form.email.value.trim(),
-          request: form.phone.value.trim()
-        };
-
-        if (!relayUrl) {
-          success.hidden = false;
-          success.textContent = 'Спасибо, мы свяжемся с вами в ближайшее время.';
-          return;
-        }
-
-        try {
-          const resp = await fetch(relayUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (!resp.ok) {
-            throw new Error('relay failed');
-          }
-          success.hidden = false;
-          success.textContent = 'Спасибо, мы свяжемся с вами в ближайшее время.';
-        } catch {
-          success.hidden = false;
-          success.textContent = 'Не удалось отправить заявку. Попробуйте ещё раз или напишите нам напрямую.';
-        }
+        success.hidden = false;
       });
     })();
   </script>
