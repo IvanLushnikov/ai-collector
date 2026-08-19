@@ -242,7 +242,7 @@
 <div class="modal" id="apiSourceModal" aria-hidden="true"><div class="modal-head"><div><h2>Подключить по API</h2><p>Макет обмена. Живая система не подключается.</p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"><div class="wizard-content"><span class="sr-only" id="apiSourceStatus">не подключено</span><div class="form-grid"><div class="field full"><label>Адрес обмена</label><input id="apiSourceUrl" placeholder="https://example.ru/exchange"></div><div class="field"><label>Логин</label><input id="apiSourceLogin" placeholder="Укажите логин"></div><div class="field"><label>Пароль</label><input id="apiSourceSecret" type="password" autocomplete="off" placeholder="Укажите пароль"></div><div class="field full"><label>Кампания</label><select id="apiSourceCampaign"><option>Просрочка 1–7 дней · Займы</option><option>Просрочка 8–30 дней · Рассрочка</option></select></div></div><div class="notice" id="apiSourceNotice" style="margin-top:16px">Подключение не настроено. Укажите данные обмена, чтобы записи поступали сами.</div></div></div><div class="modal-foot"><button class="btn" data-close>Отмена</button><div class="foot-right"><button class="btn primary" id="saveApiSource">Сохранить подключение</button></div></div></div>
 
 <aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
-      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход попытки и результат разговора</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div></div></div></aside>
+      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Ход звонка</div><div id="callCardProgress"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход попытки и результат разговора</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Техническая диагностика</div><div id="callCardDiagnostics"></div></div></div></div></aside>
 <div class="modal" id="confirmActionModal" aria-hidden="true"><div class="modal-head"><div><h2 id="confirmActionTitle">Подтверждение</h2><p id="confirmActionText"></p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"></div><div class="modal-foot"><button class="btn" data-close id="confirmActionCancel">Отмена</button><div class="foot-right"><button class="btn primary" id="confirmActionOk">Запустить кампанию</button></div></div></div>
 <div class="toast" id="toast"><b id="toastTitle">Готово</b><span id="toastText">Изменения сохранены</span></div>
 
@@ -271,10 +271,64 @@
     const map={allow:'Разрешено',block:'Запрещено',review_required:'Нужна проверка',unknown:'Нет решения'};
     return map[String(decision)] || 'Нет решения';
   };
+  const complianceStatusDecisionMap = {
+    allowed: 'allow',
+    blocked: 'block',
+    not_checked: 'unknown'
+  };
+  function formatDecisionStateClass(decision){
+    if (decision === 'allow') return 'state-ready';
+    if (decision === 'block') return 'state-blocked';
+    return 'state-empty';
+  }
   const formatCallStatusLabel=(status='')=>{
     const map={completed:'завершён',initiated:'начат',ringing:'идёт вызов',no_answer:'нет ответа',failed:'ошибка',blocked:'заблокирован'};
     return map[String(status)] || 'в работе';
   };
+  function formatDialStatusLabel(status){
+    const labels = {
+      created: 'Подготовка',
+      queued: 'В очереди',
+      dialing: 'Набор',
+      ringing: 'Идет вызов',
+      answered: 'Соединение установлено',
+      in_conversation: 'Идет разговор',
+      transferred_to_handoff: 'Переведен оператору',
+      handoff_requested: 'Переведен оператору',
+      completed: 'Завершен',
+      no_answer: 'Нет ответа',
+      busy: 'Занято',
+      voicemail: 'Голосовая почта',
+      failed: 'Ошибка звонка',
+      blocked: 'Звонок заблокирован',
+      cancelled: 'Отменен',
+      unknown: 'Статус уточняется'
+    };
+    return labels[status] || 'Статус уточняется';
+  }
+  function formatEvidenceStatusLabel(item){
+    if (item.reviewRequired) return 'Требует проверки';
+    if (item.recordingStatus === 'missing' || item.recordingStatus === 'none' || item.recordingStatus === 'failed') return 'Записи нет';
+    if (item.transcriptStatus === 'processing' || item.transcriptStatus === 'pending') return 'Расшифровка в обработке';
+    if (item.transcriptStatus === 'failed') return 'Расшифровку получить не удалось';
+    if (item.recordingStatus === 'ready' && item.transcriptStatus === 'ready') return 'Запись хранится · Расшифровка готова';
+    if (item.recordingStatus === 'pending') return 'Запись ещё готовится';
+    return 'Статус уточняется';
+  }
+  function formatConversationStatusLabel(status){
+    const labels = {
+      not_started: 'Разговор не начался',
+      in_progress: 'Идет разговор',
+      awaiting_recording: 'Ожидается запись',
+      awaiting_transcription: 'Ожидается расшифровка',
+      transcribed: 'Расшифровка готова',
+      transcription_failed: 'Расшифровку получить не удалось',
+      recording_missing: 'Записи нет',
+      review_required: 'Требует проверки',
+      finalized: 'Результат зафиксирован'
+    };
+    return labels[status] || 'Результат уточняется';
+  }
   const formatReasonCodeLabel=(code='')=>{
     const map={
       ALLOW:'Контакт разрешён',
@@ -960,6 +1014,11 @@
     {
       id:'call-883104',
       status:'completed',
+      dialStatus:'completed',
+      conversationStatus:'finalized',
+      recordingStatus:'ready',
+      transcriptStatus:'ready',
+      reviewRequired:false,
       startedAt:'16:38',
       durationSec:161,
       debtor:'Иван С. · FL-883104',
@@ -982,6 +1041,11 @@
     {
       id:'call-883090',
       status:'completed',
+      dialStatus:'transferred_to_handoff',
+      conversationStatus:'review_required',
+      recordingStatus:'missing',
+      transcriptStatus:'failed',
+      reviewRequired:true,
       startedAt:'16:36',
       durationSec:78,
       debtor:'Мария В. · FL-883090',
@@ -1001,6 +1065,11 @@
     {
       id:'call-883061',
       status:'queued',
+      dialStatus:'no_answer',
+      conversationStatus:'not_started',
+      recordingStatus:'none',
+      transcriptStatus:'none',
+      reviewRequired:false,
       startedAt:'16:33',
       durationSec:0,
       debtor:'Сергей М. · FL-883061',
@@ -1177,9 +1246,15 @@
     const debtorExternalId = item.debtorExternalId ? String(item.debtorExternalId).trim() : '';
     const startedAt = item.startedAt || '';
     const endedAt = item.endedAt || '';
+    const mappedComplianceDecision = complianceStatusDecisionMap[item.complianceStatus];
     return {
       id:`api-call-${index}`,
       status:item.status || 'queued',
+      dialStatus:item.dialStatus || item.status || 'unknown',
+      conversationStatus:item.conversationStatus || null,
+      recordingStatus:item.recordingStatus || null,
+      transcriptStatus:item.transcriptStatus || null,
+      reviewRequired:item.reviewRequired === true,
       startedAt: formatCallTime(startedAt),
       startedAtRaw: startedAt,
       endedAt: endedAt ? formatCallTime(endedAt) : null,
@@ -1192,7 +1267,9 @@
       callAttemptId:item.callAttemptId || item.id || null,
       qaStatus:'not_reviewed',
       complianceEvidence: item.complianceEvidence || item.complianceDecision?.evidence || [],
-      complianceDecision: item.complianceDecision || null,
+      complianceDecision: mappedComplianceDecision
+        ? { decision: mappedComplianceDecision }
+        : item.complianceDecision || null,
       recordingUrl:null,
       transcript:'',
       complianceTimeline:[],
@@ -2465,8 +2542,8 @@
       tr.innerHTML=`
         <td>${item.startedAt}</td>
         <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
-        <td><span class="tag ${result.pill}">${result.label}</span></td>
-        <td><span class="tag ${item.complianceDecision?.decision === 'allow' ? 'state-ready' : 'state-blocked'}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
+        <td><span class="tag ${result.pill}">${result.label}</span><div style="font-size:12px;color:var(--muted)">${formatDialStatusLabel(item.dialStatus || item.status)} · ${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
+        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
       `;
       tbody.appendChild(tr);
       if (expandedDebtorKey === debtorKey) {
@@ -2509,6 +2586,13 @@
         displayItem = {
           ...item,
           status: attemptDetail.status || item.status,
+          dialStatus: attemptDetail.dialStatus || attemptDetail.status || item.dialStatus,
+          conversationStatus: resultDetail.conversationStatus || item.conversationStatus,
+          recordingStatus: resultDetail.recordingStatus || item.recordingStatus,
+          transcriptStatus: resultDetail.transcriptStatus || item.transcriptStatus,
+          reviewRequired: attemptDetail.reviewRequired === true,
+          providerCallId: attemptDetail.providerCallId || item.providerCallId,
+          providerStatus: detailData?.providerStatus || null,
           startedAt: formatCallTime(attemptDetail.startedAt) || item.startedAt,
           startedAtRaw: attemptDetail.startedAt || item.startedAtRaw || '',
           endedAt: attemptDetail.endedAt ? formatCallTime(attemptDetail.endedAt) : item.endedAt,
@@ -2531,12 +2615,8 @@
     }
 
     const outcomeMeta = callOutcomeMeta[displayItem.outcome] || { label: displayItem.outcome, pill: 'state-empty' };
-    const sourceMode = isLimitedApiCall ? 'live API (агрегатный режим)' : displayItem.dataSource === 'api' ? 'live API (детальная выгрузка)' : 'локальный демо';
-    const callAttemptLabel = isLimitedApiCall
-      ? 'не применимо: live API без callAttemptId'
-      : (displayItem.callAttemptId ? `callAttemptId=${displayItem.callAttemptId}` : 'callAttemptId не получен');
     q('#callCardDrawerTitle').textContent=displayItem.debtor;
-    q('#callCardDrawerMeta').textContent=`${displayItem.startedAt} · ${formatCallStatusLabel(displayItem.status)}`;
+    q('#callCardDrawerMeta').textContent=`${displayItem.startedAt} · ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}`;
     const sameDebtor = callCards.filter((card) => card.debtor === displayItem.debtor);
     const list=q('#callCardDialogList');
     if (list) {
@@ -2554,9 +2634,24 @@
     const resultEl=q('#callCardResult');
     if (resultEl) {
       resultEl.innerHTML=`
-      <b>Исход попытки:</b> ${formatCallStatusLabel(displayItem.status)}<br/>
-      <b>Результат разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span>
+      <b>Статус попытки:</b> ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}<br/>
+      <b>Результат разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
+      <b>Состояние разговора:</b> ${formatConversationStatusLabel(displayItem.conversationStatus)}
     `;
+    }
+    const progress=q('#callCardProgress');
+    if (progress) {
+      const progressItems=[
+        `${displayItem.startedAt || '—'} · Попытка начата`,
+        `${displayItem.endedAt || displayItem.startedAt || '—'} · ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}`
+      ];
+      progress.textContent='';
+      progressItems.forEach((line)=>{
+        const row=document.createElement('div');
+        row.style.cssText='padding:8px 0;border-top:1px solid #edf2f6';
+        row.textContent=line;
+        progress.appendChild(row);
+      });
     }
     const turnsRoot=q('#callCardTranscriptTurns');
     const emptyTranscript=q('#callCardTranscriptEmpty');
@@ -2574,9 +2669,24 @@
     if (emptyTranscript) emptyTranscript.hidden = turns.length > 0;
     const recording=q('#callCardRecordingStatus');
     if (recording) {
-      const url=String(displayItem.recordingUrl || '');
-      const stored=Boolean(displayItem.recordingStored) || (Boolean(url) && !url.startsWith('memory:'));
-      recording.textContent = stored ? 'Запись хранится' : 'Записи нет';
+      recording.textContent = formatEvidenceStatusLabel(displayItem);
+    }
+    const diagnostics=q('#callCardDiagnostics');
+    if (diagnostics) {
+      const providerStatus=displayItem.providerStatus || displayItem.rawApiData?.providerStatus || {};
+      const diagnosticItems=[
+        ['Нормализованный статус', providerStatus.normalized || displayItem.dialStatus || 'не передан'],
+        ['Идентификатор у поставщика', displayItem.providerCallId || 'не передан'],
+        ['Исходный статус', providerStatus.raw || 'не передан']
+      ];
+      diagnostics.textContent='';
+      diagnosticItems.forEach(([label, value])=>{
+        const row=document.createElement('div');
+        const title=document.createElement('b');
+        title.textContent=`${label}: `;
+        row.append(title, document.createTextNode(String(value)));
+        diagnostics.appendChild(row);
+      });
     }
 
     openLayer(q('#callCardDrawer'));

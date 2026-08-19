@@ -11,6 +11,10 @@ export type CallResultOutcome =
 
 export type CallResultQaStatus = 'not_reviewed' | 'approved' | 'flagged';
 
+export type TranscriptStatus = import('../call-lifecycle/index.js').TranscriptStatus;
+export type RecordingStatus = import('../call-lifecycle/index.js').RecordingStatus;
+export type ConversationStatus = import('../call-lifecycle/index.js').ConversationStatus;
+
 const validQaStatuses: CallResultQaStatus[] = ['not_reviewed', 'approved', 'flagged'];
 
 export const isCallResultQaStatus = (value: unknown): value is CallResultQaStatus => (

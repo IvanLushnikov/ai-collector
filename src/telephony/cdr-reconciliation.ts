@@ -13,6 +13,7 @@ export type CdrMismatch = {
   providerStatus: string | null;
   attemptStatus: string | null;
   kind: 'missing_attempt' | 'missing_cdr' | 'status_mismatch';
+  severity: 'warning' | 'critical';
 };
 
 export type CdrReconciliationResult = {
@@ -35,7 +36,8 @@ export const reconcileCdr = (
         providerCallId: record.providerCallId,
         providerStatus: record.providerStatus,
         attemptStatus: null,
-        kind: 'missing_attempt'
+        kind: 'missing_attempt',
+        severity: 'critical'
       });
       continue;
     }
@@ -44,7 +46,8 @@ export const reconcileCdr = (
         providerCallId: record.providerCallId,
         providerStatus: record.providerStatus,
         attemptStatus: attempt.status,
-        kind: 'status_mismatch'
+        kind: 'status_mismatch',
+        severity: 'warning'
       });
     }
   }
@@ -55,7 +58,8 @@ export const reconcileCdr = (
         providerCallId: attempt.providerCallId,
         providerStatus: null,
         attemptStatus: attempt.status,
-        kind: 'missing_cdr'
+        kind: 'missing_cdr',
+        severity: 'critical'
       });
     }
   }

@@ -6,28 +6,41 @@ describe('evidence guard', () => {
     expect(shouldAutoPauseForMissingEvidence({
       channel: 'live',
       answered: true,
-      recordingUrl: null,
-      transcriptUrl: 'sandbox://x'
+      recordingStatus: 'missing',
+      transcriptStatus: 'ready'
     })).toBe(true);
   });
 
-  it('does not pause fake sandbox even without evidence URLs', () => {
+  it('does not pause fake sandbox even without ready evidence', () => {
     expect(shouldAutoPauseForMissingEvidence({
       channel: 'fake',
-      answered: true
+      answered: true,
+      recordingStatus: 'missing',
+      transcriptStatus: 'failed'
     })).toBe(false);
     expect(shouldAutoPauseForMissingEvidence({
       channel: 'sandbox',
       answered: true,
-      recordingUrl: 'sandbox://recordings/a.mp3',
-      transcriptUrl: 'sandbox://transcripts/a.txt'
+      recordingStatus: 'ready',
+      transcriptStatus: 'ready'
+    })).toBe(false);
+  });
+
+  it('does not pause answered live calls when recording and transcript are ready', () => {
+    expect(shouldAutoPauseForMissingEvidence({
+      channel: 'live',
+      answered: true,
+      recordingStatus: 'ready',
+      transcriptStatus: 'ready'
     })).toBe(false);
   });
 
   it('does not pause unanswered live calls', () => {
     expect(shouldAutoPauseForMissingEvidence({
       channel: 'live',
-      answered: false
+      answered: false,
+      recordingStatus: 'none',
+      transcriptStatus: 'none'
     })).toBe(false);
   });
 });

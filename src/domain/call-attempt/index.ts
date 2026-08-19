@@ -23,4 +23,9 @@ export interface CallAttempt {
   endedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  dialStatus?: import('../call-lifecycle/index.js').CallDialStatus;
+  providerStatusRaw?: string | null;
+  providerStatusUpdatedAt?: Date | null;
+  reviewRequired?: boolean;
+  reviewReasonCode?: string | null;
 }

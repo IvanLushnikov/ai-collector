@@ -17,4 +17,24 @@ describe('prototype call card', () => {
     expect(html).not.toContain('sandbox://recordings');
     expect(html).not.toContain('Скачать запись');
   });
+
+  it('shows recording and transcript state separately from outcome', () => {
+    expect(html).toContain('Ход звонка');
+    expect(html).toContain('Исход попытки и результат разговора');
+    expect(html).toContain('id="callCardRecordingStatus"');
+    expect(html).toContain('id="callCardTranscriptEmpty"');
+    expect(html).toContain('Техническая диагностика');
+    expect(html).toContain('id="callCardDiagnostics"');
+  });
+
+  it('labels supported dial and evidence statuses', () => {
+    expect(html).toContain("handoff_requested: 'Переведен оператору'");
+    expect(html).toContain("cancelled: 'Отменен'");
+    expect(html).toContain("item.transcriptStatus === 'pending'");
+    expect(html).toContain("item.recordingStatus === 'pending'");
+    expect(html).toContain("item.recordingStatus === 'failed'");
+    expect(html).toContain('Расшифровка в обработке');
+    expect(html).toContain('Запись ещё готовится');
+    expect(html).toContain('Записи нет');
+  });
 });

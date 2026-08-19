@@ -14,6 +14,12 @@ import {
 } from '../domain/frequency-ledger/index.js';
 import { CallAttemptStatus } from '../domain/call-attempt/index.js';
 import { CallResultOutcome, isCallResultQaStatus } from '../domain/call-result/index.js';
+import {
+  deriveConversationStatus,
+  type CallDialStatus,
+  type RecordingStatus,
+  type TranscriptStatus
+} from '../domain/call-lifecycle/index.js';
 import { UsageEventType } from '../domain/usage-event/index.js';
 import {
   VoiceCallStatus,
@@ -75,6 +81,20 @@ type CallDependencies = {
     create?: (args: any) => Promise<unknown>;
     findMany?: (args: any) => Promise<unknown>;
     count?: (args: any) => Promise<number>;
+  };
+  callEvent?: {
+    findMany?: (args: any) => Promise<unknown>;
+    create?: (args: any) => Promise<unknown>;
+  };
+  callTranscript?: {
+    findFirst?: (args: any) => Promise<unknown>;
+  };
+  callRecordingAsset?: {
+    findFirst?: (args: any) => Promise<unknown>;
+  };
+  callReconciliationIssue?: {
+    findMany?: (args: any) => Promise<unknown>;
+    create?: (args: any) => Promise<unknown>;
   };
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
@@ -142,6 +162,88 @@ const createEngine = (
 };
 
 const defaultVoiceProvider = new SandboxVoiceProvider();
+
+const callDialStatuses = new Set<CallDialStatus>([
+  'created',
+  'queued',
+  'dialing',
+  'ringing',
+  'answered',
+  'in_conversation',
+  'handoff_requested',
+  'transferred_to_handoff',
+  'completed',
+  'no_answer',
+  'busy',
+  'voicemail',
+  'failed',
+  'cancelled',
+  'blocked',
+  'unknown'
+]);
+const recordingStatuses = new Set<RecordingStatus>(['none', 'pending', 'ready', 'failed', 'missing']);
+const transcriptStatuses = new Set<TranscriptStatus>(['none', 'pending', 'processing', 'ready', 'failed']);
+const connectedDialStatuses = new Set<CallDialStatus>([
+  'answered',
+  'in_conversation',
+  'completed',
+  'handoff_requested',
+  'transferred_to_handoff'
+]);
+
+const normalizeLifecycleEvidence = (input: {
+  dialStatus?: string | null;
+  recordingStatus?: string | null;
+  transcriptStatus?: string | null;
+  reviewRequired: boolean;
+}): {
+  recordingStatus: string | null;
+  transcriptStatus: string | null;
+  reviewRequired: boolean;
+  forceDerivation: boolean;
+} => {
+  const connected = Boolean(
+    input.dialStatus
+    && connectedDialStatuses.has(input.dialStatus as CallDialStatus)
+  );
+  const recordingStatus = input.recordingStatus ?? (connected ? 'missing' : null);
+  const transcriptStatus = input.transcriptStatus
+    ?? (connected ? (recordingStatus === 'ready' ? 'pending' : 'failed') : null);
+
+  return {
+    recordingStatus,
+    transcriptStatus,
+    reviewRequired: input.reviewRequired || (connected && recordingStatus === 'missing'),
+    forceDerivation: connected && (!input.recordingStatus || !input.transcriptStatus)
+  };
+};
+
+const deriveConversationStatusIfPossible = (input: {
+  storedStatus?: string | null;
+  dialStatus?: string | null;
+  recordingStatus?: string | null;
+  transcriptStatus?: string | null;
+  reviewRequired: boolean;
+  forceDerivation?: boolean;
+}): string | null => {
+  if (
+    input.dialStatus
+    && input.recordingStatus
+    && input.transcriptStatus
+    && callDialStatuses.has(input.dialStatus as CallDialStatus)
+    && recordingStatuses.has(input.recordingStatus as RecordingStatus)
+    && transcriptStatuses.has(input.transcriptStatus as TranscriptStatus)
+    && (input.forceDerivation || input.reviewRequired || !input.storedStatus)
+  ) {
+    return deriveConversationStatus({
+      dialStatus: input.dialStatus as CallDialStatus,
+      recordingStatus: input.recordingStatus as RecordingStatus,
+      transcriptStatus: input.transcriptStatus as TranscriptStatus,
+      reviewRequired: input.reviewRequired
+    });
+  }
+  return input.storedStatus ?? null;
+};
 
 const mapVoiceStatusToCallAttemptStatus = (status: VoiceCallStatus): CallAttemptStatus => {
   switch (status) {
@@ -224,8 +326,8 @@ export const guardLiveSpeechCredentialsIfEnabled = async (
 
 export const evaluateLiveCallGuards = (input: {
   answered: boolean;
-  recordingUrl?: string | null;
-  transcriptUrl?: string | null;
+  recordingStatus?: RecordingStatus | null;
+  transcriptStatus?: TranscriptStatus | null;
   dailyCallCap?: number | null;
   startedToday: number;
 }): { missingEvidence: boolean; pilotCapReached: boolean } => {
@@ -236,8 +338,8 @@ export const evaluateLiveCallGuards = (input: {
     missingEvidence: shouldAutoPauseForMissingEvidence({
       channel: 'live',
       answered: input.answered,
-      recordingUrl: input.recordingUrl,
-      transcriptUrl: input.transcriptUrl
+      recordingStatus: input.recordingStatus,
+      transcriptStatus: input.transcriptStatus
     }),
     pilotCapReached: isPilotCapReached({
       channel: 'live',
@@ -678,28 +780,100 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         callResult: {
           select: {
             outcome: true,
-            qaStatus: true
+            qaStatus: true,
+            conversationStatus: true,
+            transcriptStatus: true,
+            recordingStatus: true
           }
         }
       }
     }) as Array<{
       id: string;
+      debtorRecordId?: string;
       status: string;
+      dialStatus?: string | null;
+      reviewRequired?: boolean;
       startedAt: string | Date;
       endedAt: string | Date | null;
       debtorRecord: { externalId: string } | null;
-      callResult: { outcome: string; qaStatus?: string } | null;
+      callResult: {
+        outcome: string;
+        qaStatus?: string;
+        conversationStatus?: string | null;
+        transcriptStatus?: string | null;
+        recordingStatus?: string | null;
+      } | null;
     }> ) ?? [];
 
+    const debtorRecordIds = Array.from(new Set(
+      attempts
+        .map((attempt) => attempt.debtorRecordId)
+        .filter((debtorRecordId): debtorRecordId is string => Boolean(debtorRecordId))
+    ));
+    const complianceDecisions = debtorRecordIds.length > 0 && deps.complianceDecision?.findMany
+      ? (await deps.complianceDecision.findMany({
+          where: {
+            tenantId: params.data.tenantId,
+            debtorRecordId: {
+              in: debtorRecordIds
+            }
+          },
+          orderBy: {
+            checkedAt: 'desc'
+          },
+          select: {
+            debtorRecordId: true,
+            decision: true,
+            checkedAt: true
+          }
+        })) as Array<{
+          debtorRecordId: string;
+          decision: string;
+          checkedAt: string | Date;
+        }>
+      : [];
+    const latestComplianceDecisionByDebtor = new Map<string, string>();
+    for (const decision of complianceDecisions) {
+      if (!latestComplianceDecisionByDebtor.has(decision.debtorRecordId)) {
+        latestComplianceDecisionByDebtor.set(decision.debtorRecordId, decision.decision);
+      }
+    }
+
     return reply.code(200).send(
-      attempts.map((attempt) => ({
-        callAttemptId: attempt.id,
-        status: attempt.status,
-        debtorExternalId: attempt.debtorRecord?.externalId ?? null,
-        startedAt: attempt.startedAt,
-        endedAt: attempt.endedAt ?? null,
-        outcome: attempt.callResult?.outcome ?? null
-      }))
+      attempts.map((attempt) => {
+        const dialStatus = attempt.dialStatus ?? attempt.status;
+        const lifecycleEvidence = normalizeLifecycleEvidence({
+          dialStatus,
+          recordingStatus: attempt.callResult?.recordingStatus,
+          transcriptStatus: attempt.callResult?.transcriptStatus,
+          reviewRequired: attempt.reviewRequired === true
+        });
+        const complianceDecision = attempt.debtorRecordId
+          ? latestComplianceDecisionByDebtor.get(attempt.debtorRecordId)
+          : undefined;
+        return {
+          callAttemptId: attempt.id,
+          status: attempt.status,
+          dialStatus,
+          conversationStatus: deriveConversationStatusIfPossible({
+            storedStatus: attempt.callResult?.conversationStatus,
+            dialStatus,
+            ...lifecycleEvidence
+          }),
+          outcome: attempt.callResult?.outcome ?? null,
+          complianceStatus: complianceDecision === 'allow'
+            ? 'allowed'
+            : complianceDecision === 'block'
+              ? 'blocked'
+              : 'not_checked',
+          recordingStatus: lifecycleEvidence.recordingStatus,
+          transcriptStatus: lifecycleEvidence.transcriptStatus,
+          reviewRequired: lifecycleEvidence.reviewRequired,
+          debtorExternalId: attempt.debtorRecord?.externalId ?? null,
+          startedAt: attempt.startedAt,
+          endedAt: attempt.endedAt ?? null
+        };
+      })
     );
   });
 
@@ -756,6 +930,9 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       telephonyConnectionId: string;
       scriptVersionId?: string | null;
       status: string;
+      dialStatus?: string | null;
+      providerStatusRaw?: string | null;
+      reviewRequired?: boolean;
       providerCallId: string;
       identityVerified?: boolean;
       identityVerifiedAt?: string | Date | null;
@@ -770,6 +947,9 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         reason: string | null;
         transcriptUrl: string | null;
         recordingUrl: string | null;
+        conversationStatus?: string | null;
+        transcriptStatus?: string | null;
+        recordingStatus?: string | null;
       } | null;
       debtorRecord: {
         id: string;
@@ -788,7 +968,14 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       return reply.code(404).send({ error: 'CALL_ATTEMPT_NOT_FOUND' });
     }
 
-    const [complianceDecisions, usageEvents] = await Promise.all([
+    const [
+      complianceDecisions,
+      usageEvents,
+      rawCallEvents,
+      rawTranscript,
+      rawRecording,
+      rawReconciliationIssues
+    ] = await Promise.all([
       deps.complianceDecision?.findMany
         ? deps.complianceDecision.findMany({
             where: {
@@ -811,8 +998,78 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
               occurredAt: 'asc'
             }
           })
+        : Promise.resolve([]),
+      deps.callEvent?.findMany
+        ? deps.callEvent.findMany({
+            where: {
+              tenantId: params.data.tenantId,
+              callAttemptId: attempt.id
+            },
+            orderBy: {
+              occurredAt: 'asc'
+            }
+          })
+        : Promise.resolve([]),
+      deps.callTranscript?.findFirst
+        ? deps.callTranscript.findFirst({
+            where: {
+              tenantId: params.data.tenantId,
+              callAttemptId: attempt.id
+            }
+          })
+        : Promise.resolve(null),
+      deps.callRecordingAsset?.findFirst
+        ? deps.callRecordingAsset.findFirst({
+            where: {
+              tenantId: params.data.tenantId,
+              callAttemptId: attempt.id
+            }
+          })
+        : Promise.resolve(null),
+      deps.callReconciliationIssue?.findMany
+        ? deps.callReconciliationIssue.findMany({
+            where: {
+              tenantId: params.data.tenantId,
+              callAttemptId: attempt.id
+            },
+            orderBy: {
+              detectedAt: 'asc'
+            }
+          })
         : Promise.resolve([])
     ]);
+
+    const callEvents = (rawCallEvents ?? []) as Array<{
+      normalizedStatus?: string | null;
+      rawStatus?: string | null;
+      eventSource?: string | null;
+      receivedAt?: string | Date | null;
+    }>;
+    const transcript = rawTranscript as ({ status?: string | null } & Record<string, unknown>) | null;
+    const recording = rawRecording as ({ status?: string | null } & Record<string, unknown>) | null;
+    const reconciliationIssues = (rawReconciliationIssues ?? []) as unknown[];
+    const latestEvent = callEvents.at(-1);
+    const dialStatus = attempt.dialStatus ?? attempt.status;
+    const lifecycleEvidence = normalizeLifecycleEvidence({
+      dialStatus,
+      transcriptStatus: attempt.callResult?.transcriptStatus ?? transcript?.status ?? null,
+      recordingStatus: attempt.callResult?.recordingStatus ?? recording?.status ?? null,
+      reviewRequired: attempt.reviewRequired === true
+    });
+    const conversationStatus = deriveConversationStatusIfPossible({
+      storedStatus: attempt.callResult?.conversationStatus,
+      dialStatus,
+      ...lifecycleEvidence
+    });
+    const result = {
+      ...(attempt.callResult ?? {}),
+      id: attempt.callResult?.id ?? null,
+      outcome: attempt.callResult?.outcome ?? null,
+      qaStatus: attempt.callResult?.qaStatus ?? null,
+      conversationStatus,
+      transcriptStatus: lifecycleEvidence.transcriptStatus,
+      recordingStatus: lifecycleEvidence.recordingStatus
+    };
 
     return reply.code(200).send({
       attempt: {
@@ -821,6 +1078,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         campaignId: attempt.campaignId,
         debtorRecordId: attempt.debtorRecordId,
         status: attempt.status,
+        dialStatus,
+        reviewRequired: lifecycleEvidence.reviewRequired,
         telephonyConnectionId: attempt.telephonyConnectionId,
         scriptVersionId: attempt.scriptVersionId ?? null,
         providerCallId: attempt.providerCallId,
@@ -831,13 +1090,27 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         createdAt: attempt.createdAt,
         updatedAt: attempt.updatedAt
       },
-      result: attempt.callResult ?? null,
+      result,
+      providerStatus: {
+        normalized: latestEvent?.normalizedStatus ?? dialStatus ?? null,
+        raw: latestEvent?.rawStatus ?? attempt.providerStatusRaw ?? null,
+        source: latestEvent?.eventSource ?? 'legacy',
+        receivedAt: latestEvent?.receivedAt ?? null
+      },
+      callEvents,
+      transcript,
+      recording,
+      reconciliationIssues,
       complianceDecisions,
       usageEvents,
       evidenceBundle: {
         callResult: attempt.callResult ?? null,
         complianceDecisions,
-        usageEvents
+        usageEvents,
+        callEvents,
+        transcript,
+        recording,
+        reconciliationIssues
       }
     });
   });

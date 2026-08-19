@@ -105,6 +105,18 @@ enum CallResultQaStatus {
   flagged
 }
 
+enum CallConversationStatus {
+  not_started
+  in_progress
+  awaiting_recording
+  awaiting_transcription
+  transcribed
+  transcription_failed
+  recording_missing
+  review_required
+  finalized
+}
+
 enum PaymentOutcome {
   none
   promised
@@ -194,6 +206,10 @@ model Tenant {
   providerCredentials ProviderCredential[]
   credentialSecrets CredentialSecret[]
   webhookInboxEvents WebhookInboxEvent[]
+  callEvents CallEvent[]
+  callTranscripts CallTranscript[]
+  callRecordingAssets CallRecordingAsset[]
+  callReconciliationIssues CallReconciliationIssue[]
 }
 
 model Role {
@@ -398,6 +414,21 @@ model TelephonyConnection {
   mode           TelephonyMode
   status         TelephonyStatus
   displayName    String
+  connectionType String?
+  transportProfile String?
+  capabilityStatus String            @default("pending")
+  providerDeclaredCapacity Int?
+  platformApprovedCapacity Int?
+  statusCallbackUrlConfigured Boolean @default(false)
+  webhookSecretHash String?
+  supportsRealtimeEvents Boolean      @default(false)
+  supportsCdr Boolean                 @default(false)
+  supportsRecording Boolean           @default(false)
+  supportsAudioExportForTranscription Boolean @default(false)
+  supportsHandoff Boolean             @default(false)
+  supportsMarking Boolean             @default(false)
+  lastHealthcheckAt DateTime?
+  lastHealthcheckStatus String?
   lastProbeAt    DateTime?
   probeMarking   Boolean          @default(false)
   probeRecording Boolean          @default(false)
@@ -425,6 +456,20 @@ model CallAttempt {
   scriptVersionId       String?
   scriptVersion         ScriptVersion?      @relation(fields: [scriptVersionId], references: [id], onDelete: Restrict)
   status                CallAttemptStatus  @default(initiated)
+  dialStatus            String?
+  providerStatusRaw     String?
+  providerStatusUpdatedAt DateTime?
+  lastEventAt           DateTime?
+  answeredAt            DateTime?
+  hangupAt              DateTime?
+  failureReasonCode     String?
+  failureReasonText     String?
+  disconnectInitiator  String?
+  attemptSequence       Int                @default(1)
+  isTestCall            Boolean            @default(false)
+  reviewRequired        Boolean            @default(false)
+  reviewReasonCode      String?
+  cdrReconciliationStatus String?
   providerCallId        String
   identityVerified      Boolean           @default(false)
   identityVerifiedAt    DateTime?
@@ -434,6 +479,12 @@ model CallAttempt {
   updatedAt             DateTime          @updatedAt
 
   callResult            CallResult?
+  callEvents            CallEvent[]
+  callTranscript        CallTranscript?
+  callRecordingAsset    CallRecordingAsset?
+  reconciliationIssues CallReconciliationIssue[]
+
+  @@unique([tenantId, id])
 }
 
 model CallResult {
@@ -443,6 +494,16 @@ model CallResult {
   callAttemptId String            @unique
   callAttempt   CallAttempt       @relation(fields: [callAttemptId], references: [id], onDelete: Cascade)
   outcome       CallResultOutcome
+  conversationStatus CallConversationStatus @default(not_started)
+  transcriptStatus String          @default("none")
+  recordingStatus String           @default("none")
+  recordingDurationSec Int?
+  talkDurationSec Int?
+  transcriptId  String?            @unique
+  transcript    CallTranscript?     @relation("CallResultTranscript", fields: [tenantId, transcriptId], references: [tenantId, id], onDelete: NoAction)
+  recordingAssetId String?         @unique
+  recordingAsset CallRecordingAsset? @relation("CallResultRecordingAsset", fields: [tenantId, recordingAssetId], references: [tenantId, id], onDelete: NoAction)
+  outcomeSource String              @default("system")
   qaStatus      CallResultQaStatus @default(not_reviewed)
   ptpAmount     Decimal?
   ptpDate       DateTime?
@@ -453,6 +514,105 @@ model CallResult {
   paymentReceivedAt DateTime?
   paymentAmount Decimal?
   createdAt     DateTime          @default(now())
+
+  @@unique([tenantId, transcriptId])
+  @@unique([tenantId, recordingAssetId])
+}
+
+model CallEvent {
+  id               String      @id @default(uuid())
+  tenantId         String
+  tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callAttemptId    String
+  callAttempt      CallAttempt @relation(fields: [tenantId, callAttemptId], references: [tenantId, id], onDelete: Cascade)
+  eventType        String
+  eventSource      String
+  normalizedStatus String?
+  rawStatus        String?
+  payloadRef       String?
+  occurredAt       DateTime
+  receivedAt       DateTime    @default(now())
+  isTerminal       Boolean     @default(false)
+  metadata         Json        @default("{}")
+
+  @@index([tenantId, callAttemptId, occurredAt])
+}
+
+model CallTranscript {
+  id                String                  @id @default(uuid())
+  tenantId          String
+  tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callAttemptId     String                  @unique
+  callAttempt       CallAttempt             @relation(fields: [tenantId, callAttemptId], references: [tenantId, id], onDelete: Cascade)
+  status            String
+  provider          String?
+  language          String?
+  version           String?
+  storageUrl        String?
+  summary           String?
+  confidenceSummary String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  segments          CallTranscriptSegment[]
+  callResult        CallResult?             @relation("CallResultTranscript")
+
+  @@index([tenantId])
+  @@unique([tenantId, callAttemptId])
+  @@unique([tenantId, id])
+}
+
+model CallTranscriptSegment {
+  id           String         @id @default(uuid())
+  transcriptId String
+  transcript   CallTranscript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  speaker      String
+  startedAtMs  Int
+  endedAtMs    Int
+  text         String
+  confidence   Float?
+  channel      String?
+  sequence     Int
+
+  @@unique([transcriptId, sequence])
+}
+
+model CallRecordingAsset {
+  id            String      @id @default(uuid())
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callAttemptId String      @unique
+  callAttempt   CallAttempt @relation(fields: [tenantId, callAttemptId], references: [tenantId, id], onDelete: Cascade)
+  status        String
+  storageUrl    String?
+  durationSec   Int?
+  format        String?
+  checksum      String?
+  createdAt     DateTime    @default(now())
+  callResult    CallResult? @relation("CallResultRecordingAsset")
+
+  @@index([tenantId])
+  @@unique([tenantId, callAttemptId])
+  @@unique([tenantId, id])
+}
+
+model CallReconciliationIssue {
+  id              String       @id @default(uuid())
+  tenantId        String
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  callAttemptId   String?
+  callAttempt     CallAttempt? @relation(fields: [tenantId, callAttemptId], references: [tenantId, id], onDelete: Cascade)
+  providerCallId  String
+  issueType       String
+  severity        String
+  providerValue   String?
+  platformValue   String?
+  detectedAt      DateTime     @default(now())
+  resolvedAt      DateTime?
+  resolution      String?
+
+  @@index([tenantId, detectedAt])
+  @@index([callAttemptId])
+  @@index([tenantId, providerCallId])
 }
 
 model UsageEvent {

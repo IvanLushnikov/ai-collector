@@ -59,3 +59,15 @@ describe('TelephonyConnection production probe', () => {
     })).toBe(true);
   });
 });
+
+describe('telephony connection capacity snapshot', () => {
+  it('treats production probe as incomplete without marking, recording and handoff', () => {
+    expect(isProductionTelephonyProbeConfirmed({
+      mode: 'production',
+      lastProbeAt: new Date(),
+      probeMarking: true,
+      probeRecording: false,
+      probeHandoff: true
+    })).toBe(false);
+  });
+});

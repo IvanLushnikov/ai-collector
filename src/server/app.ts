@@ -9,6 +9,7 @@ import { registerScriptRoutes } from '../routes/scripts.js';
 import { registerReportRoutes } from '../routes/reports.js';
 import { registerUsageRoutes } from '../routes/usage.js';
 import { registerTelephonyRoutes } from '../routes/telephony.js';
+import { registerTelephonyWebhookRoutes } from '../routes/telephony-webhooks.js';
 import { registerTenantRoutes } from '../routes/tenants.js';
 import { registerProviderCredentialRoutes } from '../routes/provider-credentials.js';
 import { registerAuthRoutes } from '../routes/auth.js';
@@ -331,6 +332,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   registerReportRoutes(app as any, campaignStore as any);
   registerUsageRoutes(app as any, campaignStore as any);
   registerTelephonyRoutes(app as any, campaignStore as any);
+  registerTelephonyWebhookRoutes(app as any, campaignStore as any);
   registerTenantRoutes(app as any, campaignStore as any);
   registerTenantUserRoutes(app as any, campaignStore as any);
   registerProviderCredentialRoutes(app as any, {

@@ -18,4 +18,18 @@ describe('prototype calls journal', () => {
     expect(calls).not.toContain('>Карточка<');
     expect(html).toContain('Звонков пока нет');
   });
+
+  it('maps list compliance statuses and keeps not checked decisions neutral', () => {
+    expect(html).toContain('const complianceStatusDecisionMap = {');
+    expect(html).toContain("allowed: 'allow'");
+    expect(html).toContain("blocked: 'block'");
+    expect(html).toContain("not_checked: 'unknown'");
+    expect(html).toContain('complianceStatusDecisionMap[item.complianceStatus]');
+    expect(html).toContain("if (decision === 'allow') return 'state-ready';");
+    expect(html).toContain("if (decision === 'block') return 'state-blocked';");
+    expect(html).toContain("return 'state-empty';");
+    expect(html).toContain('formatDialStatusLabel(item.dialStatus || item.status)');
+    expect(html).toContain('formatConversationStatusLabel(item.conversationStatus)');
+    expect(html).toContain('formatEvidenceStatusLabel(item)');
+  });
 });
