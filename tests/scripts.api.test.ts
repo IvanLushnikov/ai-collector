@@ -107,6 +107,21 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     ...overrides
   });
 
+  it('rejects an unauthenticated script write', async () => {
+    const app = createApp({ campaignStore: makeStore() });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      payload: { content: lockedDisclosureContent }
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('USER_ROLE_MISSING');
+    await app.close();
+  });
+
   it('creates first script version and moves campaign to review', async () => {
     const appStore = makeStore();
 
@@ -118,6 +133,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -171,6 +187,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: 'Hello script'
       }
@@ -221,7 +238,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -286,7 +304,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(404);
@@ -311,7 +330,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts'
+      url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(404);
@@ -347,7 +367,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -381,6 +402,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -426,6 +448,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -470,6 +493,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -495,6 +519,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: ''
       }
@@ -534,6 +559,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -562,6 +588,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }

@@ -213,6 +213,35 @@ describe('authContextMiddleware', () => {
     await app.close();
   });
 
+  it('does not accept header identity when the application disables it', async () => {
+    const campaignStore = makeStore();
+    await campaignStore.user.create({
+      data: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        roleId: 'role-owner',
+        email: 'production@example.com',
+        name: 'Production'
+      }
+    });
+    const app = createApp({ campaignStore, allowHeaderIdentity: false });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/campaigns',
+      headers: { 'X-User-Role': 'owner', 'X-Tenant-Id': '11111111-1111-1111-1111-111111111111' },
+      payload: {
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Пилот',
+        timezone: 'Europe/Moscow'
+      }
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json().error).toBe('AUTHENTICATION_REQUIRED');
+    await app.close();
+  });
+
   it('rejects cross-tenant request when session tenant does not match route tenant', async () => {
     const campaignStore = makeStore();
     const app = createApp({ campaignStore });

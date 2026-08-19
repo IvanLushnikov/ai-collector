@@ -21,7 +21,7 @@ export const roleMiddleware = (allowedRoles: readonly AllowedRole[]) => {
     const existingRole = request.userRole;
     const roleHeader = request.headers['x-user-role'];
     const rawRole = existingRole
-      ?? (Array.isArray(roleHeader) ? roleHeader[0] : roleHeader);
+      ?? (request.allowHeaderIdentity ? (Array.isArray(roleHeader) ? roleHeader[0] : roleHeader) : undefined);
 
     if (typeof rawRole !== 'string' || !rawRole.trim()) {
       return reply.code(401).send({

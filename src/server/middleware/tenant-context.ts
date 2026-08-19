@@ -10,6 +10,7 @@ export type TenantContext = {
 declare module 'fastify' {
   interface FastifyRequest {
     tenantContext?: TenantContext;
+    allowHeaderIdentity?: boolean;
   }
 }
 
@@ -73,6 +74,13 @@ export const tenantContextMiddleware = async (
 
   if (request.tenantContext) {
     return;
+  }
+
+  if (!request.allowHeaderIdentity) {
+    return reply.code(401).send({
+      error: 'AUTHENTICATION_REQUIRED',
+      message: 'Authenticated session or service identity is required.'
+    });
   }
 
   if (headerTenantId) {

@@ -233,19 +233,33 @@ const reviewItemRoleMiddleware = async (
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> => {
-  const canonicalRole = request.authContext?.role ?? request.userRole;
-  if (canonicalRole === 'tenant_owner' || canonicalRole === 'campaign_manager') {
+  const authenticatedRole = request.authContext?.role ?? request.userRole;
+  if (
+    authenticatedRole === 'tenant_owner' ||
+    authenticatedRole === 'campaign_manager' ||
+    authenticatedRole === 'qa_analyst' ||
+    authenticatedRole === 'compliance_officer'
+  ) {
     return;
   }
 
   const roleHeader = request.headers['x-user-role'];
   const rawRole = (Array.isArray(roleHeader) ? roleHeader[0] : roleHeader)?.trim().toLowerCase();
   const headerRole = typeof rawRole === 'string' ? normalizeRole(rawRole) : null;
-  if (headerRole === 'tenant_owner' || headerRole === 'campaign_manager') {
-    request.userRole = headerRole;
-    return;
+  if (!request.allowHeaderIdentity) {
+    return reply.code(401).send({
+      error: 'AUTHENTICATION_REQUIRED',
+      message: 'Authenticated session or service identity is required.'
+    });
   }
-  if (rawRole === 'qa_analyst' || rawRole === 'compliance_officer') {
+
+  if (
+    headerRole === 'tenant_owner' ||
+    headerRole === 'campaign_manager' ||
+    headerRole === 'qa_analyst' ||
+    headerRole === 'compliance_officer'
+  ) {
+    request.userRole = headerRole;
     return;
   }
 

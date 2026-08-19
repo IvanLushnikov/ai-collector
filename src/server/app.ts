@@ -146,6 +146,7 @@ const createRateLimitAuditEntry = async (
 
 export type AppDependencies = {
   campaignStore?: any;
+  allowHeaderIdentity?: boolean;
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
@@ -278,6 +279,11 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   } as any);
 
   const campaignStore: any = dependencies.campaignStore ?? prisma;
+  const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.NODE_ENV !== 'production';
+
+  app.addHook('onRequest', async (request) => {
+    request.allowHeaderIdentity = allowHeaderIdentity;
+  });
 
   const rateLimitConfig = dependencies.rateLimit ?? {
     maxRequests: env.API_RATE_LIMIT_MAX_REQUESTS,

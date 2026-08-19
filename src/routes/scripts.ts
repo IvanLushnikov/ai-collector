@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { isLockedDisclosureContent, serializeScriptContent } from '../domain/script-version/index.js';
+import { authorizeZone } from '../server/authz/index.js';
+import { resolveActorId } from '../server/authz/actor.js';
 
 type ScriptDependencies = {
   tenant: {
@@ -33,7 +35,7 @@ const createScriptSchema = z.object({
 });
 
 export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependencies): void => {
-  app.get('/tenants/:tenantId/campaigns/:campaignId/scripts', async (request, reply) => {
+  app.get('/tenants/:tenantId/campaigns/:campaignId/scripts', { preValidation: authorizeZone('campaigns', 'read') }, async (request, reply) => {
     const params = tenantCampaignScriptsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -80,7 +82,7 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
     return reply.code(200).send(scripts);
   });
 
-  app.post('/tenants/:tenantId/campaigns/:campaignId/scripts', async (request, reply) => {
+  app.post('/tenants/:tenantId/campaigns/:campaignId/scripts', { preValidation: authorizeZone('campaigns', 'write') }, async (request, reply) => {
     const params = tenantCampaignScriptsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -117,14 +119,8 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
       return reply.code(409).send({ error: 'SCRIPT_VERSION_LOCKED' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
@@ -142,7 +138,7 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
         campaignId: params.data.campaignId,
         version: (previousScript?.version ?? 0) + 1,
         content: serializeScriptContent(payload.data.content),
-        createdByUserId: actor.id
+        createdByUserId: actorId
       }
     }) as {
       id: string;
@@ -167,7 +163,7 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
       await deps.auditLog.create({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
+          userId: actorId,
           action: 'script_version.created',
           entityType: 'scriptVersion',
           entityId: script.id,

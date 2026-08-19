@@ -73,7 +73,31 @@
 12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`done`).
 13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`done`).
 
-Первая `todo`: нет.  
+### T-253: Закрыть header-based доступ в production и защитить scripts API
+
+Статус: `done`
+
+Что сделать:
+
+- Разрешать header-based tenant/role контекст только в test/development runtime.
+- Require authenticated actor for production tenant-scoped routes.
+- Подключить единый RBAC authorizer к scripts API и получать audit actor из request identity.
+- Восстановить и расширить тесты RBAC/import/billing, затронутые переходом на единую модель доступа.
+
+Где менять:
+
+- `src/server/middleware/*`
+- `src/server/authz/*`
+- `src/routes/scripts.ts`
+- `tests/*`
+
+Критерии готовности:
+
+- В production spoofed `X-Tenant-Id`/`X-User-Role` не открывают tenant route.
+- Scripts read/write требуют зоны `campaigns`.
+- Полный test suite проходит.
+
+Первая `todo`: нет; выполнена `T-253`.
 Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
 
 ## Закрытые волны (не переписывать)
@@ -6527,6 +6551,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: `T-253` done: header-based tenant/role context допускается только вне production; scripts API переведён на zone-based RBAC и получает actor для audit из request identity; review queue больше не читает role header при выключенном header identity; введены canonical QA/compliance зоны. Проверка: `npm run typecheck`; `npm test` (437/437).
 
 - 19.08.2026: после упрощения спеки `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md` добавлена отдельная волна `P1. RBAC SaaS v1` (`T-245`–`T-252`) и сохранён план `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`; новая очередь покрывает канонические роли, role normalization, единый authorizer, миграцию существующих endpoints, membership-based role resolution, tenant user management и support access path.
 
