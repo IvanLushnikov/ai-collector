@@ -686,10 +686,7 @@
   const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
   const currentAuth={ tenantId:'', role:'', userName:'', tenantName:'', email:'' };
   function apiHeaders(extra){
-    const headers=Object.assign({ Accept:'application/json' }, extra || {});
-    if (currentAuth.tenantId) headers['X-Tenant-Id']=currentAuth.tenantId;
-    if (currentAuth.role) headers['X-User-Role']=currentAuth.role;
-    return headers;
+    return Object.assign({ Accept:'application/json' }, extra || {});
   }
   function apiFetch(url, options){
     const next=options || {};
@@ -3655,7 +3652,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       const payload=await readImportPayload(file);
       const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/import`,{
         method:'POST',
-        headers:{Accept:'application/json','Content-Type':'application/json','X-User-Role':currentAuth.role},
+        headers:{Accept:'application/json','Content-Type':'application/json'},
         body: JSON.stringify(payload)
       });
       const body=await response.json().catch(()=>({}));
@@ -3735,9 +3732,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
         method:'POST',
         headers:{
           Accept:'application/json',
-          'Content-Type':'application/json',
-          'X-Tenant-Id':tenantId,
-          'X-User-Role':currentAuth.role
+          'Content-Type':'application/json'
         },
         body: JSON.stringify({ tenantId, name, timezone })
       });
@@ -3850,8 +3845,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
         method:'PATCH',
         headers:{
           Accept:'application/json',
-          'Content-Type':'application/json',
-          'X-User-Role':currentAuth.role
+          'Content-Type':'application/json'
         },
         body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed' } : { status })
       });
@@ -3918,7 +3912,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     try {
       const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/${debtorId}/calls/sandbox`,{
         method:'POST',
-        headers:{Accept:'application/json','Content-Type':'application/json','X-User-Role':currentAuth.role},
+        headers:{Accept:'application/json','Content-Type':'application/json'},
         body: JSON.stringify({})
       });
       const body=await response.json().catch(()=>({}));

@@ -17,7 +17,7 @@ describe('prototype launch confirmation', () => {
   it('launches via PATCH campaign status after confirm, fail-closed on API error', () => {
     expect(html).toContain('/status');
     expect(html).toContain("method:'PATCH'");
-    expect(html).toContain("'X-User-Role':currentAuth.role");
+    expect(html).not.toContain("'X-User-Role':currentAuth.role");
     expect(html).toContain("status: 'running'");
   });
 });
