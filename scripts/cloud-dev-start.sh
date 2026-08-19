@@ -16,7 +16,7 @@ if command -v pg_isready >/dev/null 2>&1 && pg_isready -h localhost >/dev/null 2
   if ! PGPASSWORD=postgres psql -h localhost -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='ai_collector'" | grep -q 1; then
     sudo -u postgres createdb ai_collector >/dev/null 2>&1 || true
   fi
-  npx prisma db push --schema=src/db/prisma/schema.prisma --accept-data-loss >/dev/null
+  npm run db:migrate >/dev/null
 fi
 
 echo "cloud-dev-start: dependencies ready"

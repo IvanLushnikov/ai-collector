@@ -27,7 +27,6 @@
 - `docker compose up -d`
 - `npm install`
 - `npm run db:migrate`
-- `npm run db:seed`
 - `npm run dev`
 
 ## Команды тестов и проверки
@@ -35,6 +34,7 @@
 - `npm run test` — unit/integration тесты.
 - `npm run lint` — ESLint/типизация (если настроено в CI/локально).
 - `npm run typecheck` — проверка типов TypeScript.
+- `npm run db:validate` — проверка Prisma schema без подключения к БД.
 
 ## Ограничения и guardrails
 

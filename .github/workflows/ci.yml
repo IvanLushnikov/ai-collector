@@ -18,5 +18,6 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
+      - run: npm run db:validate
       - run: npm run typecheck
       - run: npm run test
