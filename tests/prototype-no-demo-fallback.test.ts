@@ -23,4 +23,10 @@ describe('prototype evidence views', () => {
     expect(html).not.toContain("id:'RQ-1001'");
     expect(html).not.toContain('item.status=decision;');
   });
+
+  it('does not ship unused demo calls or audit evidence to the cabinet', () => {
+    expect(html).not.toContain('const localCallCards=[');
+    expect(html).not.toContain('const localAuditLog=[');
+    expect(html).not.toContain('localCallCardsWithSource');
+  });
 });

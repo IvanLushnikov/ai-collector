@@ -770,97 +770,6 @@
     approved:{label:'Принято',pill:'state-ready'},
     flagged:{label:'Требует проверки',pill:'state-review'}
   };
-  const localCallCards=[
-    {
-      id:'call-883104',
-      status:'completed',
-      startedAt:'16:38',
-      durationSec:161,
-      debtor:'Иван С. · FL-883104',
-      phone:'+7 (495) 883-10-04',
-      outcome:'ptp_created',
-      outcomeSource:'provider-call:ptp_created:sandbox-call',
-      complianceDecision:{decision:'allow',reasonCode:'ALLOW',reasonText:'Соглашение + проверка согласия в норме'},
-      transcript:'AI: Здравствуйте. Я автоматизированный агент ООО МКК «ФинЛиния». Назовите, пожалуйста, последние 2 цифры года рождения.\nКлиент: 87. Смогу оплатить 8 000 после зарплаты 21.08.\nAI: Подтверждаю. Сроки оплати понятны, пришлите подтверждение.',
-      identityVerified:false,
-      sourceBadge:'демо',
-      recordingStored:true,
-      qaStatus:'approved',
-      complianceTimeline:[
-        {time:'16:37:57', actor:'compliance', stage:'evaluate', details:'decision=allow · reasonCode=ALLOW · ruleVersion=v1'},
-        {time:'16:38:01', actor:'engine', stage:'policy', details:'voice provider started sandbox-call'},
-        {time:'16:40:10', actor:'qa', stage:'result', details:'outcome=ptp_created, transcript saved'},
-        {time:'16:40:11', actor:'usage-event', stage:'ledger', details:'sourceId=sandbox-call:call-883104:completed'}
-      ]
-    },
-    {
-      id:'call-883090',
-      status:'completed',
-      startedAt:'16:36',
-      durationSec:78,
-      debtor:'Мария В. · FL-883090',
-      phone:'+7 (495) 883-09-90',
-      outcome:'handoff',
-      outcomeSource:'provider-call:handoff:sandbox-call',
-      complianceDecision:{decision:'block',reasonCode:'CONSENT_LOW_CONFIDENCE',reasonText:'Согласие не подтверждено'},
-      transcript:'AI: Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Марией?\nКлиент: могу ли я оплатить позже?\nAI: Передаю на специалиста.',
-      recordingUrl:null,
-      qaStatus:'not_reviewed',
-      complianceTimeline:[
-        {time:'16:36:02', actor:'compliance', stage:'evaluate', details:'decision=review_required · reasonCode=CONSENT_LOW_CONFIDENCE'},
-        {time:'16:36:22', actor:'engine', stage:'handoff', details:'auto_handoff=operator_requested'},
-        {time:'16:36:41', actor:'usage-event', stage:'ledger', details:'sourceId=sandbox-call:call-883090:completed'}
-      ]
-    },
-    {
-      id:'call-883061',
-      status:'queued',
-      startedAt:'16:33',
-      durationSec:0,
-      debtor:'Сергей М. · FL-883061',
-      phone:'+7 (495) 883-06-10',
-      outcome:'no_answer',
-      outcomeSource:'provider-call:no_answer:sandbox-call',
-      complianceDecision:{decision:'allow',reasonCode:'ALLOW',reasonText:'Окончательная проверка успешна, но абонент не ответил'},
-      transcript:'AI: Добрый день, звонок не принят.',
-      recordingUrl:null,
-      qaStatus:'flagged',
-      complianceTimeline:[
-        {time:'16:33:00', actor:'compliance', stage:'evaluate', details:'decision=allow · ruleVersion=v1'},
-        {time:'16:33:45', actor:'provider', stage:'attempt', details:'call status = no_answer'},
-        {time:'16:33:45', actor:'qa', stage:'status', details:'qa status выставлен вручную как flagged'}
-      ]
-    }
-  ];
-  const localAuditLog=[
-    {
-      createdAt:'2026-08-16T16:41:00.000Z',
-      action:'campaign.controlled_launch',
-      actorName:'Анна Котова',
-      actor:'operator',
-      entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Запустила кампанию. Черновик → работает',
-      ip:''
-    },
-    {
-      createdAt:'2026-08-16T15:12:00.000Z',
-      action:'campaign.created',
-      actorName:'Павел Орлов',
-      actor:'operator',
-      entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Создал кампанию',
-      ip:''
-    },
-    {
-      createdAt:'2026-08-14T09:12:00.000Z',
-      action:'base.imported',
-      actorName:'Анна Котова',
-      actor:'operator',
-      entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Загрузила базу займы_14_08.csv. Принято 8 740 записей',
-      ip:''
-    }
-  ];
   let callCards=[];
   let callsSource='loading';
   let callsErrorNotice='';
@@ -870,7 +779,6 @@
   let auditLogErrorNotice='';
   let auditLogLoadInProgress=false;
   const callAttemptDetailCache = new Map();
-  const localCallCardsWithSource=localCallCards.map((item)=>({...item, dataSource:'local'}));
 
   function formatCallTime(value) {
     const date = new Date(value);
@@ -2288,7 +2196,7 @@
     }
 
     const outcomeMeta = callOutcomeMeta[displayItem.outcome] || { label: displayItem.outcome, pill: 'state-empty' };
-    const sourceMode = isLimitedApiCall ? 'live API (агрегатный режим)' : displayItem.dataSource === 'api' ? 'live API (детальная выгрузка)' : 'локальный демо';
+    const sourceMode = isLimitedApiCall ? 'live API (агрегатный режим)' : displayItem.dataSource === 'api' ? 'live API (детальная выгрузка)' : 'источник не подтверждён';
     const callAttemptLabel = isLimitedApiCall
       ? 'не применимо: live API без callAttemptId'
       : (displayItem.callAttemptId ? `callAttemptId=${displayItem.callAttemptId}` : 'callAttemptId не получен');
