@@ -236,7 +236,41 @@
       font-size: 12px;
     }
 
-    .form-success {
+    .check-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .check-row input {
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    .check-row a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .form-notice {
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .form-notice.error {
+      background: #fdf0f0;
+      border: 1px solid #f0c8c8;
+      color: #8b1e1e;
+    }
+
+    .form-success,
+    .form-notice.success {
       background: #edf7f1;
       border: 1px solid #cfe6d8;
       color: #1b5b37;
@@ -244,6 +278,11 @@
       padding: 12px;
       font-weight: 600;
       font-size: 14px;
+    }
+
+    .demo-form button[disabled] {
+      opacity: 0.7;
+      cursor: wait;
     }
 
     .value-strip {
@@ -528,25 +567,32 @@
           <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
             <h2>Назначить демо</h2>
             <p>Покажем кампанию, сценарий и результат на вашем примере.</p>
-            <form class="demo-form" id="demoForm">
+            <form class="demo-form" id="demoForm" novalidate>
+              <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+
+              <div class="form-notice error" id="demoError" hidden></div>
+
               <label>
                 <span>Имя</span>
                 <input id="demoName" name="name" type="text" autocomplete="name" required>
               </label>
               <label>
                 <span>Компания</span>
-                <input name="company" type="text" autocomplete="organization" required>
+                <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
               </label>
               <label>
                 <span>Email</span>
-                <input name="email" type="email" autocomplete="email" required>
+                <input id="demoEmail" name="email" type="email" autocomplete="email" required>
               </label>
               <label>
                 <span>Телефон</span>
-                <input name="phone" type="tel" autocomplete="tel" required>
+                <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
               </label>
-              <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
-              <p class="form-note">Демо-форма: заявка не отправляется на сервер.</p>
+              <label class="check-row">
+                <input id="demoAgree" name="agree" type="checkbox" required>
+                <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
+              </label>
+              <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
               <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
             </form>
           </aside>
@@ -779,15 +825,80 @@
 
   <script>
     (() => {
+      const relayUrl = document.querySelector('meta[name="lead-relay-url"]')?.getAttribute('content') ?? '';
       const form = document.getElementById('demoForm');
+      const submitButton = document.getElementById('demoSubmit');
       const success = document.getElementById('demoSuccess');
+      const error = document.getElementById('demoError');
+      const honeypot = document.getElementById('_hp_name');
 
-      form.addEventListener('submit', (event) => {
+      function showError(message) {
+        error.textContent = message;
+        error.hidden = false;
+        success.hidden = true;
+      }
+
+      function hideError() {
+        error.hidden = true;
+        error.textContent = '';
+      }
+
+      function emailOk(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      }
+
+      form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (!form.reportValidity()) {
+        hideError();
+        success.hidden = true;
+
+        if (honeypot.value) {
           return;
         }
-        success.hidden = false;
+
+        const name = document.getElementById('demoName').value.trim();
+        const organization = document.getElementById('demoCompany').value.trim();
+        const email = document.getElementById('demoEmail').value.trim();
+        const phone = document.getElementById('demoPhone').value.trim();
+        const agree = document.getElementById('demoAgree').checked;
+
+        if (!name || !organization || !emailOk(email) || !phone || !agree) {
+          form.reportValidity();
+          return;
+        }
+
+        if (!relayUrl) {
+          showError('Форма не настроена. Напишите нам напрямую или проверьте переменную LEAD_RELAY_URL.');
+          return;
+        }
+
+        submitButton.disabled = true;
+
+        try {
+          const response = await fetch(relayUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              organization,
+              name,
+              email,
+              role: 'management',
+              segment: 'other',
+              request: `Заявка на демо с лендинга. Телефон: ${phone}`,
+            }),
+          });
+
+          if (response.ok) {
+            success.hidden = false;
+            form.reset();
+          } else {
+            showError('Не удалось отправить заявку. Попробуйте ещё раз или напишите нам напрямую.');
+          }
+        } catch {
+          showError('Нет связи с сервером. Проверьте подключение и попробуйте снова.');
+        } finally {
+          submitButton.disabled = false;
+        }
       });
     })();
   </script>

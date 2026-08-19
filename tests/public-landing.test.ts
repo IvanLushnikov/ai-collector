@@ -19,6 +19,15 @@ describe('public GitHub Pages landing', () => {
     expect(landing).not.toMatch(/маги[яи]/i);
     expect(landing).not.toContain('demoModalOverlay');
     expect(landing).not.toContain('Что покажем на демо');
+    expect(landing).not.toContain('заявка не отправляется на сервер');
+  });
+
+  it('submits demo leads through lead-relay when configured', () => {
+    expect(landing).toContain('meta[name="lead-relay-url"]');
+    expect(landing).toContain('fetch(relayUrl');
+    expect(landing).toContain('organization');
+    expect(landing).toContain('id="_hp_name"');
+    expect(landing).toContain('id="demoAgree"');
   });
 
   it('uses hero with product copy and inline demo form instead of side panel', () => {
