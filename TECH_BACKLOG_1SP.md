@@ -100,6 +100,29 @@
 Первая `todo`: нет; выполнена `T-253`.
 Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
 
+### T-254: Сделать frequency ledger durable и идемпотентным
+
+Статус: `done`
+
+Что сделать:
+
+- Хранить идентификатор учтённой попытки в PostgreSQL, а не в process memory.
+- Инкрементировать day/week/month buckets атомарно в одной транзакции с идемпотентностью по `callAttemptId`.
+- Создавать один repository на приложение и прокидывать его в calls/compliance routes.
+
+Где менять:
+
+- `src/domain/frequency-ledger/*`
+- `src/db/prisma/schema.prisma`, `src/db/migrations/*`
+- `src/server/app.ts`
+- `tests/compliance/*`
+
+Критерии готовности:
+
+- Повтор доставки одной попытки не меняет счётчики.
+- Durable adapter использует transaction и upsert/increment для всех трёх buckets.
+- Приложение не создаёт новый in-memory ledger на каждый request.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
@@ -6551,6 +6574,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: `T-254` done: добавлены `FrequencyLedgerAttempt` и migration `0025`; durable Prisma adapter использует уникальный `callAttemptId` как idempotency key и в одной transaction обновляет day/week/month buckets; bootstrap прокидывает один ledger в compliance/calls routes. In-memory adapter сохранён как тестовый fallback. Решение зафиксировано в ADR `0006`. Проверка: `prisma validate`; `npm run typecheck`; `npm test` (439/439).
 
 - 19.08.2026: `T-253` done: header-based tenant/role context допускается только вне production; scripts API переведён на zone-based RBAC и получает actor для audit из request identity; review queue больше не читает role header при выключенном header identity; введены canonical QA/compliance зоны. Проверка: `npm run typecheck`; `npm test` (437/437).
 

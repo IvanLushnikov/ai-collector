@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  createPrismaFrequencyLedgerRepository,
   createInMemoryFrequencyLedgerRepository,
   periodStartForBucket,
   recordFrequencyAttempt,
@@ -15,6 +16,59 @@ const baseInput = {
 };
 
 describe('recordFrequencyAttempt', () => {
+  it('persists an attempt and all buckets in one transaction', async () => {
+    const attemptCreate = vi.fn(async () => ({ id: 'ledger-attempt-1' }));
+    const upsert = vi.fn(async () => ({}));
+    const transaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      frequencyLedgerAttempt: { create: attemptCreate },
+      frequencyLedger: { upsert }
+    }));
+    const repo = createPrismaFrequencyLedgerRepository({
+      $transaction: transaction,
+      frequencyLedgerAttempt: {
+        findUnique: vi.fn(),
+        create: attemptCreate
+      },
+      frequencyLedger: { findUnique: vi.fn(), upsert }
+    } as any);
+
+    await expect(recordFrequencyAttempt(repo, { ...baseInput, status: 'ringing' })).resolves.toBe('counted');
+
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(attemptCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        callAttemptId: baseInput.callAttemptId,
+        tenantId: baseInput.tenantId,
+        status: 'ringing'
+      })
+    });
+    expect(upsert).toHaveBeenCalledTimes(3);
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({ count: 1 }),
+      update: { count: { increment: 1 } }
+    }));
+  });
+
+  it('treats a duplicate durable attempt as a no-op', async () => {
+    const upsert = vi.fn(async () => ({}));
+    const transaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback({
+      frequencyLedgerAttempt: {
+        create: vi.fn(async () => {
+          throw { code: 'P2002' };
+        })
+      },
+      frequencyLedger: { upsert }
+    }));
+    const repo = createPrismaFrequencyLedgerRepository({
+      $transaction: transaction,
+      frequencyLedgerAttempt: { findUnique: vi.fn(), create: vi.fn() },
+      frequencyLedger: { findUnique: vi.fn(), upsert }
+    } as any);
+
+    await expect(recordFrequencyAttempt(repo, { ...baseInput, status: 'answered' })).resolves.toBe('duplicate');
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it('increments day, week and month buckets on ringing', async () => {
     const repo = createInMemoryFrequencyLedgerRepository();
 

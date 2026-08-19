@@ -24,6 +24,11 @@ import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
 import { MangoVoiceProvider } from '../telephony/mango/index.js';
 import { createVoiceProviderResolver, type VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 import { createPrismaCredentialSecretStore } from '../secrets/credential-store.js';
+import {
+  createInMemoryFrequencyLedgerRepository,
+  createPrismaFrequencyLedgerRepository,
+  type FrequencyLedgerRepository
+} from '../domain/frequency-ledger/index.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -147,6 +152,7 @@ const createRateLimitAuditEntry = async (
 export type AppDependencies = {
   campaignStore?: any;
   allowHeaderIdentity?: boolean;
+  frequencyLedger?: FrequencyLedgerRepository;
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
@@ -280,6 +286,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   const campaignStore: any = dependencies.campaignStore ?? prisma;
   const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.NODE_ENV !== 'production';
+  const frequencyLedger = dependencies.frequencyLedger
+    ?? (campaignStore.$transaction && campaignStore.frequencyLedger && campaignStore.frequencyLedgerAttempt
+      ? createPrismaFrequencyLedgerRepository(campaignStore)
+      : createInMemoryFrequencyLedgerRepository());
 
   app.addHook('onRequest', async (request) => {
     request.allowHeaderIdentity = allowHeaderIdentity;
@@ -324,9 +334,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   registerAuthRoutes(app as any, campaignStore as any);
   registerCampaignRoutes(app as any, campaignStore as any);
-  registerComplianceRoutes(app as any, campaignStore as any);
+  registerComplianceRoutes(app as any, { ...(campaignStore as any), frequencyLedger });
   registerCallRoutes(app as any, {
     ...(campaignStore as AppCallDependencies),
+    frequencyLedger,
     voiceProviderResolver: (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
       sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
       mango: new MangoVoiceProvider()
