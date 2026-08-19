@@ -15,6 +15,7 @@ export type StartCallInput = {
   campaignId: string;
   debtorRecordId: string;
   phone: string;
+  idempotencyKey?: string;
   metadata?: Record<string, string | number | boolean | null>;
 };
 

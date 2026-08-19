@@ -429,6 +429,7 @@ model CallAttempt {
   scriptVersion         ScriptVersion?      @relation(fields: [scriptVersionId], references: [id], onDelete: Restrict)
   status                CallAttemptStatus  @default(initiated)
   providerCallId        String
+  idempotencyKey        String?
   identityVerified      Boolean           @default(false)
   identityVerifiedAt    DateTime?
   startedAt             DateTime
@@ -437,6 +438,8 @@ model CallAttempt {
   updatedAt             DateTime          @updatedAt
 
   callResult            CallResult?
+
+  @@unique([tenantId, idempotencyKey])
 }
 
 model CallResult {

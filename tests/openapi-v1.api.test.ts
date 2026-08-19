@@ -16,6 +16,8 @@ describe('OpenAPI v1 contract', () => {
     expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/audit-logs'].get.operationId).toBe('listCampaignAuditLogs');
     expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/readiness-summary'].get.operationId).toBe('getCampaignReadiness');
     expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/report'].get.operationId).toBe('getCampaignReport');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/debtors/{debtorRecordId}/calls/sandbox'].post.parameters)
+      .toContainEqual({ $ref: '#/components/parameters/IdempotencyKey' });
     expect(contract.components.responses.Error.content['application/json'].schema.required).toEqual(['error']);
     await app.close();
   });

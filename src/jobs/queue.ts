@@ -14,6 +14,7 @@ export type SandboxStartJobData = {
   campaignId: string;
   debtorRecordId: string;
   campaignStatus: string;
+  idempotencyKey: string;
 };
 
 export const createPingJob = (): { name: string; data: PingJobData } => ({

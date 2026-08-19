@@ -3789,10 +3789,11 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       toast('Проверка не выполнена','Кампания не переведена в работу.');
       return;
     }
-    try {
-      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/${debtorId}/calls/sandbox`,{
-        method:'POST',
-        headers:{Accept:'application/json','Content-Type':'application/json'},
+     try {
+       const idempotencyKey=window.crypto?.randomUUID?.() || `sandbox-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+       const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/debtors/${debtorId}/calls/sandbox`,{
+         method:'POST',
+         headers:{Accept:'application/json','Content-Type':'application/json','Idempotency-Key':idempotencyKey},
         body: JSON.stringify({})
       });
       const body=await response.json().catch(()=>({}));

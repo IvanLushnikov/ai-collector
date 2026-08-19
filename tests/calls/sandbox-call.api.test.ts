@@ -48,6 +48,7 @@ type AppStore = {
   };
   callAttempt: {
     create: (payload: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>;
+    findFirst?: (query: { where: { tenantId: string; campaignId: string; idempotencyKey: string } }) => Promise<Record<string, unknown> | null>;
     findUnique: (query: { where: { id: string } }) => Promise<Record<string, unknown> | null>;
     findMany?: (query: {
       where: {
@@ -149,6 +150,7 @@ const injectWithOwnerRole = (
     ...request,
     headers: {
       'x-user-role': 'owner',
+      'idempotency-key': 'sandbox-test-request-1',
       ...((request?.headers as Record<string, unknown> | undefined) ?? {})
     }
   });
@@ -298,6 +300,54 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       findMany: vi.fn(async () => [])
     },
     ...overrides
+  });
+
+  it('requires an idempotency key before starting an external call side effect', async () => {
+    const provider = makeProvider();
+    const store = makeStore({ complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]), voiceProvider: provider });
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      headers: { 'idempotency-key': '' },
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('IDEMPOTENCY_KEY_REQUIRED');
+    expect(provider.startCall).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('returns the existing attempt for a repeated idempotency key without dialing again', async () => {
+    const provider = makeProvider();
+    const store = makeStore({
+      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      voiceProvider: provider,
+      callAttempt: {
+        create: vi.fn(async () => ({ id: 'unexpected' })),
+        findFirst: vi.fn(async () => ({ id: 'existing-attempt', status: 'queued' })),
+        findUnique: vi.fn(async () => null),
+        findMany: vi.fn(async () => [])
+      }
+    });
+    const app = createApp({ campaignStore: store });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/calls/sandbox',
+      headers: { 'idempotency-key': 'repeated-request-1' },
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ replayed: true, callAttempt: { id: 'existing-attempt' } });
+    expect(provider.startCall).not.toHaveBeenCalled();
+    expect(store.callAttempt.create).not.toHaveBeenCalled();
+    await app.close();
   });
 
   const makeProvider = (options: { initialStatus?: VoiceCallStatus } = {}) => {

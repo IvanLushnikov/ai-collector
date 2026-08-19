@@ -92,7 +92,11 @@ const makeStore = (overrides: Record<string, unknown> = {}) => ({
 
 const injectOwner = (app: any, request: any) => app.inject({
   ...request,
-  headers: { 'x-user-role': 'owner', ...((request?.headers as Record<string, unknown> | undefined) ?? {}) }
+  headers: {
+    'x-user-role': 'owner',
+    'idempotency-key': 'live-test-request-1',
+    ...((request?.headers as Record<string, unknown> | undefined) ?? {})
+  }
 });
 
 describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live', () => {
