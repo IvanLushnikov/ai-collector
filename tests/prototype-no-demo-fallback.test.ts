@@ -17,4 +17,10 @@ describe('prototype evidence views', () => {
     expect(html).toContain('currentCampaignReportSnapshot=null;');
     expect(html).toContain("element.textContent='—';");
   });
+
+  it('does not keep a local queue or allow local review decisions', () => {
+    expect(html).toContain('let reviewQueueItems=[];');
+    expect(html).not.toContain("id:'RQ-1001'");
+    expect(html).not.toContain('item.status=decision;');
+  });
 });
