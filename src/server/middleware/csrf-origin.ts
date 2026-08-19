@@ -6,6 +6,7 @@ type CsrfOriginOptions = {
 };
 
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const sessionEstablishingPaths = new Set(['/auth/login', '/auth/register']);
 
 /**
  * Cookie sessions are browser credentials. In production, reject unsafe
@@ -15,7 +16,9 @@ const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  */
 export const createCsrfOriginMiddleware = ({ enabled, allowedOrigins }: CsrfOriginOptions) =>
   async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    if (!enabled || !unsafeMethods.has(request.method) || !request.authContext?.sessionId) {
+    const path = (request.url ?? '').split('?')[0];
+    const createsSession = sessionEstablishingPaths.has(path);
+    if (!enabled || !unsafeMethods.has(request.method) || (!request.authContext?.sessionId && !createsSession)) {
       return;
     }
 

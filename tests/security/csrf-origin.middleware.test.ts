@@ -55,4 +55,16 @@ describe('CSRF origin middleware', () => {
     expect(safe.state.statusCode).toBe(200);
     expect(service.state.statusCode).toBe(200);
   });
+
+  it('also protects session-establishing auth endpoints from login CSRF', async () => {
+    const middleware = createCsrfOriginMiddleware({ enabled: true, allowedOrigins: ['https://cabinet.example.test'] });
+    const response = reply();
+
+    await middleware({ method: 'POST', url: '/auth/login', headers: {} } as any, response as any);
+
+    expect(response.state).toEqual({
+      statusCode: 403,
+      body: { error: 'CSRF_ORIGIN_REQUIRED', message: 'Origin header is required for cookie-authenticated mutations.' }
+    });
+  });
 });

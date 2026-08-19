@@ -234,7 +234,7 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 Что сделано:
 
-- Для production cookie-authenticated `POST`/`PUT`/`PATCH`/`DELETE` добавлена fail-closed проверка явного trusted `Origin`.
+- Для production cookie-authenticated `POST`/`PUT`/`PATCH`/`DELETE`, а также `/auth/login` и `/auth/register`, добавлена fail-closed проверка явного trusted `Origin`.
 - Не затронуты безопасные методы и service/worker requests без browser session.
 - Middleware и интеграция с Fastify покрыты regression tests; тестовый override не меняет production default.
 

@@ -132,6 +132,7 @@ describe('authContextMiddleware', () => {
     const registered = await app.inject({
       method: 'POST',
       url: '/auth/register',
+      headers: { origin: 'https://cabinet.example.test' },
       payload: {
         organizationName: 'ООО МКК ФинЛиния',
         name: 'Анна Котова',
@@ -181,6 +182,7 @@ describe('authContextMiddleware', () => {
     const registered = await app.inject({
       method: 'POST',
       url: '/auth/register',
+      headers: { origin: 'https://cabinet.example.test' },
       payload: {
         organizationName: 'ООО МКК ФинЛиния',
         name: 'Анна Котова',
