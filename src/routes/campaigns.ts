@@ -10,6 +10,7 @@ import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 type CampaignDependencies = {
+  $transaction?: <T>(callback: (tx: any) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: any) => Promise<unknown>;
   };
@@ -32,6 +33,9 @@ type CampaignDependencies = {
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
     findMany?: (args: any) => Promise<unknown>;
+  };
+  outboxEvent?: {
+    create?: (args: any) => Promise<unknown>;
   };
   debtorRecord?: {
     count?: (args: any) => Promise<number>;
@@ -1193,27 +1197,14 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
     const previousStatus = campaign.status;
 
-    const updated = await (deps.campaign.update?.({
-      where: { id: params.data.campaignId },
-      data: { status: nextStatus },
-      select: {
-        id: true,
-        tenantId: true,
-        name: true,
-        status: true,
-        timezone: true,
-        createdAt: true
-      }
-    }) ?? Promise.resolve(null)) as {
-      id: string;
-      tenantId: string;
-      name: string;
-      status: string;
-      timezone: string;
-      createdAt: string;
-    };
+    const persistStatusChange = async (store: Pick<CampaignDependencies, 'campaign' | 'auditLog' | 'outboxEvent'>) => {
+      const updated = await (store.campaign.update?.({
+        where: { id: params.data.campaignId },
+        data: { status: nextStatus },
+        select: { id: true, tenantId: true, name: true, status: true, timezone: true, createdAt: true }
+      }) ?? Promise.resolve(null)) as { id: string; tenantId: string; name: string; status: string; timezone: string; createdAt: string };
 
-    await deps.auditLog?.create?.({
+      await store.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
         userId: actorId,
@@ -1226,7 +1217,22 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           toStatus: nextStatus
         }
       }
-    });
+      });
+      await store.outboxEvent?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          eventType: 'campaign.status_changed',
+          aggregateType: 'campaign',
+          aggregateId: params.data.campaignId,
+          idempotencyKey: `campaign.status_changed:${params.data.campaignId}:${previousStatus}:${nextStatus}`,
+          payload: { campaignId: params.data.campaignId, fromStatus: previousStatus, toStatus: nextStatus, actorId }
+        }
+      });
+      return updated;
+    };
+    const updated = deps.$transaction
+      ? await deps.$transaction((tx) => persistStatusChange(tx))
+      : await persistStatusChange(deps);
 
     return reply.code(200).send(updated);
   });
