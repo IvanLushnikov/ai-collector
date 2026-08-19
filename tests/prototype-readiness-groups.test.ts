@@ -6,7 +6,7 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 describe('prototype readiness groups', () => {
   it('splits blocking and warning reasons and does not start limits as applied', () => {
     expect(html).toContain('id="campaignLaunchLimitsStatus">Нужна проверка');
-    expect(html).toContain('id="readinessLimitsStatus">Нужна проверка');
+    expect(html).toMatch(/id="readinessLimitsStatus"[^>]*>Нужна проверка/);
     expect(html).toContain('Блокирует запуск');
     expect(html).toContain('id="campaignLaunchBlockingReasons"');
     expect(html).toContain('id="campaignLaunchWarningReasons"');

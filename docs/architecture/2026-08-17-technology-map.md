@@ -43,25 +43,27 @@
 
 ## 2. Текущее состояние (as-is)
 
-На 17.08.2026 проект находится **между поздним MVP Lab и подготовкой Controlled Pilot**.
+На 19.08.2026 проект находится **между поздним MVP Lab и подготовкой Controlled Pilot**. Закрыта волна клиентского кабинета CJ (`T-229`).
 
 Уже есть:
 
-- Backend: Node.js 20 + TypeScript + Fastify + Prisma + PostgreSQL 16 + Vitest (`docs/decisions/0001-backend-stack.md`).
-- Домен: Tenant, User, Role, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog.
-- Compliance v1: `call-window` (по умолчанию 08:00–22:00), `consent-status`, `debt-status`; fail-closed до sandbox-звонка.
-- Телефония: vendor-agnostic adapter + sandbox provider. Боевого провайдера нет.
-- UI: статические `prototype.html` / `index.html`, частично привязанные к API.
-- Auth: mock через заголовки `X-Tenant-Id` / `X-User-Role`.
-- Очередей, Redis, object storage, Docker Compose, реального ASR/TTS/LLM в коде нет.
+- Backend: Node.js 20 + TypeScript + Fastify + Prisma + PostgreSQL 16 + Vitest.
+- Домен расширен: SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent и др.
+- Compliance pilot rules: call-window + праздники, consent, debt status, frequency 1/2/8, suppression, legalBasis.
+- Телефония: sandbox + скелеты Exolve/Mango (без HTTP live).
+- Речь/диалог: ASR/TTS/LLM adapters (fake + Yandex/GigaChat skeleton), BYOK store, state machine, extractor, golden set.
+- Platform: docker-compose (PG+Redis), BullMQ/call jobs skeleton, fake object store, structured logger.
+- UI: `prototype.html` — CJ-меню и вкладки; partial API (calls, report, readiness, audit). Аналитика/список/launch/import — demo/local (волна `T-232`–`T-238`).
+- Auth: mock headers `X-Tenant-Id` / `X-User-Role`.
 
 Критические пробелы ядра:
 
-- нет frequency ledger (1/2/8), праздников, timezone должника как юридического окна, suppression list, third-party disclosure guard, AI disclosure в runtime;
-- нет call orchestrator со state machine, streaming ASR/TTS, prompt registry, extractor, golden set;
-- нет записи/транскрипта как обязательного evidence-контура;
-- нет live-провайдера, маркировки, CDR reconciliation;
-- UI ещё не является единственным API-backed операторским контуром.
+- нет HTTP live Exolve/SpeechKit (blocked на DPA/legal);
+- нет `POST .../calls/live` и runtime orchestrator wiring end-to-end;
+- third-party disclosure guard и AI disclosure в runtime не на live path;
+- CDR reconciliation, payment outcome, complaint/holdout для пилота;
+- клиентский кабинет не полностью API-backed;
+- `npm run typecheck` красный (CI blocker).
 
 ## 3. Нормативный контур → технические контроли
 

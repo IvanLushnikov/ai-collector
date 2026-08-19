@@ -2,13 +2,18 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8');
-const campaigns = html.match(/<section class="screen" id="campaigns">[\s\S]*?<\/section>/)?.[0] ?? '';
+const home = html.match(/<section class="screen active" id="home">[\s\S]*?<\/section>/)?.[0] ?? '';
 
-describe('prototype campaigns list', () => {
-  it('shows auto-pause in the filter and opens launch from the reason CTA', () => {
-    expect(campaigns).toContain('Автопауза');
-    expect(campaigns).toContain('data-open-campaign="launch">Открыть причину');
-    expect(campaigns).toContain('демо');
-    expect(campaigns).not.toMatch(/data-open-campaign="settings">Перенастроить/);
+describe('prototype campaigns list on home', () => {
+  it('keeps only agreed columns and mass actions on the home list', () => {
+    expect(home).toMatch(/<th[^>]*>Название/);
+    expect(home).toMatch(/<th[^>]*>Статус/);
+    expect(home).toMatch(/<th[^>]*>Прогресс/);
+    expect(home).not.toContain('Риск / причина');
+    expect(home).not.toContain('Открыть причину');
+    expect(home).not.toMatch(/data-open-campaign="settings">Перенастроить/);
+    expect(home).not.toContain('Автопауза');
+    expect(home).toContain('приостановлена системой');
+    expect(html).not.toContain('id="campaigns"');
   });
 });

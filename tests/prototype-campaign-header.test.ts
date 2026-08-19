@@ -4,11 +4,15 @@ import { describe, expect, it } from 'vitest';
 const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8');
 
 describe('prototype campaign header', () => {
-  it('keeps open-reason as the primary auto-pause CTA toward launch', () => {
-    expect(html).toContain('id="openPauseReason"');
-    expect(html).toContain('data-camp-tab-link="launch"');
-    expect(html).toContain('Открыть причину');
-    expect(html).toMatch(/openReasonButton\.style\.display = nextStatus === 'auto_paused'/);
-    expect(html).toMatch(/settingsButton\.style\.display = nextStatus === 'auto_paused' \? 'none'/);
+  it('launches from overview header and does not offer open-reason or one-click resume after system pause', () => {
+    expect(html).not.toContain('id="openPauseReason"');
+    expect(html).not.toContain('Открыть причину');
+    expect(html).not.toContain('data-camp-tab-link="launch"');
+    expect(html).toMatch(/id="launchCampaign"[^>]*>Запустить кампанию/);
+    expect(html).toContain('id="pauseCampaign">Приостановить кампанию');
+    expect(html).toContain('id="resumeCampaign"');
+    expect(html).toContain('id="stopCampaign">Остановить кампанию');
+    expect(html).toMatch(/resumeButton\.style\.display = nextStatus === 'manual_paused' \? 'inline-flex' : 'none'/);
+    expect(html).not.toMatch(/openReasonButton\.style\.display = nextStatus === 'auto_paused'/);
   });
 });

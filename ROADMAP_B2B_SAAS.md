@@ -319,9 +319,9 @@ Commercial:
 - Риск экономики: публичная цена конкурентов не равна полному COGS; маржу надо считать на реальных CDR и vendor costs.
 - Риск enterprise-продаж: без SSO, RBAC, audit log, retention и ИБ-документации крупный клиент не пройдёт закупку.
 
-## 8. Статус технологического roadmap на 16.08.2026
+## 8. Статус технологического roadmap на 19.08.2026
 
-Оценка ниже основана на текущих артефактах репозитория и `TECH_BACKLOG_1SP.md`, а не на предположениях о внешней готовности команды.
+Оценка ниже основана на текущих артефактах репозитория и `TECH_BACKLOG_1SP.md`, а не на предположениях о внешней готовности команды. Последняя закрытая UX-волна: `T-229` (клиентский кабинет CJ). Открытая очередь: `T-230`–`T-243`.
 
 Полная карта необходимых технологий по этапам (core / platform / adjacent, включая БД, хостинг, телефонию, ASR/TTS, LLM, промпты и ФЗ-контроли) зафиксирована в `docs/architecture/2026-08-17-technology-map.md` и кратко отражена в PRD, раздел 22. Продуктовый rulebook: `docs/compliance/rulebook-v1.md`. Направление live-телефонии: `docs/decisions/0003-live-voice-provider.md`. Направление speech/LLM: `docs/decisions/0004-speech-llm-stack.md`.
 
@@ -330,23 +330,26 @@ Commercial:
 - Сформирован backend-контур MVP Lab: стек, базовая структура сервера, тестовый контур, Prisma-схема и tenant-scoped доменная модель.
 - Реализованы базовые API для кампаний, импорта базы, compliance check, sandbox-звонка, журнала звонков, QA-разметки, версий сценария, usage ledger и telephony connections.
 - Появились ключевые control-механизмы: tenant context, RBAC v0, AuditLog, compliance decision log, автопауза, usage events и отчёт кампании из реальных событий.
-- Прототип `prototype.html` частично привязан к backend: отчёт кампании теперь читает реальные данные через API вместо демо-метрик.
+- Прототип `prototype.html` пересобран по CJ-спеке (`T-229`): канонический путь менеджера, меню без админ-контура. Частично API-backed: calls, report, readiness-summary, audit-logs; волна `T-232`–`T-238` доводит до полного API-backed flow.
+- Backend pilot-ready compliance: frequency 1/2/8, suppression, праздники, legalBasis, BYOK/speech/dialogue skeletons, docker-compose + BullMQ skeleton.
 
 ### 8.2. Чего ещё критически не хватает
 
-- Нет целостного пользовательского контура MVP: список кампаний, мастер создания, launch readiness, review queue, карточка звонка и QA-проход существуют как прототип, но не собраны в один API-backed flow.
-- Compliance engine пока покрывает только базовые правила; отсутствуют suppression list, third-party disclosure guard, holiday/contact-frequency logic и полноценный handoff policy.
-- Нет call orchestrator со state machine, полноценной записи transcript/extraction pipeline и regression/golden-set контура для AI-сценариев.
-- Enterprise-ready блок остаётся в основном на уровне документов и заготовок: SSO, billing, integrations, SLA/monitoring и self-service exports не доведены до рабочего состояния.
+- Клиентский кабинет не end-to-end API-backed: список кампаний, мастер создания, импорт, запуск/пауза/стоп, аналитика — частично demo/local (`T-232`–`T-238`).
+- Нет live-маршрута звонка и HTTP интеграций Exolve/SpeechKit (`T-149`, `T-157` blocked до DPA/legal).
+- Runtime orchestrator не wired end-to-end; CDR reconciliation и payment outcome для пилота отсутствуют.
+- `npm run typecheck` красный (~147 ошибок) — CI blocker (`T-230`).
+- Admin-контур (речь/BYOK, внутренняя QA-очередь) вынесен из клиентского меню, отдельная поверхность не спроектирована.
+- Enterprise: SSO, real auth, invoice-grade billing, SLA/monitoring — в основном docs/заготовки.
 
 ### 8.3. Качественная оценка по этапам
 
 - Этап 0. Discovery и подготовка пилота: `35%`.
-  Уже есть продуктовый контур и часть технических решений, но в репозитории пока нет подтверждённого legal-safe call-flow, baseline-метрик, выбранного пилотного сегмента и формализованных hard gates для live traffic.
-- Этап 1. MVP Lab: `65%`.
-  Сильнее всего продвинут backend, данные, auditability и sandbox voice flow. Основной недостающий кусок здесь теперь не только backend, а операторский UX и end-to-end flow от создания кампании до review и отчёта.
-- Этап 2. Controlled Pilot: `10%`.
-  Есть технические заделы под QA, отчётность и автопаузу, но ещё нет live-процессов, holdout/control, ежедневного review-ритма и сверки результатов с платежными данными.
+  Технический rulebook и skeletons есть; нет legal memo, DPA, baseline и формализованных hard gates для live.
+- Этап 1. MVP Lab: `75%`.
+  Backend и compliance pilot rules сильны; CJ-IA закрыта (`T-229`); остался API-backed UI и typecheck.
+- Этап 2. Controlled Pilot: `12%`.
+  Заделы QA, отчёт, автопауза, jobs; нет live HTTP, orchestrator wiring, CDR, payment outcome, пилотного ритма.
 - Этап 3. Production SaaS v1: `20%`.
   Есть фундамент под multi-tenant, RBAC, audit и usage, но production-контур для нескольких клиентов пока не собран.
 - Этап 4. Scale и enterprise: `5%`.

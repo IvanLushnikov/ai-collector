@@ -1,6 +1,6 @@
 # Technical Backlog: 1 SP Tasks
 
-Дата: 17.08.2026
+Дата: 19.08.2026
 
 Каноническая очередь работ репозитория. UX/UI-задачи тоже живут здесь (`T-*`), не в отдельном файле. `DESIGN_BACKLOG_1SP.md` — архив закрытых дизайн-волн `D-001`–`D-013`.
 
@@ -13,38 +13,47 @@
 - Слишком крупная → `split` и несколько новых 1 SP.
 - `blocked` — только внешний договор, ключ, legal memo или доступ.
 - Поля «Где менять» у открытых задач держать в актуальных путях (`src/`, `tests/`, `docs/`).
-- Исторические id `T-065`/`T-066` встречаются дважды (API-docs и UX). Не перенумеровывать закрытое. Новые задачи — следующие свободные после последней `T-*` (сейчас `T-205+`).
+- Исторические id `T-065`/`T-066` встречаются дважды (API-docs и UX). Не перенумеровывать закрытое. Новые задачи — следующие свободные после последней `T-*` (сейчас `T-243+`).
 
 ## Статусы
 
 - `todo` / `doing` / `done` / `blocked` / `split`
 
-## Архитектура as-is (17.08.2026)
+## Архитектура as-is (19.08.2026)
 
 Стек: Node 20, TypeScript, Fastify, Prisma, PostgreSQL 16, Vitest. ADR: `0001` backend, `0002` SSO (ещё не код), `0003` Exolve+Mango, `0004` SpeechKit+YandexGPT/GigaChat, `0005` BYOK.
 
 Есть в коде:
 
-- Домен Lab: Tenant, User, Role, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog.
-- API: кампании, CSV-импорт, sandbox-звонок, отчёт, usage, QA, scripts, telephony connections, audit-logs, readiness-summary, review-items (вычисляемые, без таблицы).
-- Compliance v1: окно будни `08:00–22:00` / выходные и продуктовые праздники РФ 2026–2027 `09:00–20:00` по `DebtorRecord.timezone`, `consent=revoked`/`pending`, `debtStatus` block-список. Fail-closed до sandbox-звонка.
-- Телефония: `VoiceProviderAdapter` + sandbox. Секретов провайдера в БД нет. Активный сценарий на `running` нельзя сменить (`SCRIPT_VERSION_LOCKED`). Safe-resume: `POST .../safe-resume` с чеклистом в `review`/`ready`.
+- Домен Lab: Tenant, User, Role, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog, SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent.
+- API: кампании, CSV/XLSX-импорт, sandbox-звонок, отчёт, usage, QA, scripts, telephony connections, audit-logs, readiness-summary, review-items (вычисляемые), BYOK credentials, billing settings.
+- Compliance pilot-ready (Lab): окно будни `08:00–22:00` / выходные и праздники РФ 2026–2027 `09:00–20:00` по timezone; `consent` given/pending/revoked; `debtStatus` block-список; `FREQUENCY_LIMIT_BLOCK` 1/2/8; `SUPPRESSION_BLOCK`; `Tenant.legalBasisStatus` (production без `confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`). Fail-closed до звонка.
+- Телефония: `VoiceProviderAdapter` + sandbox + скелеты Exolve/Mango (без HTTP). Production probe gates на marking/recording/handoff. Safe-resume: `POST .../safe-resume`.
+- Речь/диалог (скелеты): ASR/TTS/LLM adapters + fake, Yandex/GigaChat skeleton без HTTP, BYOK envelope/store, DialogueStateMachine, extractor, golden set, identity gate в LLM tests.
+- Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
 - Auth: заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
-- UI: `prototype.html`, частично API-backed.
+- UI: `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs); запуск/аналитика/список кампаний/импорт — ещё demo/local.
 - Биллинг v0: connected minute из usage + тариф tenant/env.
-- `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox.
-- Identity slots: `DebtorRecord.displayName`, `agreementRef` (опциональны в CSV).
-- Маскировка телефона в audit metadata sandbox: `src/logging/mask.ts`. GitHub Actions CI: `.github/workflows/ci.yml`.
-- Production readiness: `TelephonyConnection.lastProbeAt` + `probeMarking/probeRecording/probeHandoff`; без подтверждения трёх сигналов → `TELEPHONY_PROBE_INCOMPLETE`. `sandboxPass` не считается live-маркировкой.
+- `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
 
-Нет в коде (и это уже разрыв относительно ADR/rulebook/карты, не «будущий SaaS»):
+Нет в коде (разрыв до Controlled Pilot / Production):
 
-- Docker Compose, Redis, BullMQ, object storage.
-- Frequency ledger + `FREQUENCY_LIMIT_BLOCK` (1/2/8); sandbox канал не инкрементирует. `SUPPRESSION_BLOCK` есть. `Tenant.legalBasisStatus` (default `pending`); production-ready без `confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`.
-- Live-провайдер, маркировка/probe, ASR/TTS/LLM, BYOK, state machine диалога, prompt registry.
-- Excel-импорт, golden/red-team, extractor, GigaChat/Mango скелеты, handoff destination.
+- HTTP live Exolve (`T-149` blocked), HTTP SpeechKit/YandexGPT (`T-157` blocked), retention purge job (`T-203` blocked — ждёт legal memo).
+- Маршрут `POST .../calls/live` (контракт в docs, guards есть, реализации нет).
+- Runtime wiring orchestrator (ASR→state machine→LLM→TTS) в live/sandbox path end-to-end.
+- CDR reconciliation, payment outcome / kept PTP, complaint rate, holdout/control для пилота.
+- SSO/OIDC (только ADR 0002), real auth вместо mock headers.
+- Клиентский кабинет как единый API-backed flow (волна 12: `T-232`–`T-238`).
+- Admin-контур: речь/BYOK, внутренняя очередь QA (убран из клиентского меню в `T-229`).
+- `npm run typecheck` — ~147 ошибок; CI красный на typecheck при зелёных тестах (`T-230`).
 
-Карта: `docs/architecture/2026-08-17-technology-map.md`. Rulebook: `docs/compliance/rulebook-v1.md`. Live без legal memo не запускать (`T-149`, `T-157` остаются `blocked`).
+Карта: `docs/architecture/2026-08-17-technology-map.md`. Rulebook: `docs/compliance/rulebook-v1.md`. Live без legal memo и DPA не запускать.
+
+### Внешние блокеры (не код, параллельно разработке)
+
+- Legal memo: rulebook v1, 1/2/8, retention (152‑ФЗ vs 1,5 года), коллизия 126‑ФЗ / 230‑ФЗ по автовызовам.
+- DPA и коммерция: Exolve (ADR 0003), Yandex Cloud Speech/GPT (ADR 0004).
+- Baseline метрики пилота, beachhead-сегмент, владелец пилота у клиента.
 
 ## Очередь исполнения (открытое)
 
@@ -59,9 +68,13 @@
 7. **Evidence** — закрыта кроме retention = `T-203` blocked. `T-192`, `T-193`, `T-202` done.
 8. **Adjacent** — закрыта (`T-196`, `T-199`, `T-200`, `T-204`). Logger `T-204` done.
 9. **UX-волна кабинета (аудит 17.08.2026)** — закрыта (`T-205`–`T-228`).
+10. **Кабинет клиента CJ (18.08.2026)** — закрыта (`T-229`). Спека `docs/superpowers/specs/2026-08-18-client-cabinet-cj-design.md`.
+11. **Tech hygiene (19.08.2026)** — `T-230` (`todo`), `T-231` (`done`). Первая: `T-230`.
+12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`todo`).
+13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`todo`).
 
-Открытых `todo` нет.  
-HTTP Exolve = `T-149` blocked, HTTP SpeechKit = `T-157` blocked, retention = `T-203` blocked.
+Первая `todo`: **T-230** (typecheck / CI).  
+Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
 
 ## Закрытые волны (не переписывать)
 
@@ -5944,7 +5957,341 @@ HTTP Exolve = `T-149` blocked, HTTP SpeechKit = `T-157` blocked, retention = `T-
 Контекст:
 - Live без legal memo не обещать. Identity в карточке: «не подтверждена» по умолчанию. Stop в UI отображает `completed`.
 
+### T-229: Клиентский кабинет — канонический путь и IA
+
+Статус: `done`
+
+Что сделать:
+
+- Пересобрать `prototype.html` по утверждённой спеке кабинета клиента: меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки кампании Обзор · База · Сценарий · Телефония · Звонки.
+- Главная = список кампаний без «Действия» и «Открыть причину». Запуск только в шапке Обзора, fail-closed.
+- Убрать клиентские экраны админ-контура, вкладки Запуск/Проверка/Отчёт/Настройки, шаг мастера «Проверка перед запуском».
+- Словарь и антипаттерны той же волны. Не расширять enum кампании, не делать живую CRM.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-*.test.ts`
+- `PRODUCT_LANGUAGE.md`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Меню и вкладки совпадают со спекой §4.1–4.2.
+- Путь создать → база → сценарий → телефония → запуск с Обзора проходит без третьей кнопки.
+- `npm run test -- tests/prototype-*.test.ts` проходит. Инлайн-скрипт парсится (`new Function`).
+
+## P1. Tech hygiene (волна 11)
+
+### T-230: Починить npm run typecheck
+
+Статус: `todo`
+
+Что сделать:
+
+- Исправить ошибки `tsc --noEmit` в `src/` и `tests/` (~147 на 19.08.2026).
+- Не менять runtime-поведение без необходимости; приоритет — типы моков в тестах и deps в `app.ts`/`campaigns.ts`.
+
+Где менять:
+
+- `src/routes/campaigns.ts`
+- `src/server/app.ts`
+- `tests/campaigns.create.test.ts`
+- `tests/reports/campaign-report.api.test.ts`
+- прочие файлы из вывода `npm run typecheck`
+
+Критерии готовности:
+
+- `npm run typecheck` exit 0.
+- `npm run test` по-прежнему зелёный.
+- CI job `check` проходит typecheck.
+
+### T-231: Синхронизировать as-is документацию
+
+Статус: `done`
+
+Что сделать:
+
+- Обновить `ROADMAP_B2B_SAAS.md` §8 под T-229 и текущий код.
+- Обновить `docs/architecture/2026-08-17-technology-map.md` §2 (as-is).
+- Обновить `docs/product/prd-open-questions.md` §6–7 (разрывы и IA клиентского кабинета CJ).
+- Сверить с шапкой «Архитектура as-is» в этом файле.
+
+Где менять:
+
+- `ROADMAP_B2B_SAAS.md`
+- `docs/architecture/2026-08-17-technology-map.md`
+- `docs/product/prd-open-questions.md`
+- `TECH_BACKLOG_1SP.md` (журнал)
+
+Критерии готовности:
+
+- Нет утверждений «нет frequency ledger / docker / BYOK» там, где код уже есть.
+- IA клиента соответствует `docs/superpowers/specs/2026-08-18-client-cabinet-cj-design.md`.
+
+## P1. API-backed клиентский кабинет (волна 12)
+
+Источник: CJ-спека; backend API уже есть, UI после `T-229` ещё demo/local на ключевых шагах.
+
+### T-232: Главная — список кампаний из API
+
+Статус: `todo`
+
+Что сделать:
+
+- Загружать строки Главной из `GET /tenants/:tenantId/campaigns` вместо статичных `<tr>`.
+- Показывать empty/error/fallback без падения навигации.
+- Сохранить колонки CJ-спеки: чекбокс, название (клик), статус, прогресс «Обзвонили».
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-campaigns-list.test.ts`
+- `tests/prototype-home-risk.test.ts`
+
+Критерии готовности:
+
+- При доступном API список строится из ответа сервера.
+- Нет колонки «Действия» и «Открыть причину».
+- `npm run test -- tests/prototype-campaigns-list.test.ts tests/prototype-home-risk.test.ts` проходит.
+
+### T-233: Мастер — создание кампании через POST /campaigns
+
+Статус: `todo`
+
+Что сделать:
+
+- Шаг 1 мастера вызывает `POST /campaigns` с `X-Tenant-Id` / `X-User-Role`.
+- Ошибки API показываются inline на шаге, без false success.
+- После успеха — переход к вкладкам кампании с реальным `campaignId`.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-nav.test.ts` (парсинг скрипта)
+- новый или существующий `tests/prototype-wizard-create.test.ts`
+
+Критерии готовности:
+
+- Локальный «успех» без ответа API невозможен на шаге создания.
+- `campaignId` из ответа используется в последующих fetch.
+
+### T-234: Вкладка «База» — импорт через API
+
+Статус: `todo`
+
+Что сделать:
+
+- Загрузка файла вызывает `POST .../debtors/import` (CSV или XLSX base64 по контракту API).
+- Показать `acceptedCount`, `rejectedCount`, ошибки по строкам на человеческом русском.
+- Различать «принято в базу» и «допущено к звонку» в copy (`PRODUCT_LANGUAGE.md`).
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-import-mapping.test.ts`
+- `tests/prototype-import-report.test.ts`
+
+Критерии готовности:
+
+- Нет hardcoded 10 000/8 740/1 260 после успешного API-импорта.
+- Ошибки валидации из API видны на вкладке «База».
+
+### T-235: Запуск, пауза, стоп через PATCH status
+
+Статус: `todo`
+
+Что сделать:
+
+- Подтверждённый запуск/остановка/возобновление (где API позволяет) через `PATCH .../campaigns/:id/status`.
+- Ручная пауза может остаться локальной меткой UI, если enum не поддерживает — не выдумывать API `stopped`.
+- Передавать `X-User-Role: owner` или `collection_manager` для write.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-launch-confirm.test.ts`
+- `tests/prototype-pause-confirm.test.ts`
+- `tests/prototype-stop-confirm.test.ts`
+
+Критерии готовности:
+
+- Запуск после confirm вызывает backend transition, не только `setCampaignState('running')`.
+- Fail-closed: при 409/403 кнопка не показывает ложный успех.
+
+### T-236: Аналитика из report API
+
+Статус: `todo`
+
+Что сделать:
+
+- Экран «Аналитика» и KPI Обзора агрегируют данные из `GET .../report` (per campaign + фильтр «все»).
+- Убрать или скрыть demo-notice, когда все метрики из live API.
+- Сохранить четыре показателя: Обзвонено, Соединилось, Обещания, Стоимость.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-report-funnel.test.ts`
+- `PRODUCT_LANGUAGE.md`
+
+Критерии готовности:
+
+- `renderAnalytics()` не использует только hardcoded `byCampaign` при успешном API.
+- Подпись «демо» только при fallback.
+
+### T-237: Тестовый звонок через sandbox API
+
+Статус: `todo`
+
+Что сделать:
+
+- Кнопка проверки соединения вызывает `POST .../calls/sandbox` для выбранного debtor (или documented test debtor).
+- Убрать `setTimeout`-mock как единственный путь успеха.
+- Явно: кампания не переходит в `running`.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-test-call.test.ts`
+
+Критерии готовности:
+
+- Успех/ошибка sandbox отображаются из ответа API.
+- `npm run test -- tests/prototype-test-call.test.ts` проходит.
+
+### T-238: Overview KPI только из API
+
+Статус: `todo`
+
+Что сделать:
+
+- Метрики Обзора (`campaignOverview*`) синхронизировать с report/readiness; при отсутствии данных — «н/д», не выдуманные цифры.
+- Ссылки «Аналитика» сохраняют фильтр кампании.
+
+Где менять:
+
+- `prototype.html`
+- `tests/prototype-campaign-header.test.ts`
+
+Критерии готовности:
+
+- Нет статичных 6 800 / 3 102 при live API и пустой кампании.
+- Readiness на Обзоре по-прежнему из `readiness-summary`.
+
+## P1. Controlled Pilot skeleton (волна 13)
+
+Live-трафик не включать до legal memo и разблокировки `T-149`/`T-157`.
+
+### T-239: POST .../calls/live — skeleton маршрута
+
+Статус: `todo`
+
+Что сделать:
+
+- Реализовать маршрут по контракту `docs/calls-api.md` с `isLiveCallsEnabled()`, compliance, production telephony gates, resolver adapter.
+- Без HTTP Exolve: использовать sandbox или fake adapter за флагом; `LIVE_CALLS_ENABLED=false` по умолчанию.
+
+Где менять:
+
+- `src/routes/calls.ts`
+- `src/server/app.ts`
+- `tests/calls/live-call.api.test.ts` (новый)
+
+Критерии готовности:
+
+- При `LIVE_CALLS_ENABLED=false` → 403/503 с понятным кодом.
+- При включении и sandbox connection — создаётся `CallAttempt` по тем же правилам, что sandbox POST.
+- Tenant isolation и compliance fail-closed покрыты тестами.
+
+### T-240: Wire call orchestrator к call path
+
+Статус: `todo`
+
+Что сделать:
+
+- Подключить `src/jobs/` / orchestrator hook к завершению sandbox (или live skeleton) без сетевых ASR/TTS.
+- Fake adapters проходят state machine один turn; usage events не дублируются.
+
+Где менять:
+
+- `src/jobs/worker.ts`
+- `src/routes/calls.ts`
+- `tests/jobs/call-jobs.test.ts`
+
+Критерии готовности:
+
+- Один sandbox-звонок может пройти через orchestrator stub в тестах.
+- `SANDBOX_CALLS_QUEUE_ENABLED` default false сохранён.
+
+### T-241: Tenant-level analytics endpoint
+
+Статус: `todo`
+
+Что сделать:
+
+- `GET /tenants/:tenantId/analytics/summary` — агрегация report-метрик по кампаниям tenant (limit/period v0).
+- RBAC как у report. Документ route-level.
+
+Где менять:
+
+- `src/routes/reports.ts` или новый `src/routes/analytics.ts`
+- `docs/reports-api.md` или `docs/analytics-api.md`
+- `tests/analytics/tenant-summary.api.test.ts`
+
+Критерии готовности:
+
+- Endpoint возвращает те же четыре KPI для UI «Аналитика».
+- Tenant isolation в тестах.
+
+### T-242: Payment outcome в домене и отчёте
+
+Статус: `todo`
+
+Что сделать:
+
+- Расширить `CallResult` optional полями payment outcome v0 (enum + nullable timestamp/amount).
+- Включить в campaign report агрегацию «оплата после обещания» как placeholder для пилота.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`
+- `src/domain/call-result/index.ts`
+- `src/reports/campaign-report.ts`
+- `tests/reports/campaign-report.test.ts`
+
+Критерии готовности:
+
+- Миграция применима; report не ломает существующие поля.
+- Без live payment feed — только schema + report math на событиях.
+
+### T-243: CDR reconciliation stub
+
+Статус: `todo`
+
+Что сделать:
+
+- Модуль `src/telephony/cdr-reconciliation.ts`: compare provider status vs `CallAttempt` (in-memory/fake).
+- Документ `docs/operations/cdr-reconciliation.md` — процесс пилота, не production cron.
+
+Где менять:
+
+- `src/telephony/cdr-reconciliation.ts`
+- `docs/operations/cdr-reconciliation.md`
+- `tests/telephony/cdr-reconciliation.test.ts`
+
+Критерии готовности:
+
+- Тест на mismatch → audit/event stub, без auto-delete.
+- Live HTTP не требуется.
+
 ## Журнал изменений плана
+
+- 19.08.2026: Ревью backlog; добавлены волны 11–13 (`T-230`–`T-243`), обновлена шапка as-is (19.08.2026), внешние блокеры legal/DPA зафиксированы. `T-231` done: ROADMAP §8, technology-map §2, prd-open-questions §6–7. Первая `todo`: `T-230`. Коммит: `T-229` + backlog.
+
+- 18.08.2026: `T-229` done; клиентский кабинет пересобран по CJ-спеке. Проверка: `npm run test -- tests/prototype-*.test.ts`.
+
+- 18.08.2026: Hotfix кабинета: в `prototype.html` у `showCampaignTab` не было закрывающей `}`, из‑за этого инлайн-скрипт не парсился и кроме статичной «Главной» навигация не работала. Проверка: `npm run test -- tests/prototype-nav.test.ts`.
 
 - 17.08.2026: `T-160` переведена в `done`; `SANDBOX_CALLS_QUEUE_ENABLED` default false, auto_paused job skip, sync sandbox сохранён. Проверка: `npm run test -- tests/jobs/call-jobs.test.ts tests/calls/sandbox-call.api.test.ts`. Следующая: `T-162`.
 
