@@ -651,18 +651,11 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         return reply.code(403).send({ error: 'LIVE_CALLS_DISABLED' });
       }
 
-      const sandboxUrl = request.url.replace(/\/calls\/live\/?(\?.*)?$/, '/calls/sandbox$1');
-      const proxied = await app.inject({
-        method: 'POST',
-        url: sandboxUrl,
-        headers: request.headers,
-        payload: request.body ?? {}
-      });
-      const contentType = proxied.headers['content-type'];
-      if (typeof contentType === 'string') {
-        reply.header('content-type', contentType);
-      }
-      return reply.code(proxied.statusCode).send(proxied.json ? proxied.json() : proxied.body);
+      // A live call must never silently degrade to sandbox. This route stays
+      // closed until the configured provider has a reviewed HTTP adapter,
+      // signed webhook ingress and legal/DPA approval.
+      void request;
+      return reply.code(501).send({ error: 'LIVE_CALLS_NOT_IMPLEMENTED' });
     }
   );
 

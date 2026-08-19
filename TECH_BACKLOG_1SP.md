@@ -289,6 +289,21 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Документированная команда миграции существует и не зависит от неверсируемого schema push.
 - Изменение применённой миграции обнаруживается до изменения схемы.
 
+### T-265: Исключить sandbox fallback из live call API
+
+Статус: `done`
+
+Что сделано:
+
+- `POST .../calls/live` при выключенном флаге возвращает `LIVE_CALLS_DISABLED`, а при включённом — явный `501 LIVE_CALLS_NOT_IMPLEMENTED`.
+- Live request больше не проксируется в sandbox, не создаёт `CallAttempt` и не запускает провайдера.
+- Контрактная документация обновлена: production call остаётся blocked до HTTP adapter, signed ingress и legal/DPA gate.
+
+Критерии готовности:
+
+- Нельзя ошибочно представить sandbox side effect как live обзвон.
+- Tests доказывают отсутствие `CallAttempt` в обоих live-state сценариях.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
