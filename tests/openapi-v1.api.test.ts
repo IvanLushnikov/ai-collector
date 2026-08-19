@@ -10,6 +10,12 @@ describe('OpenAPI v1 contract', () => {
     const contract = response.json();
     expect(contract.openapi).toBe('3.1.0');
     expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/status'].patch.operationId).toBe('updateCampaignStatus');
+    expect(contract.paths['/tenants/{tenantId}/campaigns'].post.operationId).toBe('createCampaign');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/calls'].get.operationId).toBe('listCampaignCalls');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/calls/{callAttemptId}'].get.operationId).toBe('getCampaignCall');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/audit-logs'].get.operationId).toBe('listCampaignAuditLogs');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/readiness-summary'].get.operationId).toBe('getCampaignReadiness');
+    expect(contract.paths['/tenants/{tenantId}/campaigns/{campaignId}/report'].get.operationId).toBe('getCampaignReport');
     expect(contract.components.responses.Error.content['application/json'].schema.required).toEqual(['error']);
     await app.close();
   });

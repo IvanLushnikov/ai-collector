@@ -212,6 +212,21 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - API error не создаёт видимость реальных показателей кампании.
 - Тесты report/campaign header/prototype проходят.
 
+### T-260: Зафиксировать ownership и покрытие OpenAPI v1 для кабинета
+
+Статус: `done`
+
+Что сделано:
+
+- Расширен опубликованный `/openapi/v1.json` до маршрутов кабинета: campaign create/list/status, import, calls/evidence, audit, readiness, report и sandbox call.
+- Contract test фиксирует operation IDs ключевых API-вызовов frontend.
+- Добавлены правила ownership, совместимости и будущей генерации typed client в `docs/architecture/api-contract-governance.md`.
+
+Критерии готовности:
+
+- Backend публикует единственный versioned contract для используемых UI API.
+- Breaking changes требуют новой версии, а не неявно ломают кабинет.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
