@@ -1729,7 +1729,13 @@
   }
 
   function syncCampaignOverviewMetricsFromReport(snapshot = currentCampaignReportSnapshot) {
-    const sourceSnapshot = snapshot && typeof snapshot === 'object' ? snapshot : getReportSnapshotFromCalls();
+    const sourceSnapshot = snapshot && typeof snapshot === 'object' ? snapshot : null;
+    if (!sourceSnapshot) {
+      ['#campaignOverviewProcessedValue','#campaignOverviewCompletedValue','#campaignOverviewPtpValue','#campaignOverviewCostValue'].forEach((selector)=>{
+        const element=q(selector); if (element) element.textContent='—';
+      });
+      return;
+    }
     const totalRecords = Number(sourceSnapshot.totalRecords) || 0;
     const attemptedCalls = Number(sourceSnapshot.attemptedCalls) || 0;
     const completedCalls = Number(sourceSnapshot.completedCalls) || 0;
@@ -2028,9 +2034,8 @@
       setIf('#reportCampaignName', context?.campaignName || 'Кампания');
       setIf('#reportNotice', 'API отчёта недоступен: контекст кампании не найден.', 'notice warn');
       setIf('#reportTag', 'ошибка', 'tag warn');
-      const local=getReportSnapshotFromCalls();
-      currentCampaignReportSnapshot=local;
-      syncCampaignOverviewMetricsFromReport({ ...local, source:'local' });
+      currentCampaignReportSnapshot=null;
+      syncCampaignOverviewMetricsFromReport(null);
       return;
     }
 
@@ -2051,14 +2056,10 @@
       }
     } catch (error) {
       const message=`API отчёта недоступен: ${error instanceof Error ? error.message : 'неизвестная ошибка'}.`;
-      setIf('#reportNotice', `${message} Показаны локальные метрики прототипа.`, 'notice warn');
+      setIf('#reportNotice', `${message} Данные отчёта не показаны.`, 'notice warn');
       setIf('#reportTag', 'ошибка', 'tag warn');
-      const local=getReportSnapshotFromCalls();
-      currentCampaignReportSnapshot={ ...local, source:'local' };
-      syncCampaignOverviewMetricsFromReport(currentCampaignReportSnapshot);
-      if (q('#reportNotice')) {
-        renderReportSnapshot(getReportSnapshotFromCalls(), 'local', q('#reportNotice').textContent);
-      }
+      currentCampaignReportSnapshot=null;
+      syncCampaignOverviewMetricsFromReport(null);
     }
   }
  function setPanelStatus(panelId, badgeId, statusTextId, reasonsId, state, mainText, reasons) {

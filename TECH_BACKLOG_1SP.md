@@ -32,7 +32,7 @@
 - Речь/диалог (скелеты): ASR/TTS/LLM adapters + fake, Yandex/GigaChat skeleton без HTTP, BYOK envelope/store, DialogueStateMachine, extractor, golden set, identity gate в LLM tests.
 - Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
 - Auth: cookie-сессия `ac_session` (`POST /auth/register|login|logout`, `GET /auth/me`) + fallback заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
-- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
+- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`; evidence и отчёт fail closed без локальной подмены при ошибке API.
 - Биллинг v0: connected minute из usage + тариф tenant/env.
 - `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
 
@@ -191,9 +191,24 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 Осталось:
 
-- Добавлять outbox event атомарно с domain mutation.
-- Заменить optimistic claim на conditional SQL claim/lease для нескольких workers.
+- Добавлять outbox event атомарно с оставшимися domain mutations.
+- Добавить lease expiry и ownership check для нескольких workers.
 - Подключить consumer к конкретному provider/webhook flow.
+
+### T-259: Убрать локальную подмену отчёта в кабинете
+
+Статус: `done`
+
+Что сделано:
+
+- При отсутствии campaign context или ошибке report API кабинет очищает report snapshot и показывает отсутствие данных вместо метрик из demo calls.
+- KPI на обзоре становятся `—`, пока серверный snapshot не получен.
+- Добавлен regression test fail-closed поведения.
+
+Критерии готовности:
+
+- API error не создаёт видимость реальных показателей кампании.
+- Тесты report/campaign header/prototype проходят.
 
 ## Закрытые волны (не переписывать)
 

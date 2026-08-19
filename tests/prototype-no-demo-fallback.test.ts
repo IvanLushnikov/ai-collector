@@ -10,4 +10,11 @@ describe('prototype evidence views', () => {
     expect(html).toContain("auditLogItems=[]");
     expect(html).toContain("callCards=[]");
   });
+
+  it('fails closed when the campaign report is unavailable', () => {
+    expect(html).not.toContain('Показаны локальные метрики прототипа');
+    expect(html).toContain('Данные отчёта не показаны.');
+    expect(html).toContain('currentCampaignReportSnapshot=null;');
+    expect(html).toContain("element.textContent='—';");
+  });
 });
