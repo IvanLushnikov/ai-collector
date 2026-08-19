@@ -1,12 +1,19 @@
+import type {
+  RecordingStatus,
+  TranscriptStatus
+} from '../domain/call-lifecycle/index.js';
+
 export type EvidenceGuardInput = {
   channel: 'live' | 'sandbox' | 'fake';
   answered: boolean;
-  recordingUrl?: string | null;
-  transcriptUrl?: string | null;
+  recordingStatus?: RecordingStatus | null;
+  transcriptStatus?: TranscriptStatus | null;
 };
 
-export const hasCallEvidence = (input: Pick<EvidenceGuardInput, 'recordingUrl' | 'transcriptUrl'>): boolean =>
-  Boolean(input.recordingUrl && input.transcriptUrl);
+export const hasCallEvidence = (
+  input: Pick<EvidenceGuardInput, 'recordingStatus' | 'transcriptStatus'>
+): boolean =>
+  input.recordingStatus === 'ready' && input.transcriptStatus === 'ready';
 
 export const shouldAutoPauseForMissingEvidence = (input: EvidenceGuardInput): boolean => {
   if (input.channel === 'sandbox' || input.channel === 'fake') {

@@ -13,7 +13,8 @@ describe('CDR reconciliation stub', () => {
         providerCallId: 'p-1',
         providerStatus: 'completed',
         attemptStatus: 'failed',
-        kind: 'status_mismatch'
+        kind: 'status_mismatch',
+        severity: 'warning'
       }
     ]);
     expect(result.events[0]).toMatchObject({
@@ -22,5 +23,29 @@ describe('CDR reconciliation stub', () => {
       entityId: 'p-1'
     });
     expect(result.events[0]?.metadata.kind).toBe('status_mismatch');
+  });
+
+  it('marks missing records as critical', () => {
+    const result = reconcileCdr(
+      [{ providerCallId: 'provider-only', providerStatus: 'completed' }],
+      [{ providerCallId: 'attempt-only', status: 'failed' }]
+    );
+
+    expect(result.mismatches).toEqual([
+      {
+        providerCallId: 'provider-only',
+        providerStatus: 'completed',
+        attemptStatus: null,
+        kind: 'missing_attempt',
+        severity: 'critical'
+      },
+      {
+        providerCallId: 'attempt-only',
+        providerStatus: null,
+        attemptStatus: 'failed',
+        kind: 'missing_cdr',
+        severity: 'critical'
+      }
+    ]);
   });
 });

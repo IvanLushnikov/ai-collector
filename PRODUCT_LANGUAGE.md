@@ -102,6 +102,9 @@
 | Campaign completed | завершена | stopped, остановлена как отдельный enum | Stop в UI = `completed` |
 | Report role selector | демонстрация прав | Роль для принятия решений | Не смена должности |
 | Recording status | Запись хранится / Записи нет | Скачать запись (sandbox://) | Плеера в v1 нет |
+| Call dial status | статус попытки | dial status | В журнале звонков |
+| Conversation status | состояние разговора | conversation status | Не показывать пользователю как backend-термин |
+| Recording/transcript state | запись / расшифровка | evidence | Отдельно от исхода разговора |
 
 ## Compliance и ограничения
 

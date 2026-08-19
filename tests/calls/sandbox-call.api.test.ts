@@ -481,6 +481,12 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         {
           callAttemptId: 'call-1',
           status: 'completed',
+          dialStatus: 'completed',
+          conversationStatus: 'review_required',
+          complianceStatus: 'not_checked',
+          recordingStatus: 'missing',
+          transcriptStatus: 'failed',
+          reviewRequired: true,
           debtorExternalId: 'debtor-002',
           startedAt: '2026-08-16T09:00:00.000Z',
           endedAt: '2026-08-16T09:10:00.000Z',
@@ -489,6 +495,12 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         {
           callAttemptId: 'call-2',
           status: 'queued',
+          dialStatus: 'queued',
+          conversationStatus: null,
+          complianceStatus: 'not_checked',
+          recordingStatus: null,
+          transcriptStatus: null,
+          reviewRequired: false,
           debtorExternalId: 'debtor-001',
           startedAt: '2026-08-16T10:00:00.000Z',
           endedAt: null,
@@ -514,7 +526,10 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           callResult: {
             select: {
               outcome: true,
-              qaStatus: true
+              qaStatus: true,
+              conversationStatus: true,
+              transcriptStatus: true,
+              recordingStatus: true
             }
           }
         }
@@ -587,7 +602,10 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           callResult: {
             select: {
               outcome: true,
-              qaStatus: true
+              qaStatus: true,
+              conversationStatus: true,
+              transcriptStatus: true,
+              recordingStatus: true
             }
           }
         }
@@ -644,6 +662,12 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
         {
           callAttemptId: 'call-1',
           status: 'completed',
+          dialStatus: 'completed',
+          conversationStatus: 'review_required',
+          complianceStatus: 'not_checked',
+          recordingStatus: 'missing',
+          transcriptStatus: 'failed',
+          reviewRequired: true,
           debtorExternalId: 'debtor-007',
           startedAt: '2026-08-16T09:00:00.000Z',
           endedAt: '2026-08-16T09:10:00.000Z',
@@ -674,7 +698,10 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           callResult: {
             select: {
               outcome: true,
-              qaStatus: true
+              qaStatus: true,
+              conversationStatus: true,
+              transcriptStatus: true,
+              recordingStatus: true
             }
           }
         }
@@ -947,6 +974,8 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         campaignId: '22222222-2222-2222-2222-222222222222',
         debtorRecordId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         status: 'completed',
+        dialStatus: 'completed',
+        reviewRequired: true,
         telephonyConnectionId: 'telephony-1',
         scriptVersionId: 'script-1',
         providerCallId: 'provider-call-1',
@@ -962,8 +991,22 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
         outcome: 'ptp_created',
         reason: 'sandbox_call_result',
         transcriptUrl: 'sandbox://transcripts/provider-call-1.txt',
-        recordingUrl: 'sandbox://recordings/provider-call-1.mp3'
+        recordingUrl: 'sandbox://recordings/provider-call-1.mp3',
+        qaStatus: null,
+        conversationStatus: 'review_required',
+        transcriptStatus: 'failed',
+        recordingStatus: 'missing'
       },
+      providerStatus: {
+        normalized: 'completed',
+        raw: null,
+        source: 'legacy',
+        receivedAt: null
+      },
+      callEvents: [],
+      transcript: null,
+      recording: null,
+      reconciliationIssues: [],
       complianceDecisions: [
         {
           id: 'decision-1',
@@ -1041,7 +1084,11 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
             sourceId: 'sandbox-call:provider-call-1:completed',
             occurredAt: '2026-08-16T09:10:00.000Z'
           }
-        ]
+        ],
+        callEvents: [],
+        transcript: null,
+        recording: null,
+        reconciliationIssues: []
       }
     });
 

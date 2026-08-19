@@ -31,6 +31,16 @@ export interface TelephonyConnection {
   mode: TelephonyMode;
   status: TelephonyStatus;
   displayName: string;
+  providerDeclaredCapacity?: number | null;
+  platformApprovedCapacity?: number | null;
+  supportsRealtimeEvents?: boolean;
+  supportsCdr?: boolean;
+  supportsRecording?: boolean;
+  supportsAudioExportForTranscription?: boolean;
+  supportsHandoff?: boolean;
+  supportsMarking?: boolean;
+  lastHealthcheckAt?: Date | null;
+  lastHealthcheckStatus?: string | null;
   lastProbeAt: Date | null;
   probeMarking: boolean;
   probeRecording: boolean;
