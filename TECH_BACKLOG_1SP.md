@@ -167,6 +167,20 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - При API error UI не показывает успешную смену статуса.
 - Автопауза не получает one-click resume.
 
+### T-257: Сделать webhook inbox durable
+
+Статус: `done`
+
+Что сделано:
+
+- Добавлен Prisma adapter для `WebhookInboxEvent` с deduplication по существующему unique key.
+- Повторный provider event становится no-op по `P2002`; in-memory adapter остаётся для unit tests.
+
+Критерии готовности:
+
+- Дедупликация не хранится только в process memory.
+- Проверка adapter покрыта тестом.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
@@ -6618,6 +6632,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: `T-257` done: `WebhookInboxEvent` получил Prisma adapter, использующий уникальный `(tenantId, sourceSystem, eventId)` как durable duplicate gate. Проверка: `npm run typecheck`; `vitest run tests/integrations/webhook-inbox.test.ts` (3/3).
 
 - 19.08.2026: `T-256` done: добавлен `CampaignStatus.manual_paused` и migration `0027`; backend допускает `running ↔ manual_paused` и фиксирует оба перехода в audit; кабинет отправляет PATCH status и обновляет UI только по ответу сервера, с явной ошибкой без локального fallback. Автопауза остаётся без one-click resume. Проверка: `npm run typecheck`; targeted tests (67/67).
 

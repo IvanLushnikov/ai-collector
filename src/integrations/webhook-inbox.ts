@@ -8,6 +8,34 @@ export type WebhookInboxStore = {
   insertIfNew: (record: WebhookInboxRecord) => Promise<{ duplicate: boolean }>;
 };
 
+type WebhookInboxPrismaClient = {
+  webhookInboxEvent: {
+    create: (args: unknown) => Promise<unknown>;
+  };
+};
+
+const isUniqueConstraintError = (error: unknown): boolean => {
+  return typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && (error as { code?: unknown }).code === 'P2002';
+};
+
+/** Durable inbox adapter. The database unique index is the repeat-delivery gate. */
+export const createPrismaWebhookInbox = (client: WebhookInboxPrismaClient): WebhookInboxStore => ({
+  async insertIfNew(record) {
+    try {
+      await client.webhookInboxEvent.create({ data: record });
+      return { duplicate: false };
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        return { duplicate: true };
+      }
+      throw error;
+    }
+  }
+});
+
 export const createInMemoryWebhookInbox = (): WebhookInboxStore => {
   const seen = new Set<string>();
   const keyOf = (record: WebhookInboxRecord) =>
