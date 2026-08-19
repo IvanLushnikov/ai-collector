@@ -176,6 +176,26 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.close();
   });
 
+  it('writes the script mutation and audit append in one transaction when supported', async () => {
+    const appStore = makeStore();
+    const transaction = vi.fn(async (callback: (tx: AppStore) => Promise<unknown>) => callback(appStore));
+    Object.assign(appStore, { $transaction: transaction });
+    const app = createApp({ campaignStore: appStore });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      headers: { 'x-user-role': 'owner' },
+      payload: { content: lockedDisclosureContent }
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(appStore.auditLog?.create).toHaveBeenCalledTimes(1);
+    await app.close();
+  });
+
   it('returns VALIDATION_ERROR when locked disclosure fields are missing', async () => {
     const appStore = makeStore();
 

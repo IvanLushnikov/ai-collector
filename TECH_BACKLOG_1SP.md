@@ -123,6 +123,28 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - Durable adapter использует transaction и upsert/increment для всех трёх buckets.
 - Приложение не создаёт новый in-memory ledger на каждый request.
 
+### T-255: Сделать audit append-only и транзакционным для script changes
+
+Статус: `done`
+
+Что сделать:
+
+- Запретить UPDATE/DELETE audit rows на уровне БД для application role.
+- Выполнять создание script version, перевод campaign в review и audit append в одной Prisma transaction.
+- Сохранить тестовый dependency-injection path без требования PostgreSQL в unit/API tests.
+
+Где менять:
+
+- `src/db/migrations/*`
+- `src/routes/scripts.ts`
+- `tests/scripts.api.test.ts`
+
+Критерии готовности:
+
+- В production Prisma path не может вернуть успешный script change без audit append.
+- Trigger отклоняет update/delete из application connection.
+- API tests доказывают, что mutation path использует transaction.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
@@ -6574,6 +6596,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: `T-255` done: migration `0026` добавляет trigger append-only для `AuditLog`; script version, campaign review status и audit append объединены в одну Prisma transaction (DI path сохраняет unit tests). Проверка: `npm run typecheck`; `vitest run tests/scripts.api.test.ts` (14/14).
 
 - 19.08.2026: `T-254` done: добавлены `FrequencyLedgerAttempt` и migration `0025`; durable Prisma adapter использует уникальный `callAttemptId` как idempotency key и в одной transaction обновляет day/week/month buckets; bootstrap прокидывает один ledger в compliance/calls routes. In-memory adapter сохранён как тестовый fallback. Решение зафиксировано в ADR `0006`. Проверка: `prisma validate`; `npm run typecheck`; `npm test` (439/439).
 
