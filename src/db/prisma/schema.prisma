@@ -590,6 +590,7 @@ model OutboxEvent {
   lockedAt       DateTime?
   lockedBy       String?
   processedAt    DateTime?
+  deadLetteredAt DateTime?
   lastError      String?
   createdAt      DateTime @default(now())
 

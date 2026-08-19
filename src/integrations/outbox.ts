@@ -2,6 +2,7 @@ export type OutboxEvent = {
   id: string;
   eventType: string;
   payload: unknown;
+  attempts?: number;
 };
 
 type OutboxPrismaClient = {
@@ -15,10 +16,16 @@ type OutboxPrismaClient = {
 export type OutboxStore = {
   claimAvailable: (workerId: string, limit: number) => Promise<OutboxEvent[]>;
   markProcessed: (eventId: string, workerId: string) => Promise<void>;
-  markFailed: (eventId: string, workerId: string, error: string) => Promise<void>;
+  markFailed: (eventId: string, workerId: string, error: string, attemptNumber?: number) => Promise<void>;
 };
 
 const OUTBOX_LEASE_MS = 60_000;
+const OUTBOX_MAX_ATTEMPTS = 10;
+const OUTBOX_RETRY_BASE_MS = 30_000;
+const OUTBOX_RETRY_MAX_MS = 30 * 60_000;
+
+const retryDelayMs = (attempts: number): number =>
+  Math.min(OUTBOX_RETRY_BASE_MS * (2 ** Math.max(0, attempts - 1)), OUTBOX_RETRY_MAX_MS);
 
 /**
  * Durable delivery adapter. Claiming is deliberately short-lived; consumers
@@ -31,6 +38,7 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
     const events = await client.outboxEvent.findMany({
       where: {
         processedAt: null,
+        deadLetteredAt: null,
         availableAt: { lte: now },
         OR: [{ lockedAt: null }, { lockedAt: { lt: leaseExpiredAt } }]
       },
@@ -42,6 +50,7 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
         where: {
           id: event.id,
           processedAt: null,
+          deadLetteredAt: null,
           OR: [{ lockedAt: null }, { lockedAt: { lt: leaseExpiredAt } }]
         },
         data: { lockedAt: now, lockedBy: workerId, attempts: { increment: 1 } }
@@ -56,10 +65,19 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
       data: { processedAt: new Date(), lockedAt: null, lockedBy: null, lastError: null },
     });
   },
-  async markFailed(eventId, workerId, error) {
+  async markFailed(eventId, workerId, error, attemptNumber = 1) {
+    const now = new Date();
+    const deadLettered = await client.outboxEvent.updateMany({
+      where: { id: eventId, processedAt: null, lockedBy: workerId, attempts: { gte: OUTBOX_MAX_ATTEMPTS } },
+      data: { lockedAt: null, lockedBy: null, lastError: error, deadLetteredAt: now }
+    });
+    if (deadLettered.count === 1) {
+      return;
+    }
+
     await client.outboxEvent.updateMany({
-      where: { id: eventId, processedAt: null, lockedBy: workerId },
-      data: { lockedAt: null, lockedBy: null, lastError: error, availableAt: new Date(Date.now() + 30_000) }
+      where: { id: eventId, processedAt: null, lockedBy: workerId, attempts: { lt: OUTBOX_MAX_ATTEMPTS } },
+      data: { lockedAt: null, lockedBy: null, lastError: error, availableAt: new Date(now.getTime() + retryDelayMs(attemptNumber)) }
     });
   }
 });
@@ -78,7 +96,12 @@ export const dispatchOutboxBatch = async (
       await store.markProcessed(event.id, workerId);
       processed += 1;
     } catch (error) {
-      await store.markFailed(event.id, workerId, error instanceof Error ? error.message : 'Unknown outbox delivery error');
+      await store.markFailed(
+        event.id,
+        workerId,
+        error instanceof Error ? error.message : 'Unknown outbox delivery error',
+        Number(event.attempts ?? 0) + 1
+      );
       failed += 1;
     }
   }
