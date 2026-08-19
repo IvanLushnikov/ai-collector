@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ИИ-коллектор — рабочий контур взыскания</title>
+  <meta name="description" content="B2B-платформа для compliance-first кампаний раннего взыскания: загрузка базы, телефония, сценарий, журнал решений.">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#f3f6f8;color:#17212f;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+    a{color:#1268a8}
+    header,footer{max-width:960px;margin:auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+    header strong{font-size:18px}
+    nav{display:flex;gap:14px;flex-wrap:wrap}
+    main{max-width:960px;margin:auto;padding:8px 24px 64px}
+    .hero{background:#fff;border:1px solid #d6dee7;border-radius:12px;padding:32px;margin-bottom:20px}
+    .hero h1{margin:0 0 10px;font-size:32px;letter-spacing:-.02em}
+    .hero p{color:#52667b;max-width:640px}
+    .btn{display:inline-block;border:1px solid #1268a8;border-radius:8px;background:#1268a8;color:#fff;padding:10px 16px;font-weight:700;text-decoration:none;font-size:15px}
+    .btn.secondary{background:#fff;color:#25374b;border-color:#b8c5d1}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+    .card{background:#fff;border:1px solid #d6dee7;border-radius:12px;padding:20px}
+    .card h2{margin:0 0 8px;font-size:17px}
+    .card p{margin:0;color:#52667b;font-size:15px}
+    ol{padding-left:20px}
+    section+section{margin-top:16px}
+    .faq details{background:#fff;border:1px solid #d6dee7;border-radius:10px;padding:12px 14px;margin:8px 0}
+    footer{color:#64748b;font-size:14px;flex-wrap:wrap;gap:10px}
+
+    /* Lead form */
+    #leadSection{background:#fff;border:1px solid #d6dee7;border-radius:12px;padding:28px;margin-top:16px}
+    #leadSection h2{margin:0 0 6px;font-size:20px}
+    #leadSection .sub{color:#52667b;font-size:15px;margin:0 0 18px}
+    .field{margin:0 0 14px}
+    .field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+    .field input,.field select,.field textarea{width:100%;border:1px solid #b8c4cf;border-radius:8px;padding:9px 11px;font:inherit;color:#17212f;background:#fff}
+    .field textarea{resize:vertical;min-height:72px}
+    .field-error{color:#b43a40;font-size:13px;margin:4px 0 0;display:none}
+    .field-error.visible{display:block}
+    .form-notice{padding:10px 12px;border-radius:8px;font-size:14px;margin:0 0 14px;display:none}
+    .form-notice.error{background:#fff1f2;border-left:4px solid #b43a40;display:block}
+    .form-notice.success{background:#f0fdf4;border-left:4px solid #16a34a;display:block}
+    .check-row{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+    .check-row input{margin-top:3px;flex-shrink:0}
+    .submit-btn{border:0;border-radius:8px;background:#1268a8;color:#fff;padding:11px 20px;font:700 15px/1 inherit;cursor:pointer}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}header,footer{flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <header>
+    <strong>ИИ-коллектор</strong>
+    <nav>
+      <a href="privacy.html">Конфиденциальность</a>
+      <a href="terms.html">Условия</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero">
+      <h1>Контур взыскания под управлением оператора</h1>
+      <p>Платформа для compliance-first автоматизации исходящих кампаний раннего взыскания. Каждый звонок проходит проверку ограничений. Спорные случаи передаются специалисту. Это не автономная система, а управляемый рабочий контур.</p>
+      <p style="margin-top:18px">
+        <a class="btn" href="#leadForm">Запросить пилот</a>
+      </p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Кампании взыскания</h2>
+        <p>Список кампаний с прогрессом, статусом готовности и риск-предупреждениями. Запуск только после прохождения проверки.</p>
+      </article>
+      <article class="card">
+        <h2>Загрузка базы</h2>
+        <p>Импорт CSV с проверкой обязательных полей. Принято в базу — ещё не допуск к звонку. Дубли и невалидные записи выделяются отдельно.</p>
+      </article>
+      <article class="card">
+        <h2>Compliance перед звонком</h2>
+        <p>Перед каждым контактом система проверяет ограничения. Если звонок заблокирован — кабинет не предлагает позвонить всё равно.</p>
+      </article>
+      <article class="card">
+        <h2>Журнал решений</h2>
+        <p>Кто и что изменил: создание кампании, загрузка базы, запуск и пауза. Decision trail воспроизводится постфактум.</p>
+      </article>
+      <article class="card">
+        <h2>Телефония</h2>
+        <p>Подключение исходящего контура через провайдера. Тест соединения не запускает кампанию.</p>
+      </article>
+      <article class="card">
+        <h2>Отчёт</h2>
+        <p>Метрики только из реальных событий: попытки, соединения, бизнес-результаты, compliance-блокировки.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Как начать</h2>
+      <ol>
+        <li>Создайте аккаунт организации.</li>
+        <li>Подключите телефонию и настройте сценарий.</li>
+        <li>Загрузите базу и проверьте готовность.</li>
+        <li>Запустите ограниченный пилот и следите за результатом.</li>
+      </ol>
+    </section>
+
+    <section class="faq">
+      <h2>Вопросы</h2>
+      <details>
+        <summary>Это полностью автоматический обзвон?</summary>
+        <p>Нет. Платформа автоматизирует только те действия, которые система может безопасно выполнить и обосновать. Спорные случаи остаются на специалисте.</p>
+      </details>
+      <details>
+        <summary>Можно ли обойти запрет звонка?</summary>
+        <p>Нет. Если звонок заблокирован проверкой ограничений, кабинет не предлагает продолжить. Override требует явного задокументированного основания, подтверждения и записи в журнал.</p>
+      </details>
+      <details>
+        <summary>Для каких организаций подходит платформа?</summary>
+        <p>МФО, банки, профессиональные коллекторские организации (ПКО), рассрочка. Кабинет ориентирован на B2B-работу с собственной базой должников.</p>
+      </details>
+      <details>
+        <summary>Что такое пилот?</summary>
+        <p>Ограниченный контролируемый запуск на небольшой выборке записей. Система автоматически контролирует объём, останавливается при отклонениях и передаёт спорные случаи специалисту.</p>
+      </details>
+    </section>
+
+    <!-- Лид-форма -->
+    <section id="leadSection">
+      <h2>Запросить пилот или демо</h2>
+      <p class="sub">Оставьте заявку — расскажем о возможностях и согласуем формат запуска.</p>
+
+      <div class="form-notice" id="leadNotice"></div>
+
+      <form id="leadForm" novalidate>
+        <!-- Honeypot: не показываем пользователю -->
+        <input type="text" name="_hp_name" id="_hp_name" style="display:none" tabindex="-1" autocomplete="off">
+
+        <div class="field">
+          <label for="leadOrg">Организация <span aria-hidden="true">*</span></label>
+          <input id="leadOrg" name="organization" type="text" autocomplete="organization" required placeholder="ООО Финанс">
+          <p class="field-error" id="leadOrgError">Укажите название организации.</p>
+        </div>
+
+        <div class="field">
+          <label for="leadName">Имя <span aria-hidden="true">*</span></label>
+          <input id="leadName" name="name" type="text" autocomplete="name" required placeholder="Алексей Иванов">
+          <p class="field-error" id="leadNameError">Укажите имя.</p>
+        </div>
+
+        <div class="field">
+          <label for="leadEmail">Email <span aria-hidden="true">*</span></label>
+          <input id="leadEmail" name="email" type="email" autocomplete="email" required placeholder="a.ivanov@company.ru">
+          <p class="field-error" id="leadEmailError">Укажите корректный email.</p>
+        </div>
+
+        <div class="field">
+          <label for="leadRole">Роль</label>
+          <select id="leadRole" name="role">
+            <option value="">— не выбрано —</option>
+            <option value="debt_collection">Взыскание / коллекшн</option>
+            <option value="it">ИТ / разработка</option>
+            <option value="legal">Правовой / compliance</option>
+            <option value="management">Руководство</option>
+            <option value="other">Другое</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="leadSegment">Сегмент</label>
+          <select id="leadSegment" name="segment">
+            <option value="">— не выбрано —</option>
+            <option value="mfo">МФО</option>
+            <option value="bank">Банк</option>
+            <option value="pko">ПКО</option>
+            <option value="installment">Рассрочка / BNPL</option>
+            <option value="other">Другое</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="leadRequest">Запрос / цель обращения</label>
+          <textarea id="leadRequest" name="request" placeholder="Например: хотим запустить пилот на просрочке 1–30 дней, база ~2000 записей"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="check-row">
+            <input id="leadAgree" type="checkbox" required>
+            <span>Соглашаюсь с <a href="privacy.html" target="_blank">политикой конфиденциальности</a> и на обработку данных заявки, включая передачу через GitHub и Telegram для связи.</span>
+          </label>
+          <p class="field-error" id="leadAgreeError">Нужно согласие на обработку данных.</p>
+        </div>
+
+        <button class="submit-btn" type="submit" id="leadSubmit">Отправить заявку</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <span>ИИ-коллектор · Тестовый контур</span>
+    <nav>
+      <a href="privacy.html">Политика конфиденциальности</a>
+      <a href="terms.html">Условия использования</a>
+    </nav>
+  </footer>
+
+  <script>
+    /* Base path helper: works both on root and on GitHub Pages subpath */
+    (function () {
+      var base = document.createElement('base');
+      var path = location.pathname.replace(/\/[^/]*$/, '/');
+      base.href = path || '/';
+      document.head.insertBefore(base, document.head.firstChild);
+    })();
+
+    /* Lead form */
+    var RELAY_URL = (function () {
+      var meta = document.querySelector('meta[name="lead-relay-url"]');
+      return meta ? meta.getAttribute('content') : '';
+    })();
+
+    var form = document.getElementById('leadForm');
+    var notice = document.getElementById('leadNotice');
+    var submitBtn = document.getElementById('leadSubmit');
+
+    function showFieldError(id, show) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('visible', !!show);
+    }
+
+    function emailOk(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+    function setNotice(type, text) {
+      notice.className = 'form-notice ' + (type || '');
+      notice.textContent = text;
+      if (!type) notice.style.display = 'none';
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      /* Honeypot check */
+      if (document.getElementById('_hp_name').value) return;
+
+      var org     = document.getElementById('leadOrg').value.trim();
+      var name    = document.getElementById('leadName').value.trim();
+      var email   = document.getElementById('leadEmail').value.trim();
+      var role    = document.getElementById('leadRole').value;
+      var segment = document.getElementById('leadSegment').value;
+      var request = document.getElementById('leadRequest').value.trim();
+      var agree   = document.getElementById('leadAgree').checked;
+
+      setNotice('', '');
+      showFieldError('leadOrgError',   !org);
+      showFieldError('leadNameError',  !name);
+      showFieldError('leadEmailError', !emailOk(email));
+      showFieldError('leadAgreeError', !agree);
+
+      if (!org || !name || !emailOk(email) || !agree) return;
+
+      if (!RELAY_URL) {
+        setNotice('error', 'Форма не настроена. Напишите нам напрямую или настройте переменную LEAD_RELAY_URL.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      setNotice('', '');
+
+      try {
+        var resp = await fetch(RELAY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ organization: org, name: name, email: email, role: role, segment: segment, request: request })
+        });
+
+        if (resp.ok) {
+          form.style.display = 'none';
+          setNotice('success', 'Заявка принята. Свяжемся с вами в ближайшее рабочее время.');
+        } else {
+          setNotice('error', 'Не удалось отправить заявку. Попробуйте ещё раз или напишите нам напрямую.');
+          submitBtn.disabled = false;
+        }
+      } catch {
+        setNotice('error', 'Нет связи с сервером. Проверьте подключение и попробуйте снова.');
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
