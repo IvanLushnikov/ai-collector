@@ -32,7 +32,7 @@
 - Речь/диалог (скелеты): ASR/TTS/LLM adapters + fake, Yandex/GigaChat skeleton без HTTP, BYOK envelope/store, DialogueStateMachine, extractor, golden set, identity gate в LLM tests.
 - Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
 - Auth: cookie-сессия `ac_session` (`POST /auth/register|login|logout`, `GET /auth/me`) + fallback заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
-- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
+- UI: публичный вход `landing.html` / `register.html` / `login.html`; GitHub Pages отдаёт `public/index.html` (маркетинговый лендинг, не корневой `index.html`); `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
 - Биллинг v0: connected minute из usage + тариф tenant/env.
 - `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
 
@@ -6527,6 +6527,8 @@ Live-трафик не включать до legal memo и разблокиро�
 - Audit log фиксирует жизненный цикл support-доступа.
 
 ## Журнал изменений плана
+
+- 19.08.2026: GitHub Pages лендинг `public/index.html` переписан: короче copy, один главный CTA в hero, sticky-плашка только на мобиле. Проверка: `npx vitest run tests/public-landing.test.ts`. На github.io попадёт только после commit+push в `main` (workflow смотрит `public/**`).
 
 - 19.08.2026: после упрощения спеки `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md` добавлена отдельная волна `P1. RBAC SaaS v1` (`T-245`–`T-252`) и сохранён план `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`; новая очередь покрывает канонические роли, role normalization, единый authorizer, миграцию существующих endpoints, membership-based role resolution, tenant user management и support access path.
 
