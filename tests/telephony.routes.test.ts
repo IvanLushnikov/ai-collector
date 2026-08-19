@@ -356,6 +356,30 @@ describe('POST /tenants/:tenantId/telephony-connections', () => {
     await app.close();
   });
 
+  it('creates the connection and its audit event in one transaction when the store supports it', async () => {
+    const appStore = makeStore();
+    const transaction = vi.fn(async (callback: (transactionStore: unknown) => Promise<unknown>) => callback({
+      telephonyConnection: appStore.telephonyConnection,
+      auditLog: appStore.auditLog
+    }));
+    (appStore as any).$transaction = transaction;
+    const app = createApp({ campaignStore: appStore as any });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/telephony-connections',
+      headers: { 'x-user-role': 'owner' },
+      payload: { provider: 'example', mode: 'sandbox', displayName: 'Линия' }
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(appStore.telephonyConnection.create).toHaveBeenCalledOnce();
+    expect(appStore.auditLog?.create).toHaveBeenCalledOnce();
+    await app.close();
+  });
+
   it('returns 404 when tenant does not exist', async () => {
     const appStore = makeStore();
     const app = createApp({ campaignStore: appStore as any });

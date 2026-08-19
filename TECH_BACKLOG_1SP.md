@@ -320,6 +320,20 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 - В `prototype.html` нет локальных call/audit demo collections.
 - Regression test фиксирует отсутствие этих источников.
 
+### T-267: Сделать создание телефонии транзакционным с audit
+
+Статус: `done`
+
+Что сделано:
+
+- Создание `TelephonyConnection` и `telephony_connection.created` audit append выполняются в одной `$transaction`, когда store её поддерживает.
+- Fallback DI path для unit tests сохранён.
+
+Критерии готовности:
+
+- Production Prisma path не может подтвердить создание соединения без попытки audit append в той же транзакции.
+- API test доказывает transactional path.
+
 ## Закрытые волны (не переписывать)
 
 `T-001`–`T-128` и дубли UX `T-065`–`T-072` / `T-161` — `done`. Ниже тела задач сохранены как история. Новые работы не добавлять внутрь закрытых P0-секций.
