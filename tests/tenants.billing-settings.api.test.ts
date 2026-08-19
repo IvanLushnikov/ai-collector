@@ -52,6 +52,8 @@ const makeStore = (overrides: Partial<TenantStore> = {}): TenantStore => ({
 });
 
 describe('GET /tenants/:tenantId/billing/settings', () => {
+  const readHeaders = { 'X-User-Role': 'integration_admin' };
+
   it('returns tenant billing settings with resolved fallback', async () => {
     const appStore = makeStore({
       tenant: {
@@ -73,7 +75,8 @@ describe('GET /tenants/:tenantId/billing/settings', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/11111111-1111-1111-1111-111111111111/billing/settings'
+      url: '/tenants/11111111-1111-1111-1111-111111111111/billing/settings',
+      headers: readHeaders
     });
 
     expect(response.statusCode).toBe(200);
@@ -91,7 +94,8 @@ describe('GET /tenants/:tenantId/billing/settings', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/00000000-0000-0000-0000-000000000000/billing/settings'
+      url: '/tenants/00000000-0000-0000-0000-000000000000/billing/settings',
+      headers: readHeaders
     });
 
     expect(response.statusCode).toBe(404);
@@ -106,7 +110,8 @@ describe('GET /tenants/:tenantId/billing/settings', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/tenants/not-a-uuid/billing/settings'
+      url: '/tenants/not-a-uuid/billing/settings',
+      headers: readHeaders
     });
 
     expect(response.statusCode).toBe(400);

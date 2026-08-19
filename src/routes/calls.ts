@@ -702,18 +702,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         return reply.code(403).send({ error: 'LIVE_CALLS_DISABLED' });
       }
 
-      const sandboxUrl = request.url.replace(/\/calls\/live\/?(\?.*)?$/, '/calls/sandbox$1');
-      const proxied = await app.inject({
-        method: 'POST',
-        url: sandboxUrl,
-        headers: request.headers,
-        payload: request.body ?? {}
-      });
-      const contentType = proxied.headers['content-type'];
-      if (typeof contentType === 'string') {
-        reply.header('content-type', contentType);
-      }
-      return reply.code(proxied.statusCode).send(proxied.json ? proxied.json() : proxied.body);
+      return reply.code(501).send({ error: 'LIVE_CALLS_NOT_IMPLEMENTED' });
     }
   );
 

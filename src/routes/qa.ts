@@ -40,7 +40,7 @@ const qaUpdateSchema = z.object({
 export const registerQaRoutes = (app: FastifyInstance, deps: QaDependencies): void => {
   app.patch(
     '/tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId/qa',
-    { preValidation: authorizeZone('calls', 'write') },
+    { preValidation: authorizeZone('qa', 'write') },
     async (request, reply) => {
     const params = tenantCampaignCallSchema.safeParse(request.params);
     if (!params.success) {

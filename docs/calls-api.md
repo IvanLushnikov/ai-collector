@@ -106,7 +106,7 @@
 
 `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live`
 
-Маршрут реализован как fail-closed skeleton: при `LIVE_CALLS_ENABLED=false` ответ `403 LIVE_CALLS_DISABLED`. При включённом флаге и sandbox-соединении создаётся `CallAttempt` по тем же правилам, что sandbox POST (без HTTP Exolve).
+Маршрут реализован как fail-closed skeleton: при `LIVE_CALLS_ENABLED=false` ответ `403 LIVE_CALLS_DISABLED`. При включённом флаге возвращает `501 LIVE_CALLS_NOT_IMPLEMENTED` — HTTP Exolve и end-to-end orchestrator ещё не подключены; маршрут не проксирует запрос в sandbox.
 
 ### Назначение
 

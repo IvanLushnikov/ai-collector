@@ -4,6 +4,9 @@ export const CANONICAL_ROLES = [
   'tenant_owner',
   'campaign_manager',
   'tenant_viewer',
+  'qa_analyst',
+  'compliance_officer',
+  'integration_admin',
   'platform_admin',
   'support_engineer'
 ] as const;
@@ -16,7 +19,9 @@ export type AccessZone =
   | 'reports'
   | 'integrations'
   | 'users'
-  | 'audit_logs';
+  | 'audit_logs'
+  | 'qa'
+  | 'compliance';
 
 type LegacyRole =
   | 'owner'
@@ -46,6 +51,7 @@ type ActorContext = {
 declare module 'fastify' {
   interface FastifyRequest {
     actor?: ActorContext;
+    allowHeaderIdentity?: boolean;
   }
 }
 
@@ -53,9 +59,9 @@ const legacyAliasMap: Record<LegacyRole, CanonicalRole> = {
   owner: 'tenant_owner',
   collection_manager: 'campaign_manager',
   operator: 'tenant_viewer',
-  qa_analyst: 'tenant_viewer',
-  compliance_officer: 'tenant_viewer',
-  integration_admin: 'tenant_owner'
+  qa_analyst: 'qa_analyst',
+  compliance_officer: 'compliance_officer',
+  integration_admin: 'integration_admin'
 };
 
 const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
@@ -65,7 +71,9 @@ const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
     reports: 'read',
     integrations: 'write',
     users: 'write',
-    audit_logs: 'read'
+    audit_logs: 'read',
+    qa: 'write',
+    compliance: 'write'
   },
   campaign_manager: {
     campaigns: 'write',
@@ -73,7 +81,9 @@ const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
     reports: 'read',
     integrations: 'read',
     users: 'none',
-    audit_logs: 'read'
+    audit_logs: 'read',
+    qa: 'none',
+    compliance: 'read'
   },
   tenant_viewer: {
     campaigns: 'read',
@@ -81,7 +91,39 @@ const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
     reports: 'read',
     integrations: 'none',
     users: 'none',
-    audit_logs: 'read'
+    audit_logs: 'read',
+    qa: 'none',
+    compliance: 'read'
+  },
+  qa_analyst: {
+    campaigns: 'read',
+    calls: 'read',
+    reports: 'read',
+    integrations: 'none',
+    users: 'none',
+    audit_logs: 'read',
+    qa: 'write',
+    compliance: 'read'
+  },
+  compliance_officer: {
+    campaigns: 'read',
+    calls: 'read',
+    reports: 'read',
+    integrations: 'none',
+    users: 'none',
+    audit_logs: 'read',
+    qa: 'none',
+    compliance: 'write'
+  },
+  integration_admin: {
+    campaigns: 'read',
+    calls: 'read',
+    reports: 'read',
+    integrations: 'write',
+    users: 'none',
+    audit_logs: 'read',
+    qa: 'none',
+    compliance: 'read'
   },
   platform_admin: {
     campaigns: 'none',
@@ -89,7 +131,9 @@ const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
     reports: 'none',
     integrations: 'none',
     users: 'none',
-    audit_logs: 'none'
+    audit_logs: 'none',
+    qa: 'none',
+    compliance: 'none'
   },
   support_engineer: {
     campaigns: 'none',
@@ -97,7 +141,9 @@ const accessMatrix: Record<CanonicalRole, Record<AccessZone, AccessLevel>> = {
     reports: 'none',
     integrations: 'none',
     users: 'none',
-    audit_logs: 'none'
+    audit_logs: 'none',
+    qa: 'none',
+    compliance: 'none'
   }
 };
 
@@ -149,7 +195,7 @@ export const authorizeZone = (
   if (!actor) {
     const roleHeader = request.headers['x-user-role'];
     const rawRole = Array.isArray(roleHeader) ? roleHeader[0] : roleHeader;
-    if (typeof rawRole === 'string' && rawRole.trim()) {
+    if (request.allowHeaderIdentity && typeof rawRole === 'string' && rawRole.trim()) {
       const canonicalRole = normalizeRole(rawRole);
       if (!canonicalRole) {
         return reply.code(403).send({

@@ -77,19 +77,19 @@
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-loans" aria-label="Выбрать кампанию Просрочка 1–7 дней · Займы"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-loans">Просрочка 1–7 дней · Займы</button></td>
                     <td><span class="tag run">работает</span></td>
-                    <td>68% обзвонили</td>
+                    <td>Обзвонили 6 800 из 10 000</td>
                   </tr>
                   <tr data-campaign-status="auto_paused" data-campaign-id="c-installment">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-installment" aria-label="Выбрать кампанию Просрочка 8–30 дней · Рассрочка"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-installment">Просрочка 8–30 дней · Рассрочка</button></td>
                     <td><span class="tag warn">приостановлена системой</span></td>
-                    <td>47% обзвонили</td>
+                    <td>Обзвонили 1 974 из 4 200</td>
                   </tr>
                   <tr data-campaign-status="manual_paused" data-campaign-id="c-repeat">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-repeat" aria-label="Выбрать кампанию Повторный обзвон · Москва"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-repeat">Повторный обзвон · Москва</button></td>
                     <td><span class="tag warn">приостановлена</span></td>
-                    <td>14% обзвонили</td>
+                    <td>Обзвонили 210 из 1 500</td>
                   </tr>
                   <tr data-campaign-status="draft" data-campaign-id="c-draft">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-draft" aria-label="Выбрать кампанию Черновик · карта"></td>
@@ -244,6 +244,19 @@
 <aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
       <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Ход звонка</div><div id="callCardProgress"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход попытки и результат разговора</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Техническая диагностика</div><div id="callCardDiagnostics"></div></div></div></div></aside>
 <div class="modal" id="confirmActionModal" aria-hidden="true"><div class="modal-head"><div><h2 id="confirmActionTitle">Подтверждение</h2><p id="confirmActionText"></p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"></div><div class="modal-foot"><button class="btn" data-close id="confirmActionCancel">Отмена</button><div class="foot-right"><button class="btn primary" id="confirmActionOk">Запустить кампанию</button></div></div></div>
+<div hidden id="campaignLaunchReadinessShell">
+  <div class="wizard-state state-empty" id="campaignLaunchReadinessPanel">
+    <span class="status-pill state-empty" id="campaignLaunchReadinessBadge">Не проверено</span>
+    <small id="campaignLaunchReadinessText">Проверка ещё не запускалась.</small>
+    <ul class="state-reasons" id="campaignLaunchReadinessReasons"></ul>
+    <div id="campaignLaunchBlockingGroup"><b>Блокирует запуск</b><ul id="campaignLaunchBlockingReasons"></ul></div>
+    <div id="campaignLaunchWarningGroup"><b>Предупреждение</b><ul id="campaignLaunchWarningReasons"></ul></div>
+  </div>
+  <div class="notice" id="campaignLaunchReadinessNotice">Задайте базу, сценарий и телефонию, чтобы запустить кампанию.</div>
+  <span class="status-pill state-empty" id="campaignLaunchLimitsStatus">Нужна проверка</span>
+  <span class="status-pill state-empty" id="readinessLimitsStatus" hidden>Нужна проверка</span>
+  <small id="overviewReadyWindowIcon">Будни 08:30–20:30 · выходные 09:30–19:30. Системный минимум 08:00–22:00. Можно только сузить.</small>
+</div>
 <div class="toast" id="toast"><b id="toastTitle">Готово</b><span id="toastText">Изменения сохранены</span></div>
 
 <script>
@@ -2767,13 +2780,21 @@
       return;
     }
     if (nextStatus === 'completed') {
-      const result=await patchCampaignStatus('completed');
-      if (!result.ok) {
-        toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
-        return;
-      }
-      setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
-      toast('Кампания завершена','Новые звонки не начнутся.');
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Остановить кампанию?',
+        `Остановить «${name}»? Для продолжения нужен новый запуск.`,
+        'Остановить кампанию',
+        async ()=>{
+          const result=await patchCampaignStatus('completed');
+          if (!result.ok) {
+            toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
+            return;
+          }
+          setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
+          toast('Кампания завершена','Новые звонки не начнутся.');
+        }
+      );
       return;
     }
     if (nextStatus === 'running') {
@@ -2791,8 +2812,16 @@
       return;
     }
     if (nextStatus === 'manual_paused') {
-      setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
-      toast('Кампания приостановлена','Новые звонки не создаются.');
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Приостановить кампанию?',
+        `Приостановить «${name}»? Новые звонки не создаются.`,
+        'Приостановить кампанию',
+        ()=>{
+          setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
+          toast('Кампания приостановлена','Новые звонки не создаются.');
+        }
+      );
       return;
     }
     setCampaignState(nextStatus,{actor:'operator',reason:'статус изменён',force:true});

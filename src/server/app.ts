@@ -19,6 +19,7 @@ import { prisma } from '../db/client.js';
 import { tenantContextMiddleware } from './middleware/tenant-context.js';
 import { authContextMiddleware } from './middleware/auth-context.js';
 import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
+import { createCsrfOriginMiddleware } from './middleware/csrf-origin.js';
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
@@ -147,18 +148,13 @@ const createRateLimitAuditEntry = async (
 
 export type AppDependencies = {
   campaignStore?: any;
+  allowHeaderIdentity?: boolean;
+  csrfProtection?: boolean;
+  csrfAllowedOrigins?: readonly string[];
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
     onLimitExceeded?: RateLimitConfig['onLimitExceeded'];
-  };
-};
-
-type CampaignStoreWithComplianceRouteDeps = CampaignDependencies & {
-  debtorRecord: {
-    findUnique: (args: any) => Promise<unknown>;
-    count?: (args: any) => Promise<number>;
-    create?: (args: any) => Promise<unknown>;
   };
 };
 
@@ -183,90 +179,6 @@ type AppCallDependencies = CampaignDependencies & {
   };
 };
 
-type AppQaDependencies = CampaignDependencies & {
-  campaign: {
-    findUnique: (args: any) => Promise<unknown>;
-  };
-  callAttempt: {
-    findUnique: (args: any) => Promise<unknown>;
-  };
-  callResult: {
-    update: (args: any) => Promise<unknown>;
-  };
-};
-
-type CampaignStoreWithReportRouteDeps = CampaignDependencies & {
-  campaign: {
-    findUnique: (args: any) => Promise<unknown>;
-  };
-  debtorRecord: {
-    count: (args: any) => Promise<number>;
-  };
-  callAttempt: {
-    count: (args: any) => Promise<number>;
-  };
-  callResult: {
-    count: (args: any) => Promise<number>;
-  };
-  complianceDecision: {
-    count: (args: any) => Promise<number>;
-  };
-  usageEvent?: {
-    count?: (args: any) => Promise<number>;
-    findMany?: (
-      args: {
-        where: { tenantId: string; campaignId: string };
-        select: { sourceId: true; eventType: true; quantity: true; unit: true };
-      }
-    ) => Promise<Array<{
-      tenantId: string;
-      campaignId: string;
-      eventType: string;
-      quantity: number;
-      unit: string;
-      sourceId: string;
-    }>>;
-  };
-};
-
-type CampaignStoreWithUsageRouteDeps = CampaignDependencies & {
-  campaign: {
-    findUnique: (args: any) => Promise<unknown>;
-  };
-  usageEvent?: {
-    findMany?: (args: any) => Promise<unknown>;
-  };
-};
-
-type TelephonyDependencies = CampaignDependencies & {
-  tenant: {
-    findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
-  };
-  telephonyConnection: {
-    create: (args: any) => Promise<unknown>;
-    findMany?: (args: any) => Promise<unknown>;
-  };
-};
-
-type AppScriptDependencies = CampaignDependencies & {
-  campaign: {
-    findUnique: (args: any) => Promise<unknown>;
-    update: (args: any) => Promise<unknown>;
-  };
-  scriptVersion: {
-    findFirst: (args: any) => Promise<unknown>;
-    create: (args: any) => Promise<unknown>;
-    findMany: (args: any) => Promise<unknown>;
-  };
-};
-
-type TenantDependencies = CampaignDependencies & {
-  tenant: {
-    findUnique: (args: { where: { id: string } }) => Promise<{ id: string; connectedMinuteRateRub: number | null } | null>;
-    update: (args: { where: { id: string }; data: { connectedMinuteRateRub: number | null } }) => Promise<{ id: string; connectedMinuteRateRub: number | null }>;
-  };
-};
-
 export const createApp = (dependencies: AppDependencies = {}): any => {
   const app = fastify({
     logger: env.NODE_ENV === 'test'
@@ -279,6 +191,28 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   } as any);
 
   const campaignStore: any = dependencies.campaignStore ?? prisma;
+  const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.NODE_ENV !== 'production';
+  const allowedOrigins = env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean);
+
+  app.addHook('onRequest', async (request) => {
+    request.allowHeaderIdentity = allowHeaderIdentity;
+  });
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin;
+    if (!origin) return;
+    const allowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
+    if (!allowed) {
+      return reply.code(403).send({ error: 'CORS_ORIGIN_FORBIDDEN' });
+    }
+    reply.header('Access-Control-Allow-Origin', origin);
+    reply.header('Access-Control-Allow-Credentials', 'true');
+    reply.header('Vary', 'Origin');
+    if (request.method === 'OPTIONS') {
+      reply.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+      reply.header('Access-Control-Allow-Headers', 'Content-Type,Accept');
+      return reply.code(204).send();
+    }
+  });
 
   const rateLimitConfig = dependencies.rateLimit ?? {
     maxRequests: env.API_RATE_LIMIT_MAX_REQUESTS,
@@ -316,8 +250,12 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);
+  app.addHook('preHandler', createCsrfOriginMiddleware({
+    enabled: dependencies.csrfProtection ?? env.NODE_ENV === 'production',
+    allowedOrigins: dependencies.csrfAllowedOrigins ?? allowedOrigins
+  }));
 
-  registerAuthRoutes(app as any, campaignStore as any);
+  registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
   registerCampaignRoutes(app as any, campaignStore as any);
   registerComplianceRoutes(app as any, campaignStore as any);
   registerCallRoutes(app as any, {

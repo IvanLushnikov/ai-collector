@@ -35,6 +35,13 @@ export const envSchema = z.object({
         message: 'CREDENTIALS_ENCRYPTION_KEY is required in production (32-byte hex)'
       });
     }
+    if (value.CORS_ORIGINS.trim() === '*') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CORS_ORIGINS'],
+        message: 'CORS_ORIGINS must list explicit trusted origins in production'
+      });
+    }
     return;
   }
 

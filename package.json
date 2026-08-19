@@ -11,8 +11,13 @@
     "start": "node dist/server/index.js",
     "verify:skills": "node scripts/verify-skills-bootstrap.mjs",
     "typecheck": "npm run verify:skills && tsc --noEmit",
-    "lint": "echo \"No lint configured yet\"",
+    "lint": "eslint .",
+    "lint:staged": "lint-staged",
+    "prepare": "husky",
     "test": "npm run verify:skills && vitest run"
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs}": "eslint --max-warnings=0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -24,10 +29,16 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^22.10.7",
+    "eslint": "^9.39.5",
+    "globals": "^17.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.5.4",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^3.2.4"
   }
 }

@@ -17,6 +17,8 @@ AI Collector — это прототип продукта для compliance-firs
 
 - `index.html` — продуктовый dashboard прототипа (архитектура, сценарии, риски, расчет экономики).
 - `prototype.html` — кликабельный кабинет пользователя (кампании, источники, сценарии, звонки, отчеты).
+- `src/` — backend API (Fastify + Prisma + PostgreSQL), compliance engine, auth, telephony skeleton.
+- `public/` — публикация GitHub Pages (лендинг и копия `prototype.html`).
 - `ROADMAP_B2B_SAAS.md` — продуктовый roadmap и стратегический план развития.
 - `TECH_BACKLOG_1SP.md` — единственная очередь задач 1 SP (backend и кабинет).
 - `DESIGN_BACKLOG_1SP.md` — архив закрытых UX-волн `D-001`–`D-013`.
@@ -24,11 +26,12 @@ AI Collector — это прототип продукта для compliance-firs
 
 ## Как работать в репозитории сейчас
 
-Проект находится на раннем этапе реализации после этапа принятия архитектурных решений:
+Проект на стадии Controlled Pilot skeleton:
 
-- backend stack выбран: Node.js 20 + TypeScript + Fastify + Prisma + PostgreSQL + Vitest
-- физический backend-код пока только формируется в следующих итерациях
-- текущая задача после `T-001` — создание полноценного `README` для локальной разработки
+- backend stack: Node.js 20 + TypeScript + Fastify + Prisma + PostgreSQL + Vitest
+- production hardening: CSRF Origin для cookie-сессий, `allowHeaderIdentity=false` в production, явный `CORS_ORIGINS`
+- локальная разработка и тесты используют header-based auth fallback (`NODE_ENV !== production`)
+- pre-commit hook: `lint-staged` (ESLint) на изменённых `.ts/.js` файлах
 
 ## Agent bootstrap и обязательные skills
 
@@ -62,7 +65,7 @@ AI Collector — это прототип продукта для compliance-firs
    - `docker compose up -d` — PostgreSQL 16 (`DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_collector`) и Redis (`REDIS_URL=redis://127.0.0.1:6379`), без секретов в git
    - `npm install`
    - `npm run dev`
-   - тесты: `npm run test` (без живого Postgres/Redis)
+   - проверки: `npm run typecheck`, `npm run lint`, `npm run test` (без живого Postgres/Redis)
 
 ## Рекомендуемый рабочий цикл на итерации
 

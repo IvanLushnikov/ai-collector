@@ -133,7 +133,7 @@ export const resolveSessionFromRequest = async (
   return findSessionByRawToken(deps, raw);
 };
 
-export const registerAuthRoutes = (app: FastifyInstance, deps: AuthDependencies): void => {
+export const registerAuthRoutes = (app: FastifyInstance, deps: AuthDependencies, secureCookies = false): void => {
   app.post('/auth/register', async (request, reply) => {
     const payload = registerSchema.safeParse(request.body);
     if (!payload.success) {
@@ -199,7 +199,7 @@ export const registerAuthRoutes = (app: FastifyInstance, deps: AuthDependencies)
 
     const canonicalRole = normalizeRole(role.name) ?? 'tenant_owner';
     const rawToken = await createSessionForUser(deps, user, canonicalRole);
-    reply.header('Set-Cookie', buildSessionCookie(rawToken));
+    reply.header('Set-Cookie', buildSessionCookie(rawToken, undefined, secureCookies));
     return reply.code(201).send(toPublicAuth(user, tenant.name, canonicalRole));
   });
 
@@ -235,7 +235,7 @@ export const registerAuthRoutes = (app: FastifyInstance, deps: AuthDependencies)
     const roleName = normalizeRole(user.role?.name || 'owner') ?? 'tenant_owner';
     const tenantName = user.tenant?.name || '';
     const rawToken = await createSessionForUser(deps, user, roleName);
-    reply.header('Set-Cookie', buildSessionCookie(rawToken));
+    reply.header('Set-Cookie', buildSessionCookie(rawToken, undefined, secureCookies));
     return reply.code(200).send(toPublicAuth(user, tenantName, roleName));
   });
 
@@ -247,7 +247,7 @@ export const registerAuthRoutes = (app: FastifyInstance, deps: AuthDependencies)
         data: { revokedAt: new Date() }
       });
     }
-    reply.header('Set-Cookie', buildExpiredSessionCookie());
+    reply.header('Set-Cookie', buildExpiredSessionCookie(secureCookies));
     return reply.code(204).send();
   });
 

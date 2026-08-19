@@ -73,8 +73,8 @@ const injectWithRole = (
 const injectWithOwnerRole = (app: any, request: any) =>
   injectWithRole(app, request, 'owner');
 
-const injectWithOperatorRole = (app: any, request: any) =>
-  injectWithRole(app, request, 'operator');
+const injectWithNoAuditAccessRole = (app: any, request: any) =>
+  injectWithRole(app, request, 'platform_admin');
 
 describe('GET /tenants/:tenantId/campaigns/:campaignId/audit-logs', () => {
   it('returns 401 when audit role is missing', async () => {
@@ -96,7 +96,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/audit-logs', () => {
     const app = createApp({ campaignStore: makeCampaignStore() });
     await app.ready();
 
-    const response = await injectWithOperatorRole(app, {
+    const response = await injectWithNoAuditAccessRole(app, {
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/audit-logs'
     });
@@ -458,7 +458,7 @@ describe('GET /tenants/:tenantId/audit-logs', () => {
     const app = createApp({ campaignStore: makeCampaignStore() });
     await app.ready();
 
-    const response = await injectWithOperatorRole(app, {
+    const response = await injectWithNoAuditAccessRole(app, {
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/audit-logs'
     });

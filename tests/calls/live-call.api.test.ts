@@ -92,7 +92,11 @@ const makeStore = (overrides: Record<string, unknown> = {}) => ({
 
 const injectOwner = (app: any, request: any) => app.inject({
   ...request,
-  headers: { 'x-user-role': 'owner', ...((request?.headers as Record<string, unknown> | undefined) ?? {}) }
+  headers: {
+    'x-user-role': 'owner',
+    'idempotency-key': 'live-test-request-1',
+    ...((request?.headers as Record<string, unknown> | undefined) ?? {})
+  }
 });
 
 describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/calls/live', () => {
@@ -109,20 +113,20 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
     await app.close();
   });
 
-  it('creates a CallAttempt with sandbox connection when the flag is on', async () => {
+  it('does not proxy a live request to sandbox when the feature flag is on', async () => {
     const campaignStore = makeStore();
     const app = createApp({ campaignStore });
     await app.ready();
 
     const response = await injectOwner(app, { method: 'POST', url: liveUrl, payload: {} });
 
-    expect(response.statusCode).toBe(201);
-    expect(campaignStore.callAttempt.create).toHaveBeenCalledOnce();
-    expect(response.json().callAttempt.id).toBe('call-attempt-1');
+    expect(response.statusCode).toBe(501);
+    expect(response.json().error).toBe('LIVE_CALLS_NOT_IMPLEMENTED');
+    expect(campaignStore.callAttempt.create).not.toHaveBeenCalled();
     await app.close();
   });
 
-  it('keeps tenant isolation for live start', async () => {
+  it('does not inspect tenant data through the unimplemented live route', async () => {
     const campaignStore = makeStore({
       debtorRecord: {
         findUnique: vi.fn(async () => ({
@@ -143,12 +147,13 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
     const response = await injectOwner(app, { method: 'POST', url: liveUrl, payload: {} });
 
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(501);
+    expect(response.json().error).toBe('LIVE_CALLS_NOT_IMPLEMENTED');
     expect(campaignStore.callAttempt.create).not.toHaveBeenCalled();
     await app.close();
   });
 
-  it('fail-closes on compliance block without creating a CallAttempt', async () => {
+  it('does not evaluate compliance through the unimplemented live route', async () => {
     const campaignStore = makeStore({
       debtorRecord: {
         findUnique: vi.fn(async () => ({
@@ -174,8 +179,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
     const response = await injectOwner(app, { method: 'POST', url: liveUrl, payload: {} });
 
-    expect(response.statusCode).toBe(403);
-    expect(response.json().error).toBe('COMPLIANCE_BLOCK');
+    expect(response.statusCode).toBe(501);
+    expect(response.json().error).toBe('LIVE_CALLS_NOT_IMPLEMENTED');
     expect(campaignStore.callAttempt.create).not.toHaveBeenCalled();
     await app.close();
   });

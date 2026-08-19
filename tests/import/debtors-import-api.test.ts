@@ -2,6 +2,16 @@ import { expect, it, describe, vi } from 'vitest';
 import { createApp } from '../../src/server/app.js';
 
 describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
+  const authHeaders = { 'X-User-Role': 'collection_manager' };
+
+  const injectImport = (app: any, request: Record<string, unknown>) =>
+    app.inject({
+      ...request,
+      headers: {
+        ...authHeaders,
+        ...((request.headers as Record<string, unknown> | undefined) ?? {})
+      }
+    });
   const makeCampaignStore = () => ({
     tenant: {
       findUnique: vi.fn(async (query: { where: { id: string } }) => {
@@ -51,7 +61,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const app = createApp({ campaignStore });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
       payload: {
@@ -92,7 +102,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const app = createApp({ campaignStore });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
       payload: {
@@ -145,7 +155,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const app = createApp({ campaignStore });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-missing/debtors/import',
       payload: {
@@ -163,7 +173,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const app = createApp({ campaignStore });
     await app.ready();
 
-    const response = await app.inject({
+    const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
       payload: {

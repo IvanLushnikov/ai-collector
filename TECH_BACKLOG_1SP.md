@@ -6528,6 +6528,8 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ## Журнал изменений плана
 
+- 19.08.2026: Post-review hardening: CSRF Origin middleware для cookie-mutations в production; `allowHeaderIdentity=false` в production (header auth только dev/test); явный `CORS_ORIGINS` без wildcard в production; live route возвращает `501 LIVE_CALLS_NOT_IMPLEMENTED` вместо proxy в sandbox; Secure cookie в production; синхронизация `public/prototype.html`; ESLint + husky pre-commit. Проверка: `npm run typecheck`; `npm run lint`; `npm run test` (466/466).
+
 - 19.08.2026: GitHub Pages лендинг `public/index.html` переписан: короче copy, один главный CTA в hero, sticky-плашка только на мобиле. Проверка: `npx vitest run tests/public-landing.test.ts`. На github.io попадёт только после commit+push в `main` (workflow смотрит `public/**`).
 
 - 19.08.2026: после упрощения спеки `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md` добавлена отдельная волна `P1. RBAC SaaS v1` (`T-245`–`T-252`) и сохранён план `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`; новая очередь покрывает канонические роли, role normalization, единый authorizer, миграцию существующих endpoints, membership-based role resolution, tenant user management и support access path.
