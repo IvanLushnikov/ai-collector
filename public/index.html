@@ -3,47 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ИИ-коллектор — управляемый пилот телефонного процесса</title>
-  <meta name="description" content="ИИ-коллектор помогает запускать управляемый телефонный процесс с проверкой ограничений, передачей специалисту и журналом действий.">
+  <title>ИИ-коллектор — автоматизация телефонного взыскания</title>
+  <meta name="description" content="ИИ-коллектор помогает запускать кампании взыскания: база, сценарий, обзвон и результат. Контроль ограничений и журнал действий встроены в процесс.">
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #f4f6f8;
       --surface: #ffffff;
-      --surface-muted: #eef3f9;
-      --ink: #142033;
-      --muted: #5f6e82;
-      --line: #d7e0ea;
-      --accent: #195fc7;
-      --accent-strong: #144b9c;
-      --accent-soft: #e9f1ff;
-      --success-soft: #edf7f1;
-      --shadow: 0 18px 40px rgba(20, 32, 51, 0.08);
-      --radius-lg: 24px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
+      --ink: #0f1724;
+      --muted: #5c6b7a;
+      --line: #dde4ec;
+      --accent: #1565c0;
+      --accent-strong: #0d4a8f;
+      --accent-soft: #e8f1fb;
+      --hero-bg: linear-gradient(165deg, #f8fafc 0%, #eef3f8 48%, #f4f6f8 100%);
+      --shadow: 0 16px 40px rgba(15, 23, 36, 0.08);
+      --radius: 14px;
       --container: 1120px;
-      --space-1: 8px;
-      --space-2: 12px;
-      --space-3: 16px;
-      --space-4: 24px;
-      --space-5: 32px;
-      --space-6: 48px;
-      --space-7: 72px;
-      --sticky-height: 88px;
-      --font-body: Inter, Arial, sans-serif;
-      --font-title: Inter, Arial, sans-serif;
+      --sticky-height: 0px;
+      --font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font: 16px/1.6 var(--font-body);
+      font: 16px/1.55 var(--font);
       color: var(--ink);
-      background: linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
-      padding-bottom: calc(var(--sticky-height) + 24px);
+      background: var(--bg);
+      padding-bottom: var(--sticky-height);
     }
-    body.modal-open { overflow: hidden; }
     a { color: inherit; text-decoration: none; }
     button, input { font: inherit; }
     button { cursor: pointer; }
@@ -57,56 +45,54 @@
       position: sticky;
       top: 0;
       z-index: 20;
-      backdrop-filter: blur(10px);
-      background: rgba(244, 247, 251, 0.92);
-      border-bottom: 1px solid rgba(215, 224, 234, 0.9);
+      background: rgba(248, 250, 252, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
     }
 
     .header-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      min-height: 78px;
+      gap: 16px;
+      min-height: 64px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
-      min-width: 0;
+      gap: 12px;
     }
 
     .brand-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
       display: grid;
       place-items: center;
       background: var(--ink);
       color: #fff;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      font-size: 13px;
     }
 
     .brand-copy strong {
       display: block;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.2;
     }
 
     .brand-copy span {
       display: block;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.3;
-      margin-top: 4px;
+      font-size: 12px;
+      margin-top: 2px;
     }
 
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 16px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
@@ -118,34 +104,26 @@
 
     .btn {
       border: 0;
-      border-radius: 999px;
-      padding: 14px 22px;
+      border-radius: 10px;
+      padding: 12px 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
       font-weight: 700;
-      transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .btn:hover,
-    .btn:focus-visible {
-      transform: translateY(-1px);
+      transition: background 0.15s ease;
     }
 
     .btn:focus-visible,
     .header-nav a:focus-visible,
     summary:focus-visible,
-    .modal-close:focus-visible,
     input:focus-visible {
-      outline: 3px solid rgba(25, 95, 199, 0.22);
+      outline: 3px solid rgba(21, 101, 192, 0.28);
       outline-offset: 2px;
     }
 
     .btn-primary {
       background: var(--accent);
       color: #fff;
-      box-shadow: 0 12px 24px rgba(25, 95, 199, 0.22);
     }
 
     .btn-primary:hover,
@@ -154,275 +132,281 @@
     }
 
     .btn-secondary {
-      background: transparent;
+      background: #fff;
       color: var(--ink);
       border: 1px solid var(--line);
     }
 
+    .btn-block { width: 100%; }
+
     .hero {
-      padding: 56px 0 28px;
+      padding: 56px 0 24px;
+      background: var(--hero-bg);
+      border-bottom: 1px solid var(--line);
     }
 
-    .hero-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      padding: clamp(28px, 4vw, 56px);
+    .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-      gap: 28px;
-      align-items: center;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+      gap: 32px;
+      align-items: start;
     }
 
     .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 10px;
       border-radius: 999px;
-      background: var(--surface-muted);
+      background: #fff;
+      border: 1px solid var(--line);
       color: var(--muted);
       font-size: 13px;
       font-weight: 600;
-      margin-bottom: 16px;
     }
 
     .hero h1 {
       margin: 0;
-      font-family: var(--font-title);
-      font-size: clamp(38px, 6vw, 64px);
-      line-height: 1.05;
+      font-size: clamp(32px, 4.8vw, 52px);
+      line-height: 1.08;
       letter-spacing: -0.03em;
+      max-width: 14ch;
     }
 
-    .hero p {
-      margin: 18px 0 0;
+    .hero-lead {
+      margin: 16px 0 0;
       font-size: 18px;
       color: var(--muted);
-      max-width: 660px;
+      max-width: 520px;
     }
 
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 28px;
+    .hero-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 15px;
     }
 
-    .hero-facts,
-    .proof-list,
-    .benefits-grid,
-    .roles-grid {
+    .hero-form-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 2px);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .hero-form-card h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-form-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .demo-form {
       display: grid;
-      gap: 16px;
+      gap: 12px;
+      margin-top: 18px;
     }
 
-    .hero-facts {
+    .demo-form label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .demo-form input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0 12px;
+      background: #fff;
+    }
+
+    .form-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .form-success {
+      background: #edf7f1;
+      border: 1px solid #cfe6d8;
+      color: #1b5b37;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .value-strip {
+      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 32px;
+      gap: 14px;
+      margin-top: 36px;
     }
 
-    .fact-card,
-    .side-panel,
+    .value-card,
     .step-card,
-    .trust-card,
     .benefit-card,
     .role-card,
+    .control-card,
     .cta-panel,
     details {
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: var(--radius-md);
+      border-radius: var(--radius);
     }
 
-    .fact-card,
+    .value-card,
     .step-card,
-    .trust-card,
     .benefit-card,
-    .role-card {
+    .role-card,
+    .control-card {
       padding: 18px;
     }
 
-    .fact-card strong,
-    .side-panel strong,
+    .value-card strong,
     .step-card strong,
-    .trust-card strong,
     .benefit-card strong,
-    .role-card strong {
+    .role-card strong,
+    .control-card strong {
       display: block;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.3;
     }
 
-    .fact-card span,
-    .side-panel p,
+    .value-card span,
     .step-card p,
-    .trust-card p,
     .benefit-card p,
     .role-card p,
+    .control-card p,
     .section-lead,
     .faq-intro {
       color: var(--muted);
     }
 
-    .side-panel {
-      padding: 22px;
-      background: linear-gradient(180deg, #fbfdff 0%, #f4f8fd 100%);
+    main section { padding: 56px 0; }
+
+    main section:nth-of-type(even) {
+      background: #fff;
+      border-block: 1px solid var(--line);
     }
 
-    .side-panel ul {
-      padding-left: 18px;
-      margin: 18px 0 0;
-      color: var(--muted);
-    }
-
-    .side-panel li + li { margin-top: 8px; }
-
-    main section {
-      padding: 34px 0;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      align-items: end;
-      margin-bottom: 22px;
-    }
+    .section-head { margin-bottom: 24px; }
 
     .section-head h2,
     .cta-panel h2 {
       margin: 0;
-      font-size: clamp(28px, 4vw, 40px);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
+      font-size: clamp(26px, 3.6vw, 36px);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
     }
 
     .section-lead {
-      max-width: 760px;
+      max-width: 640px;
       margin: 10px 0 0;
       font-size: 17px;
     }
 
-    .section-tag {
-      color: var(--muted);
-      font-size: 13px;
-      white-space: nowrap;
-      padding-bottom: 8px;
-    }
-
-    .steps-grid {
+    .steps-grid,
+    .benefits-grid,
+    .roles-grid,
+    .control-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+      gap: 14px;
+    }
+
+    .control-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .step-card {
       display: grid;
-      grid-template-columns: 56px 1fr;
-      gap: 16px;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
       align-items: start;
     }
 
     .step-index {
-      width: 56px;
-      height: 56px;
-      border-radius: 18px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
       background: var(--accent-soft);
       color: var(--accent);
       display: grid;
       place-items: center;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 13px;
     }
 
-    .trust-layout,
-    .cta-repeat {
-      display: grid;
-      gap: 16px;
-    }
-
-    .trust-layout {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .cta-repeat {
-      margin-top: 24px;
-      justify-items: start;
-    }
-
-    .benefits-grid,
-    .roles-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .cta-repeat { margin-top: 24px; }
 
     .role-card small {
       display: inline-block;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       color: var(--accent);
       font-weight: 700;
-      letter-spacing: 0.02em;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .faq-wrap {
-      display: grid;
-      gap: 12px;
-    }
+    .faq-wrap { display: grid; gap: 10px; }
 
-    details {
-      padding: 0;
-      overflow: hidden;
-    }
+    details { overflow: hidden; }
 
     summary {
       list-style: none;
       cursor: pointer;
-      padding: 18px 22px;
+      padding: 16px 18px;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
     }
 
     summary::-webkit-details-marker { display: none; }
 
     summary::after {
       content: '+';
-      flex: 0 0 auto;
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      background: var(--surface-muted);
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--bg);
       display: grid;
       place-items: center;
       color: var(--accent);
-      font-size: 20px;
-      line-height: 1;
     }
 
     details[open] summary::after { content: '−'; }
 
     .faq-answer {
-      padding: 0 22px 20px;
+      padding: 0 18px 18px;
       color: var(--muted);
       font-size: 15px;
     }
 
     .cta-panel {
-      padding: clamp(28px, 4vw, 44px);
+      padding: 32px;
       display: grid;
-      gap: 18px;
-      background: linear-gradient(180deg, #f9fbff 0%, #eef4fb 100%);
-      box-shadow: var(--shadow);
+      gap: 14px;
+      background: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
     }
 
     .cta-panel p {
       margin: 0;
-      max-width: 720px;
+      max-width: 560px;
       color: var(--muted);
-      font-size: 18px;
     }
 
     .sticky-cta {
@@ -431,139 +415,33 @@
       right: 0;
       bottom: 0;
       z-index: 30;
-      height: var(--sticky-height);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px 16px 18px;
-      background: rgba(244, 247, 251, 0.94);
-      border-top: 1px solid rgba(215, 224, 234, 0.95);
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid var(--line);
     }
 
     .sticky-shell {
-      width: min(100%, 1120px);
-      background: rgba(20, 32, 51, 0.96);
-      color: #fff;
-      border-radius: 999px;
+      width: min(100%, var(--container));
+      margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 10px 10px 10px 18px;
-      box-shadow: 0 16px 34px rgba(20, 32, 51, 0.26);
+      gap: 12px;
     }
 
-    .sticky-copy {
-      min-width: 0;
-    }
-
-    .sticky-copy strong {
+    .sticky-copy strong,
+    .sticky-copy span {
       display: block;
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.3;
     }
 
-    .sticky-copy span {
-      display: block;
-      color: rgba(255, 255, 255, 0.78);
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .sticky-shell .btn-primary {
-      box-shadow: none;
-      white-space: nowrap;
-    }
+    .sticky-copy span { color: var(--muted); }
 
     .site-footer {
-      padding: 8px 0 10px;
+      padding: 20px 0 28px;
       color: var(--muted);
       font-size: 14px;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      background: rgba(20, 32, 51, 0.58);
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-
-    .modal-overlay[hidden] { display: none; }
-
-    .modal {
-      width: min(100%, 520px);
-      background: var(--surface);
-      border-radius: 24px;
-      box-shadow: 0 28px 60px rgba(20, 32, 51, 0.28);
-      padding: 28px;
-      position: relative;
-    }
-
-    .modal h2 {
-      margin: 0;
-      font-size: 30px;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-
-    .modal-subtitle {
-      margin: 12px 0 0;
-      color: var(--muted);
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--ink);
-      font-size: 24px;
-      line-height: 1;
-    }
-
-    .modal-form {
-      display: grid;
-      gap: 14px;
-      margin-top: 22px;
-    }
-
-    .modal-form label {
-      display: grid;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .modal-form input {
-      width: 100%;
-      min-height: 50px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 0 14px;
-      color: var(--ink);
-      background: #fff;
-    }
-
-    .modal-note {
-      color: var(--muted);
-      font-size: 13px;
-      margin: -2px 0 0;
-    }
-
-    .form-success {
-      background: var(--success-soft);
-      border: 1px solid #cfe6d8;
-      color: #1b5b37;
-      border-radius: 14px;
-      padding: 14px 16px;
-      font-weight: 600;
     }
 
     .footer-row {
@@ -573,72 +451,45 @@
       flex-wrap: wrap;
       align-items: center;
     }
+
     .footer-row nav { display: flex; gap: 14px; }
-    .footer-row a { color: var(--muted); }
+
+    @media (min-width: 761px) {
+      .sticky-cta { display: none; }
+    }
 
     @media (max-width: 980px) {
-      .hero-card,
-      .trust-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-facts,
+      .hero-grid,
+      .value-strip,
+      .control-grid,
       .steps-grid,
       .benefits-grid,
       .roles-grid {
         grid-template-columns: 1fr;
       }
 
-      .section-head {
-        align-items: start;
-        flex-direction: column;
-      }
+      .hero h1 { max-width: none; }
     }
 
     @media (max-width: 760px) {
-      :root {
-        --sticky-height: 116px;
-      }
+      :root { --sticky-height: 84px; }
 
       .header-inner {
         align-items: start;
         flex-direction: column;
-        padding: 14px 0;
+        padding: 12px 0;
       }
 
-      .header-nav {
-        width: 100%;
-        justify-content: flex-start;
-        gap: 12px 16px;
-      }
+      .header-nav { width: 100%; justify-content: flex-start; }
 
-      .header-nav .btn {
-        width: 100%;
-      }
-
-      .hero {
-        padding-top: 28px;
-      }
-
-      .hero p,
-      .cta-panel p {
-        font-size: 16px;
-      }
+      .hero { padding-top: 32px; }
 
       .sticky-shell {
-        border-radius: 24px;
-        align-items: stretch;
         flex-direction: column;
-        padding: 14px;
+        align-items: stretch;
       }
 
-      .sticky-shell .btn-primary {
-        width: 100%;
-      }
-
-      .modal {
-        padding: 22px;
-      }
+      .sticky-shell .btn-primary { width: 100%; }
     }
   </style>
 </head>
@@ -649,152 +500,131 @@
         <span class="brand-mark">ИИ</span>
         <span class="brand-copy">
           <strong>ИИ-коллектор</strong>
-          <span>Маркетинговый прототип для ограниченного пилота</span>
+          <span>Автоматизация телефонного взыскания</span>
         </span>
       </a>
       <nav class="header-nav" aria-label="Навигация по лендингу">
         <a href="#how-it-works">Как это работает</a>
-        <a href="#trust">Доверие</a>
-        <a href="#benefits">Преимущества</a>
+        <a href="#benefits">Возможности</a>
         <a href="#faq">FAQ</a>
-        <a href="login.html">Войти в кабинет</a>
+        <a href="login.html">Войти</a>
         <a href="register.html">Создать аккаунт</a>
-        <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+        <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
       </nav>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
-      <div class="container hero-card">
-        <div>
-          <span class="eyebrow">Управляемый пилот вместо обещаний «автоматизировать всё»</span>
-          <h1>ИИ-коллектор для управляемого телефонного процесса</h1>
-          <p>Показываем, как устроен запуск, где выполняется проверка ограничений, когда требуется проверка специалистом и как фиксируется журнал действий без потери контекста.</p>
-          <div class="hero-actions">
-            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
-            <a class="btn btn-secondary" href="login.html">Войти в кабинет</a>
-            <a class="btn btn-secondary" href="#how-it-works">Посмотреть структуру пилота</a>
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Для МФО, банков и ПКО</span>
+            <h1>ИИ-коллектор для телефонного взыскания</h1>
+            <p class="hero-lead">Запускайте кампании, ведите диалоги и собирайте результат. Проверка ограничений, перевод оператору и журнал действий уже встроены в процесс.</p>
+            <a class="hero-link" href="#how-it-works">Как устроен продукт →</a>
           </div>
-          <div class="hero-facts">
-            <div class="fact-card">
-              <strong>Проверка ограничений</strong>
-              <span>Перед каждым действием видно, что разрешено, а что требует отдельной проверки.</span>
-            </div>
-            <div class="fact-card">
-              <strong>Передача специалисту</strong>
-              <span>Спорные случаи не продавливаются автоматически и передаются с понятным контекстом.</span>
-            </div>
-            <div class="fact-card">
-              <strong>Журнал действий</strong>
-              <span>По итогам можно восстановить цепочку шагов и причин принятых решений.</span>
-            </div>
-          </div>
+
+          <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
+            <h2>Назначить демо</h2>
+            <p>Покажем кампанию, сценарий и результат на вашем примере.</p>
+            <form class="demo-form" id="demoForm">
+              <label>
+                <span>Имя</span>
+                <input id="demoName" name="name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                <span>Компания</span>
+                <input name="company" type="text" autocomplete="organization" required>
+              </label>
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" required>
+              </label>
+              <label>
+                <span>Телефон</span>
+                <input name="phone" type="tel" autocomplete="tel" required>
+              </label>
+              <button class="btn btn-primary btn-block" type="submit">Отправить заявку</button>
+              <p class="form-note">Демо-форма: заявка не отправляется на сервер.</p>
+              <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+            </form>
+          </aside>
         </div>
-        <aside class="side-panel" aria-label="Что входит в демо">
-          <strong>Что увидите на демо</strong>
-          <p>Не рекламную абстракцию, а цельный сценарий ограниченного пилота: запуск, проверку ограничений, выделение случаев на проверку и итоговую фиксацию результата.</p>
-          <ul>
-            <li>Как готовится ограниченный пилот и что контролируется на запуске.</li>
-            <li>Как система отделяет допустимые действия от тех, что требуют проверки.</li>
-            <li>Как выглядит передача специалисту без потери истории шага.</li>
-          </ul>
-        </aside>
+
+        <div class="value-strip">
+          <article class="value-card">
+            <strong>Кампании и база</strong>
+            <span>Загрузите базу, настройте сценарий и запустите обзвон в одном кабинете.</span>
+          </article>
+          <article class="value-card">
+            <strong>Диалоги и результат</strong>
+            <span>ИИ ведёт разговор, фиксирует исход и обещания платежа.</span>
+          </article>
+          <article class="value-card">
+            <strong>Контроль в процессе</strong>
+            <span>Ограничения, журнал действий и перевод оператору — без отдельного «контура безопасности».</span>
+          </article>
+        </div>
       </div>
     </section>
 
     <section id="how-it-works">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>Как это работает</h2>
-            <p class="section-lead">Лендинг описывает управляемый сценарий пилота: от подготовки процесса до фиксации результата и случаев, где требуется проверка специалистом.</p>
-          </div>
-          <span class="section-tag">7 коротких шагов</span>
+          <h2>Как это работает</h2>
+          <p class="section-lead">От базы до результата — один управляемый процесс, а не набор разрозненных инструментов.</p>
         </div>
         <div class="steps-grid">
           <article class="step-card">
             <div class="step-index">01</div>
             <div>
-              <strong>Подключаем сценарий и контекст пилота</strong>
-              <p>Определяем, какие задачи решаем, какие данные нужны и где проходит граница ограниченного пилота.</p>
+              <strong>Создаёте кампанию</strong>
+              <p>Задача, база должников и сценарий диалога — в одном месте.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">02</div>
             <div>
-              <strong>Проверка ограничений перед действиями</strong>
-              <p>Система учитывает требования и ограничения для каждого случая до перехода к следующему шагу.</p>
+              <strong>Загружаете базу</strong>
+              <p>CSV или XLSX с проверкой обязательных полей.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">03</div>
             <div>
-              <strong>Готовим допустимые контакты и расписание</strong>
-              <p>Учитываем правила по времени, исключения и рамки ограниченного запуска без лишних обещаний.</p>
+              <strong>Настраиваете телефонию</strong>
+              <p>Подключаете исходящий контур и проверяете соединение.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">04</div>
             <div>
-              <strong>Ведём управляемый диалог</strong>
-              <p>Процесс остаётся предсказуемым: шаги заданы заранее, отклонения не скрываются.</p>
+              <strong>Запускаете обзвон</strong>
+              <p>ИИ ведёт диалог по сценарию, фиксирует исход.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">05</div>
             <div>
-              <strong>Выделяем спорные ситуации для проверки</strong>
-              <p>Если возникает риск или неопределённость, система переводит кейс в режим проверки.</p>
+              <strong>Проверяете ограничения</strong>
+              <p>Перед звонком система оценивает допустимость действия.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">06</div>
             <div>
-              <strong>Передаём специалисту, где нужно</strong>
-              <p>Передача идёт вместе с контекстом, чтобы решение принималось по фактам, а не по догадке.</p>
+              <strong>Переводите оператору</strong>
+              <p>Спорные случаи уходят человеку с полным контекстом.</p>
             </div>
           </article>
           <article class="step-card">
             <div class="step-index">07</div>
             <div>
-              <strong>Показываем результат и журнал действий</strong>
-              <p>Видно, что было выполнено, какие решения приняты и на чём они основывались.</p>
+              <strong>Смотрите результат</strong>
+              <p>Журнал звонков, исходы и отчёт по кампании.</p>
             </div>
           </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="trust">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <h2>Почему нам можно доверять</h2>
-            <p class="section-lead">Мы не строим страницу вокруг обещания «всё сделает ИИ». Основной акцент — на управляемости, понятных причинах решений и контролируемом запуске.</p>
-          </div>
-          <span class="section-tag">Контроль и прозрачность</span>
-        </div>
-        <div class="trust-layout">
-          <article class="trust-card">
-            <strong>Понятные причины решений</strong>
-            <p>Пользователь видит, что разрешено, что требует проверки и по какой причине следующий шаг остановлен или передан специалисту.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Контроль процесса</strong>
-            <p>Система не заменяет специалиста там, где нужен человеческий контроль, и не маскирует сложные случаи под обычный поток.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Журнал действий по фактам</strong>
-            <p>Можно восстановить цепочку шагов, решений и последствий без отдельного расследования по разрозненным источникам.</p>
-          </article>
-          <article class="trust-card">
-            <strong>Предсказуемый пилот</strong>
-            <p>Запуск ограниченный: сначала подтверждаем готовность процесса, а затем масштабируем только то, что можно объяснить и проверить.</p>
-          </article>
-        </div>
-        <div class="cta-repeat">
-          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
         </div>
       </div>
     </section>
@@ -802,28 +632,51 @@
     <section id="benefits">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>Преимущества</h2>
-            <p class="section-lead">Лендинг собран вокруг реальных критериев пилота: сначала допустимость действия, затем работа со сценарием, затем понятный результат.</p>
-          </div>
-          <span class="section-tag">4 доказательных пункта</span>
+          <h2>Что получает команда</h2>
+          <p class="section-lead">Продукт для операционной работы: меньше ручной рутины, больше прозрачности по кампании.</p>
         </div>
         <div class="benefits-grid">
           <article class="benefit-card">
-            <strong>Проверка ограничений перед действиями</strong>
-            <p>Сначала оценивается допустимость каждого шага, затем выполняется управляемое действие в границах пилота.</p>
+            <strong>Автоматизация обзвона</strong>
+            <p>ИИ ведёт диалог по сценарию, команда контролирует процесс, а не каждый звонок вручную.</p>
           </article>
           <article class="benefit-card">
-            <strong>Передача специалисту там, где нужна проверка</strong>
-            <p>Спорные и рискованные ситуации не скрываются: они переходят на проверку с понятным объяснением причины.</p>
+            <strong>Кампании в одном кабинете</strong>
+            <p>База, сценарий, телефония, звонки и отчёт — без переключения между системами.</p>
           </article>
           <article class="benefit-card">
-            <strong>Журнал действий по фактам</strong>
-            <p>Можно восстановить, что произошло, какие решения были приняты и на чём они основывались.</p>
+            <strong>Результат по фактам</strong>
+            <p>Исходы звонков, обещания платежа и прогресс кампании видны сразу.</p>
           </article>
           <article class="benefit-card">
-            <strong>Ограниченный пилот вместо обещаний «сразу в масштаб»</strong>
-            <p>Демо показывает контролируемый сценарий и критерии готовности, а не витрину с абстрактными цифрами.</p>
+            <strong>Контроль без отдельного «контура»</strong>
+            <p>Проверка ограничений и журнал действий встроены в обычный рабочий процесс.</p>
+          </article>
+        </div>
+        <div class="cta-repeat">
+          <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="control">
+      <div class="container">
+        <div class="section-head">
+          <h2>Контроль — часть процесса, не отдельный продукт</h2>
+          <p class="section-lead">Безопасность не продаём отдельно. Она следует из того, как устроен обзвон.</p>
+        </div>
+        <div class="control-grid">
+          <article class="control-card">
+            <strong>Проверка перед звонком</strong>
+            <p>Система оценивает допустимость действия до следующего шага.</p>
+          </article>
+          <article class="control-card">
+            <strong>Перевод оператору</strong>
+            <p>Спорный случай не уходит в автоматический обзвон.</p>
+          </article>
+          <article class="control-card">
+            <strong>Журнал действий</strong>
+            <p>Можно восстановить, что произошло и почему принято решение.</p>
           </article>
         </div>
       </div>
@@ -832,36 +685,30 @@
     <section id="roles">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>Кому подходит</h2>
-            <p class="section-lead">Страница ориентирована на роли, которым важны управляемость процесса, видимость причин решений и работа в контуре специалиста.</p>
-          </div>
-          <span class="section-tag">4 сценария</span>
+          <h2>Кому подходит</h2>
+          <p class="section-lead">Командам, которым нужен управляемый обзвон, а не «чёрный ящик с ИИ».</p>
         </div>
         <div class="roles-grid">
           <article class="role-card">
             <small>Роль</small>
-            <strong>Руководитель взыскания / операционный руководитель</strong>
-            <p>Получает предсказуемый пилот, понятные рамки запуска и видимость того, что происходит по ходу процесса.</p>
+            <strong>Руководитель взыскания</strong>
+            <p>Запуск кампаний, прогресс и результат в одном месте.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Юристы и руководители по рискам</strong>
-            <p>Видят, что система делает только то, что можно объяснить, проверить и подтвердить по журналу действий.</p>
+            <strong>Операционный менеджер</strong>
+            <p>Настройка базы, сценария и телефонии без лишних шагов.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Супервизор и специалисты контроля качества</strong>
-            <p>Работают с кейсами, которые требуют проверки, и получают контекст без необходимости собирать его вручную.</p>
+            <strong>Юристы и риск-менеджмент</strong>
+            <p>Действия можно проверить по журналу и ограничениям.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
             <strong>Администратор интеграций</strong>
-            <p>Понимает, как данные и события проходят в управляемом контуре без обещаний функций, которых нет в текущем пилоте.</p>
+            <p>Понятный контур данных и подключений.</p>
           </article>
-        </div>
-        <div class="cta-repeat">
-          <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
         </div>
       </div>
     </section>
@@ -869,36 +716,29 @@
     <section id="faq">
       <div class="container">
         <div class="section-head">
-          <div>
-            <h2>FAQ</h2>
-            <p class="faq-intro">Короткие ответы на вопросы, которые обычно возникают перед обсуждением пилота и демонстрации сценария.</p>
-          </div>
-          <span class="section-tag">6 вопросов</span>
+          <h2>FAQ</h2>
+          <p class="faq-intro">Коротко — перед демо.</p>
         </div>
         <div class="faq-wrap">
           <details>
-            <summary>Что будет на демо “ИИ-коллектора”?</summary>
-            <div class="faq-answer">Покажем контролируемый сценарий работы: как запускаются шаги, где выполняется проверка ограничений, как фиксируется журнал действий и как оформляется передача специалисту при необходимости.</div>
+            <summary>Что покажете на демо?</summary>
+            <div class="faq-answer">Кампанию от базы до результата: сценарий, обзвон, проверку ограничений и перевод оператору.</div>
           </details>
           <details>
-            <summary>Как система принимает решения “разрешено / требуется проверка”?</summary>
-            <div class="faq-answer">Решение основано на заданных ограничениях и правилах для каждого случая. Если есть риск или неопределённость, действие переводится в режим проверки специалистом.</div>
+            <summary>Это полностью автоматический обзвон?</summary>
+            <div class="faq-answer">Нет. ИИ автоматизирует диалог, но спорные случаи остаются на операторе. Запуск управляемый.</div>
           </details>
           <details>
-            <summary>Что происходит, если ситуация спорная или есть риск?</summary>
-            <div class="faq-answer">Спорные кейсы не продавливаются автоматически: они выделяются для проверки, а специалист получает контекст, чтобы принять решение по понятной причине.</div>
+            <summary>Как работает проверка ограничений?</summary>
+            <div class="faq-answer">Перед звонком система смотрит правила конкретного случая. Если есть риск — действие уходит на проверку.</div>
           </details>
           <details>
-            <summary>Мы сможем остановить пилот, если потребуется?</summary>
-            <div class="faq-answer">Да, пилот проектируется как контролируемый запуск. При необходимости сценарий можно приостановить и уточнить критерии готовности до продолжения.</div>
+            <summary>Можно ли остановить кампанию?</summary>
+            <div class="faq-answer">Да. Кампанию можно приостановить и возобновить, когда процесс готов.</div>
           </details>
           <details>
-            <summary>Какие результаты вы показываете по итогам?</summary>
-            <div class="faq-answer">По фактам: что было выполнено, какие решения приняты и на чём они основывались. Мы не подменяем это обещаниями цифр без подтверждения.</div>
-          </details>
-          <details>
-            <summary>Кому подходит “ИИ-коллектор” по процессу и ролям?</summary>
-            <div class="faq-answer">Руководителям взыскания, специалистам контроля качества, юридическим службам и администраторам интеграций — там, где ключевыми являются управляемость, прозрачные причины решений и работа в контуре специалиста.</div>
+            <summary>Какие результаты видны по итогам?</summary>
+            <div class="faq-answer">Исходы звонков, обещания платежа, прогресс кампании и журнал действий — по фактам, без «магических» цифр.</div>
           </details>
         </div>
       </div>
@@ -907,10 +747,10 @@
     <section>
       <div class="container">
         <div class="cta-panel">
-          <h2>Готовы обсудить пилот и увидеть проверку ограничений в действии?</h2>
-          <p>Покажем управляемый сценарий, журнал действий и передачу специалисту там, где требуется проверка.</p>
+          <h2>Посмотреть ИИ-коллектор в работе</h2>
+          <p>30 минут — и вы увидите, как кампания проходит от базы до результата.</p>
           <div>
-            <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
+            <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
           </div>
         </div>
       </div>
@@ -919,7 +759,7 @@
 
   <footer class="site-footer">
     <div class="container footer-row">
-      <span>ИИ-коллектор · публичный лендинг</span>
+      <span>ИИ-коллектор</span>
       <nav>
         <a href="privacy.html">Конфиденциальность</a>
         <a href="terms.html">Условия</a>
@@ -927,90 +767,20 @@
     </div>
   </footer>
 
-  <div class="sticky-cta" aria-label="Быстрый переход к назначению демо">
+  <div class="sticky-cta" aria-label="Назначить демо">
     <div class="sticky-shell">
       <div class="sticky-copy">
-        <strong>Показать ограниченный пилот без лишнего шума</strong>
-        <span>Откроем форму и договоримся о демонстрации сценария.</span>
+        <strong>Назначить демо</strong>
+        <span>Форма заявки — вверху страницы.</span>
       </div>
-      <button class="btn btn-primary" type="button" data-cta="demo">Назначить демо</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="demoModalOverlay" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
-      <button class="modal-close" id="demoModalClose" type="button" aria-label="Закрыть">×</button>
-      <h2 id="demoModalTitle">Назначить демо</h2>
-      <p class="modal-subtitle">Оставьте контакты, и мы свяжемся, чтобы показать управляемый сценарий работы ИИ-коллектора.</p>
-      <form class="modal-form" id="demoForm">
-        <label>
-          <span>Имя</span>
-          <input id="demoName" name="name" type="text" autocomplete="name" required>
-        </label>
-        <label>
-          <span>Компания</span>
-          <input name="company" type="text" autocomplete="organization" required>
-        </label>
-        <label>
-          <span>Email</span>
-          <input name="email" type="email" autocomplete="email" required>
-        </label>
-        <label>
-          <span>Телефон</span>
-          <input name="phone" type="tel" autocomplete="tel" required>
-        </label>
-        <button class="btn btn-primary" type="submit">Отправить</button>
-        <p class="modal-note">Это демонстрационная форма прототипа без реальной отправки на сервер.</p>
-        <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-      </form>
+      <a class="btn btn-primary" href="#demo-form">Перейти к форме</a>
     </div>
   </div>
 
   <script>
     (() => {
-      const overlay = document.getElementById('demoModalOverlay');
-      const closeButton = document.getElementById('demoModalClose');
       const form = document.getElementById('demoForm');
       const success = document.getElementById('demoSuccess');
-      const firstInput = document.getElementById('demoName');
-      let lastActive = null;
-
-      function openModal() {
-        lastActive = document.activeElement;
-        success.hidden = true;
-        form.reset();
-        overlay.hidden = false;
-        document.body.classList.add('modal-open');
-        window.requestAnimationFrame(() => {
-          firstInput.focus();
-        });
-      }
-
-      function closeModal() {
-        overlay.hidden = true;
-        document.body.classList.remove('modal-open');
-        if (lastActive && typeof lastActive.focus === 'function') {
-          lastActive.focus();
-        }
-      }
-
-      document.querySelectorAll('[data-cta="demo"]').forEach((button) => {
-        button.addEventListener('click', openModal);
-      });
-
-      closeButton.addEventListener('click', closeModal);
-
-      overlay.addEventListener('click', (event) => {
-        if (event.target === overlay) {
-          closeModal();
-        }
-      });
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !overlay.hidden) {
-          closeModal();
-        }
-      });
 
       form.addEventListener('submit', (event) => {
         event.preventDefault();
