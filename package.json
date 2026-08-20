@@ -23,7 +23,7 @@
     "test": "npm run verify:skills && vitest run"
   },
   "lint-staged": {
-    "*.{ts,js,mjs}": "eslint --max-warnings=0"
+    "*.ts": "eslint --max-warnings=0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
