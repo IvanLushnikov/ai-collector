@@ -542,6 +542,7 @@
 | 2026-08-20 | `LT-05` | Указатель волны в TECH_BACKLOG_1SP.md |
 | 2026-08-20 | `LD-09` | Финальный CTA про демо пилота; anti-patterns чеклист закрыт |
 | 2026-08-20 | `LD-10` | `#benefits` → before/after compare-table без % |
+| 2026-08-20 | visual polish | Смелый redesign: ink hero, Bricolage+Source Sans 3, signal amber CTA, ledger aesthetics |
 
 ---
 
