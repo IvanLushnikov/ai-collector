@@ -5,9 +5,11 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 const overview = html.match(/<div class="campaign-view active" data-camp-view="overview">[\s\S]*?<div class="campaign-view" data-camp-view="base">/)?.[0] ?? '';
 
 describe('prototype overview', () => {
-  it('shows KPI cards without readiness or activity blocks and links to analytics', () => {
+  it('shows KPI cards and launch building blocks without legacy readiness title', () => {
     expect(overview).toContain('campaignOverviewBlockedValue');
     expect(overview).toContain('campaignOverviewReviewOpenValue');
+    expect(overview).toContain('campaignOverviewBlocksPanel');
+    expect(overview).toContain('campaignReadinessBlocks');
     expect(overview).not.toContain('Готовность к запуску');
     expect(overview).not.toContain('Последние действия');
     expect(overview).not.toContain('campaignOverviewCostValue');

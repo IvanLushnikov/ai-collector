@@ -3,11 +3,28 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-011
-- Следующая кандидат: OP-D-012
+- Последняя закрытая: OP-D-012
+- Следующая кандидат: OP-D-013 (P2 polish) / OP-T-007
 - Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
 
 ## Проходы
+
+## 2026-08-20 — OP-D-012 — done
+
+### Взял
+- OP-D-012: карточка кампании — блоки готовности без «магии».
+
+### Сделал
+- Обзор: панель «Сборка кампании» — база · сценарий · телефония · готовность · режим; статусы OK / Нужна проверка / Блокирует через `buildingBlockMeta` + `setBuildingBlockItem`.
+- Готовность не OK до факта `readiness-summary` API; группы «Блокирует запуск» / «Предупреждение» (T-213); `#launchCampaign` disabled при блокировке.
+- `#readinessLimitsStatus` / `#campaignLaunchLimitsStatus` стартуют «Нужна проверка», не «Применены».
+- Sync `public/prototype.html`; `tests/prototype-building-blocks.test.ts`.
+
+### Проверка
+- vitest tests/prototype-building-blocks.test.ts tests/prototype-overview-readiness.test.ts tests/prototype-readiness-groups.test.ts tests/prototype-launch-confirm.test.ts
+
+### Handoff
+- Следующие: OP-T-007 и оставшиеся todo без блокеров.
 
 ## 2026-08-20 — OP-D-011 — done
 
