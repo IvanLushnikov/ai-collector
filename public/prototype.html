@@ -78,16 +78,16 @@
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-loans">Просрочка 1–7 дней · Займы</button></td>
                     <td><span class="tag run">работает</span></td>
                     <td class="campaign-reason">н/д</td>
-                    <td class="campaign-mode">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
                     <td class="campaign-progress">Обзвонили 6 800 из 10 000</td>
                     <td class="campaign-updated">н/д</td>
                   </tr>
                   <tr data-campaign-status="auto_paused" data-campaign-id="c-installment">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-installment" aria-label="Выбрать кампанию Просрочка 8–30 дней · Рассрочка"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-installment">Просрочка 8–30 дней · Рассрочка</button></td>
-                    <td><span class="tag warn">приостановлена системой</span></td>
+                    <td><span class="tag stop">приостановлена системой</span></td>
                     <td class="campaign-reason">н/д</td>
-                    <td class="campaign-mode">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
                     <td class="campaign-progress">Обзвонили 1 974 из 4 200</td>
                     <td class="campaign-updated">н/д</td>
                   </tr>
@@ -96,7 +96,7 @@
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-repeat">Повторный обзвон · Москва</button></td>
                     <td><span class="tag warn">приостановлена</span></td>
                     <td class="campaign-reason">н/д</td>
-                    <td class="campaign-mode">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
                     <td class="campaign-progress">Обзвонили 210 из 1 500</td>
                     <td class="campaign-updated">н/д</td>
                   </tr>
@@ -105,7 +105,7 @@
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-draft">Черновик · карта</button></td>
                     <td><span class="tag draft">черновик</span></td>
                     <td class="campaign-reason">н/д</td>
-                    <td class="campaign-mode">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
                     <td class="campaign-progress">База не загружена</td>
                     <td class="campaign-updated">н/д</td>
                   </tr>
@@ -175,12 +175,12 @@
       </div>
 
       <section class="campaign-shell" id="campaignWorkspace" data-tenant-id="11111111-1111-1111-1111-111111111111" data-campaign-id="11111111-1111-1111-1111-111111111112" data-campaign-name="Просрочка 1–7 дней · Займы">
-        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span style="position:relative;display:inline-block"><button type="button" class="tag run status-tag-btn" id="campaignStatus" aria-haspopup="listbox">работает</button><div class="status-menu" id="campaignStatusMenu" role="listbox" aria-label="Статус кампании"></div></span> · <span id="campaignProgressLabel">68% обзвонили</span></p></div></div><div class="head-actions"><button class="btn success" id="launchCampaign" style="display:none">Запустить кампанию</button></div></div>
+        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span id="campaignModeBadge" class="tag warn" data-campaign-mode="demo">демо</span> · <span style="position:relative;display:inline-block"><button type="button" class="tag run status-tag-btn" id="campaignStatus" aria-haspopup="listbox">работает</button><div class="status-menu" id="campaignStatusMenu" role="listbox" aria-label="Статус кампании"></div></span> · <span id="campaignProgressLabel">68% обзвонили</span></p></div></div><div class="head-actions"><button class="btn success" id="launchCampaign" style="display:none">Запустить кампанию</button></div></div>
         <div class="campaign-tabs" aria-label="Разделы кампании"><button class="active" data-camp-tab="overview">Обзор</button><button data-camp-tab="base">База</button><button data-camp-tab="scenario">Сценарий</button><button data-camp-tab="phone">Телефония</button><button data-camp-tab="calls">Звонки</button></div>
 
         <div class="campaign-view active" data-camp-view="overview">
           <div id="campaignOverviewRiskStack" class="overview-risk-stack">
-            <div class="notice warn" id="campaignAutoPauseBanner" hidden>
+            <div class="notice danger" id="campaignAutoPauseBanner" hidden>
               <b>Кампания приостановлена системой.</b>
               <span id="campaignAutoPauseReason">Нет записи разговора. Новые звонки не создаются.</span>
             </div>
@@ -241,7 +241,7 @@
 
         <div class="campaign-view" data-camp-view="calls">
           <div class="page-head"><div><h1>Звонки кампании</h1><p>Нажмите имя должника, чтобы раскрыть историю звонков ниже.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button></div>
-          <div id="callsDataSourceState" style="margin-top:10px;display:none"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div>
+          <div id="callsDataSourceState" style="margin-top:10px"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div>
           <div id="callsNotice" class="notice" style="margin-bottom:12px"></div>
           <div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход разговора:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание платежа</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select></div></div>
           <div class="panel"><div class="table-wrap"><table class="wide"><thead><tr><th>Время</th><th>Должник</th><th>Статус попытки</th><th>Исход разговора</th><th>Решение</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Звонков пока нет.</b>Они появятся после запуска кампании.</div></div>
@@ -1365,9 +1365,41 @@
     };
   }
 
+  function syncCampaignModeBadge(isLive = false) {
+    const badge = q('#campaignModeBadge');
+    if (!badge) {
+      return;
+    }
+    if (isLive) {
+      badge.className = 'tag info';
+      badge.dataset.campaignMode = 'live';
+      badge.textContent = 'live';
+      return;
+    }
+    badge.className = 'tag warn';
+    badge.dataset.campaignMode = 'demo';
+    badge.textContent = 'демо';
+  }
+
+  function formatCallSourceBadge(item = {}) {
+    const source = item.dataSource || item.sourceBadge || callsSource || '';
+    if (source === 'api' || source === 'live' || item.sourceBadge === 'live') {
+      return { className: 'tag info', label: 'live' };
+    }
+    if (source === 'local' || source === 'demo' || item.sourceBadge === 'демо' || callsSource === 'local') {
+      return { className: 'tag warn', label: 'демо' };
+    }
+    return null;
+  }
+
   function setCallsDataSourceIndicator(isLive = false) {
     const badge = q('#callsDataSourceBadge');
     const label = q('#callsDataSourceLabel');
+    const state = q('#callsDataSourceState');
+    if (state) {
+      state.style.display = '';
+    }
+    syncCampaignModeBadge(isLive);
     if (!badge || !label) {
       return;
     }
@@ -2663,10 +2695,14 @@
     for (const item of filtered) {
       const result=formatConversationResult(item);
       const debtorKey=String(item.debtor);
+      const sourceBadge=formatCallSourceBadge(item);
+      const sourceBadgeHtml=sourceBadge
+        ? `<span class="${sourceBadge.className}" data-call-source-badge="${sourceBadge.label}">${sourceBadge.label}</span>`
+        : '';
       const tr=document.createElement('tr');
       tr.dataset.debtorKey=debtorKey;
       tr.innerHTML=`
-        <td>${item.startedAt}</td>
+        <td>${item.startedAt}${sourceBadgeHtml ? `<div style="margin-top:4px">${sourceBadgeHtml}</div>` : ''}</td>
         <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
         <td>${formatDialStatusLabel(item.dialStatus || item.status)}<div style="font-size:12px;color:var(--muted)">${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
         <td><span class="tag ${result.pill}">${result.label}</span></td>
@@ -2842,7 +2878,7 @@
 
   function getCampaignStateMeta() {
     if (campaignLifecycle.status === 'auto_paused') {
-      return {className:'tag warn', label:'приостановлена системой'};
+      return {className:'tag stop', label:'приостановлена системой'};
     }
     if (campaignLifecycle.status === 'manual_paused') {
       return {className:'tag warn', label:'приостановлена'};
@@ -3736,7 +3772,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
         const statusMeta={
           running:{ cls:'tag run', text:'работает', progress:'н/д' },
           manual_paused:{ cls:'tag warn', text:'приостановлена', progress:'н/д' },
-          auto_paused:{ cls:'tag warn', text:'приостановлена системой', progress:'н/д' },
+          auto_paused:{ cls:'tag stop', text:'приостановлена системой', progress:'н/д' },
           draft:{ cls:'tag draft', text:'черновик', progress:'База не загружена' },
           ready:{ cls:'tag info', text:'готова к запуску', progress:'н/д' },
           completed:{ cls:'tag stop', text:'завершена', progress:'н/д' }
@@ -3753,7 +3789,14 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
 
         const tdMode=document.createElement('td');
         tdMode.className='campaign-mode';
-        tdMode.textContent='н/д';
+        const modeRaw=typeof c.mode==='string' ? c.mode.trim().toLowerCase() : '';
+        if (modeRaw === 'sandbox' || modeRaw === 'demo' || modeRaw === 'демо') {
+          tdMode.innerHTML='<span class="tag warn">демо</span>';
+        } else if (modeRaw === 'live' || modeRaw === 'production' || modeRaw === 'prod') {
+          tdMode.innerHTML='<span class="tag info">live</span>';
+        } else {
+          tdMode.textContent='н/д';
+        }
 
         const tdProgress=document.createElement('td');
         tdProgress.className='campaign-progress';

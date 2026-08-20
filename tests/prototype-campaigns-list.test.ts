@@ -13,8 +13,11 @@ describe('prototype campaigns list on home', () => {
     expect(home).toMatch(/<th[^>]*>Прогресс/);
     expect(home).toMatch(/<th[^>]*>Обновлено/);
     expect(home).toContain('class="campaign-reason">н/д');
-    expect(home).toContain('class="campaign-mode">н/д');
+    expect(home).toContain('class="campaign-mode"');
+    expect(home).toContain('>демо<');
     expect(home).toContain('class="campaign-updated">н/д');
+    expect(home).toContain('class="tag stop">приостановлена системой');
+    expect(home).toContain('class="tag warn">приостановлена');
     expect(home).not.toContain('Открыть причину');
     expect(home).not.toMatch(/data-open-campaign="settings">Перенастроить/);
     expect(home).not.toContain('Автопауза');
