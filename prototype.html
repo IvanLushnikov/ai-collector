@@ -1590,7 +1590,10 @@
     auditLogErrorNotice='';
     setAuditNotice('Загружаем журнал действий кампании…', true);
     try {
-      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs`, {
+      const kindFilter = q('#auditKindFilter')?.value || 'all';
+      const actionGroup = auditKindFilterToActionGroup(kindFilter);
+      const query = actionGroup ? `?actionGroup=${encodeURIComponent(actionGroup)}` : '';
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs${query}`, {
         headers:{ Accept:'application/json' }
       });
       if (!response.ok) {
@@ -1645,6 +1648,13 @@
     return 'decision';
   }
 
+  function auditKindFilterToActionGroup(kind='all') {
+    if (kind === 'block' || kind === 'campaign_status' || kind === 'decision') {
+      return kind;
+    }
+    return null;
+  }
+
   function formatAuditTransition(item={}, metadata={}) {
     const previous=item.previousValue ?? metadata.fromStatus ?? metadata.previousValue ?? '';
     const next=item.nextValue ?? metadata.toStatus ?? metadata.nextValue ?? '';
@@ -1691,7 +1701,7 @@
     }).filter((row) => {
       if (actorFilter !== 'all' && row.who !== actorFilter) return false;
       if (campaignFilter !== 'all' && row.object !== campaignFilter) return false;
-      if (kindFilter !== 'all' && row.kind !== kindFilter) return false;
+      if (auditLogSource !== 'live' && kindFilter !== 'all' && row.kind !== kindFilter) return false;
       return true;
     });
 
@@ -4076,6 +4086,13 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   q('#auditPeriodFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditActorFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditCampaignFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
+  q('#auditKindFilter')?.addEventListener('change',async ()=>{
+    window.__auditPage=1;
+    if (auditLogSource === 'live') {
+      await loadAuditLogFromApi();
+    }
+    renderAuditLog();
+  });
   q('#auditPrevPage')?.addEventListener('click',()=>{window.__auditPage=Math.max(1,(window.__auditPage||1)-1);renderAuditLog();});
   q('#auditNextPage')?.addEventListener('click',()=>{window.__auditPage=(window.__auditPage||1)+1;renderAuditLog();});
   q('#reviewQueueStatusFilter')?.addEventListener('change',renderReviewQueue);

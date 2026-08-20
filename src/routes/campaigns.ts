@@ -7,6 +7,8 @@ import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor
 import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
+import { matchesAuditActionGroup, normalizeAuditActionGroup } from '../domain/audit-log/index.js';
+import type { AuditActionGroup } from '../domain/audit-log/index.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { toComplianceDecisionSummary } from '../domain/compliance-block-kind/index.js';
 
@@ -170,8 +172,25 @@ const tenantAuditLogSchema = z.object({
   tenantId: z.string().uuid()
 });
 
+const auditActionGroupQuerySchema = z
+  .string()
+  .min(1)
+  .transform((value, ctx) => {
+    const normalized = normalizeAuditActionGroup(value);
+    if (!normalized) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid actionGroup'
+      });
+      return z.NEVER;
+    }
+
+    return normalized;
+  });
+
 const tenantAuditLogQuerySchema = z.object({
   action: z.string().min(1).optional(),
+  actionGroup: auditActionGroupQuerySchema.optional(),
   entityType: z.string().min(1).optional(),
   campaignId: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -234,10 +253,35 @@ const getReviewUrgency = (itemType: 'qa' | 'compliance', outcome: string | null 
 
 const campaignAuditLogQuerySchema = z.object({
   action: z.string().min(1).optional(),
+  actionGroup: auditActionGroupQuerySchema.optional(),
   entityType: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).max(1000).default(0)
 });
+
+const matchesAuditLogFilters = (
+  action: string,
+  entityType: string,
+  filters: {
+    action?: string;
+    actionGroup?: AuditActionGroup;
+    entityType?: string;
+  }
+): boolean => {
+  if (filters.action && action !== filters.action) {
+    return false;
+  }
+
+  if (filters.actionGroup && !matchesAuditActionGroup(action, filters.actionGroup)) {
+    return false;
+  }
+
+  if (filters.entityType && entityType !== filters.entityType) {
+    return false;
+  }
+
+  return true;
+};
 
 const reviewItemRoleMiddleware = async (
   request: FastifyRequest,
@@ -481,11 +525,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
     const filteredRows = rows
       .filter((item) => {
-        if (query.data.action && item.action !== query.data.action) {
-          return false;
-        }
-
-        if (query.data.entityType && item.entityType !== query.data.entityType) {
+        if (
+          !matchesAuditLogFilters(item.action, item.entityType, {
+            action: query.data.action,
+            actionGroup: query.data.actionGroup,
+            entityType: query.data.entityType
+          })
+        ) {
           return false;
         }
 
@@ -688,17 +734,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     });
 
     const filteredCampaignAudits = campaignAudits
-      .filter((row) => {
-        if (query.data.action && row.action !== query.data.action) {
-          return false;
-        }
-
-        if (query.data.entityType && row.entityType !== query.data.entityType) {
-          return false;
-        }
-
-        return true;
-      })
+      .filter((row) =>
+        matchesAuditLogFilters(row.action, row.entityType, {
+          action: query.data.action,
+          actionGroup: query.data.actionGroup,
+          entityType: query.data.entityType
+        })
+      )
       .map((item) => ({
         id: item.id,
         tenantId: item.tenantId,

@@ -1359,7 +1359,8 @@
           decision: apiDecision.decision,
           reasonCode: apiDecision.reasonCode || null,
           reasonText: apiDecision.reasonText || null,
-          checkedAt: apiDecision.checkedAt || null
+          checkedAt: apiDecision.checkedAt || null,
+          blockKind: apiDecision.blockKind || null
         }
       : (complianceStatusDecisionMap[item.complianceStatus]
         ? { decision: complianceStatusDecisionMap[item.complianceStatus] }
@@ -1589,7 +1590,10 @@
     auditLogErrorNotice='';
     setAuditNotice('Загружаем журнал действий кампании…', true);
     try {
-      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs`, {
+      const kindFilter = q('#auditKindFilter')?.value || 'all';
+      const actionGroup = auditKindFilterToActionGroup(kindFilter);
+      const query = actionGroup ? `?actionGroup=${encodeURIComponent(actionGroup)}` : '';
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs${query}`, {
         headers:{ Accept:'application/json' }
       });
       if (!response.ok) {
@@ -1644,6 +1648,13 @@
     return 'decision';
   }
 
+  function auditKindFilterToActionGroup(kind='all') {
+    if (kind === 'block' || kind === 'campaign_status' || kind === 'decision') {
+      return kind;
+    }
+    return null;
+  }
+
   function formatAuditTransition(item={}, metadata={}) {
     const previous=item.previousValue ?? metadata.fromStatus ?? metadata.previousValue ?? '';
     const next=item.nextValue ?? metadata.toStatus ?? metadata.nextValue ?? '';
@@ -1690,7 +1701,7 @@
     }).filter((row) => {
       if (actorFilter !== 'all' && row.who !== actorFilter) return false;
       if (campaignFilter !== 'all' && row.object !== campaignFilter) return false;
-      if (kindFilter !== 'all' && row.kind !== kindFilter) return false;
+      if (auditLogSource !== 'live' && kindFilter !== 'all' && row.kind !== kindFilter) return false;
       return true;
     });
 
@@ -2746,7 +2757,7 @@
         <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
         <td>${formatDialStatusLabel(item.dialStatus || item.status)}<div style="font-size:12px;color:var(--muted)">${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
         <td><span class="tag ${result.pill}">${result.label}</span></td>
-        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
+        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span>${formatBlockKindLabel(item.complianceDecision?.blockKind) ? `<div style="font-size:11px;color:var(--muted)">${formatBlockKindLabel(item.complianceDecision?.blockKind)}</div>` : ''}<div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
       `;
       tbody.appendChild(tr);
       if (expandedDebtorKey === debtorKey) {
@@ -4075,6 +4086,13 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   q('#auditPeriodFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditActorFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditCampaignFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
+  q('#auditKindFilter')?.addEventListener('change',async ()=>{
+    window.__auditPage=1;
+    if (auditLogSource === 'live') {
+      await loadAuditLogFromApi();
+    }
+    renderAuditLog();
+  });
   q('#auditPrevPage')?.addEventListener('click',()=>{window.__auditPage=Math.max(1,(window.__auditPage||1)-1);renderAuditLog();});
   q('#auditNextPage')?.addEventListener('click',()=>{window.__auditPage=(window.__auditPage||1)+1;renderAuditLog();});
   q('#reviewQueueStatusFilter')?.addEventListener('change',renderReviewQueue);
