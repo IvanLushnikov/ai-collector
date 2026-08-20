@@ -69,7 +69,7 @@ export class CallWindowComplianceRule implements ComplianceRule {
     return {
       decision: 'block',
       reasonCode: 'CALL_WINDOW_BLOCK',
-      reasonText: `Call window is restricted to weekday ${WEEKDAY_WINDOW.label} and weekend ${WEEKEND_WINDOW.label}`
+      reasonText: 'Вне разрешённого окна звонка'
     };
   }
 }

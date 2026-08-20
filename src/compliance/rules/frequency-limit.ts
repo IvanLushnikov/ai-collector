@@ -28,10 +28,15 @@ export class FrequencyLimitRule implements ComplianceRule {
       });
 
       if (count >= PRODUCT_FREQUENCY_CAPS[bucket]) {
+        const bucketLabel = bucket === 'day'
+          ? 'дневной'
+          : bucket === 'week'
+            ? 'недельный'
+            : 'месячный';
         return {
           decision: 'block',
           reasonCode: 'FREQUENCY_LIMIT_BLOCK',
-          reasonText: `Product frequency cap reached for ${bucket === 'day' ? 'daily' : bucket} bucket`
+          reasonText: `Достигнут ${bucketLabel} лимит частоты контактов`
         };
       }
     }

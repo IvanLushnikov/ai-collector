@@ -43,6 +43,11 @@ import { isLiveCallsEnabled } from '../config/env.js';
 import { assertSpeechCredentialsReady } from '../speech/credentials/assert-ready.js';
 import { shouldAutoPauseForMissingEvidence } from '../calls/evidence-guard.js';
 import { isPilotCapReached } from '../domain/campaign/pilot-cap.js';
+import {
+  CAMPAIGN_PAUSE_REASON_TEXT,
+  enrichBlockedReason,
+  toComplianceDecisionSummary
+} from '../domain/compliance-block-kind/index.js';
 
 type CallDependencies = {
   tenant: {
@@ -522,7 +527,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
       return reply.code(403).send({
         decision: decision.decision,
-        reasons: decision.blockedReasons,
+        reasons: decision.blockedReasons.map(enrichBlockedReason),
         rules: decision.rules,
         allowed: false,
         error: 'COMPLIANCE_BLOCK'
@@ -548,7 +553,11 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
     if (shouldEnqueueSandboxCall(deps.sandboxCallsQueueEnabled)) {
       if (!canRunSandboxStartJob(campaign.status ?? 'draft')) {
-        return reply.code(409).send({ error: 'CAMPAIGN_JOB_BLOCKED' });
+        return reply.code(409).send({
+          error: 'CAMPAIGN_JOB_BLOCKED',
+          blockKind: 'campaign_pause',
+          reasonText: CAMPAIGN_PAUSE_REASON_TEXT
+        });
       }
 
       return reply.code(202).send({
@@ -870,12 +879,12 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
               ? 'blocked'
               : 'not_checked',
           complianceDecision: complianceDecision
-            ? {
+            ? toComplianceDecisionSummary({
                 decision: complianceDecision.decision,
                 reasonCode: complianceDecision.reasonCode,
                 reasonText: complianceDecision.reasonText,
                 checkedAt: complianceDecision.checkedAt
-              }
+              })
             : null,
           recordingStatus: lifecycleEvidence.recordingStatus,
           transcriptStatus: lifecycleEvidence.transcriptStatus,
@@ -1101,12 +1110,12 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       if (!latest?.decision) {
         return null;
       }
-      return {
+      return toComplianceDecisionSummary({
         decision: latest.decision,
-        reasonCode: latest.reasonCode ?? null,
-        reasonText: latest.reasonText ?? null,
-        checkedAt: latest.checkedAt ?? null
-      };
+        reasonCode: latest.reasonCode,
+        reasonText: latest.reasonText,
+        checkedAt: latest.checkedAt
+      });
     })();
 
     return reply.code(200).send({

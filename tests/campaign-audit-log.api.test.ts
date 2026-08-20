@@ -266,6 +266,78 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/audit-logs', () => {
     await app.close();
   });
 
+  it('filters campaign audit logs by actionGroup', async () => {
+    const campaignStore = makeCampaignStore({
+      auditLog: {
+        findMany: vi.fn(async () => [
+          {
+            id: 'log-block',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            userId: 'user-1',
+            action: 'campaign.auto_paused',
+            entityType: 'campaign',
+            entityId: 'campaign-1',
+            metadata: { campaignId: 'campaign-1', reasonText: 'compliance' },
+            createdAt: '2026-08-16T12:00:00.000Z'
+          },
+          {
+            id: 'log-status',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            userId: 'user-1',
+            action: 'campaign.status_updated',
+            entityType: 'campaign',
+            entityId: 'campaign-1',
+            metadata: { campaignId: 'campaign-1', fromStatus: 'running', toStatus: 'paused' },
+            createdAt: '2026-08-16T11:00:00.000Z'
+          },
+          {
+            id: 'log-decision',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            userId: 'user-1',
+            action: 'review_item.resolved',
+            entityType: 'reviewItem',
+            entityId: 'qa-1',
+            metadata: { campaignId: 'campaign-1', action: 'approve' },
+            createdAt: '2026-08-16T10:00:00.000Z'
+          }
+        ])
+      }
+    });
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const blockResponse = await injectWithOwnerRole(app, {
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/audit-logs?actionGroup=block'
+    });
+    expect(blockResponse.statusCode).toBe(200);
+    expect(blockResponse.json().map((item: { id: string }) => item.id)).toEqual(['log-block']);
+
+    const statusResponse = await injectWithOwnerRole(app, {
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/audit-logs?actionGroup=campaign_status'
+    });
+    expect(statusResponse.statusCode).toBe(200);
+    expect(statusResponse.json().map((item: { id: string }) => item.id)).toEqual(['log-status']);
+
+    const reviewAliasResponse = await injectWithOwnerRole(app, {
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/audit-logs?actionGroup=review'
+    });
+    expect(reviewAliasResponse.statusCode).toBe(200);
+    expect(reviewAliasResponse.json().map((item: { id: string }) => item.id)).toEqual(['log-decision']);
+
+    const invalidResponse = await injectWithOwnerRole(app, {
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/audit-logs?actionGroup=unknown'
+    });
+    expect(invalidResponse.statusCode).toBe(400);
+    expect(invalidResponse.json().error).toBe('VALIDATION_ERROR');
+
+    await app.close();
+  });
+
   it('paginates campaign audit logs with limit and offset', async () => {
     const campaignStore = makeCampaignStore({
       auditLog: {
@@ -790,6 +862,49 @@ describe('GET /tenants/:tenantId/audit-logs', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json().error).toBe('TENANT_NOT_FOUND');
+
+    await app.close();
+  });
+
+  it('filters tenant audit logs by actionGroup alias blocks', async () => {
+    const campaignStore = makeCampaignStore({
+      auditLog: {
+        findMany: vi.fn(async () => [
+          {
+            id: 'log-block',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            userId: 'user-1',
+            action: 'call.sandbox_blocked',
+            entityType: 'callAttempt',
+            entityId: 'call-1',
+            metadata: { campaignId: 'campaign-1' },
+            createdAt: '2026-08-16T12:00:00.000Z'
+          },
+          {
+            id: 'log-decision',
+            tenantId: '11111111-1111-1111-1111-111111111111',
+            userId: 'user-1',
+            action: 'call.qa_updated',
+            entityType: 'callResult',
+            entityId: 'call-2',
+            metadata: { campaignId: 'campaign-1' },
+            createdAt: '2026-08-16T11:00:00.000Z'
+          }
+        ])
+      }
+    });
+
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    const response = await injectWithOwnerRole(app, {
+      method: 'GET',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/audit-logs?actionGroup=blocks'
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toHaveLength(1);
+    expect(response.json()[0].id).toBe('log-block');
 
     await app.close();
   });

@@ -48,3 +48,10 @@ export const isAuditLogMetadata = (value: unknown): value is AuditLogMetadata =>
 
   return Object.values(value).every(isAuditLogMetadataValue);
 };
+
+export {
+  AUDIT_ACTION_GROUPS,
+  matchesAuditActionGroup,
+  normalizeAuditActionGroup,
+  type AuditActionGroup
+} from './action-groups.js';

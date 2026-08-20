@@ -111,8 +111,9 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/compliance-decisions', ()
       decision: 'allow',
       reasonCode: 'CODE_1',
       reasonText: 'Reason 1',
-      ruleVersion: 'v1',
-      checkedAt: '2026-08-16T00:00:00.000Z'
+      checkedAt: '2026-08-16T00:00:00.000Z',
+      blockKind: null,
+      ruleVersion: 'v1'
     });
 
     expect(appStore.complianceDecision?.findMany).toHaveBeenCalledWith({
@@ -173,6 +174,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/compliance-decisions', ()
     const body = response.json() as Array<Record<string, unknown>>;
     expect(body).toHaveLength(1);
     expect(body[0].decision).toBe('block');
+    expect(body[0].blockKind).toBeNull();
 
     expect(appStore.complianceDecision?.findMany).toHaveBeenCalledWith({
       where: {

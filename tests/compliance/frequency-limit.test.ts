@@ -45,7 +45,7 @@ describe('FrequencyLimitRule', () => {
     expect(result).toEqual({
       decision: 'block',
       reasonCode: 'FREQUENCY_LIMIT_BLOCK',
-      reasonText: expect.stringMatching(/daily/i)
+      reasonText: 'Достигнут дневной лимит частоты контактов'
     });
     expect(result.reasonText).not.toMatch(/ФЗ-230|FZ-230|230-ФЗ/i);
   });

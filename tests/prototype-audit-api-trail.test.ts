@@ -21,4 +21,11 @@ describe('prototype audit decision trail from API (review fix)', () => {
     const publicHash = createHash('sha256').update(publicHtml).digest('hex');
     expect(publicHash).toBe(rootHash);
   });
+
+  it('loads live audit logs with actionGroup query from auditKindFilter', () => {
+    expect(html).toContain('function auditKindFilterToActionGroup');
+    expect(html).toContain('?actionGroup=${encodeURIComponent(actionGroup)}');
+    expect(html).toContain("if (auditLogSource === 'live')");
+    expect(html).toContain("q('#auditKindFilter')?.addEventListener('change',async ()=>{");
+  });
 });

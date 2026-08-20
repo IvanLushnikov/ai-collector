@@ -90,7 +90,8 @@ describe('calls journal row contract (OP-T-004)', () => {
           decision: 'allow',
           reasonCode: 'ALLOW',
           reasonText: 'Согласие подтверждено',
-          checkedAt: '2026-08-19T10:00:00.000Z'
+          checkedAt: '2026-08-19T10:00:00.000Z',
+          blockKind: null
         }
       }),
       expect.objectContaining({
@@ -102,7 +103,8 @@ describe('calls journal row contract (OP-T-004)', () => {
           decision: 'block',
           reasonCode: 'OUTSIDE_WINDOW',
           reasonText: 'Вне разрешённого окна звонка',
-          checkedAt: '2026-08-19T09:00:00.000Z'
+          checkedAt: '2026-08-19T09:00:00.000Z',
+          blockKind: null
         }
       }),
       expect.objectContaining({
@@ -215,7 +217,8 @@ describe('calls journal row contract (OP-T-004)', () => {
       decision: 'block',
       reasonCode: 'CONSENT_LOW',
       reasonText: 'Согласие не подтверждено',
-      checkedAt: '2026-08-19T09:00:00.000Z'
+      checkedAt: '2026-08-19T09:00:00.000Z',
+      blockKind: null
     });
     expect(Array.isArray(body.complianceDecisions)).toBe(true);
     expect(body.complianceDecisions).toHaveLength(2);

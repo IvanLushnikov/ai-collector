@@ -100,6 +100,7 @@ Fail-closed: нет решения, нет правила, ошибка пров
 - **Поведение:** номер, `externalId` или обязательство в suppression → `SUPPRESSION_BLOCK`
 - **Этап:** Pilot. В MVP Lab частично закрыто через `contact_forbidden` / `revoked`.
 - **Клиент может:** добавлять записи в список. Не может исключать системные статусы из проверки.
+- **UI `blockKind` (OP-T-007):** `SUPPRESSION_BLOCK` → `permanent`; `CALL_WINDOW_BLOCK` / `FREQUENCY_LIMIT_BLOCK` → `temporary`. Пауза кампании (`campaign_pause`) — не строка suppression; отдельный ops-сценарий (статус кампании / `CAMPAIGN_JOB_BLOCKED`).
 
 #### R-MARKING — маркировка и основание вызова
 

@@ -29,7 +29,7 @@ describe('SuppressionRule', () => {
     expect(result).toEqual({
       decision: 'block',
       reasonCode: 'SUPPRESSION_BLOCK',
-      reasonText: 'Contact is on the tenant suppression list'
+      reasonText: 'Контакт в списке исключений'
     });
   });
 

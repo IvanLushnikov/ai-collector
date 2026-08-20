@@ -33,7 +33,7 @@ describe('CallWindowComplianceRule', () => {
     expect(result).toEqual({
       decision: 'block',
       reasonCode: 'CALL_WINDOW_BLOCK',
-      reasonText: expect.stringMatching(/weekend 09:00-20:00/i)
+      reasonText: 'Вне разрешённого окна звонка'
     });
     expect(result.reasonText).not.toMatch(/ФЗ-230|FZ-230|230-ФЗ/i);
 

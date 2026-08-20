@@ -8,6 +8,7 @@ import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { toComplianceDecisionSummary } from '../domain/compliance-block-kind/index.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -875,9 +876,11 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       tenantId: item.tenantId,
       campaignId: item.campaignId,
       debtorRecordId: item.debtorRecordId,
-      decision: item.decision,
-      reasonCode: item.reasonCode,
-      reasonText: item.reasonText,
+      ...toComplianceDecisionSummary({
+        decision: item.decision,
+        reasonCode: item.reasonCode,
+        reasonText: item.reasonText
+      }),
       createdAt: toIsoString(item.checkedAt),
       retryCount: retryCountByDebtor.get(item.debtorRecordId) ?? 0,
       urgency: getReviewUrgency('compliance')

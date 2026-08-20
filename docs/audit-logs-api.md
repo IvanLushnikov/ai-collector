@@ -11,7 +11,7 @@
 
 ## Общие ошибки
 
-- `VALIDATION_ERROR` — ошибка валидации `tenantId` или query-параметров (`action`, `entityType`, `campaignId`, `limit`, `offset`), включая `limit > 100` и `offset > 1000`.
+- `VALIDATION_ERROR` — ошибка валидации `tenantId` или query-параметров (`action`, `actionGroup`, `entityType`, `campaignId`, `limit`, `offset`), включая `limit > 100` и `offset > 1000`.
 - `TENANT_NOT_FOUND` — tenant не найден.
 - `CAMPAIGN_NOT_FOUND` — кампания не принадлежит tenant или не существует.
 - `USER_ROLE_MISSING` — отсутствует обязательный `X-User-Role`.
@@ -30,6 +30,7 @@
 ### Query-параметры
 
 - `action` (`string`, optional) — точное соответствие поля `action` в событии.
+- `actionGroup` (`string`, optional) — OR-фильтр по alias-группам ops UI (см. [Action groups](#action-groups-op-t-009)); совместим с `action` (AND).
 - `entityType` (`string`, optional) — точное соответствие `entityType`.
 - `campaignId` (`string`, optional) — фильтрация по `metadata.campaignId` события.
 - `limit` (`number`, optional, default `20`, min `1`, max `100`) — число возвращаемых записей.
@@ -151,6 +152,7 @@
 ### Query-параметры
 
 - `action` (`string`, optional) — точное соответствие поля `action` в событии.
+- `actionGroup` (`string`, optional) — OR-фильтр по alias-группам ops UI (см. [Action groups](#action-groups-op-t-009)); совместим с `action` (AND).
 - `entityType` (`string`, optional) — точное соответствие `entityType`.
 - `limit` (`number`, optional, default `20`, min `1`, max `100`) — число возвращаемых записей.
 - `offset` (`number`, optional, default `0`, min `0`, max `1000`) — смещение в отфильтрованном списке.
@@ -189,3 +191,21 @@
 - Сначала валидируется `tenantId` и `campaignId`.
 - Кампания должна принадлежать tenant из пути; в случае расхождения возвращается `CAMPAIGN_NOT_FOUND`.
 - В текущей реализации campaign-scope применяется в дополнительной фильтрации по `entityId` (для `entityType=campaign`) и `metadata.campaignId` (для других сущностей).
+
+## Action groups (OP-T-009)
+
+Ops UI (`#auditKindFilter` в `prototype.html`) фильтрует журнал по трём группам. Query `actionGroup` возвращает события, у которых `action` входит в группу (OR внутри группы). Точный фильтр `action` по-прежнему доступен и комбинируется с `actionGroup` через AND.
+
+| `actionGroup` | Alias | Ops UI | Actions (OR) |
+|---|---|---|---|
+| `block` | `blocks` | Блокировки | `campaign.auto_paused`, `call.sandbox_blocked` |
+| `campaign_status` | — | Статусы кампании | `campaign.created`, `campaign.status_updated`, `campaign.safe_resumed` |
+| `decision` | `review` | Решения | `review_item.resolved`, `call.qa_updated`, `script_version.created`, `call.sandbox_started` |
+
+Примеры:
+
+- `GET .../audit-logs?actionGroup=block` — только блокировки и автопаузы.
+- `GET .../audit-logs?actionGroup=campaign_status` — только смены статуса кампании.
+- `GET .../audit-logs?actionGroup=review` — alias для `decision`.
+
+Невалидное значение `actionGroup` → `400 VALIDATION_ERROR`.

@@ -384,6 +384,14 @@
     };
     return labels[status] || 'Результат уточняется';
   }
+  const formatBlockKindLabel=(kind='')=>{
+    const map={
+      permanent:'Постоянное исключение',
+      temporary:'Временная блокировка',
+      campaign_pause:'Пауза кампании'
+    };
+    return map[String(kind||'').trim()] || '';
+  };
   const formatReasonCodeLabel=(code='')=>{
     const map={
       ALLOW:'Контакт разрешён',
