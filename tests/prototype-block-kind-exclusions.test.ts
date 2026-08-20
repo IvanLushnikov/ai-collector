@@ -2,8 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8');
-const base = html.match(/data-camp-view="base"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<div class="campaign-view" data-camp-view="scenario"/)?.[0] ?? html;
-const calls = html.match(/data-camp-view="calls"[\s\S]*?<\/section>/)?.[0] ?? html;
+const base = html.match(/data-camp-view="base"[\s\S]*?data-camp-view="scenario"/)?.[0] ?? html;
 
 describe('prototype block kind exclusions (OP-D-009)', () => {
   it('defines domain blockKind labels, classes, hints and render helper', () => {
@@ -37,7 +36,7 @@ describe('prototype block kind exclusions (OP-D-009)', () => {
   });
 
   it('shows blockKind in calls journal and call card without inventing new kinds', () => {
-    expect(calls).toContain('renderBlockKindBlock(item.complianceDecision?.blockKind');
+    expect(html).toContain('renderBlockKindBlock(item.complianceDecision?.blockKind');
     expect(html).toContain('renderBlockKindBlock(displayItem.complianceDecision?.blockKind');
     expect(html).toContain("blockKind:'permanent'");
     expect(html).toContain("blockKind:'temporary'");

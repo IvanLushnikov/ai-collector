@@ -205,10 +205,15 @@
         </div>
 
         <div class="campaign-view" data-camp-view="base">
-          <div class="page-head"><div><h1>База кампании</h1><p>Когда загружали файл базы.</p></div>
+          <div class="page-head"><div><h1>База кампании</h1><p>Загрузка файла и ограничения по контактам — отдельно от паузы кампании.</p></div>
             <div class="head-actions"><button class="btn" id="openApiSourceFromBase">Получать из API</button><button class="btn primary" data-open-wizard-step="2">Загрузить файл</button></div>
           </div>
-          <div class="panel"><div class="panel-head"><div><div class="panel-title" id="campaignBaseFileTitle">займы_14_08.csv</div><div class="panel-sub" id="campaignBaseFileMeta">загружен 14 августа 2026 в 09:12</div></div></div></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title" id="campaignBaseFileTitle">займы_14_08.csv</div><div class="panel-sub" id="campaignBaseFileMeta">загружен 14 августа 2026 в 09:12</div></div><span class="tag run" id="campaignBaseFileStatus">проверено</span></div>
+            <div class="panel-body"><div class="grid g4"><div class="metric info"><small>Найдено в файле</small><strong id="campaignBaseLoadedCount">10 000</strong></div><div class="metric ok"><small>Принято в базу</small><strong id="campaignBaseAcceptedCount">8 740</strong></div><div class="metric warn"><small>Отклонено при импорте</small><strong id="campaignBaseRejectedCount">1 260</strong></div><div class="metric stop"><small>Не допущено к звонку</small><strong id="campaignBaseEligibilityHoldCount">3</strong><span>по ограничениям ниже</span></div></div></div>
+          </div>
+          <div class="panel" id="campaignBaseWhyNotCalledPanel"><div class="panel-head"><div><div class="panel-title">Почему не звонили</div><div class="panel-sub">Три разных ограничения — не путать «в стоп-листе» и «кампания на паузе».</div></div></div>
+            <div class="panel-body"><div class="base-block-kind-legend" id="campaignBaseBlockKindLegend"></div><div class="table-wrap" style="margin-top:16px"><table class="wide"><thead><tr><th>Контакт</th><th>Тип ограничения</th><th>Причина</th></tr></thead><tbody id="campaignBaseHoldTableBody"></tbody></table></div></div>
+          </div>
           <div id="campaignBaseEmpty" class="empty" hidden><b>База ещё не загружена.</b>Загрузите файл или подключите обмен по API.</div>
         </div>
 
