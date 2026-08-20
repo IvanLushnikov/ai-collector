@@ -58,7 +58,12 @@ describe('GET /tenants/:tenantId/campaigns ops list fields (OP-T-001)', () => {
         })
       },
       callAttempt: {
-        count: vi.fn(async ({ where }: { where: { campaignId: string } }) => {
+        count: vi.fn(async ({ where }: { where: { campaignId: string; status?: string } }) => {
+          if (where.status === 'completed') {
+            if (where.campaignId === 'campaign-running') return 4100;
+            if (where.campaignId === 'campaign-paused') return 890;
+            return 0;
+          }
           if (where.campaignId === 'campaign-running') return 6800;
           if (where.campaignId === 'campaign-paused') return 1974;
           return 0;
@@ -85,7 +90,7 @@ describe('GET /tenants/:tenantId/campaigns ops list fields (OP-T-001)', () => {
         createdAt: '2026-08-10T10:00:00.000Z',
         updatedAt: '2026-08-18T12:00:00.000Z',
         statusReason: null,
-        progress: { attemptedCalls: 6800, totalRecords: 10000 }
+        progress: { attemptedCalls: 6800, completedCalls: 4100, totalRecords: 10000 }
       },
       {
         id: 'campaign-paused',
@@ -95,7 +100,7 @@ describe('GET /tenants/:tenantId/campaigns ops list fields (OP-T-001)', () => {
         createdAt: '2026-08-11T10:00:00.000Z',
         updatedAt: '2026-08-19T09:30:00.000Z',
         statusReason: 'Нет записи разговора',
-        progress: { attemptedCalls: 1974, totalRecords: 4200 }
+        progress: { attemptedCalls: 1974, completedCalls: 890, totalRecords: 4200 }
       }
     ]);
 

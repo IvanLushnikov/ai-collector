@@ -27,5 +27,7 @@ describe('prototype campaigns list on home', () => {
 
   it('loads home campaigns from GET /tenants/:tenantId/campaigns (не demo/local)', () => {
     expect(html).toContain('`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns`');
+    expect(html).toContain('formatCampaignListProgressLabel');
+    expect(html).not.toContain('rowsByCampaignId.set(campaignId,tdProgress)');
   });
 });

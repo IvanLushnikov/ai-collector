@@ -33,10 +33,7 @@ type UsageEventRecord = {
   sourceId: string;
 };
 
-type CampaignReportDependencies = {
-  debtorRecord: {
-    count: (args: { where: { tenantId: string; campaignId: string } }) => Promise<number>;
-  };
+export type CampaignCompletedCallsDependencies = {
   callAttempt: {
     count: (args: {
       where: {
@@ -45,6 +42,19 @@ type CampaignReportDependencies = {
         status?: string;
       };
     }) => Promise<number>;
+  };
+  usageEvent?: {
+    count?: (args: { where: UsageEventWhere }) => Promise<number>;
+    findMany?: (args: {
+      where: { tenantId: string; campaignId: string };
+      select: { sourceId: true; eventType: true; quantity: true; unit: true };
+    }) => Promise<UsageEventRecord[]>;
+  };
+};
+
+type CampaignReportDependencies = CampaignCompletedCallsDependencies & {
+  debtorRecord: {
+    count: (args: { where: { tenantId: string; campaignId: string } }) => Promise<number>;
   };
   callResult: {
     count: (args: {
@@ -67,13 +77,64 @@ type CampaignReportDependencies = {
       };
     }) => Promise<number>;
   };
-  usageEvent?: {
-    count?: (args: { where: UsageEventWhere }) => Promise<number>;
-    findMany?: (args: {
-      where: { tenantId: string; campaignId: string };
-      select: { sourceId: true; eventType: true; quantity: true; unit: true };
-    }) => Promise<UsageEventRecord[]>;
+};
+
+export const countCampaignCompletedCalls = async (
+  deps: CampaignCompletedCallsDependencies,
+  args: {
+    tenantId: string;
+    campaignId: string;
+  }
+): Promise<number> => {
+  const whereAttemptScope = {
+    tenantId: args.tenantId,
+    campaignId: args.campaignId
   };
+
+  if (deps.usageEvent?.findMany) {
+    const usageLedgerTotals = await calculateUsageLedgerTotals(
+      {
+        usageEvent: {
+          findMany: (query) => deps.usageEvent!.findMany!({
+            where: {
+              tenantId: query.where.tenantId,
+              campaignId: query.where.campaignId
+            },
+            select: {
+              sourceId: true,
+              eventType: true,
+              quantity: true,
+              unit: true
+            }
+          })
+        }
+      },
+      {
+        tenantId: args.tenantId,
+        campaignId: args.campaignId
+      }
+    ).then((result) => result.totals);
+
+    return usageLedgerTotals
+      .filter((item) => item.eventType === 'call_completed' && item.unit === 'call')
+      .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
+  }
+
+  if (deps.usageEvent?.count) {
+    return deps.usageEvent.count({
+      where: {
+        ...whereAttemptScope,
+        eventType: 'call_completed'
+      }
+    });
+  }
+
+  return deps.callAttempt.count({
+    where: {
+      ...whereAttemptScope,
+      status: 'completed'
+    }
+  });
 };
 
 export const createCampaignReport = async (
@@ -124,26 +185,14 @@ export const createCampaignReport = async (
     .filter((item) => item.eventType === 'call_completed' && item.unit === 'minute')
     .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
 
-  const [totalRecords, attemptedCalls, completedCallsFallback, blockedCalls, ptpCount, paidAfterPtpCount] = await Promise.all([
+  const [totalRecords, attemptedCalls, completedCalls, blockedCalls, ptpCount, paidAfterPtpCount] = await Promise.all([
     deps.debtorRecord.count({
       where: whereAttemptScope
     }),
     deps.callAttempt.count({
       where: whereAttemptScope
     }),
-    deps.usageEvent?.count
-      ? deps.usageEvent.count({
-          where: {
-            ...whereAttemptScope,
-            eventType: 'call_completed'
-          }
-        })
-      : deps.callAttempt.count({
-          where: {
-            ...whereAttemptScope,
-            status: 'completed'
-      }
-    }),
+    countCampaignCompletedCalls(deps, args),
     deps.complianceDecision.count({
       where: {
         ...whereAttemptScope,
@@ -171,17 +220,10 @@ export const createCampaignReport = async (
     })
   ]);
 
-  const callCompletedQuantityTotals = usageLedgerTotals
-    .filter((item) => item.eventType === 'call_completed' && item.unit === 'call')
-    .reduce((sum, item) => sum + (item.totalQuantity ?? 0), 0);
-
-  const finalizedCompletedCalls = deps.usageEvent?.findMany
-    ? callCompletedQuantityTotals
-    : completedCallsFallback;
   const costPerCall = hasUsageLedger
     ? calculateCostFromMinutes(
       connectedMinutes,
-      finalizedCompletedCalls,
+      completedCalls,
       billingRates
     )
     : null;
@@ -196,7 +238,7 @@ export const createCampaignReport = async (
   return {
     totalRecords,
     attemptedCalls,
-    completedCalls: finalizedCompletedCalls,
+    completedCalls,
     blockedCalls,
     ptpCount,
     paidAfterPtpCount,

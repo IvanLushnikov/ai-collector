@@ -68,6 +68,7 @@
     "statusReason": "Нет записи разговора",
     "progress": {
       "attemptedCalls": 1974,
+      "completedCalls": 890,
       "totalRecords": 4200
     }
   }
@@ -75,7 +76,27 @@
 ```
 
 - `statusReason` — человекочитаемая причина при `auto_paused` (из последнего audit `campaign.auto_paused`); иначе `null`.
-- `progress.attemptedCalls` — число попыток звонка; `progress.totalRecords` — число записей базы кампании.
+- `progress` — additive агрегаты прогресса кампании (OP-T-008). Старые клиенты могут игнорировать отдельные поля.
+
+#### Прогресс кампании (`progress`)
+
+| Поле | Знаменатель / числитель | Источник | Назначение UI |
+|---|---|---|---|
+| `totalRecords` | **Знаменатель** — все записи базы кампании (`DebtorRecord`) | `count(debtorRecord where campaignId)` | «из N» в списке и % в обзоре |
+| `completedCalls` | **Числитель (предпочтительный)** — завершённые диалоги по событиям | Та же логика, что `completedCalls` в campaign report (см. ниже) | «Завершено X из N», % обзвона |
+| `attemptedCalls` | Доп. метрика — все попытки звонка (`CallAttempt`) | `count(callAttempt where campaignId)` | Fallback числителя, если `completedCalls` недоступен клиенту |
+
+**Что считается `completedCalls` (числитель):**
+
+1. Если доступен usage ledger (`usageEvent.findMany`): сумма `quantity` по событиям `eventType=call_completed`, `unit=call` (dedupe по `sourceId` через usage ledger totals — как в report API).
+2. Иначе, если есть только `usageEvent.count`: число событий `call_completed` кампании.
+3. Иначе (fallback): число `CallAttempt` со `status=completed`.
+
+**Что считается `totalRecords` (знаменатель):** все импортированные записи должников кампании, независимо от исхода звонка.
+
+**UI-рекомендация:** показывать `completedCalls / totalRecords`; `attemptedCalls / totalRecords` — только fallback для старых ответов без `completedCalls`. Процент: `round(completedCalls / totalRecords * 100)` при `totalRecords > 0`.
+
+Согласованность с report API: `GET .../campaigns/:campaignId/report` возвращает те же `completedCalls` и `totalRecords` для одной кампании; список агрегирует их per-row без отдельного report-fetch для прогресса.
 
 #### Ответы с ошибками
 

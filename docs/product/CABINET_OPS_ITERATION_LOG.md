@@ -3,11 +3,69 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-012
-- Следующая кандидат: OP-D-009 / OP-D-014
+- Последняя закрытая: OP-D-009
+- Следующая кандидат: OP-D-011
 - Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
 
 ## Проходы
+
+## 2026-08-20 — OP-D-009 — done
+
+### Взял
+- OP-D-009: на «Базе» и в «почему не звонили» визуально развести permanent / temporary / campaign_pause.
+
+### Сделал
+- `formatBlockKindClass`, `formatBlockKindHint`, `formatBlockKindTerm`, `renderBlockKindBlock` — три доменных `blockKind` из OP-T-007.
+- Вкладка «База»: легенда «Почему не звонили», таблица holds, метрика «Не допущено к звонку».
+- Журнал звонков и карточка: badge + однострочная подсказка; для temporary — срок из данных (`blockUntil`/`validUntil`/`expiresAt`), если передан.
+- Demo: `baseEligibilityHolds` + три blocked call cards; sync `public/prototype.html`.
+- tests/prototype-block-kind-exclusions.test.ts
+
+### Проверка
+- vitest tests/prototype-block-kind-exclusions.test.ts
+
+### Handoff
+- Следующие: OP-D-011 (microcopy pass).
+
+## 2026-08-20 — OP-T-008 — done
+
+### Взял
+- OP-T-008: progress completed/total из реальных событий в списке кампаний и обзоре.
+
+### Сделал
+- `countCampaignCompletedCalls` в `src/reports/campaign-report.ts` (reuse report logic).
+- `GET /tenants/:tenantId/campaigns`: additive `progress.completedCalls` рядом с `attemptedCalls`/`totalRecords`.
+- `docs/campaigns-api.md`: числитель/знаменатель, источники completed.
+- Prototype: `formatCampaignListProgressLabel` + overview `formatCampaignProgressLabel(snapshot)` prefer completed/total; убран per-row report-fetch из home list.
+- tests: campaigns.list-progress-completed + обновлены list/create/prototype контракты.
+
+### Проверка
+- vitest tests/campaigns.list-* + tests/reports/campaign-report* + prototype-campaigns-list/header
+
+### Handoff
+- Следующие: OP-D-011 (microcopy pass).
+
+## 2026-08-20 — OP-D-010 — done
+
+### Взял
+- OP-D-010: пороги метрик (threshold color) на Обзоре кампании.
+
+### Сделал
+- KPI Обзора: Обзвонено (нейтрально), Соединилось / Блокировки / Очередь проверки — динамический tone info/warn/stop.
+- `overviewMetricThresholds` — UI-константы с комментариями (не SLA клиента): доля блокировок, reviewOpen, connect rate.
+- `applyOverviewMetricTone` + `overviewMetricStateFromBands`; при `.is-risk` приглушается только нейтральный info, warn/stop остаются заметными.
+- Синхрон `public/prototype.html`; обещания/среднее время остаются на экране «Аналитика».
+
+### Проверка
+- `npx vitest run tests/prototype-overview-thresholds.test.ts tests/prototype-overview-readiness.test.ts tests/prototype-campaign-header.test.ts` — PASS
+
+### Состояние бэклога
+- OP-D-010: `done`
+- Следующая `todo`: OP-D-011
+
+### Handoff
+- Следующий ID: **OP-D-011** (microcopy pass RU B2B).
+- Не возвращать glow; пороги — UI bands, не обещать SLA.
 
 ## 2026-08-20 — OP-T-012 — done (sandbox; live T-149 deferred)
 
@@ -43,7 +101,7 @@
 - vitest tests/compliance + tests/calls/calls-journal-row.contract.test.ts
 
 ### Handoff
-- Следующие: OP-D-009 (UI mapping исключений), OP-T-008.
+- Следующие: OP-D-009 (UI mapping исключений), OP-D-010 (threshold color на Обзоре).
 
 ## 2026-08-20 — OP-T-009 — done
 

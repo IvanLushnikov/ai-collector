@@ -161,13 +161,6 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/report', () => {
     });
     expect(body.costPerCall).toBe(expectedCostPerCall);
     expect(body.costPerPtp).toBe(expectedCostPerPtp);
-    expect(campaignStore.usageEvent.count).toHaveBeenCalledWith({
-      where: {
-        tenantId: '11111111-1111-1111-1111-111111111111',
-        campaignId: '11111111-1111-1111-1111-111111111112',
-        eventType: 'call_completed'
-      }
-    });
     expect(campaignStore.usageEvent.findMany).toHaveBeenCalledWith({
       where: {
         tenantId: '11111111-1111-1111-1111-111111111111',

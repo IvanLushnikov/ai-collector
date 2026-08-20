@@ -46,7 +46,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 15 | OP-D-009 | design | Исключения: постоянно / временно / пауза кампании |
 | 16 | OP-T-007 | tech | Типы suppression + reason в ответе/журнале · `done` |
 | 17 | OP-D-010 | design | Пороги метрик (threshold color) на Обзоре |
-| 18 | OP-T-008 | tech | Progress completed/total из реальных событий |
+| 18 | OP-T-008 | tech | Progress completed/total из реальных событий · `done` |
 | 19 | OP-D-011 | design | Microcopy pass по рыночным формулировкам |
 | 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы · `done` |
 | 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» |
@@ -252,7 +252,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-009: Исключения — три разных состояния
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: NICE DNC vs Call Suppression vs filter
 
@@ -275,7 +275,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-010: Пороги метрик на Обзоре
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Voximplant Kit thresholds
 
@@ -586,7 +586,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-008: Progress completed/total из событий
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk record progress
 

@@ -462,7 +462,7 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         createdAt: '2026-08-10T10:00:00.000Z',
         updatedAt: '2026-08-10T10:00:00.000Z',
         statusReason: null,
-        progress: { attemptedCalls: 5, totalRecords: 2 }
+        progress: { attemptedCalls: 5, completedCalls: 5, totalRecords: 2 }
       },
       {
         id: 'campaign-new',
@@ -472,7 +472,7 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         createdAt: '2026-08-16T10:00:00.000Z',
         updatedAt: '2026-08-16T10:00:00.000Z',
         statusReason: null,
-        progress: { attemptedCalls: 5, totalRecords: 2 }
+        progress: { attemptedCalls: 5, completedCalls: 5, totalRecords: 2 }
       }
     ]);
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
@@ -528,7 +528,7 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         createdAt: '2026-08-12T10:00:00.000Z',
         updatedAt: '2026-08-12T10:00:00.000Z',
         statusReason: null,
-        progress: { attemptedCalls: 5, totalRecords: 2 }
+        progress: { attemptedCalls: 5, completedCalls: 5, totalRecords: 2 }
       }
     ]);
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
@@ -584,7 +584,7 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         createdAt: '2026-08-16T09:00:00.000Z',
         updatedAt: '2026-08-16T09:00:00.000Z',
         statusReason: null,
-        progress: { attemptedCalls: 5, totalRecords: 2 }
+        progress: { attemptedCalls: 5, completedCalls: 5, totalRecords: 2 }
       }
     ]);
 

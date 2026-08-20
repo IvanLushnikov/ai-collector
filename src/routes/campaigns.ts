@@ -53,6 +53,10 @@ type CampaignDependencies = {
     findUnique?: (args: any) => Promise<unknown>;
     update?: (args: any) => Promise<unknown>;
   };
+  usageEvent?: {
+    count?: (args: any) => Promise<number>;
+    findMany?: (args: any) => Promise<unknown>;
+  };
   complianceDecision?: {
     count?: (args: any) => Promise<number>;
     create?: (args: any) => Promise<unknown>;
@@ -462,9 +466,14 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     }
 
     const enriched = await Promise.all(campaigns.map(async (campaign) => {
-      const [totalRecords, attemptedCalls] = await Promise.all([
+      const tenantId = params.data.tenantId;
+      const [totalRecords, attemptedCalls, completedCalls] = await Promise.all([
         deps.debtorRecord?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0),
-        deps.callAttempt?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0)
+        deps.callAttempt?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0),
+        countCampaignCompletedCalls(deps as Parameters<typeof countCampaignCompletedCalls>[0], {
+          tenantId,
+          campaignId: campaign.id
+        })
       ]);
 
       return {
@@ -479,6 +488,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           : null,
         progress: {
           attemptedCalls,
+          completedCalls,
           totalRecords
         }
       };
