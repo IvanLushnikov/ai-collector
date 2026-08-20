@@ -5,11 +5,16 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 const home = html.match(/<section class="screen active" id="home">[\s\S]*?<\/section>/)?.[0] ?? '';
 
 describe('prototype campaigns list on home', () => {
-  it('keeps only agreed columns and mass actions on the home list', () => {
+  it('uses a dense ops table with status, reason, mode, progress, updated', () => {
     expect(home).toMatch(/<th[^>]*>Название/);
     expect(home).toMatch(/<th[^>]*>Статус/);
+    expect(home).toMatch(/<th[^>]*>Причина/);
+    expect(home).toMatch(/<th[^>]*>Режим/);
     expect(home).toMatch(/<th[^>]*>Прогресс/);
-    expect(home).not.toContain('Риск / причина');
+    expect(home).toMatch(/<th[^>]*>Обновлено/);
+    expect(home).toContain('class="campaign-reason">н/д');
+    expect(home).toContain('class="campaign-mode">н/д');
+    expect(home).toContain('class="campaign-updated">н/д');
     expect(home).not.toContain('Открыть причину');
     expect(home).not.toMatch(/data-open-campaign="settings">Перенастроить/);
     expect(home).not.toContain('Автопауза');
