@@ -7,7 +7,8 @@ const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</scri
 describe('prototype auth session', () => {
   it('loads /auth/me and redirects unauthenticated users to login', () => {
     expect(script).toContain('/auth/me');
-    expect(script).toContain('/login.html');
+    expect(script).toContain("loginPageUrl='login.html'");
+    expect(script).toContain('applyDemoAuth');
     expect(script).toContain('currentAuth');
     expect(script).toContain('apiHeaders');
   });

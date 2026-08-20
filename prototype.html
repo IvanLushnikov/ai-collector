@@ -774,7 +774,8 @@
   };
   let expandedDebtorKey='';
   let tenantBalanceMinutes=12450;
-  const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
+  const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'').replace(/\/$/, '');
+  const loginPageUrl='login.html';
   const currentAuth={ tenantId:'', role:'', userName:'', tenantName:'', email:'' };
   function apiHeaders(extra){
     const headers=Object.assign({ Accept:'application/json' }, extra || {});
@@ -844,12 +845,24 @@
     }
     try { localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0'); } catch {}
   }
+  function applyDemoAuth(){
+    currentAuth.tenantId='demo';
+    currentAuth.role='collection_manager';
+    currentAuth.userName='Демо-пользователь';
+    currentAuth.tenantName='Демо-организация';
+    currentAuth.email='demo@example.com';
+    applyAuthToChrome();
+  }
   async function bootstrapCabinetAuth(){
+    if (!reportApiBaseUrl) {
+      applyDemoAuth();
+      return true;
+    }
     try {
       const response=await apiFetch(`${reportApiBaseUrl}/auth/me`);
       const body=await response.json().catch(()=>({}));
       if (!body?.authenticated) {
-        window.location.href='/login.html';
+        window.location.href=loginPageUrl;
         return false;
       }
       currentAuth.tenantId=body.tenant?.id || '';
@@ -860,7 +873,7 @@
       applyAuthToChrome();
       return true;
     } catch {
-      window.location.href='/login.html';
+      window.location.href=loginPageUrl;
       return false;
     }
   }
@@ -4319,7 +4332,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     } catch {
       // redirect anyway
     }
-    window.location.href='/login.html';
+    window.location.href=loginPageUrl;
   });
   bootstrapCabinetAuth().then((ok)=>{
     if (ok) loadHomeCampaignsFromApi();

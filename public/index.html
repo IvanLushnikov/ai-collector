@@ -102,6 +102,15 @@
       font-size: 14px;
     }
 
+    .header-nav a.btn-primary {
+      color: #fff;
+    }
+
+    .header-nav a.btn-primary:hover,
+    .header-nav a.btn-primary:focus-visible {
+      color: #fff;
+    }
+
     .btn {
       border: 0;
       border-radius: 10px;
@@ -221,7 +230,7 @@
       font-weight: 600;
     }
 
-    .demo-form input {
+    .demo-form input:not([type="checkbox"]) {
       width: 100%;
       min-height: 44px;
       border: 1px solid var(--line);
@@ -246,9 +255,14 @@
       line-height: 1.45;
     }
 
-    .check-row input {
+    .check-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      min-height: 0;
       margin-top: 3px;
       flex-shrink: 0;
+      padding: 0;
+      accent-color: var(--accent);
     }
 
     .check-row a {

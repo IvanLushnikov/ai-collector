@@ -48,6 +48,12 @@ describe('public GitHub Pages landing', () => {
     expect(landing).toMatch(/@media \(min-width:\s*761px\)[\s\S]{0,240}\.sticky-cta\s*\{\s*display:\s*none;/);
   });
 
+  it('keeps demo-form checkbox compact and header CTA readable', () => {
+    expect(landing).toContain('.demo-form input:not([type="checkbox"])');
+    expect(landing).toContain('.check-row input[type="checkbox"]');
+    expect(landing).toContain('.header-nav a.btn-primary');
+  });
+
   it('sells automation first and keeps control secondary', () => {
     expect(landing).not.toContain('Маркетинговый прототип');
     expect(landing).not.toContain('без лишнего шума');
