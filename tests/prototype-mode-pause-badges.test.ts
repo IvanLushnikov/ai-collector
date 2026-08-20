@@ -19,7 +19,7 @@ describe('prototype mode and pause badges (OP-D-007)', () => {
   it('shows live/демо mode badges in campaign header and call rows when source is known', () => {
     expect(html).toContain('id="campaignModeBadge"');
     expect(html).toContain('syncCampaignModeBadge');
-    expect(html).toContain("badge.textContent = 'live'");
+    expect(html).toContain("badge.textContent = 'бой'");
     expect(html).toContain("badge.textContent = 'демо'");
     expect(calls).toContain('id="callsDataSourceBadge"');
     expect(html).toContain('formatCallSourceBadge');

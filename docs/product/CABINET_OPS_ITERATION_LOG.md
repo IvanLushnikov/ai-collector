@@ -3,11 +3,29 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-014
-- Следующая кандидат: OP-D-011
+- Последняя закрытая: OP-D-011
+- Следующая кандидат: OP-D-012
 - Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
 
 ## Проходы
+
+## 2026-08-20 — OP-D-011 — done
+
+### Взял
+- OP-D-011: microcopy pass RU B2B (Mango/UIS/FIS + PRODUCT_LANGUAGE.md).
+
+### Сделал
+- `prototype.html` + `public/prototype.html`: замена англицизмов/AI-тона в видимых строках — «требует проверки», «приостановлена системой», «Решение по ограничениям», «Причины блокировок», бейдж режима «бой», RU next-step в wizard/telephony/script sim.
+- `formatReviewEventType`, `openReviewItem`, audit/journal/calls filter — RU labels без raw API codes в UI.
+- `PRODUCT_LANGUAGE.md`: mode badge «бой», фильтр «причины блокировок».
+- `tests/prototype-microcopy.test.ts` + обновлены mode-pause/review-queue tests.
+- Таблица «было → стало» в OP-D-011 (backlog).
+
+### Проверка
+- `npx vitest run tests/prototype-microcopy.test.ts tests/prototype-mode-pause-badges.test.ts tests/prototype-review-queue.test.ts tests/prototype-activity-copy.test.ts tests/prototype-campaigns-list.test.ts` — PASS
+
+### Handoff
+- Следующий ID: **OP-D-012** (блоки готовности без «магии» — частично начаты на Обзоре).
 
 ## 2026-08-20 — OP-D-014 — done
 

@@ -15,7 +15,7 @@ describe('prototype audit log', () => {
     expect(audit).toContain('id="auditKindFilter"');
     expect(audit).toContain('Решения');
     expect(audit).toContain('Статусы кампании');
-    expect(audit).toContain('Блокировки');
+    expect(audit).toContain('Причины блокировок');
     expect(audit).toContain('Пока нет зафиксированных действий');
     expect(audit).not.toContain('>IP<');
     expect(html).toContain('formatAuditTransition');

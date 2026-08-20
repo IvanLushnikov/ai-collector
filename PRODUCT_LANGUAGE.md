@@ -28,6 +28,7 @@
 | Campaign | кампания | campaign, кампейн | Центральная сущность кабинета |
 | Campaign status `draft` | черновик | draft | |
 | Campaign status `running` | работает | run, running | |
+| Campaign mode `live` (badge) | бой | live | В шапке кампании и списке; API `mode` не менять |
 | Campaign status `auto_paused` | приостановлена системой | auto pause, автопауза как единственная подпись, review | В Обзоре причина человеческим языком. Из списка one-click «Продолжить» нет |
 | DebtorRecord | запись / должник | debtor record, debtor | В таблицах — «должник»; в импорте — «запись» |
 | Debtor base / import file | база должников | база, файл базы | «База» только рядом с контекстом кампании |
@@ -116,6 +117,7 @@
 | Call window / time window | время звонков / расписание | time window | |
 | Frequency limits | лимиты контактов | frequency ledger | |
 | Audit trail / decision log | журнал действий / журнал проверок | audit trail, log | |
+| Audit kind `block` | причины блокировок | блокировки (как единственная подпись фильтра) | Фильтр журнала действий |
 | Blocked call | звонок заблокирован | blocked | С указанием причины на человеческом языке |
 
 ## Отчёты и статусы качества
