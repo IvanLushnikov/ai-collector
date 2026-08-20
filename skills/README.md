@@ -42,6 +42,27 @@
 | `ux-design-review` | Финальный UX/design review (оркестратор) |
 | `prd-from-context` | Собрать RU PRD из уже известного контекста |
 
+## Layer 3 — Role agents
+
+Ролевые владельцы зон AI Collector. Process/product skills (Layer 0–2) вызываются **внутри** role workflow.
+
+| Skill | Когда |
+|-------|-------|
+| `team-orchestrator` | 2+ ownership-зоны или неясный владелец |
+| `product-agent` | scope, backlog wording, journeys |
+| `architect-agent` | ADR, границы модулей, API contracts |
+| `backend-engineer` | `src/**` API/domain/jobs |
+| `frontend-engineer` | кабинет/статика UI |
+| `product-designer` | оркестрация UX/craft |
+| `qa-engineer` / `test-automation-engineer` | проверка / Vitest |
+| `security-engineer` | auth, secrets, compliance rules |
+| `devops-sre` / `release-manager` | CI/envs / cut criteria |
+| `documentation-agent` / `research-agent` | docs / research |
+| `final-reviewer` | gate перед «готово»/merge claim |
+| `feedback-analyzer` → `skill-governor` | улучшение skills |
+
+Контекст команды: [`docs/agents/PROJECT_AGENT_CONTEXT.md`](../docs/agents/PROJECT_AGENT_CONTEXT.md).
+
 Внешние skills содержат `SOURCE.md`. Не обновляйте их молча без записи в `third_party/lobehub/manifest.json`.
 
 ## Default routing recipes

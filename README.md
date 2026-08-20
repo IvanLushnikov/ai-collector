@@ -40,6 +40,7 @@ AI Collector — это прототип продукта для compliance-firs
 - корневой bootstrap живет в `AGENTS.md`
 - дополнительный bootstrap для Claude/Codex-потока живет в `CLAUDE.md`
 - карта слоёв и routing recipes: [`skills/README.md`](./skills/README.md)
+- Layer 3 описывает role agents; общий контекст команды: [`docs/agents/PROJECT_AGENT_CONTEXT.md`](./docs/agents/PROJECT_AGENT_CONTEXT.md)
 - ресерч LobeHub + Superpowers: [`docs/skills/research-lobehub-superpowers-2026-08-20.md`](./docs/skills/research-lobehub-superpowers-2026-08-20.md)
 - базовое правило маршрутизации начинается с `skills/using-superpowers/SKILL.md`
 
