@@ -92,6 +92,19 @@ describe('credentials and platform speech env', () => {
     }).ALLOW_HEADER_IDENTITY).toBe(false);
   });
 
+  it('uses a test fixture database URL when omitted in test', () => {
+    const parsed = parseEnv({
+      NODE_ENV: 'test'
+    });
+    expect(parsed.DATABASE_URL).toMatch(/^postgresql:\/\//);
+  });
+
+  it('requires DATABASE_URL outside test', () => {
+    expect(() => parseEnv({
+      NODE_ENV: 'development'
+    })).toThrow(/DATABASE_URL/);
+  });
+
   it('uses a test fixture when encryption key is omitted in test', () => {
     const parsed = parseEnv({
       ...required,

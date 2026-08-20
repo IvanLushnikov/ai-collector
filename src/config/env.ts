@@ -4,6 +4,7 @@ import { z } from 'zod';
 loadEnv();
 
 export const TEST_CREDENTIALS_ENCRYPTION_KEY = 'a'.repeat(64);
+export const TEST_DATABASE_URL = 'postgresql://postgres:postgres@127.0.0.1:5432/ai_collector';
 
 const hex32 = z.string().regex(/^[0-9a-fA-F]{64}$/, 'CREDENTIALS_ENCRYPTION_KEY must be 32 bytes hex');
 
@@ -11,7 +12,7 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
-  DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL URL'),
+  DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL URL').optional(),
   JWT_SECRET: z.string().default('change-me-in-secret-store'),
   CORS_ORIGINS: z.string().default('*'),
   ALLOW_HEADER_IDENTITY: z.enum(['true', 'false']).optional(),
@@ -27,6 +28,14 @@ export const envSchema = z.object({
   GIGACHAT_API_KEY: z.string().optional().default(''),
   YANDEX_FOLDER_ID: z.string().optional().default('')
 }).superRefine((value, ctx) => {
+  if (!value.DATABASE_URL && value.NODE_ENV !== 'test') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['DATABASE_URL'],
+      message: 'DATABASE_URL is required'
+    });
+  }
+
   if (value.NODE_ENV === 'production') {
     const parsed = hex32.safeParse(value.CREDENTIALS_ENCRYPTION_KEY ?? '');
     if (!parsed.success) {
@@ -76,6 +85,7 @@ export const envSchema = z.object({
   }
 }).transform((value) => ({
   ...value,
+  DATABASE_URL: value.DATABASE_URL ?? TEST_DATABASE_URL,
   ALLOW_HEADER_IDENTITY: value.ALLOW_HEADER_IDENTITY === 'true'
     ? true
     : value.ALLOW_HEADER_IDENTITY === 'false'
