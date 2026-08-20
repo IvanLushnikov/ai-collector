@@ -29,7 +29,7 @@ describe('prototype campaign building blocks (OP-D-012)', () => {
   });
 
   it('starts readiness block as needs-check and wires API-driven helpers', () => {
-    expect(overview).toMatch(/id="campaignLaunchLimitsStatus"[^>]*>Нужна проверка/);
+    expect(overview).toMatch(/id="campaignLaunchLimitsStatus"[^>]*>Требует проверки/);
     expect(html).toContain('buildingBlockMeta');
     expect(html).toContain('setBuildingBlockItem');
     expect(html).toContain('resolveReadinessBuildingBlockState');

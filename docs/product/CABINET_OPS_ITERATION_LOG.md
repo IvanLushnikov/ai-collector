@@ -3,11 +3,27 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-012
-- Следующая кандидат: OP-D-013 (P2 polish) / OP-T-007
-- Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
+- Последняя закрытая: OP-D-014 (волна P1 закрыта)
+- Следующая кандидат: нет свободных todo; blocked: OP-D-008, OP-T-005 (IA очередь), OP-T-011 (safe-resume roles)
+- Инварианты: полный CABINET_OPS backlog done кроме blocked; live force hangup → T-149.
 
 ## Проходы
+
+## 2026-08-20 — wave-complete — stop
+
+### Взял
+- Дожать все незаблокированные todo очереди без апрува.
+
+### Сделал
+- Закрыты оставшиеся: OP-T-006…010, OP-T-012, OP-D-009…014 (+ review-fixes ранее).
+- Остались blocked: OP-D-008, OP-T-005 (нет клиентской IA очереди), OP-T-011 (product confirm §G.1).
+- Live Exolve force hangup — follow-up T-149.
+
+### Состояние бэклога
+- `done`: 25 · `blocked`: 3 · `todo`: 0
+
+### Handoff
+- Цикл стоп: нет свободных todo. Нужен product confirm по очереди и safe-resume, либо T-149 для live force.
 
 ## 2026-08-20 — OP-D-012 — done
 
