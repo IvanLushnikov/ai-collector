@@ -5,22 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ИИ-коллектор — автоматизация телефонного взыскания</title>
   <meta name="description" content="ИИ-коллектор помогает запускать кампании взыскания: база, сценарий, обзвон и результат. Контроль ограничений и журнал действий встроены в процесс.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f4f6f8;
+      --bg: #eef2f5;
       --surface: #ffffff;
-      --ink: #0f1724;
-      --muted: #5c6b7a;
-      --line: #dde4ec;
-      --accent: #1565c0;
-      --accent-strong: #0d4a8f;
-      --accent-soft: #e8f1fb;
-      --hero-bg: linear-gradient(165deg, #f8fafc 0%, #eef3f8 48%, #f4f6f8 100%);
-      --shadow: 0 16px 40px rgba(15, 23, 36, 0.08);
-      --radius: 14px;
+      --ink: #121a24;
+      --muted: #5a6a7a;
+      --line: #d5dee8;
+      --accent: #0f5ea8;
+      --accent-strong: #0a457c;
+      --accent-soft: #e4eef8;
+      --hero-bg:
+        radial-gradient(1200px 420px at 12% -10%, rgba(15, 94, 168, 0.08), transparent 60%),
+        linear-gradient(165deg, #f7f9fb 0%, #e8eef4 52%, #eef2f5 100%);
+      --shadow: 0 10px 28px rgba(18, 26, 36, 0.06);
+      --radius: 12px;
       --container: 1120px;
       --sticky-height: 0px;
-      --font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --font-display: "IBM Plex Serif", "Times New Roman", serif;
     }
 
     * { box-sizing: border-box; }
@@ -45,8 +51,7 @@
       position: sticky;
       top: 0;
       z-index: 20;
-      background: rgba(248, 250, 252, 0.92);
-      backdrop-filter: blur(8px);
+      background: #f7f9fb;
       border-bottom: 1px solid var(--line);
     }
 
@@ -175,9 +180,10 @@
 
     .hero h1 {
       margin: 0;
+      font-family: var(--font-display);
       font-size: clamp(32px, 4.8vw, 52px);
       line-height: 1.08;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.02em;
       max-width: 16ch;
     }
 
@@ -387,6 +393,7 @@
     .section-head h2,
     .cta-panel h2 {
       margin: 0;
+      font-family: var(--font-display);
       font-size: clamp(26px, 3.6vw, 36px);
       line-height: 1.12;
       letter-spacing: -0.02em;

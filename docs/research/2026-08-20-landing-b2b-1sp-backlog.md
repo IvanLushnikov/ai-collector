@@ -31,7 +31,7 @@
 4. `LT-01`…`LT-05` (техника под изменения copy/UI)  
 5. `LD-09` (финальная сверка anti-patterns)
 
-Первая `todo`: `LD-07`.
+Первая `todo`: `LD-08`.
 
 ---
 
@@ -236,7 +236,16 @@
 
 ### LD-07: Визуальный язык B2B fintech/ops (anti AI-landing)
 
-Статус: `todo`
+Статус: `done`
+
+Контекст для следующих задач:
+
+- Шрифты: IBM Plex Sans + IBM Plex Serif (Google Fonts); `--font` / `--font-display`.
+- Палитра: холодный slate/steel blue ops; hero-фон с лёгким radial без glow/glass.
+- Шапка: solid `#f7f9fb`, **без** `backdrop-filter`.
+- Карточки mid-page сохранены; hero без карточного дашборда (после `LD-02`).
+- Не трогали motion (`LD-08`), sticky label (`LD-09`).
+- Риск: не вернуть Inter/system-first и glass blur в header.
 
 Паттерн: Диадок / Naumen / Infinity; anti-patterns research §4.
 
@@ -461,6 +470,7 @@
 | 2026-08-20 | `LD-04` | Trust `#control`: 4 процедуры (проверка/специалист/журнал/пилот), тон ops |
 | 2026-08-20 | `LD-05` | `#roles`: сегменты рынка + вторичные роли + CTA |
 | 2026-08-20 | `LD-06` | Форма: `.demo-expect` (проверки/специалист/журнал), без боевой базы |
+| 2026-08-20 | `LD-07` | IBM Plex + ops-палитра; убран glass blur шапки |
 
 ---
 
