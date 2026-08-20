@@ -178,7 +178,7 @@
       font-size: clamp(32px, 4.8vw, 52px);
       line-height: 1.08;
       letter-spacing: -0.03em;
-      max-width: 14ch;
+      max-width: 16ch;
     }
 
     .hero-lead {
@@ -191,9 +191,15 @@
     .hero-link {
       display: inline-block;
       margin-top: 20px;
-      color: var(--accent);
-      font-weight: 600;
-      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 14px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .hero-link:hover {
+      color: var(--ink);
     }
 
     .hero-form-card {
@@ -573,9 +579,9 @@
         <div class="hero-grid">
           <div>
             <span class="eyebrow">Для МФО, банков и ПКО</span>
-            <h1>ИИ-коллектор для телефонного взыскания</h1>
-            <p class="hero-lead">Запускайте кампании, ведите диалоги и собирайте результат. Проверка ограничений, перевод оператору и журнал действий уже встроены в процесс.</p>
-            <a class="hero-link" href="#how-it-works">Как устроен продукт →</a>
+            <h1>ИИ-коллектор: управляемый пилот телефонного взыскания</h1>
+            <p class="hero-lead">Автоматизируем телефонное взыскание с проверкой ограничений до звонка, передачей специалисту и журналом действий. Это не полностью автономное взыскание: спорные случаи остаются у человека.</p>
+            <a class="hero-link" href="#how-it-works">Как устроен продукт</a>
           </div>
 
           <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
