@@ -32,7 +32,9 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 3 | OP-T-001 | tech | Поля списка кампаний: причина риска + прогресс |
 | 4 | OP-D-003 | design | Обзор: риск-баннер выше KPI |
 | 5 | OP-D-004 | design | Статусы: переход «останавливается», Stop ≠ Force |
-| 6 | OP-T-002 | tech | Graceful stop vs force stop в API/статусах |
+| 6 | OP-T-002 | tech | Graceful stop vs force stop в API/статусах · `split` |
+| 6a | OP-T-002a | tech | Документ: graceful vs force stop (без enum `stopped`) |
+| 6b | OP-T-002b | tech | Реализация stopMode + audit (после 002a) |
 | 7 | OP-D-005 | design | Журнал как decision trail (было → стало) |
 | 8 | OP-T-003 | tech | Audit metadata: previous / next value |
 | 9 | OP-D-006 | design | Журнал звонков: попытка \| исход \| решение+причина |
@@ -389,7 +391,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-002: Graceful stop vs force stop
 
-Статус: `todo`  
+Статус: `split` → `OP-T-002a`, `OP-T-002b`  
 Тип: `tech`  
 Референс: Five9 Stop / Force Stop
 
@@ -409,6 +411,45 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 Критерии готовности:
 
 - Поведение остановки описано и покрыто тестом.
+- Нет обхода compliance при force.
+
+---
+
+### OP-T-002a: Документ поведения graceful vs force stop
+
+Статус: `todo`  
+Тип: `tech`  
+Родитель: `OP-T-002` (`split`)
+
+Что сделать:
+
+- Описать в `docs/campaigns-api.md` (и при необходимости operations note): graceful stop = не создавать новые попытки, активные дождаться, статус канона `completed`; force = прервать активные **без** обхода compliance / без нового enum `stopped`.
+- Явно: UI Force не показывать, пока нет `OP-T-002b`.
+- Без кода домена в этом SP.
+
+Критерии готовности:
+
+- Документ согласован с каноном `completed` и PRODUCT_LANGUAGE.
+- Ссылка из бэклога на раздел API.
+
+---
+
+### OP-T-002b: Реализация stopMode + audit
+
+Статус: `todo`  
+Тип: `tech`  
+Зависимость: `OP-T-002a`  
+Родитель: `OP-T-002` (`split`)
+
+Что сделать:
+
+- Additive контракт остановки (например `stopMode: graceful|force` на status/completed path) + audit обоих действий.
+- Force не обходит compliance; не вводить `stopped`.
+- Тесты контракта; UI-модалка Force — отдельным design после готовности API.
+
+Критерии готовности:
+
+- Поведение из `OP-T-002a` покрыто тестом.
 - Нет обхода compliance при force.
 
 ---
