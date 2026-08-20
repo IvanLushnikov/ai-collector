@@ -73,7 +73,8 @@
 12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`done`).
 13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`done`).
 
-Первая `todo`: нет.  
+Первая `todo`: нет в этом файле.  
+Отдельная очередь ops-UX кабинета (дизайн+техника, 1 SP) после бенчмарка рынка: [`docs/product/CABINET_OPS_BACKLOG_1SP.md`](./docs/product/CABINET_OPS_BACKLOG_1SP.md) (`OP-D-*` / `OP-T-*`). Не дублирует закрытые `T-205`–`T-228`.  
 Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
 
 ## Закрытые волны (не переписывать)
