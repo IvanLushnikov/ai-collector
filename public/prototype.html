@@ -148,17 +148,18 @@
         </section>
 
         <section class="screen" id="auditLog">
-          <div class="page-head"><div><h1>Журнал действий</h1><p>Кто что изменил, когда и с каким объектом.</p></div></div>
+          <div class="page-head"><div><h1>Журнал действий</h1><p>Решения и изменения: кто, что, было → стало и почему.</p></div></div>
           <div class="panel"><div class="panel-body">
             <div id="auditLogNotice" class="notice" style="margin-bottom:12px" hidden></div>
             <div class="form-grid" style="margin-bottom:14px">
               <div class="field"><label for="auditPeriodFilter">Период</label><select id="auditPeriodFilter"><option value="all">Весь период</option><option value="today">Сегодня</option><option value="week">7 дней</option></select></div>
               <div class="field"><label for="auditActorFilter">Сотрудник</label><select id="auditActorFilter"><option value="all">Все сотрудники</option><option value="Анна Котова">Анна Котова</option><option value="Павел Орлов">Павел Орлов</option></select></div>
               <div class="field"><label for="auditCampaignFilter">Кампания</label><select id="auditCampaignFilter"><option value="all">Все кампании</option><option value="Просрочка 1–7 дней · Займы">Просрочка 1–7 дней · Займы</option><option value="Просрочка 8–30 дней · Рассрочка">Просрочка 8–30 дней · Рассрочка</option></select></div>
+              <div class="field"><label for="auditKindFilter">Тип записи</label><select id="auditKindFilter"><option value="all">Все типы</option><option value="decision">Решения</option><option value="campaign_status">Статусы кампании</option><option value="block">Блокировки</option></select></div>
             </div>
             <div class="table-wrap">
-              <table>
-                <thead><tr><th>Время</th><th>Кто</th><th>Объект</th><th>Что изменилось</th><th>IP</th></tr></thead>
+              <table class="wide">
+                <thead><tr><th>Время</th><th>Кто</th><th>Событие</th><th>Объект</th><th>Было → стало</th><th>Почему</th></tr></thead>
                 <tbody id="auditLogTableBody"></tbody>
               </table>
             </div>
@@ -167,7 +168,7 @@
               <span class="panel-sub" id="auditPageLabel">Страница 1</span>
               <button class="btn small" id="auditNextPage">Далее</button>
             </div>
-            <div id="auditLogEmpty" class="empty" hidden><b>Записей пока нет.</b>Здесь появятся действия сотрудников: создание кампании, загрузка базы, запуск, пауза.</div>
+            <div id="auditLogEmpty" class="empty" hidden><b>Пока нет зафиксированных действий.</b>Здесь появятся решения и изменения сотрудников.</div>
             <div id="auditLogForbidden" class="empty" hidden><b>Нет доступа к журналу.</b></div>
           </div></div>
         </section>
@@ -1139,28 +1140,57 @@
     {
       createdAt:'2026-08-16T16:41:00.000Z',
       action:'campaign.controlled_launch',
+      kind:'campaign_status',
+      eventLabel:'Запуск кампании',
       actorName:'Анна Котова',
       actor:'operator',
       entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Запустила кампанию. Черновик → работает',
+      previousValue:'черновик',
+      nextValue:'работает',
+      reasonText:'Controlled launch после проверки готовности',
+      technicalId:'',
       ip:''
     },
     {
       createdAt:'2026-08-16T15:12:00.000Z',
       action:'campaign.created',
+      kind:'campaign_status',
+      eventLabel:'Создание кампании',
       actorName:'Павел Орлов',
       actor:'operator',
       entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Создал кампанию',
+      previousValue:'—',
+      nextValue:'черновик',
+      reasonText:'',
+      technicalId:'',
       ip:''
     },
     {
       createdAt:'2026-08-14T09:12:00.000Z',
       action:'base.imported',
+      kind:'decision',
+      eventLabel:'Загрузка базы',
       actorName:'Анна Котова',
       actor:'operator',
       entityLabel:'Просрочка 1–7 дней · Займы',
-      change:'Загрузила базу займы_14_08.csv. Принято 8 740 записей',
+      previousValue:'базы нет',
+      nextValue:'принято 8 740 записей',
+      reasonText:'Файл займы_14_08.csv',
+      technicalId:'',
+      ip:''
+    },
+    {
+      createdAt:'2026-08-16T16:42:00.000Z',
+      action:'campaign.auto_paused',
+      kind:'block',
+      eventLabel:'Автопауза',
+      actorName:'Система',
+      actor:'system',
+      entityLabel:'Просрочка 8–30 дней · Рассрочка',
+      previousValue:'работает',
+      nextValue:'приостановлена системой',
+      reasonText:'Нет записи разговора',
+      technicalId:'recording_missing',
       ip:''
     }
   ];
@@ -1523,6 +1553,27 @@
     return true;
   }
 
+  function inferAuditKind(item={}) {
+    if (item.kind) return item.kind;
+    const action=String(item.action || '');
+    if (action.includes('auto_paused') || action.includes('block') || action.includes('compliance')) return 'block';
+    if (action.includes('status') || action.includes('launch') || action.includes('created') || action.includes('resume')) return 'campaign_status';
+    if (action.includes('decision') || action.includes('import') || action.includes('review')) return 'decision';
+    return 'decision';
+  }
+
+  function formatAuditTransition(item={}, metadata={}) {
+    const previous=item.previousValue ?? metadata.fromStatus ?? metadata.previousValue ?? '';
+    const next=item.nextValue ?? metadata.toStatus ?? metadata.nextValue ?? '';
+    const prevText=String(previous || '').trim();
+    const nextText=String(next || '').trim();
+    if (prevText && nextText) return `${prevText} → ${nextText}`;
+    if (nextText) return `→ ${nextText}`;
+    if (item.change) return String(item.change);
+    const summary=summarizeAuditMetadata(metadata).join(' · ');
+    return summary || '—';
+  }
+
   function renderAuditLog() {
     const tbody = q('#auditLogTableBody');
     if (!tbody) {
@@ -1532,21 +1583,32 @@
     const period = q('#auditPeriodFilter')?.value || 'all';
     const actorFilter = q('#auditActorFilter')?.value || 'all';
     const campaignFilter = q('#auditCampaignFilter')?.value || 'all';
+    const kindFilter = q('#auditKindFilter')?.value || 'all';
     const pageSize = 20;
     const page = Number(window.__auditPage || 1);
 
-    const prepared = [...auditLogItems].filter(isStaffAuditEvent).map((item) => {
+    const prepared = [...auditLogItems].filter((item)=>{
+      // decision trail: staff + system auto-pause/block events
+      if (isStaffAuditEvent(item)) return true;
+      const kind=inferAuditKind(item);
+      return kind === 'block' || kind === 'decision';
+    }).map((item) => {
       const metadata = item.metadata || {};
+      const technicalId=item.technicalId || metadata.callAttemptId || metadata.entityId || item.entityId || '';
       return {
         time: formatAuditTime(item.createdAt || ''),
         who: item.actorName || formatActorLabel(item.actor) || 'Сотрудник',
+        event: item.eventLabel || item.action || 'Событие',
         object: item.entityLabel || item.campaignName || item.entityType || '—',
-        change: item.change || item.description || summarizeAuditMetadata(metadata).join(' · ') || '—',
-        ip: item.ip || metadata.ip || 'не зафиксирован'
+        transition: formatAuditTransition(item, metadata),
+        why: item.reasonText || metadata.reasonText || metadata.reason || '',
+        technicalId: technicalId ? String(technicalId) : '',
+        kind: inferAuditKind(item)
       };
     }).filter((row) => {
       if (actorFilter !== 'all' && row.who !== actorFilter) return false;
       if (campaignFilter !== 'all' && row.object !== campaignFilter) return false;
+      if (kindFilter !== 'all' && row.kind !== kindFilter) return false;
       return true;
     });
 
@@ -1567,7 +1629,13 @@
 
     for (const row of pageRows) {
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${row.time}</td><td>${row.who}</td><td>${row.object}</td><td>${row.change}</td><td>${row.ip}</td>`;
+      const whyCell=row.why
+        ? row.why
+        : '<span style="color:var(--muted)">—</span>';
+      const tech=row.technicalId
+        ? `<div class="panel-sub" title="${row.technicalId}">id: ${row.technicalId}</div>`
+        : '';
+      tr.innerHTML = `<td>${row.time}</td><td>${row.who}</td><td><div>${row.event}</div>${tech}</td><td>${row.object}</td><td>${row.transition}</td><td>${whyCell}</td>`;
       tbody.appendChild(tr);
     }
   }

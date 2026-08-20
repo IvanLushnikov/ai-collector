@@ -159,7 +159,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-005: Журнал действий как decision trail
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Talkdesk Audit before/after; Naumen history; FIS журнал блокировок
 
