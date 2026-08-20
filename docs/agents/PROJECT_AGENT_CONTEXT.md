@@ -39,7 +39,6 @@ AI Collector — compliance-first B2B-продукт для коллекшн-к�
 - Секреты и ключи BYOK хранятся через envelope-подход; секреты не попадают в git, логи и документацию.
 - Cookie-сессии защищаются проверкой CSRF Origin.
 - Live-режим недопустим без утверждённых legal memo и DPA.
-- Production identity не должна опираться на небезопасный header fallback.
 
 ## 6. Соглашения разработки
 
@@ -92,8 +91,7 @@ Definition of Done определяется goal prompt задачи и `docs/ag
 - compliance rulebook в `docs/compliance/rulebook-v1.md`;
 - очередь задач `TECH_BACKLOG_1SP.md`;
 - продуктовый язык `PRODUCT_LANGUAGE.md`;
-- bootstrap и routing в `AGENTS.md`;
-- фактическое поведение кода и тестов.
+- bootstrap и routing в `AGENTS.md`.
 
 ## 13. Владение зонами
 
