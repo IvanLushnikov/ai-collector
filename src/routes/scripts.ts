@@ -113,7 +113,7 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
       return reply.code(404).send({ error: 'CAMPAIGN_NOT_FOUND' });
     }
 
-    if (campaign.status === 'running') {
+    if (campaign.status === 'running' || campaign.status === 'auto_paused') {
       return reply.code(409).send({ error: 'SCRIPT_VERSION_LOCKED' });
     }
 

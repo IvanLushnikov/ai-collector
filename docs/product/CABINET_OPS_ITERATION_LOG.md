@@ -3,12 +3,27 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: review-fixes (audit trail live + force doc honesty + prototype sync)
-- Следующая кандидат: первая `todo` без блокера (не OP-D-008/OP-T-005 до product confirm; не OP-D-014 до OP-T-012)
-- Риски/договорённости: force = audit-флаг до OP-T-012; dual prototype защищён hash-тестом; очередь review — blocked на IA.
-- Инварианты: OP-D-001…007, OP-T-001…004 (+002a/b done parent), review-fixes.
+- Последняя закрытая: OP-T-006
+- Следующая кандидат: OP-D-009 / OP-T-007
+- Инварианты: + pause-before-edit locks; OP-T-011 blocked.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-006 — done
+
+### Взял
+- OP-T-006: pause-before-edit для running/auto_paused.
+
+### Сделал
+- Script create: 409 SCRIPT_VERSION_LOCKED также на auto_paused.
+- UI: notices + disable scenario/phone controls; toast на save.
+- docs/campaigns-api.md раздел Pause-before-edit.
+
+### Проверка
+- vitest scripts.api + prototype-pause-before-edit
+
+### Handoff
+- Следующие: OP-T-007 / OP-D-009, затем остальные todo без блокеров.
 
 ## 2026-08-20 — review-fixes — done
 

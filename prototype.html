@@ -213,6 +213,7 @@
 
         <div class="campaign-view" data-camp-view="scenario">
           <div class="page-head"><div><h1>Сценарий кампании</h1><p>Шаблон, голос, первая фраза, длительность и перевод оператору.</p></div><div class="head-actions"><button class="btn primary" id="saveScenario">Сохранить новую версию</button></div></div>
+          <div id="scenarioEditLockNotice" class="notice warn" hidden>Сначала приостановите кампанию.</div>
           <div class="panel"><div class="panel-head"><div class="panel-title">Настройки сценария</div><span class="tag run">версия 1.7</span></div>
             <div class="panel-body form-grid">
               <div class="field full"><label>Шаблон</label><select><option>Мягкое взыскание</option><option>Работа с возражениями</option><option>Короткое информирование</option></select></div>
@@ -226,6 +227,7 @@
 
         <div class="campaign-view" data-camp-view="phone">
           <div class="page-head"><div><h1>Телефония кампании</h1><p>Выберите соединение. Проверка соединения не запускает кампанию.</p></div><button class="btn" data-open-phone>Подключить другое соединение</button></div>
+          <div id="phoneEditLockNotice" class="notice warn" hidden>Сначала приостановите кампанию.</div>
           <div class="panel"><div class="panel-head"><div class="panel-title">Выбранное соединение</div><span class="tag run" id="campaignPhoneStatus">готово</span></div>
             <div class="panel-body form-grid">
               <div class="field full"><label>Поставщик</label><select><option>МТС Exolve · Основной контур</option><option>Mango Office · Резервный</option></select></div>
@@ -3093,6 +3095,31 @@
     }
 
     applySafeResumePanel();
+    applyPauseBeforeEditLocks();
+  }
+
+  function campaignSettingsLocked() {
+    return campaignLifecycle.status === 'running' || campaignLifecycle.status === 'auto_paused';
+  }
+
+  function applyPauseBeforeEditLocks() {
+    const locked = campaignSettingsLocked();
+    const scenarioNotice = q('#scenarioEditLockNotice');
+    const phoneNotice = q('#phoneEditLockNotice');
+    if (scenarioNotice) scenarioNotice.hidden = !locked;
+    if (phoneNotice) phoneNotice.hidden = !locked;
+    const saveScenario = q('#saveScenario');
+    if (saveScenario) saveScenario.disabled = locked;
+    qa('[data-camp-view="scenario"] select, [data-camp-view="scenario"] textarea, [data-camp-view="scenario"] input').forEach((el)=>{
+      el.disabled = locked;
+    });
+    qa('[data-camp-view="phone"] select, [data-camp-view="phone"] input').forEach((el)=>{
+      if (el.id === 'runTestCall') return;
+      el.disabled = locked;
+    });
+    qa('[data-camp-view="phone"] [data-open-phone]').forEach((el)=>{
+      el.disabled = locked;
+    });
   }
 
   function addCampaignActivity(text, actor='system') {
@@ -4408,7 +4435,13 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       },700);
     });
   });
-  q('#saveScenario').addEventListener('click',()=>toast('Версия сценария сохранена','Перед публикацией будут повторно выполнены обязательные проверки.'));
+  q('#saveScenario').addEventListener('click',()=>{
+    if (campaignSettingsLocked()) {
+      toast('Сначала приостановите кампанию','Сценарий нельзя менять, пока кампания работает или приостановлена системой.');
+      return;
+    }
+    toast('Версия сценария сохранена','Перед публикацией будут повторно выполнены обязательные проверки.');
+  });
   let pendingConfirm=null;
   function openConfirm(title,text,okLabel,onOk){
     q('#confirmActionTitle').textContent=title;

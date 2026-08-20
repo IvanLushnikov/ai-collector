@@ -52,7 +52,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» |
 | 22 | OP-T-010 | tech | Who changed status в audit (actor type) |
 | 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
-| 24 | OP-T-011 | tech | Safe-resume: кто может подтвердить (после confirm) |
+| 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
 | 25 | OP-T-012 | tech | Force stop: реальное прерывание in-flight у worker |
 | 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) |
 
@@ -535,7 +535,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-006: Pause-before-edit для running
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk — нельзя править running без pause
 
@@ -661,7 +661,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-011: Safe-resume — кто подтверждает
 
-Статус: `todo`  
+Статус: `blocked`  
 Тип: `tech`  
 Блокер: открытый вопрос UX-аудита §G.1 / `prd-open-questions.md`
 

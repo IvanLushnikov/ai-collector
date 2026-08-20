@@ -9,6 +9,17 @@
 - Сортировка списка кампаний: `createdAt` по возрастанию.
 - Карточка кампании возвращает агрегаты: `debtorRecordsCount`, `callAttemptsCount`, `complianceBlocksCount`.
 
+## Pause-before-edit (OP-T-006)
+
+Пока кампания в статусе `running` или `auto_paused`, критичные настройки нельзя менять без явной паузы / смены статуса:
+
+| Действие | Код | HTTP |
+|---|---|---|
+| `POST .../campaigns/:campaignId/scripts` | `SCRIPT_VERSION_LOCKED` | `409` |
+| `PATCH .../campaigns/:campaignId/telephony-connection` | `TELEPHONY_CONNECTION_LOCKED` | `409` |
+
+После перехода в статус вне `{running, auto_paused}` (например `review`, `ready`, `completed`) edit снова разрешён, если иное не запрещено. UI-подсказка: «Сначала приостановите кампанию.»
+
 ## Общие ошибки
 
 - `VALIDATION_ERROR` — ошибка валидации path-параметров (например, невалидный UUID).
