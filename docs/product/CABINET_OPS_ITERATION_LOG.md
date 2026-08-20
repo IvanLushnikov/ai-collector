@@ -3,11 +3,29 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-007
-- Следующая кандидат: OP-D-009 / OP-T-008
-- Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked.
+- Последняя закрытая: OP-T-012
+- Следующая кандидат: OP-D-009 / OP-D-014
+- Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-012 — done (sandbox; live T-149 deferred)
+
+### Взял
+- OP-T-012: force stop interrupt для sandbox in-flight attempts.
+
+### Сделал
+- `src/campaigns/force-stop-interrupt.ts`: поиск active attempts, `hangupCall` для sandbox provider, update attempt + audit counts.
+- `PATCH .../status` с `stopMode=force` вызывает interrupt path; graceful не трогает in-flight.
+- Shared `voiceProviderResolver` в app для campaigns + calls routes.
+- `docs/campaigns-api.md`: sandbox force реализован; live Exolve hangup — `T-149`.
+- tests `campaigns.stop-mode.test.ts` + docs test.
+
+### Проверка
+- vitest tests/campaigns.stop-mode.test.ts tests/campaigns-stop-mode-docs.test.ts
+
+### Handoff
+- OP-D-014 Force UI можно для sandbox; live hangup — после T-149.
 
 ## 2026-08-20 — OP-T-007 — done
 

@@ -53,7 +53,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 22 | OP-T-010 | tech | Who changed status в audit (actor type) — done |
 | 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
 | 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
-| 25 | OP-T-012 | tech | Force stop: реальное прерывание in-flight у worker |
+| 25 | OP-T-012 | tech | Force stop: sandbox interrupt in-flight (`done`); live Exolve hangup — `T-149` |
 | 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) |
 
 ---
@@ -155,7 +155,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 Критерии готовности:
 
 - Пользователь понимает разницу паузы и остановки по тексту кнопки и модалки.
-- Force-stop UI не показывать, пока нет реального interrupt (`OP-T-012`) и отдельного design (`OP-D-014`). Сейчас API принимает `stopMode: force` только как audit-флаг.
+- Force-stop UI не показывать для live, пока нет HTTP hangup (`T-149`). Sandbox interrupt готов (`OP-T-012`); design Force UI — `OP-D-014`.
 
 ---
 
@@ -687,21 +687,26 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-012: Force stop — прерывание in-flight у worker
 
-Статус: `todo`  
+Статус: `done` (sandbox path; live Exolve HTTP hangup — follow-up `T-149`)  
 Тип: `tech`  
 Зависимость: `OP-T-002b` (audit-флаг уже есть)
 
-Что сделать:
+Что сделано:
 
-- При `PATCH .../status` с `stopMode: force` реально запросить отмену/прерывание активных попыток в voice/worker контуре (не только metadata).
-- Сохранить инвариант: нет обхода compliance; статус всё равно `completed`.
-- Обновить `docs/campaigns-api.md`: убрать пометку «ещё не реализовано».
-- Тесты: graceful не трогает in-flight; force вызывает interrupt path.
+- При `PATCH .../status` с `stopMode: force` прерываются активные sandbox-попытки через `hangupCall` adapter.
+- Graceful не трогает in-flight.
+- Инвариант: нет обхода compliance; статус `completed`.
+- `docs/campaigns-api.md` обновлён: sandbox force реализован; live Exolve hangup отложен (`T-149`).
+- Тесты: `tests/campaigns.stop-mode.test.ts`.
+
+Отложено:
+
+- Live Exolve/Mango HTTP hangup (`T-149` blocked) — попытки с live provider пропускаются (`skippedActiveAttemptsProvider` в audit).
 
 Критерии готовности:
 
-- Force в API соответствует доке без оговорок.
-- Без этой задачи Force UI (`OP-D-014`) не брать.
+- Sandbox force в API соответствует доке.
+- Force UI (`OP-D-014`) можно брать для sandbox; live — после `T-149`.
 
 ---
 

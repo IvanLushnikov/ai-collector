@@ -7,10 +7,13 @@ import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor
 import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
+import { interruptActiveCallAttempts } from '../campaigns/force-stop-interrupt.js';
 import { matchesAuditActionGroup, normalizeAuditActionGroup } from '../domain/audit-log/index.js';
 import type { AuditActionGroup } from '../domain/audit-log/index.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { toComplianceDecisionSummary } from '../domain/compliance-block-kind/index.js';
+import { countCampaignCompletedCalls } from '../reports/campaign-report.js';
+import type { VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -43,7 +46,9 @@ type CampaignDependencies = {
   callAttempt?: {
     count?: (args: any) => Promise<number>;
     findMany?: (args: any) => Promise<unknown>;
+    update?: (args: any) => Promise<unknown>;
   };
+  voiceProviderResolver?: VoiceProviderResolver;
   callResult?: {
     findUnique?: (args: any) => Promise<unknown>;
     update?: (args: any) => Promise<unknown>;
@@ -1310,6 +1315,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       createdAt: string;
     };
 
+    const forceInterruptResult = stopMode === 'force'
+      ? await interruptActiveCallAttempts(deps, {
+          tenantId: params.data.tenantId,
+          campaignId: params.data.campaignId
+        })
+      : undefined;
+
     await deps.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
@@ -1329,7 +1341,14 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
                 stopMode,
                 reason: stopMode,
                 forceInterruptsActiveAttempts: stopMode === 'force',
-                complianceBypass: false
+                complianceBypass: false,
+                ...(forceInterruptResult
+                  ? {
+                      interruptedActiveAttempts: forceInterruptResult.interrupted,
+                      skippedActiveAttemptsProvider: forceInterruptResult.skippedProvider,
+                      forceInterruptErrors: forceInterruptResult.errors
+                    }
+                  : {})
               }
             : {})
         }

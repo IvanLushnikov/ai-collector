@@ -143,14 +143,14 @@ Content-Type: application/json
 
 | `stopMode` | Поведение сейчас | Audit |
 |---|---|---|
-| `graceful` (default) | Не создавать новые попытки; статус → `completed`. Активные попытки этим PATCH не объявляются прерванными. | `campaign.status_updated` + `stopMode=graceful`, `forceInterruptsActiveAttempts=false` |
-| `force` | Тот же переход статуса → `completed` (новые попытки не планируются). В audit: `stopMode=force`, `forceInterruptsActiveAttempts=true`. **Фактическое прерывание in-flight попыток у voice/worker ещё не реализовано** — отдельный tech follow-up. Клиенты не должны считать, что `force` уже рвёт активные звонки. | `campaign.status_updated` + `stopMode=force` |
+| `graceful` (default) | Не создавать новые попытки; статус → `completed`. Активные попытки этим PATCH не прерываются. | `campaign.status_updated` + `stopMode=graceful`, `forceInterruptsActiveAttempts=false` |
+| `force` | Статус → `completed` (новые попытки не планируются). Для **sandbox** активные in-flight попытки (`initiated`/`queued`/`ringing`/`answered`) прерываются через `hangupCall` voice provider adapter; попытка обновляется (`endedAt`, `disconnectInitiator=campaign_force_stop`). **Live Exolve/Mango HTTP hangup** — отложено (`T-149` blocked); такие попытки в audit помечаются `skippedActiveAttemptsProvider`. | `campaign.status_updated` + `stopMode=force`, `forceInterruptsActiveAttempts=true`, `interruptedActiveAttempts`, `skippedActiveAttemptsProvider` |
 
 Инварианты:
 
 1. **Нет обхода compliance:** Force не разрешает звонок, который был заблокирован проверкой ограничений; не снимает `auto_paused` и не подменяет safe-resume.
 2. **Нет нового статуса:** оба режима заканчиваются в `completed`.
-3. **UI:** Force («Остановить немедленно») — отдельный design-pass; кабинет по умолчанию шлёт `stopMode: "graceful"` / default. Не показывать Force UI, пока worker interrupt не готов (иначе обещание без эффекта).
+3. **UI:** Force («Остановить немедленно») — отдельный design-pass (`OP-D-014`); кабинет по умолчанию шлёт `stopMode: "graceful"` / default. Sandbox interrupt реализован (`OP-T-012`); live hangup — после `T-149`.
 
 ### Связь с pause
 
@@ -158,4 +158,4 @@ Content-Type: application/json
 |---|---|---|
 | Приостановить | Новые звонки не создаются; можно продолжить обзвон | UI `manual_paused` (не PATCH `completed`) |
 | Остановить (graceful) | Кампания завершена; нужен новый запуск | `completed` + `stopMode=graceful` |
-| Остановить немедленно (force) | Сейчас = тот же `completed` + audit-флаг; interrupt активных — later | `completed` + `stopMode=force` |
+| Остановить немедленно (force) | Sandbox: прерывает активные звонки + `completed`; live — audit skip до `T-149` | `completed` + `stopMode=force` |
