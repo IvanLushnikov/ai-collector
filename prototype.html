@@ -1324,7 +1324,19 @@
     const debtorExternalId = item.debtorExternalId ? String(item.debtorExternalId).trim() : '';
     const startedAt = item.startedAt || '';
     const endedAt = item.endedAt || '';
-    const mappedComplianceDecision = complianceStatusDecisionMap[item.complianceStatus];
+    const apiDecision = item.complianceDecision && typeof item.complianceDecision === 'object'
+      ? item.complianceDecision
+      : null;
+    const mappedComplianceDecision = apiDecision && apiDecision.decision
+      ? {
+          decision: apiDecision.decision,
+          reasonCode: apiDecision.reasonCode || null,
+          reasonText: apiDecision.reasonText || null,
+          checkedAt: apiDecision.checkedAt || null
+        }
+      : (complianceStatusDecisionMap[item.complianceStatus]
+        ? { decision: complianceStatusDecisionMap[item.complianceStatus] }
+        : null);
     return {
       id:`api-call-${index}`,
       status:item.status || 'queued',
@@ -1345,9 +1357,7 @@
       callAttemptId:item.callAttemptId || item.id || null,
       qaStatus:'not_reviewed',
       complianceEvidence: item.complianceEvidence || item.complianceDecision?.evidence || [],
-      complianceDecision: mappedComplianceDecision
-        ? { decision: mappedComplianceDecision }
-        : item.complianceDecision || null,
+      complianceDecision: mappedComplianceDecision,
       recordingUrl:null,
       transcript:'',
       complianceTimeline:[],
@@ -2695,7 +2705,8 @@
         const attemptDetail = detailData?.attempt || {};
         const resultDetail = detailData?.result || {};
         const decisions = Array.isArray(detailData?.complianceDecisions) ? detailData.complianceDecisions : [];
-        const complianceDecision = decisions.length ? decisions[0] : item.complianceDecision;
+        const complianceDecision = detailData?.complianceDecision
+          || (decisions.length ? decisions[0] : item.complianceDecision);
         const timelineEvents = Array.isArray(detailData?.usageEvents)
           ? detailData.usageEvents.map(mapUsageEventToTimelineItem)
           : item.complianceTimeline;

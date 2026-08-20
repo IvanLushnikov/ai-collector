@@ -236,6 +236,7 @@ describe('GET calls list', () => {
       conversationStatus: 'awaiting_transcription',
       outcome: 'ptp_created',
       complianceStatus: 'not_checked',
+      complianceDecision: null,
       recordingStatus: 'ready',
       transcriptStatus: 'processing',
       reviewRequired: false,
@@ -416,6 +417,8 @@ describe('GET calls list', () => {
       select: {
         debtorRecordId: true,
         decision: true,
+        reasonCode: true,
+        reasonText: true,
         checkedAt: true
       }
     });

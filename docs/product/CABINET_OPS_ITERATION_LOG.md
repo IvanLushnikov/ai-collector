@@ -3,12 +3,33 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-006
-- Следующая кандидат: OP-T-004
-- Риски/договорённости: UI журнала звонков разделён на 3 оси; полный контракт API — OP-T-004.
-- Инварианты: OP-D-001…006, OP-T-001…003 (+002a/b).
+- Последняя закрытая: OP-T-004
+- Следующая кандидат: OP-D-007
+- Риски/договорённости: list/detail отдают complianceDecision; UI предпочитает объект API, fallback на complianceStatus.
+- Инварианты: OP-D-001…006, OP-T-001…004 (+002a/b).
 
 ## Проходы
+
+## 2026-08-20 — OP-T-004 — done
+
+### Взял
+- OP-T-004: контракт строки журнала звонков под три колонки UI.
+
+### Сделал
+- List: additive `complianceDecision{decision,reasonCode,reasonText,checkedAt}` (+ сохранён `complianceStatus`).
+- Detail: тот же summary `complianceDecision` (latest by checkedAt); полный массив без изменений.
+- `docs/calls-api.md` — таблица колонок UI ↔ поля.
+- Prototype `mapApiCallItem` / drawer предпочитают API-объект.
+- Тест `calls-journal-row.contract.test.ts`.
+
+### Проверка
+- vitest journal-row + call-details + sandbox-call + prototype calls — 50 PASS
+
+### Состояние бэклога
+- Следующая `todo`: OP-D-007
+
+### Handoff
+- **OP-D-007**: бейджи режима и типа паузы.
 
 ## 2026-08-20 — OP-D-006 — done
 

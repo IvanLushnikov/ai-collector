@@ -813,18 +813,32 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
           select: {
             debtorRecordId: true,
             decision: true,
+            reasonCode: true,
+            reasonText: true,
             checkedAt: true
           }
         })) as Array<{
           debtorRecordId: string;
           decision: string;
+          reasonCode?: string | null;
+          reasonText?: string | null;
           checkedAt: string | Date;
         }>
       : [];
-    const latestComplianceDecisionByDebtor = new Map<string, string>();
+    const latestComplianceDecisionByDebtor = new Map<string, {
+      decision: string;
+      reasonCode: string | null;
+      reasonText: string | null;
+      checkedAt: string | Date;
+    }>();
     for (const decision of complianceDecisions) {
       if (!latestComplianceDecisionByDebtor.has(decision.debtorRecordId)) {
-        latestComplianceDecisionByDebtor.set(decision.debtorRecordId, decision.decision);
+        latestComplianceDecisionByDebtor.set(decision.debtorRecordId, {
+          decision: decision.decision,
+          reasonCode: decision.reasonCode ?? null,
+          reasonText: decision.reasonText ?? null,
+          checkedAt: decision.checkedAt
+        });
       }
     }
 
@@ -850,11 +864,19 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
             ...lifecycleEvidence
           }),
           outcome: attempt.callResult?.outcome ?? null,
-          complianceStatus: complianceDecision === 'allow'
+          complianceStatus: complianceDecision?.decision === 'allow'
             ? 'allowed'
-            : complianceDecision === 'block'
+            : complianceDecision?.decision === 'block'
               ? 'blocked'
               : 'not_checked',
+          complianceDecision: complianceDecision
+            ? {
+                decision: complianceDecision.decision,
+                reasonCode: complianceDecision.reasonCode,
+                reasonText: complianceDecision.reasonText,
+                checkedAt: complianceDecision.checkedAt
+              }
+            : null,
           recordingStatus: lifecycleEvidence.recordingStatus,
           transcriptStatus: lifecycleEvidence.transcriptStatus,
           reviewRequired: lifecycleEvidence.reviewRequired,
@@ -1060,6 +1082,33 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       recordingStatus: lifecycleEvidence.recordingStatus
     };
 
+    const complianceDecisionSummary = (() => {
+      const decisions = (complianceDecisions ?? []) as Array<{
+        decision?: string | null;
+        reasonCode?: string | null;
+        reasonText?: string | null;
+        checkedAt?: string | Date | null;
+      }>;
+      if (!decisions.length) {
+        return null;
+      }
+      const sorted = [...decisions].sort((left, right) => {
+        const leftTs = left.checkedAt ? new Date(left.checkedAt).getTime() : 0;
+        const rightTs = right.checkedAt ? new Date(right.checkedAt).getTime() : 0;
+        return rightTs - leftTs;
+      });
+      const latest = sorted[0];
+      if (!latest?.decision) {
+        return null;
+      }
+      return {
+        decision: latest.decision,
+        reasonCode: latest.reasonCode ?? null,
+        reasonText: latest.reasonText ?? null,
+        checkedAt: latest.checkedAt ?? null
+      };
+    })();
+
     return reply.code(200).send({
       attempt: {
         id: attempt.id,
@@ -1090,6 +1139,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       transcript,
       recording,
       reconciliationIssues,
+      complianceDecision: complianceDecisionSummary,
       complianceDecisions,
       usageEvents,
       evidenceBundle: {
