@@ -229,7 +229,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-008: Empty state очереди проверок
 
-Статус: `todo`  
+Статус: `blocked`  
 Тип: `design`  
 Референс: Collect! work queue; anti-pattern «декоративный empty»  
 Блокер: тот же product confirm, что у `OP-T-005` (нет клиентской IA «Очередь» / `#reviewQueue`). До confirm — не брать.
@@ -510,7 +510,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-005: Очередь проверок с review-items API
 
-Статус: `todo`  
+Статус: `blocked`  
 Тип: `tech`  
 Блокер: product confirm — в клиентском кабинете нет пункта «Очередь» (`PRODUCT_LANGUAGE` / IA); в прототипе нет `#reviewQueue`, есть мёртвый JS. Не реализовывать экран «вслепую».
 
