@@ -1518,7 +1518,11 @@
       action: item.action || 'system',
       entityType: item.entityType || 'unknown',
       entityId: item.entityId || '—',
-      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`
+      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`,
+      metadata,
+      previousValue: metadata.previousValue ?? item.previousValue ?? null,
+      nextValue: metadata.nextValue ?? item.nextValue ?? null,
+      reasonText: metadata.reasonText || metadata.reason || item.reasonText || ''
     };
   }
 
@@ -3981,6 +3985,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   renderCallsTable();
   renderCampaignStatusMenu();
   setCampaignState(campaignLifecycle.status,{actor:'system',reason:'инициализация экрана кампании',force:true});
+  syncCampaignModeBadge(callsSource === 'live');
   function openCampaign(tab='overview'){q('#globalScreens').style.display='none';q('#campaignWorkspace').classList.add('active');qa('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen==='home'));q('#crumb').textContent='Кампания';showCampaignTab(tab)}
   q('#homeCampaignsBody')?.addEventListener('click',(event)=>{
     const btn=event.target?.closest?.('[data-open-campaign]');

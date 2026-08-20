@@ -107,20 +107,13 @@
 - `401` — `USER_ROLE_MISSING`
 - `403` — `FORBIDDEN`
 
-## Остановка кампании: graceful vs force (OP-T-002a)
+## Остановка кампании: graceful vs force (OP-T-002a / OP-T-002b)
 
 Канонический статус остановки в домене и API — **`completed`**. Отдельный enum `stopped` / `force_stopped` **не вводится**.
 
 Связанные UI-термины: `PRODUCT_LANGUAGE.md` — «Приостановить кампанию» (локальная пауза) vs «Остановить» → `completed`.
 
-### Текущее поведение (до OP-T-002b)
-
-- Остановка через `PATCH /tenants/:tenantId/campaigns/:campaignId/status` с телом `{ "status": "completed" }` при допустимом переходе (сейчас из `running`).
-- Смысл по умолчанию — **graceful stop**: кампания перестаёт планировать **новые** попытки; уже созданные попытки не объявляются принудительно прерванными этим контрактом.
-- Ручная пауза («приостановлена») — прототипное UI-состояние, **не** Prisma-enum и не отдельный stop-mode API.
-- Системная автопауза — статус `auto_paused`; снятие только через safe-resume, не через Force.
-
-### Контракт `stopMode` (OP-T-002b)
+### Контракт `stopMode` (реализовано)
 
 Additive на `PATCH .../status` при `status: "completed"` (без нового enum):
 
@@ -137,22 +130,21 @@ Content-Type: application/json
 { "status": "completed", "stopMode": "force" }
 ```
 
-| `stopMode` | Поведение | Audit |
+| `stopMode` | Поведение сейчас | Audit |
 |---|---|---|
-| `graceful` (default) | Не создавать новые попытки; активные дозволить завершиться штатно; статус → `completed` | `campaign.status_updated` + `stopMode=graceful` |
-| `force` | Не создавать новые попытки **и** запросить прерывание активных попыток у voice/worker контура; статус → `completed` | отдельное действие/`stopMode=force` |
+| `graceful` (default) | Не создавать новые попытки; статус → `completed`. Активные попытки этим PATCH не объявляются прерванными. | `campaign.status_updated` + `stopMode=graceful`, `forceInterruptsActiveAttempts=false` |
+| `force` | Тот же переход статуса → `completed` (новые попытки не планируются). В audit: `stopMode=force`, `forceInterruptsActiveAttempts=true`. **Фактическое прерывание in-flight попыток у voice/worker ещё не реализовано** — отдельный tech follow-up. Клиенты не должны считать, что `force` уже рвёт активные звонки. | `campaign.status_updated` + `stopMode=force` |
 
 Инварианты:
 
 1. **Нет обхода compliance:** Force не разрешает звонок, который был заблокирован проверкой ограничений; не снимает `auto_paused` и не подменяет safe-resume.
 2. **Нет нового статуса:** оба режима заканчиваются в `completed`.
-3. **UI:** Force («Остановить немедленно») — отдельный design-pass после контракта; кабинет по умолчанию шлёт `stopMode: "graceful"` / default.
+3. **UI:** Force («Остановить немедленно») — отдельный design-pass; кабинет по умолчанию шлёт `stopMode: "graceful"` / default. Не показывать Force UI, пока worker interrupt не готов (иначе обещание без эффекта).
 
 ### Связь с pause
 
 | Действие | Эффект | Статус API |
 |---|---|---|
 | Приостановить | Новые звонки не создаются; можно продолжить обзвон | UI `manual_paused` (не PATCH `completed`) |
-| Остановить (graceful) | Кампания завершена; нужен новый запуск | `completed` |
-| Остановить немедленно (force) | Как graceful + прерывание активных | `completed` + `stopMode=force` (после OP-T-002b) |
-
+| Остановить (graceful) | Кампания завершена; нужен новый запуск | `completed` + `stopMode=graceful` |
+| Остановить немедленно (force) | Сейчас = тот же `completed` + audit-флаг; interrupt активных — later | `completed` + `stopMode=force` |

@@ -1518,7 +1518,11 @@
       action: item.action || 'system',
       entityType: item.entityType || 'unknown',
       entityId: item.entityId || '—',
-      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`
+      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`,
+      metadata,
+      previousValue: metadata.previousValue ?? item.previousValue ?? null,
+      nextValue: metadata.nextValue ?? item.nextValue ?? null,
+      reasonText: metadata.reasonText || metadata.reason || item.reasonText || ''
     };
   }
 

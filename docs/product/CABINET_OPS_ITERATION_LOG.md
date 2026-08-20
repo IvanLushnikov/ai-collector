@@ -3,12 +3,33 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-007
-- Следующая кандидат: OP-D-008
-- Риски/договорённости: системная пауза = tag stop + notice danger; ручная = tag warn; live/демо в шапке и строках звонков.
-- Инварианты: OP-D-001…007, OP-T-001…004 (+002a/b).
+- Последняя закрытая: review-fixes (audit trail live + force doc honesty + prototype sync)
+- Следующая кандидат: первая `todo` без блокера (не OP-D-008/OP-T-005 до product confirm; не OP-D-014 до OP-T-012)
+- Риски/договорённости: force = audit-флаг до OP-T-012; dual prototype защищён hash-тестом; очередь review — blocked на IA.
+- Инварианты: OP-D-001…007, OP-T-001…004 (+002a/b done parent), review-fixes.
 
 ## Проходы
+
+## 2026-08-20 — review-fixes — done
+
+### Взял
+- Закрытие дыр ревью волны: audit previous/next в UI, force-doc honesty, sync prototype.
+
+### Сделал
+- `mapApiAuditItem` прокидывает `metadata` / `previousValue` / `nextValue` / `reasonText`.
+- `docs/campaigns-api.md`: force без обещания worker interrupt; follow-up `OP-T-012` + design `OP-D-014`.
+- OP-T-002 parent → `done`; OP-D-008/OP-T-005 помечены блокером IA.
+- `prototype.html` = `public/prototype.html`; тест hash equality.
+
+### Проверка
+- vitest prototype-audit-api-trail + campaigns-stop-mode-docs (+ related)
+
+### Состояние бэклога
+- Следующая свободная `todo` сверху: **OP-T-006** (или OP-T-009), не 008/005.
+
+### Handoff
+- Не брать Force UI до OP-T-012.
+- Не восстанавливать `#reviewQueue` без product confirm.
 
 ## 2026-08-20 — OP-D-007 — done
 
