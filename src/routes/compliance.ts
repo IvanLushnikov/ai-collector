@@ -120,7 +120,7 @@ type ComplianceDecisionListRaw = {
 export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceDependencies): void => {
   app.post(
     '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/compliance/check',
-    { preValidation: authorizeZone('calls', 'read') },
+    { preValidation: authorizeZone('calls', 'write') },
     async (request, reply) => {
     const params = tenantCampaignDebtorComplianceSchema.safeParse(request.params);
     if (!params.success) {

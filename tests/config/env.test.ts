@@ -46,7 +46,8 @@ describe('credentials and platform speech env', () => {
       ...required,
       NODE_ENV: 'production',
       CREDENTIALS_ENCRYPTION_KEY: validDek,
-      CORS_ORIGINS: 'https://cabinet.example.ru'
+      CORS_ORIGINS: 'https://cabinet.example.ru',
+      JWT_SECRET: 'production-jwt-secret-with-32chars-min'
     });
     expect(parsed.CREDENTIALS_ENCRYPTION_KEY).toBe(validDek);
   });
@@ -56,8 +57,39 @@ describe('credentials and platform speech env', () => {
       ...required,
       NODE_ENV: 'production',
       CREDENTIALS_ENCRYPTION_KEY: validDek,
-      CORS_ORIGINS: '*'
+      CORS_ORIGINS: '*',
+      JWT_SECRET: 'production-jwt-secret-with-32chars-min'
     })).toThrow(/CORS_ORIGINS/);
+  });
+
+  it('does not allow default JWT_SECRET in production', () => {
+    expect(() => parseEnv({
+      ...required,
+      NODE_ENV: 'production',
+      CREDENTIALS_ENCRYPTION_KEY: validDek,
+      CORS_ORIGINS: 'https://cabinet.example.ru',
+      JWT_SECRET: 'change-me-in-secret-store'
+    })).toThrow(/JWT_SECRET/);
+  });
+
+  it('does not allow header identity in production', () => {
+    expect(() => parseEnv({
+      ...required,
+      NODE_ENV: 'production',
+      CREDENTIALS_ENCRYPTION_KEY: validDek,
+      CORS_ORIGINS: 'https://cabinet.example.ru',
+      JWT_SECRET: 'production-jwt-secret-with-32chars-min',
+      ALLOW_HEADER_IDENTITY: 'true'
+    })).toThrow(/ALLOW_HEADER_IDENTITY/);
+  });
+
+  it('defaults header identity on outside production and off when explicitly disabled', () => {
+    expect(parseEnv({ ...required, NODE_ENV: 'development' }).ALLOW_HEADER_IDENTITY).toBe(true);
+    expect(parseEnv({
+      ...required,
+      NODE_ENV: 'development',
+      ALLOW_HEADER_IDENTITY: 'false'
+    }).ALLOW_HEADER_IDENTITY).toBe(false);
   });
 
   it('uses a test fixture when encryption key is omitted in test', () => {

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { isLockedDisclosureContent, serializeScriptContent } from '../domain/script-version/index.js';
+import { authorizeZone } from '../server/authz/index.js';
 
 type ScriptDependencies = {
   tenant: {
@@ -33,7 +34,11 @@ const createScriptSchema = z.object({
 });
 
 export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependencies): void => {
-  app.get('/tenants/:tenantId/campaigns/:campaignId/scripts', async (request, reply) => {
+  app.get(
+    '/tenants/:tenantId/campaigns/:campaignId/scripts',
+    { preValidation: authorizeZone('campaigns', 'read') },
+    async (request, reply) => {
+
     const params = tenantCampaignScriptsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -80,7 +85,10 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
     return reply.code(200).send(scripts);
   });
 
-  app.post('/tenants/:tenantId/campaigns/:campaignId/scripts', async (request, reply) => {
+  app.post(
+    '/tenants/:tenantId/campaigns/:campaignId/scripts',
+    { preValidation: authorizeZone('campaigns', 'write') },
+    async (request, reply) => {
     const params = tenantCampaignScriptsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({

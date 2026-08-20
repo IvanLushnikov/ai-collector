@@ -261,7 +261,16 @@
 
 <script>
 (()=>{
-	const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];let toastTimer,wizardStep=1,campaignValidationTimer;
+	const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
+	const escapeHtml=(value)=>{
+	  return String(value ?? '')
+	    .replace(/&/g,'&amp;')
+	    .replace(/</g,'&lt;')
+	    .replace(/>/g,'&gt;')
+	    .replace(/"/g,'&quot;')
+	    .replace(/'/g,'&#39;');
+	};
+	let toastTimer,wizardStep=1,campaignValidationTimer;
   const formatActorLabel=(actor='')=>{
     const map={
       system:'Система',
@@ -1545,7 +1554,7 @@
 
     for (const row of pageRows) {
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${row.time}</td><td>${row.who}</td><td>${row.object}</td><td>${row.change}</td><td>${row.ip}</td>`;
+      tr.innerHTML = `<td>${escapeHtml(row.time)}</td><td>${escapeHtml(row.who)}</td><td>${escapeHtml(row.object)}</td><td>${escapeHtml(row.change)}</td><td>${escapeHtml(row.ip)}</td>`;
       tbody.appendChild(tr);
     }
   }
@@ -1971,7 +1980,7 @@
         const label=key==='durationSec' ? formatDurationLabel(value) : String(value);
         const row=document.createElement('div');
         row.className='chart-bar-row';
-        row.innerHTML=`<span>${item.day}</span><div class="chart-bar-track"><div class="chart-bar-fill ${cls}" style="width:${width}%"></div></div><span>${label}</span>`;
+        row.innerHTML=`<span>${escapeHtml(item.day)}</span><div class="chart-bar-track"><div class="chart-bar-fill ${escapeHtml(cls)}" style="width:${width}%"></div></div><span>${escapeHtml(label)}</span>`;
         root.appendChild(row);
       }
     };
@@ -2377,25 +2386,25 @@
         const sourceMeta=reviewSourceMeta[item.source] || {label:item.source,pill:'state-empty'};
         const typeMeta=reviewTypeMeta[item.type] || {label:item.type,pill:'state-empty'};
         const actionMeta=reviewActionMeta[item.requiredAction] || {label:item.requiredAction,pill:'state-awaiting'};
-        const campaignMeta = reviewStateFilters.campaignId ? '' : `<div style="font-size:12px;color:var(--muted)">${item.campaign || 'Кампания'}</div>`;
+        const campaignMeta = reviewStateFilters.campaignId ? '' : `<div style="font-size:12px;color:var(--muted)">${escapeHtml(item.campaign || 'Кампания')}</div>`;
         tr.innerHTML=`
-        <td>${item.createdAt}</td>
-        <td><span class="tag ${sourceMeta.pill}">${sourceMeta.label}</span></td>
-        <td><span class="tag ${typeMeta.pill}">${typeMeta.label}</span></td>
-        <td><span class="tag ${priorityMeta.pill}">${priorityMeta.label}</span></td>
+        <td>${escapeHtml(item.createdAt)}</td>
+        <td><span class="tag ${escapeHtml(sourceMeta.pill)}">${escapeHtml(sourceMeta.label)}</span></td>
+        <td><span class="tag ${escapeHtml(typeMeta.pill)}">${escapeHtml(typeMeta.label)}</span></td>
+        <td><span class="tag ${escapeHtml(priorityMeta.pill)}">${escapeHtml(priorityMeta.label)}</span></td>
         <td>
-          <b>${item.debtor}</b>
-          <div style="font-size:12px;color:var(--muted)">${item.callId}</div>
+          <b>${escapeHtml(item.debtor)}</b>
+          <div style="font-size:12px;color:var(--muted)">${escapeHtml(item.callId)}</div>
           ${campaignMeta}
         </td>
-        <td>${item.reason}</td>
-        <td><span class="tag ${actionMeta.pill}">${actionMeta.label}</span></td>
+        <td>${escapeHtml(item.reason)}</td>
+        <td><span class="tag ${escapeHtml(actionMeta.pill)}">${escapeHtml(actionMeta.label)}</span></td>
         <td>
           <div class="row-actions">
-            <button class="btn small" data-review-action="open" data-review-id="${item.id}">Карточка</button>
+            <button class="btn small" data-review-action="open" data-review-id="${escapeHtml(item.id)}">Карточка</button>
           </div>
         </td>
-        <td><span class="tag ${statusMeta.pill}">${statusMeta.label}</span></td>
+        <td><span class="tag ${escapeHtml(statusMeta.pill)}">${escapeHtml(statusMeta.label)}</span></td>
       `;
         target.appendChild(tr);
       }
@@ -2431,20 +2440,20 @@
     q('#reviewDrawerTitle').textContent=`Задача на проверку`;
     q('#reviewDrawerMeta').textContent=`${item.campaign || 'Кампания'} · ${item.debtor} · ${item.callId}`;
     q('#reviewDrawerCall').innerHTML=`
-      <b>Источник:</b> <span class="tag ${sourceMeta.pill}">${sourceMeta.label}</span><br/>
-      <b>Тип сигнала:</b> <span class="tag ${typeMeta.pill}">${typeMeta.label}</span><br/>
-      <b>Приоритет:</b> <span class="tag ${priorityMeta.pill}">${priorityMeta.label}</span><br/>
-      <b>Требуемое действие:</b> <span class="tag ${actionMeta.pill}">${actionMeta.label}</span><br/>
-      <b>Требуемо до:</b> ${item.requiredUntil || 'не указано'}<br/>
-      <b>Ответственный за решение:</b> ${item.requiredByLabel || item.requiredBy || 'Не назначен'}<br/>
-      <b>Следующий шаг:</b> ${item.nextStep || '—'}<br/>
-      <b>Исход звонка:</b> ${item.callOutcome}<br/>
-      <b>Compliance:</b> ${compliance.decision || 'нет решения'} (${compliance.reasonCode || 'n/a'})<br/>
-      <b>Основание:</b> ${compliance.reasonText || '—'}<br/>
-      <b>Открыт:</b> ${item.createdAt} · возраст ${item.ageMinutes || 0} мин
+      <b>Источник:</b> <span class="tag ${escapeHtml(sourceMeta.pill)}">${escapeHtml(sourceMeta.label)}</span><br/>
+      <b>Тип сигнала:</b> <span class="tag ${escapeHtml(typeMeta.pill)}">${escapeHtml(typeMeta.label)}</span><br/>
+      <b>Приоритет:</b> <span class="tag ${escapeHtml(priorityMeta.pill)}">${escapeHtml(priorityMeta.label)}</span><br/>
+      <b>Требуемое действие:</b> <span class="tag ${escapeHtml(actionMeta.pill)}">${escapeHtml(actionMeta.label)}</span><br/>
+      <b>Требуемо до:</b> ${escapeHtml(item.requiredUntil || 'не указано')}<br/>
+      <b>Ответственный за решение:</b> ${escapeHtml(item.requiredByLabel || item.requiredBy || 'Не назначен')}<br/>
+      <b>Следующий шаг:</b> ${escapeHtml(item.nextStep || '—')}<br/>
+      <b>Исход звонка:</b> ${escapeHtml(item.callOutcome)}<br/>
+      <b>Compliance:</b> ${escapeHtml(compliance.decision || 'нет решения')} (${escapeHtml(compliance.reasonCode || 'n/a')})<br/>
+      <b>Основание:</b> ${escapeHtml(compliance.reasonText || '—')}<br/>
+      <b>Открыт:</b> ${escapeHtml(item.createdAt)} · возраст ${escapeHtml(item.ageMinutes || 0)} мин
     `;
-    q('#reviewDrawerReason').innerHTML=`<b>Комментарий / обоснование</b><p style="margin:8px 0 0;color:var(--muted)">${item.reason || '—'}</p>`;
-    const evidence=(item.evidence || []).map((line) => `<li>${line}</li>`).join('');
+    q('#reviewDrawerReason').innerHTML=`<b>Комментарий / обоснование</b><p style="margin:8px 0 0;color:var(--muted)">${escapeHtml(item.reason || '—')}</p>`;
+    const evidence=(item.evidence || []).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
     q('#reviewDrawerEvidence').innerHTML=evidence ? `<ul>${evidence}</ul>` : '—';
 
     const complianceLog=q('#reviewDrawerComplianceLog');
@@ -2452,7 +2461,7 @@
     for (const event of item.complianceLog || []) {
       const block=document.createElement('div');
       block.className='review-event';
-      block.innerHTML=`<small>${event.time} · ${event.actor}</small><b>${event.action}</b><pre>${event.text}</pre>`;
+      block.innerHTML=`<small>${escapeHtml(event.time)} · ${escapeHtml(event.actor)}</small><b>${escapeHtml(event.action)}</b><pre>${escapeHtml(event.text)}</pre>`;
       complianceLog.appendChild(block);
     }
 
@@ -2461,7 +2470,7 @@
     for (const event of item.technicalEvents || []) {
       const block=document.createElement('div');
       block.className='review-event';
-      block.innerHTML=`<small>${event.time} · ${event.type}</small><b>${item.callId}</b><pre>${event.details}</pre>`;
+      block.innerHTML=`<small>${escapeHtml(event.time)} · ${escapeHtml(event.type)}</small><b>${escapeHtml(item.callId)}</b><pre>${escapeHtml(event.details)}</pre>`;
       technicalLog.appendChild(block);
     }
 
@@ -2566,10 +2575,10 @@
       const tr=document.createElement('tr');
       tr.dataset.debtorKey=debtorKey;
       tr.innerHTML=`
-        <td>${item.startedAt}</td>
-        <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
-        <td><span class="tag ${result.pill}">${result.label}</span><div style="font-size:12px;color:var(--muted)">${formatDialStatusLabel(item.dialStatus || item.status)} · ${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
-        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
+        <td>${escapeHtml(item.startedAt)}</td>
+        <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${escapeHtml(debtorKey)}">${escapeHtml(item.debtor)}</button><div style="font-size:12px;color:var(--muted)">${escapeHtml(item.phone || '')}</div></td>
+        <td><span class="tag ${escapeHtml(result.pill)}">${escapeHtml(result.label)}</span><div style="font-size:12px;color:var(--muted)">${escapeHtml(formatDialStatusLabel(item.dialStatus || item.status))} · ${escapeHtml(formatConversationStatusLabel(item.conversationStatus))}</div><div style="font-size:12px;color:var(--muted)">${escapeHtml(formatEvidenceStatusLabel(item))}</div></td>
+        <td><span class="tag ${escapeHtml(formatDecisionStateClass(item.complianceDecision?.decision))}">${escapeHtml(formatDecisionLabel(item.complianceDecision?.decision))}</span><div style="font-size:12px;color:var(--muted)">${escapeHtml(item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—')}</div></td>
       `;
       tbody.appendChild(tr);
       if (expandedDebtorKey === debtorKey) {
@@ -2688,7 +2697,7 @@
       for (const turn of turns) {
         const div=document.createElement('div');
         div.className=`dialog-turn ${turn.role === 'agent' ? 'ai' : 'person'}`;
-        div.innerHTML=`<small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${turn.text}`;
+        div.innerHTML=`<small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${escapeHtml(turn.text)}`;
         turnsRoot.appendChild(div);
       }
     }
@@ -3475,7 +3484,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       const filterEl=q('#analyticsCampaignFilter');
       const previous=filterEl?.value || 'all';
       if (filterEl && Array.isArray(campaigns)) {
-        filterEl.innerHTML='<option value="all">Все кампании</option>' + campaigns.map((item)=>`<option value="${item.id}">${item.name}</option>`).join('');
+        filterEl.innerHTML='<option value="all">Все кампании</option>' + campaigns.map((item)=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('');
         if ([...filterEl.options].some((option)=>option.value===previous)) {
           filterEl.value=previous;
         }

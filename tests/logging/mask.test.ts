@@ -35,10 +35,19 @@ describe('maskSensitiveFields', () => {
     });
   });
 
-  it('does not treat non-phone keys as phone numbers', () => {
-    expect(maskSensitiveFields({ campaignId: 'campaign-1', timezone: 'UTC' })).toEqual({
-      campaignId: 'campaign-1',
-      timezone: 'UTC'
+  it('redacts credential-like keys in nested payloads', () => {
+    const masked = maskSensitiveFields({
+      password: 'secret',
+      api_key: 'abc',
+      Authorization: 'Bearer x',
+      nested: { refreshToken: 'tok', phone: '+79501234567' }
+    });
+
+    expect(masked).toEqual({
+      password: '[REDACTED]',
+      api_key: '[REDACTED]',
+      Authorization: '[REDACTED]',
+      nested: { refreshToken: '[REDACTED]', phone: '+7 •••-••-45-67' }
     });
   });
 });

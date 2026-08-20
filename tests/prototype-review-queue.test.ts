@@ -14,6 +14,8 @@ describe('prototype audit log', () => {
     expect(html).toContain('не зафиксирован');
     expect(html).toContain('function isStaffAuditEvent');
     expect(html).toContain('SYSTEM_AUDIT_ACTORS');
+    expect(html).toContain('const escapeHtml=');
+    expect(html).toContain('escapeHtml(row.who)');
     expect(html).not.toContain('id="reviewQueue"');
   });
 });

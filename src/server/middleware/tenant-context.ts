@@ -42,12 +42,28 @@ const getBodyTenantId = (request: FastifyRequest): string | null => {
   return null;
 };
 
+const isPublicOrServicePath = (path: string): boolean => {
+  if (
+    path === '/'
+    || path.startsWith('/healthz')
+    || path.startsWith('/auth')
+    || path.startsWith('/support')
+    || path.startsWith('/openapi/')
+  ) {
+    return true;
+  }
+
+  // Provider callbacks authenticate via webhook secret, not cookie/header identity.
+  // Pattern: /tenants/:tenantId/telephony/webhooks/:sourceSystem
+  return /^\/tenants\/[^/]+\/telephony\/webhooks(?:\/|$)/.test(path);
+};
+
 export const tenantContextMiddleware = async (
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> => {
   const path = request.url.split('?')[0] ?? request.url;
-  if (path === '/' || path.startsWith('/healthz') || path.startsWith('/auth') || path.startsWith('/support') || path.startsWith('/openapi/')) {
+  if (isPublicOrServicePath(path)) {
     return;
   }
 

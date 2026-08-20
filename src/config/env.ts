@@ -14,6 +14,7 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL URL'),
   JWT_SECRET: z.string().default('change-me-in-secret-store'),
   CORS_ORIGINS: z.string().default('*'),
+  ALLOW_HEADER_IDENTITY: z.enum(['true', 'false']).optional(),
   BILLING_CONNECTED_MINUTE_RATE_RUB: z.coerce.number().positive('BILLING_CONNECTED_MINUTE_RATE_RUB must be a positive number').default(1.2),
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive('API_RATE_LIMIT_MAX_REQUESTS must be a positive integer').default(120),
   API_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive('API_RATE_LIMIT_WINDOW_MS must be a positive integer').default(60000),
@@ -42,6 +43,24 @@ export const envSchema = z.object({
         message: 'CORS_ORIGINS must list explicit trusted origins in production'
       });
     }
+    if (
+      !value.JWT_SECRET
+      || value.JWT_SECRET === 'change-me-in-secret-store'
+      || value.JWT_SECRET.length < 32
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JWT_SECRET'],
+        message: 'JWT_SECRET must be set to a strong unique value in production (min 32 chars)'
+      });
+    }
+    if (value.ALLOW_HEADER_IDENTITY === 'true') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ALLOW_HEADER_IDENTITY'],
+        message: 'ALLOW_HEADER_IDENTITY must not be enabled in production'
+      });
+    }
     return;
   }
 
@@ -57,6 +76,11 @@ export const envSchema = z.object({
   }
 }).transform((value) => ({
   ...value,
+  ALLOW_HEADER_IDENTITY: value.ALLOW_HEADER_IDENTITY === 'true'
+    ? true
+    : value.ALLOW_HEADER_IDENTITY === 'false'
+      ? false
+      : value.NODE_ENV !== 'production',
   CREDENTIALS_ENCRYPTION_KEY: value.CREDENTIALS_ENCRYPTION_KEY
     && value.CREDENTIALS_ENCRYPTION_KEY.length > 0
     ? value.CREDENTIALS_ENCRYPTION_KEY

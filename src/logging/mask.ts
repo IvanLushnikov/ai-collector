@@ -1,5 +1,26 @@
 const PHONE_KEYS = new Set(['phone', 'phonenumber']);
 
+const REDACTED_KEYS = new Set([
+  'password',
+  'passwordhash',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'authorization',
+  'cookie',
+  'apikey',
+  'apisalt',
+  'secret',
+  'webhooksecret',
+  'ciphertext',
+  'nonce',
+  'authtag',
+  'credentialsencryptionkey',
+  'jwtsecret',
+  'rawtoken',
+  'sessiontoken'
+]);
+
 export const maskPhone = (value: string): string => {
   const digits = value.replace(/\D/g, '');
   if (digits.length < 4) {
@@ -27,7 +48,11 @@ const maskValue = (value: unknown): unknown => {
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, nested]) => {
-        if (PHONE_KEYS.has(key.toLowerCase()) && typeof nested === 'string') {
+        const normalized = key.toLowerCase().replace(/[_-]/g, '');
+        if (REDACTED_KEYS.has(normalized)) {
+          return [key, '[REDACTED]'];
+        }
+        if (PHONE_KEYS.has(normalized) && typeof nested === 'string') {
           return [key, maskPhone(nested)];
         }
 

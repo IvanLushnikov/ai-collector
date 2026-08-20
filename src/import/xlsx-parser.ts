@@ -2,6 +2,9 @@ import { inflateRawSync } from 'node:zlib';
 import { parseDebtorImportCsv, type DebtorImportParseResult } from './debtor-import-parser.js';
 
 const MAX_IMPORT_BYTES = 100 * 1024 * 1024;
+const MAX_UNCOMPRESSED_ENTRY_BYTES = 32 * 1024 * 1024;
+const MAX_TOTAL_UNCOMPRESSED_BYTES = 64 * 1024 * 1024;
+const MAX_ZIP_ENTRIES = 64;
 
 type ZipEntry = { name: string; data: Buffer };
 
@@ -11,20 +14,53 @@ const readU32 = (buffer: Buffer, offset: number): number => buffer.readUInt32LE(
 export const extractZipEntries = (buffer: Buffer): ZipEntry[] => {
   const entries: ZipEntry[] = [];
   let offset = 0;
+  let totalUncompressed = 0;
   while (offset + 30 <= buffer.length && buffer.toString('ascii', offset, offset + 2) === 'PK') {
     const signature = readU32(buffer, offset);
     if (signature !== 0x04034b50) {
       break;
     }
+    if (entries.length >= MAX_ZIP_ENTRIES) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet archive has too many entries');
+    }
     const method = readU16(buffer, offset + 8);
     const compressedSize = readU32(buffer, offset + 18);
+    const uncompressedSize = readU32(buffer, offset + 22);
     const fileNameLength = readU16(buffer, offset + 26);
     const extraLength = readU16(buffer, offset + 28);
     const nameStart = offset + 30;
     const name = buffer.toString('utf8', nameStart, nameStart + fileNameLength);
     const dataStart = nameStart + fileNameLength + extraLength;
+    if (dataStart + compressedSize > buffer.length) {
+      throw new Error('INVALID_XLSX: truncated zip entry');
+    }
+    if (uncompressedSize > MAX_UNCOMPRESSED_ENTRY_BYTES) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet entry exceeds size limit');
+    }
+    totalUncompressed += uncompressedSize;
+    if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet uncompressed size exceeds limit');
+    }
     const compressed = buffer.subarray(dataStart, dataStart + compressedSize);
-    const data = method === 0 ? Buffer.from(compressed) : inflateRawSync(compressed);
+    let data: Buffer;
+    if (method === 0) {
+      data = Buffer.from(compressed);
+    } else {
+      const inflateLimit = uncompressedSize > 0
+        ? Math.min(uncompressedSize, MAX_UNCOMPRESSED_ENTRY_BYTES)
+        : MAX_UNCOMPRESSED_ENTRY_BYTES;
+      try {
+        data = inflateRawSync(compressed, { maxOutputLength: inflateLimit });
+      } catch {
+        throw new Error('IMPORT_TOO_LARGE: spreadsheet entry could not be safely decompressed');
+      }
+    }
+    if (data.length > MAX_UNCOMPRESSED_ENTRY_BYTES) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet entry exceeds size limit');
+    }
+    if (uncompressedSize > 0 && data.length > uncompressedSize) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet entry exceeds declared size');
+    }
     entries.push({ name, data });
     offset = dataStart + compressedSize;
   }

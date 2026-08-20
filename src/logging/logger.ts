@@ -9,7 +9,21 @@ export type SafeLogFields = {
   error?: { name: string; message: string };
 };
 
-const BLOCKED_KEYS = new Set(['phone', 'phoneNumber', 'debtAmount', 'apiKey', 'ciphertext']);
+const BLOCKED_KEYS = new Set([
+  'phone',
+  'phoneNumber',
+  'debtAmount',
+  'apiKey',
+  'ciphertext',
+  'password',
+  'token',
+  'authorization',
+  'cookie',
+  'nonce',
+  'authTag',
+  'secret',
+  'rawToken'
+]);
 
 export const serializeUnknownError = (error: unknown): { name: string; message: string } => {
   if (error instanceof Error) {
