@@ -177,22 +177,23 @@
 
     .hero {
       position: relative;
-      padding: 40px 0 28px;
+      padding: 48px 0 0;
       overflow: hidden;
     }
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-      gap: 48px;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 40px;
+      align-items: center;
+      min-height: min(520px, calc(100vh - 180px));
     }
 
     .hero-copy {
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      padding: 12px 0 0;
+      justify-content: center;
+      padding: 0;
       max-width: 480px;
     }
 
@@ -274,10 +275,10 @@
 
     .hero-aside {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: flex-end;
       position: relative;
-      padding-top: 4px;
+      padding-top: 0;
     }
 
     .hero-aside::before {
@@ -1603,7 +1604,6 @@
                     </div>
                     <div class="ui-log">
                       <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
-                      <div class="ui-log-item"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
                       <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
                     </div>
                   </div>
