@@ -243,8 +243,8 @@
           <div class="page-head"><div><h1>Звонки кампании</h1><p>Нажмите имя должника, чтобы раскрыть историю звонков ниже.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button></div>
           <div id="callsDataSourceState" style="margin-top:10px;display:none"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div>
           <div id="callsNotice" class="notice" style="margin-bottom:12px"></div>
-          <div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Результат:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание платежа</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select></div></div>
-          <div class="panel"><div class="table-wrap"><table class="wide"><thead><tr><th>Время</th><th>Должник</th><th>Результат разговора</th><th>Решение</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Звонков пока нет.</b>Они появятся после запуска кампании.</div></div>
+          <div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход разговора:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание платежа</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select></div></div>
+          <div class="panel"><div class="table-wrap"><table class="wide"><thead><tr><th>Время</th><th>Должник</th><th>Статус попытки</th><th>Исход разговора</th><th>Решение</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Звонков пока нет.</b>Они появятся после запуска кампании.</div></div>
         </div>
       </section>
 
@@ -265,7 +265,7 @@
 <div class="modal" id="apiSourceModal" aria-hidden="true"><div class="modal-head"><div><h2>Подключить по API</h2><p>Макет обмена. Живая система не подключается.</p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"><div class="wizard-content"><span class="sr-only" id="apiSourceStatus">не подключено</span><div class="form-grid"><div class="field full"><label>Адрес обмена</label><input id="apiSourceUrl" placeholder="https://example.ru/exchange"></div><div class="field"><label>Логин</label><input id="apiSourceLogin" placeholder="Укажите логин"></div><div class="field"><label>Пароль</label><input id="apiSourceSecret" type="password" autocomplete="off" placeholder="Укажите пароль"></div><div class="field full"><label>Кампания</label><select id="apiSourceCampaign"><option>Просрочка 1–7 дней · Займы</option><option>Просрочка 8–30 дней · Рассрочка</option></select></div></div><div class="notice" id="apiSourceNotice" style="margin-top:16px">Подключение не настроено. Укажите данные обмена, чтобы записи поступали сами.</div></div></div><div class="modal-foot"><button class="btn" data-close>Отмена</button><div class="foot-right"><button class="btn primary" id="saveApiSource">Сохранить подключение</button></div></div></div>
 
 <aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
-      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Ход звонка</div><div id="callCardProgress"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход попытки и результат разговора</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Техническая диагностика</div><div id="callCardDiagnostics"></div></div></div></div></aside>
+      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Ход звонка</div><div id="callCardProgress"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Статус попытки · исход · решение</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Техническая диагностика</div><div id="callCardDiagnostics"></div></div></div></div></aside>
 <div class="modal" id="confirmActionModal" aria-hidden="true"><div class="modal-head"><div><h2 id="confirmActionTitle">Подтверждение</h2><p id="confirmActionText"></p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"></div><div class="modal-foot"><button class="btn" data-close id="confirmActionCancel">Отмена</button><div class="foot-right"><button class="btn primary" id="confirmActionOk">Запустить кампанию</button></div></div></div>
 <div hidden id="campaignLaunchReadinessShell">
   <div class="wizard-state state-empty" id="campaignLaunchReadinessPanel">
@@ -2615,7 +2615,7 @@
       const transcriptHtml=turns.length
         ? turns.map((turn)=>`<div class="dialog-turn ${turn.role === 'agent' ? 'ai' : 'person'}"><small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${turn.text}</div>`).join('')
         : '<div class="panel-sub">Расшифровки этого разговора нет.</div>';
-      return `<div class="call-expand-block"><div class="call-expand-head"><b>${item.startedAt}</b><span class="tag ${result.pill}">${result.label}</span></div><div class="panel-sub" style="margin-bottom:8px">Результат разговора</div><div style="margin-bottom:10px">${transcriptHtml}</div></div>`;
+      return `<div class="call-expand-block"><div class="call-expand-head"><b>${item.startedAt}</b><span class="tag ${result.pill}">${result.label}</span></div><div class="panel-sub" style="margin-bottom:8px">Расшифровка</div><div style="margin-bottom:10px">${transcriptHtml}</div></div>`;
     }).join('');
   }
   function renderCallsTable() {
@@ -2658,14 +2658,15 @@
       tr.innerHTML=`
         <td>${item.startedAt}</td>
         <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
-        <td><span class="tag ${result.pill}">${result.label}</span><div style="font-size:12px;color:var(--muted)">${formatDialStatusLabel(item.dialStatus || item.status)} · ${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
+        <td>${formatDialStatusLabel(item.dialStatus || item.status)}<div style="font-size:12px;color:var(--muted)">${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
+        <td><span class="tag ${result.pill}">${result.label}</span></td>
         <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
       `;
       tbody.appendChild(tr);
       if (expandedDebtorKey === debtorKey) {
         const expand=document.createElement('tr');
         expand.className='call-expand-row';
-        expand.innerHTML=`<td colspan="4">${buildCallExpandHtml(debtorKey)}</td>`;
+        expand.innerHTML=`<td colspan="5">${buildCallExpandHtml(debtorKey)}</td>`;
         tbody.appendChild(expand);
       }
     }
@@ -2749,10 +2750,13 @@
     }
     const resultEl=q('#callCardResult');
     if (resultEl) {
+      const decisionLabel = formatDecisionLabel(displayItem.complianceDecision?.decision);
+      const reasonLabel = displayItem.complianceDecision?.reasonText || formatReasonCodeLabel(displayItem.complianceDecision?.reasonCode) || '—';
       resultEl.innerHTML=`
       <b>Статус попытки:</b> ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}<br/>
-      <b>Результат разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
-      <b>Состояние разговора:</b> ${formatConversationStatusLabel(displayItem.conversationStatus)}
+      <b>Исход разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
+      <b>Решение:</b> <span class="tag ${formatDecisionStateClass(displayItem.complianceDecision?.decision)}">${decisionLabel}</span><br/>
+      <b>Причина:</b> ${reasonLabel}
     `;
     }
     const progress=q('#callCardProgress');

@@ -182,7 +182,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-006: Журнал звонков — две оси статуса
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Kit Attempt result vs Wrap-up; NICE dispositions
 

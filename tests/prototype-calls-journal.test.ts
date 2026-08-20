@@ -5,11 +5,12 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 const calls = html.match(/data-camp-view="calls"[\s\S]*?<\/section>/)?.[0] ?? html;
 
 describe('prototype calls journal', () => {
-  it('expands debtor rows inline with a single conversation result column', () => {
+  it('keeps attempt status, conversation outcome and decision in separate columns', () => {
     expect(calls).toContain('Должник');
-    expect(calls).toContain('Результат разговора');
-    expect(calls).not.toContain('Статус попытки');
-    expect(calls).not.toMatch(/<th[^>]*>Исход<\/th>/);
+    expect(calls).toContain('Статус попытки');
+    expect(calls).toContain('Исход разговора');
+    expect(calls).toContain('>Решение<');
+    expect(calls).not.toContain('>Результат разговора<');
     expect(html).toContain('debtor-link');
     expect(html).toContain('data-call-action="toggle"');
     expect(html).toContain('call-expand-row');
@@ -17,6 +18,7 @@ describe('prototype calls journal', () => {
     expect(html).not.toContain('value="transferred"');
     expect(calls).not.toContain('>Карточка<');
     expect(html).toContain('Звонков пока нет');
+    expect(html).toContain('colspan="5"');
   });
 
   it('maps list compliance statuses and keeps not checked decisions neutral', () => {
@@ -31,5 +33,10 @@ describe('prototype calls journal', () => {
     expect(html).toContain('formatDialStatusLabel(item.dialStatus || item.status)');
     expect(html).toContain('formatConversationStatusLabel(item.conversationStatus)');
     expect(html).toContain('formatEvidenceStatusLabel(item)');
+    expect(html).toContain('Статус попытки · исход · решение');
+    expect(html).toContain('<b>Исход разговора:</b>');
+    expect(html).toContain('<b>Решение:</b>');
+    expect(html).toContain('<b>Причина:</b>');
+    expect(html).not.toContain('<b>Результат разговора:</b>');
   });
 });

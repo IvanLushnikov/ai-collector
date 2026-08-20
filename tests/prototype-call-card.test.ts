@@ -20,7 +20,11 @@ describe('prototype call card', () => {
 
   it('shows recording and transcript state separately from outcome', () => {
     expect(html).toContain('Ход звонка');
-    expect(html).toContain('Исход попытки и результат разговора');
+    expect(html).toContain('Статус попытки · исход · решение');
+    expect(html).toContain('<b>Исход разговора:</b>');
+    expect(html).toContain('<b>Решение:</b>');
+    expect(html).toContain('<b>Причина:</b>');
+    expect(html).not.toContain('<b>Результат разговора:</b>');
     expect(html).toContain('id="callCardRecordingStatus"');
     expect(html).toContain('id="callCardTranscriptEmpty"');
     expect(html).toContain('Техническая диагностика');
