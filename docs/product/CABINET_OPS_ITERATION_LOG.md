@@ -3,12 +3,36 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-001
-- Следующая кандидат: OP-D-003
-- Риски/договорённости: `statusReason` берётся из audit `campaign.auto_paused`; режим в таблице по-прежнему «н/д» (не в DoD OP-T-001).
-- Инварианты уже в коде: OP-D-001 визуал; OP-D-002 колонки; OP-T-001 list API: `updatedAt`, `statusReason`, `progress{attemptedCalls,totalRecords}`.
+- Последняя закрытая: OP-D-003
+- Следующая кандидат: OP-D-004
+- Риски/договорённости: Force-stop в OP-D-004 зависит от OP-T-002 — часть UI может уйти в blocked/split.
+- Инварианты: OP-D-001…003, OP-T-001; на Обзоре риск-стек выше KPI, KPI `.is-risk` без зелёного «ok».
 
 ## Проходы
+
+## 2026-08-20 — OP-D-003 — done
+
+### Взял
+- OP-D-003: Обзор — риск выше KPI.
+
+### Контекст
+- Баннер автопаузы уже был над KPI; нужно закрепить стек рисков и не красить KPI «ok» при риске.
+
+### Сделал
+- `#campaignOverviewRiskStack` над `#campaignOverviewKpis`: автопауза, ручная пауза, очередь проверки, internal closed.
+- `setCampaignState` показывает баннеры по статусу; KPI получают `.is-risk` если статус ≠ `running` или виден риск.
+- CSS приглушает `.metric.ok` при `.is-risk`.
+- Регрессия: текста «риск-событий нет» нет.
+
+### Проверка
+- vitest overview + campaign-header — PASS
+- Скрин: `op_d_003_overview_risk_above_kpi.webp`
+
+### Состояние бэклога
+- Следующая `todo`: OP-D-004
+
+### Handoff
+- Следующий ID: **OP-D-004**. Force без OP-T-002 не показывать.
 
 ## 2026-08-20 — OP-T-001 — done
 

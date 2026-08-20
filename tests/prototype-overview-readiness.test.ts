@@ -12,4 +12,18 @@ describe('prototype overview', () => {
     expect(overview).not.toContain('campaignOverviewCostValue');
     expect(overview).not.toContain('Стоимость');
   });
+
+  it('keeps risk/status banners above KPI and mutes green KPI when not running', () => {
+    const riskIdx = overview.indexOf('id="campaignOverviewRiskStack"');
+    const kpiIdx = overview.indexOf('id="campaignOverviewKpis"');
+    expect(riskIdx).toBeGreaterThan(-1);
+    expect(kpiIdx).toBeGreaterThan(riskIdx);
+    expect(overview.indexOf('campaignAutoPauseBanner')).toBeGreaterThan(riskIdx);
+    expect(overview.indexOf('campaignAutoPauseBanner')).toBeLessThan(kpiIdx);
+    expect(overview.indexOf('campaignReviewQueueBanner')).toBeGreaterThan(riskIdx);
+    expect(overview.indexOf('campaignReviewQueueBanner')).toBeLessThan(kpiIdx);
+    expect(overview).not.toContain('риск-событий нет');
+    expect(html).toContain('#campaignOverviewKpis.is-risk .metric.ok');
+    expect(html).toContain("overviewKpis.classList.toggle('is-risk'");
+  });
 });
