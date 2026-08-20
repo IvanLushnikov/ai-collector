@@ -54,7 +54,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
 | 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
 | 25 | OP-T-012 | tech | Force stop: sandbox interrupt in-flight (`done`); live Exolve hangup — `T-149` |
-| 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) |
+| 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) · `done` |
 
 ---
 
@@ -712,7 +712,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-014: Force UI «Остановить немедленно»
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Зависимость: `OP-T-012`
 

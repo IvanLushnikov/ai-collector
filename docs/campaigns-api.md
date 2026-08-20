@@ -171,7 +171,7 @@ Content-Type: application/json
 
 1. **Нет обхода compliance:** Force не разрешает звонок, который был заблокирован проверкой ограничений; не снимает `auto_paused` и не подменяет safe-resume.
 2. **Нет нового статуса:** оба режима заканчиваются в `completed`.
-3. **UI:** Force («Остановить немедленно») — отдельный design-pass (`OP-D-014`); кабинет по умолчанию шлёт `stopMode: "graceful"` / default. Sandbox interrupt реализован (`OP-T-012`); live hangup — после `T-149`.
+3. **UI:** Force («Остановить немедленно») — отдельная ветка в статус-меню кабинета (`OP-D-014`); graceful — «Остановить кампанию». Sandbox interrupt реализован (`OP-T-012`); live hangup — после `T-149` (copy предупреждает об ограничении).
 
 ### Связь с pause
 

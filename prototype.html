@@ -3213,8 +3213,17 @@
     {status:'auto_paused', label:'приостановлена системой', systemOnly:true},
     {status:'ready', label:'готова к запуску'},
     {status:'draft', label:'черновик'},
-    {status:'completed', label:'остановить и завершить'}
+    {status:'completed', label:'остановить кампанию — без прерывания звонков'},
+    {status:'completed_force', label:'остановить немедленно — прервать активные звонки', forceStop:true}
   ];
+  function isCampaignLiveMode(){
+    return q('#campaignModeBadge')?.dataset.campaignMode === 'live';
+  }
+  function buildForceStopWarningSuffix(){
+    return isCampaignLiveMode()
+      ? ' На live-поставщиках (Exolve, Mango) прерывание активных звонков пока ограничено — кампания завершится, но звонок может дойти до конца.'
+      : ' Активные звонки в демо-контуре будут прерваны.';
+  }
   function closeCampaignStatusMenu(){
     q('#campaignStatusMenu')?.classList.remove('open');
   }
@@ -3246,19 +3255,45 @@
       const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
       openConfirm(
         'Остановить кампанию?',
-        `«${name}» будет завершена. Новые звонки не начнутся. Чтобы снова обзванивать, нужен новый запуск. Немедленной принудительной остановки в этом контуре нет.`,
+        `«${name}» будет завершена. Новые звонки не начнутся. Активные звонки этим действием не прерываются. Чтобы снова обзванивать, нужен новый запуск.`,
         'Остановить кампанию',
         async ()=>{
           const previousStatus=campaignLifecycle.status;
           setCampaignState('stopping',{actor:'operator',reason:'остановка кампании',force:true});
-          const result=await patchCampaignStatus('completed');
+          const result=await patchCampaignStatus('completed','graceful');
           if (!result.ok) {
             setCampaignState(previousStatus,{actor:'operator',reason:'остановка не выполнена',force:true});
             toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
             return;
           }
           setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
-          toast('Кампания завершена','Новые звонки не начнутся.');
+          toast('Кампания завершена','Новые звонки не начнутся. Активные звонки не прерывались.');
+        }
+      );
+      return;
+    }
+    if (nextStatus === 'completed_force') {
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Остановить немедленно?',
+        `«${name}» будет завершена. Новые звонки не начнутся.${buildForceStopWarningSuffix()} Чтобы снова обзванивать, нужен новый запуск.`,
+        'Остановить немедленно',
+        async ()=>{
+          const previousStatus=campaignLifecycle.status;
+          setCampaignState('stopping',{actor:'operator',reason:'немедленная остановка кампании',force:true});
+          const result=await patchCampaignStatus('completed','force');
+          if (!result.ok) {
+            setCampaignState(previousStatus,{actor:'operator',reason:'остановка не выполнена',force:true});
+            toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
+            return;
+          }
+          setCampaignState('completed',{actor:'operator',reason:'кампания остановлена немедленно'});
+          toast(
+            'Кампания завершена',
+            isCampaignLiveMode()
+              ? 'Новые звонки не начнутся. Активные live-звонки могли остаться без прерывания.'
+              : 'Активные звонки прерваны. Новые звонки не начнутся.'
+          );
         }
       );
       return;
@@ -4733,7 +4768,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     pendingConfirm=onOk;
     openLayer(q('#confirmActionModal'));
   }
-  async function patchCampaignStatus(status) {
+  async function patchCampaignStatus(status, stopMode) {
     const context=getCampaignContext();
     if (!context?.tenantId || !context?.campaignId) {
       return { ok:false, message:'Контекст кампании не найден.' };
@@ -4746,7 +4781,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
           'Content-Type':'application/json',
           'X-User-Role':currentAuth.role
         },
-        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed', stopMode: 'graceful' } : { status })
+        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed', stopMode: stopMode || 'graceful' } : { status })
       });
       const body=await response.json().catch(()=>({}));
       if (!response.ok) {

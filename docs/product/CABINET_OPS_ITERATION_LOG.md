@@ -3,11 +3,28 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-009
+- Последняя закрытая: OP-D-014
 - Следующая кандидат: OP-D-011
 - Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked; live Exolve hangup T-149.
 
 ## Проходы
+
+## 2026-08-20 — OP-D-014 — done
+
+### Взял
+- OP-D-014: Force UI «Остановить немедленно» после OP-T-012 (sandbox interrupt).
+
+### Сделал
+- Отдельная ветка меню статуса `completed_force` + модалка «Остановить немедленно?» — не смешивается с graceful «Остановить кампанию».
+- `patchCampaignStatus(status, stopMode)` шлёт `stopMode: 'force'` / `'graceful'`; copy по `PRODUCT_LANGUAGE.md`.
+- Честная оговорка для live (Exolve/Mango): прерывание активных звонков ограничено до `T-149`; sandbox/demo — активные звонки прерываются.
+- Sync `public/prototype.html`; tests `prototype-stop-confirm.test.ts`.
+
+### Проверка
+- vitest tests/prototype-stop-confirm.test.ts
+
+### Handoff
+- Live force interrupt UI copy уже честный; полное live hangup — после `T-149`.
 
 ## 2026-08-20 — OP-D-009 — done
 
