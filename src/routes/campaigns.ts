@@ -1276,9 +1276,12 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           campaignId: params.data.campaignId,
           fromStatus: previousStatus,
           toStatus: nextStatus,
+          previousValue: previousStatus,
+          nextValue: nextStatus,
           ...(stopMode
             ? {
                 stopMode,
+                reason: stopMode,
                 forceInterruptsActiveAttempts: stopMode === 'force',
                 complianceBypass: false
               }
@@ -1377,6 +1380,9 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
             campaignId: params.data.campaignId,
             fromStatus: 'auto_paused',
             toStatus: payload.data.targetStatus,
+            previousValue: 'auto_paused',
+            nextValue: payload.data.targetStatus,
+            reason: 'safe_resume',
             checklist,
             forceCall: false
           }

@@ -69,6 +69,32 @@
 - В MVP-реализации фильтрация делается по уже полученным событиям для указанного tenant на уровне приложения.
 - Результат отсортирован по `createdAt` убыванием в контрактном виде.
 
+## Metadata: previous / next (OP-T-003)
+
+Для критичных переходов (смена статуса кампании, safe-resume) в `metadata` пишутся additive поля:
+
+- `previousValue` — значение до изменения (для статуса — прежний status);
+- `nextValue` — значение после изменения;
+- `reason` — краткая причина, если известна (например `graceful` / `force` / `safe_resume`);
+- совместимость: `fromStatus` / `toStatus` сохраняются; старые события без новых полей валидны.
+
+Пример для остановки кампании:
+
+```json
+{
+  "action": "campaign.status_updated",
+  "metadata": {
+    "campaignId": "uuid",
+    "fromStatus": "running",
+    "toStatus": "completed",
+    "previousValue": "running",
+    "nextValue": "completed",
+    "reason": "graceful",
+    "stopMode": "graceful"
+  }
+}
+```
+
 ## GET: список событий кампании
 
 `GET /tenants/:tenantId/campaigns/:campaignId/audit-logs`

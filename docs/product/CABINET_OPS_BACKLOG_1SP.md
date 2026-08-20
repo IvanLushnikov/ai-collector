@@ -456,7 +456,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-003: Audit previous/next value
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk Audit Logs Report
 

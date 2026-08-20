@@ -3,12 +3,31 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-005
-- Следующая кандидат: OP-T-003
-- Риски/договорённости: фильтры журнала UI готовы; данные previous/next из API — OP-T-003 / OP-T-009.
-- Инварианты: decision-trail колонки журнала; stopMode API; ops-таблица; риск над KPI.
+- Последняя закрытая: OP-T-003
+- Следующая кандидат: OP-D-006
+- Риски/договорённости: previous/next additive в audit; UI журнала уже ждёт поля (OP-D-005).
+- Инварианты: OP-D-001…005, OP-T-001…003 (+002a/b).
 
 ## Проходы
+
+## 2026-08-20 — OP-T-003 — done
+
+### Взял
+- OP-T-003: audit previous/next value.
+
+### Сделал
+- `campaign.status_updated` и `campaign.safe_resumed`: metadata.previousValue / nextValue / reason (additive).
+- `docs/audit-logs-api.md` обновлён.
+- Тест `campaigns.audit-previous-next.test.ts`.
+
+### Проверка
+- vitest audit-previous-next + stop-mode + campaigns.create — 66 PASS
+
+### Состояние бэклога
+- Следующая `todo`: OP-D-006
+
+### Handoff
+- **OP-D-006**: журнал звонков — две оси статуса; зависит от OP-T-004 для полного контракта.
 
 ## 2026-08-20 — OP-D-005 — done
 

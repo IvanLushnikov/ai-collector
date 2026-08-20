@@ -929,7 +929,9 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
         metadata: {
           campaignId: 'campaign-draft',
           fromStatus: 'draft',
-          toStatus: 'review'
+          toStatus: 'review',
+          previousValue: 'draft',
+          nextValue: 'review'
         }
       }
     });
