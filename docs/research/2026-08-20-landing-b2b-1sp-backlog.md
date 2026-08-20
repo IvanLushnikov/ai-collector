@@ -545,6 +545,7 @@
 | 2026-08-20 | visual polish | Смелый redesign: ink hero, Bricolage+Source Sans 3, signal amber CTA, ledger aesthetics |
 | 2026-08-20 | motion+checkbox | Fix checkbox grid; brighter signal; hero/CTA motion; scroll reveals; card hovers |
 | 2026-08-20 | visual v3 | Light Stripe/MT/Linear: cobalt accent, product UI mock, audit-trail dark block, metrics+flow |
+| 2026-08-20 | layout polish | Hero one panel; metrics RU; 4-step scroll gallery + live UI; synced card heights |
 
 ---
 

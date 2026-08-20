@@ -183,9 +183,17 @@
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
-      gap: 36px;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 32px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100%;
+      padding: 8px 0;
     }
 
     .eyebrow {
@@ -258,23 +266,36 @@
 
     .hero-link:hover { color: var(--ink); }
 
-    .hero-aside {
-      display: grid;
-      gap: 16px;
+    @keyframes float-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.985); }
+      to { opacity: 1; transform: none; }
     }
 
-    .product-frame {
+    .hero-aside {
+      display: flex;
+      min-height: 100%;
+    }
+
+    .hero-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
       background: #fff;
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 24px;
       box-shadow: var(--shadow);
       overflow: hidden;
       animation: float-in 0.7s ease both;
     }
 
-    @keyframes float-in {
-      from { opacity: 0; transform: translateY(18px) scale(0.985); }
-      to { opacity: 1; transform: none; }
+    .product-frame {
+      background: linear-gradient(180deg, #f8faff, #f3f6fc);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+      animation: none;
+      flex: 1 1 auto;
     }
 
     .product-chrome {
@@ -282,7 +303,7 @@
       align-items: center;
       gap: 8px;
       padding: 12px 14px;
-      background: linear-gradient(180deg, #fbfcff, #f3f6fb);
+      background: transparent;
       border-bottom: 1px solid var(--line);
     }
 
@@ -308,9 +329,7 @@
       display: grid;
       gap: 10px;
       padding: 14px;
-      background:
-        linear-gradient(180deg, rgba(27, 77, 255, 0.03), transparent 40%),
-        #f8fafc;
+      background: transparent;
     }
 
     .ui-card {
@@ -392,41 +411,43 @@
     }
 
     .hero-form-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      padding: 22px;
-      animation: float-in 0.7s ease 0.1s both;
+      background: #fff;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 18px 18px 20px;
+      animation: none;
+      flex: 0 0 auto;
     }
 
     .hero-form-card h2 {
       margin: 0;
-      font-size: 22px;
+      font-size: 20px;
       line-height: 1.15;
       letter-spacing: -0.03em;
       font-weight: 800;
     }
 
     .hero-form-card > p {
-      margin: 8px 0 0;
+      margin: 6px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .demo-expect {
-      margin: 12px 0 0;
+      margin: 10px 0 0;
       padding: 0 0 0 18px;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       display: grid;
-      gap: 5px;
+      gap: 4px;
     }
 
     .demo-form {
       display: grid;
-      gap: 12px;
-      margin-top: 16px;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .demo-form label {
@@ -551,21 +572,28 @@
       border-radius: var(--radius);
       padding: 22px 20px;
       box-shadow: var(--shadow-sm);
+      min-height: 148px;
+      display: flex;
+      flex-direction: column;
     }
 
     .metric-card strong {
       display: block;
-      font-size: clamp(28px, 3vw, 36px);
-      letter-spacing: -0.04em;
-      line-height: 1;
+      font-size: clamp(22px, 2.4vw, 28px);
+      letter-spacing: -0.035em;
+      line-height: 1.15;
       color: var(--ink);
+      min-height: 2.4em;
     }
 
     .metric-card span {
       display: block;
-      margin-top: 10px;
+      margin-top: auto;
+      padding-top: 12px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.45;
+      min-height: 4.2em;
     }
 
     .metric-note {
@@ -602,6 +630,22 @@
       padding: 22px;
       box-shadow: var(--shadow-sm);
       transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+
+    .value-card {
+      min-height: 168px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .value-card strong {
+      min-height: 2.5em;
+    }
+
+    .value-card span {
+      margin-top: 10px;
+      line-height: 1.45;
+      min-height: 4.4em;
     }
 
     .value-card:hover,
@@ -709,6 +753,187 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
+
+    .gallery-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .gallery-head .section-head { margin: 0; flex: 1; }
+
+    .gallery-nav {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .gallery-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 700;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .gallery-btn:hover {
+      transform: translateY(-1px);
+      border-color: #c9d3e6;
+    }
+
+    .gallery-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .gallery-track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(260px, 1fr);
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      padding: 4px 2px 12px;
+      scrollbar-width: none;
+    }
+
+    .gallery-track::-webkit-scrollbar { display: none; }
+
+    .gallery-card {
+      scroll-snap-align: start;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      min-height: 248px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .gallery-card.is-active {
+      border-color: #9db0ff;
+      box-shadow: 0 16px 40px rgba(27, 77, 255, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .gallery-card .step-index {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .gallery-card.is-active .step-index {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .gallery-card strong {
+      display: block;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      min-height: 2.5em;
+    }
+
+    .gallery-card p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      min-height: 5.8em;
+    }
+
+    .gallery-live {
+      background: #0b1220;
+      border-radius: 18px;
+      padding: 18px;
+      color: #e8eefc;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 248px;
+    }
+
+    .gallery-live-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(232, 238, 252, 0.55);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .gallery-live-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      min-height: 2.5em;
+      color: #fff;
+    }
+
+    .gallery-live-body {
+      margin-top: 10px;
+      color: rgba(232, 238, 252, 0.72);
+      font-size: 14px;
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    .gallery-live-status {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .gallery-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .gallery-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      justify-content: center;
+    }
+
+    .gallery-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 0;
+      background: #c9d3e6;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .gallery-dot.is-active { background: var(--accent); }
 
     .step-card {
       display: grid;
@@ -953,17 +1178,14 @@
       to { opacity: 1; transform: none; }
     }
 
-    #how-it-works .step-card {
+    #how-it-works .gallery-card {
       animation: step-in 0.45s ease both;
     }
 
-    #how-it-works .step-card:nth-child(1) { animation-delay: 0.04s; }
-    #how-it-works .step-card:nth-child(2) { animation-delay: 0.08s; }
-    #how-it-works .step-card:nth-child(3) { animation-delay: 0.12s; }
-    #how-it-works .step-card:nth-child(4) { animation-delay: 0.16s; }
-    #how-it-works .step-card:nth-child(5) { animation-delay: 0.2s; }
-    #how-it-works .step-card:nth-child(6) { animation-delay: 0.24s; }
-    #how-it-works .step-card:nth-child(7) { animation-delay: 0.28s; }
+    #how-it-works .gallery-card:nth-child(1) { animation-delay: 0.04s; }
+    #how-it-works .gallery-card:nth-child(2) { animation-delay: 0.08s; }
+    #how-it-works .gallery-card:nth-child(3) { animation-delay: 0.12s; }
+    #how-it-works .gallery-card:nth-child(4) { animation-delay: 0.16s; }
 
     .reveal {
       opacity: 0;
@@ -1043,12 +1265,16 @@
       .steps-grid,
       .roles-grid,
       .audit-panel,
-      .flow {
+      .flow,
+      .gallery-shell {
         grid-template-columns: 1fr;
       }
 
       .flow-step::after { content: none; }
       .hero h1 { max-width: none; }
+      .gallery-track {
+        grid-auto-columns: minmax(78%, 1fr);
+      }
     }
 
     @media (max-width: 760px) {
@@ -1112,104 +1338,106 @@
     <section class="hero">
       <div class="container">
         <div class="hero-grid">
-          <div>
+          <div class="hero-copy">
             <span class="eyebrow">Для банков, МФО и ПКО</span>
             <h1>ИИ-коллектор: управляемый пилот телефонного взыскания</h1>
             <p class="hero-lead">Автоматизируем диалог с должником: система соблюдает правила коммуникации и фиксирует каждое действие. Это не полностью автономное взыскание: спорные случаи остаются у специалиста.</p>
             <p class="hero-points">Проверки · специалист · журнал</p>
             <div class="hero-cta-row">
               <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
-              <a class="btn btn-ghost" href="#audit">Смотреть audit trail</a>
+              <a class="btn btn-ghost" href="#audit">Смотреть журнал проверок</a>
             </div>
             <a class="hero-link" href="#how-it-works">Как устроен продукт</a>
           </div>
 
           <div class="hero-aside">
-            <div class="product-frame" aria-hidden="true">
-              <div class="product-chrome">
-                <span class="product-dot"></span>
-                <span class="product-dot"></span>
-                <span class="product-dot"></span>
-                <span>Кампания · Soft collection</span>
-              </div>
-              <div class="product-body">
-                <div class="ui-card">
-                  <div class="ui-card-top">
-                    <strong>Кампания «Портфель Q2»</strong>
-                    <span class="ui-badge">В работе</span>
-                  </div>
-                  <div class="ui-meta">
-                    <div>Готово к звонку: <b>1 284</b></div>
-                    <div>На проверке: <b>37</b></div>
-                  </div>
+            <div class="hero-panel">
+              <div class="product-frame" aria-hidden="true">
+                <div class="product-chrome">
+                  <span class="product-dot"></span>
+                  <span class="product-dot"></span>
+                  <span class="product-dot"></span>
+                  <span>Кабинет · кампания взыскания</span>
                 </div>
-                <div class="ui-row">
+                <div class="product-body">
                   <div class="ui-card">
                     <div class="ui-card-top">
-                      <strong>Звонок</strong>
-                      <span class="ui-badge ok">Идёт</span>
+                      <strong>Кампания «Портфель Q2»</strong>
+                      <span class="ui-badge">В работе</span>
                     </div>
-                    <div class="ui-meta">Диалог по сценарию · 02:14</div>
+                    <div class="ui-meta">
+                      <div>Готово к звонку: <b>1 284</b></div>
+                      <div>На проверке: <b>37</b></div>
+                    </div>
+                  </div>
+                  <div class="ui-row">
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Звонок</strong>
+                        <span class="ui-badge ok">Идёт</span>
+                      </div>
+                      <div class="ui-meta">Диалог по сценарию · 02:14</div>
+                    </div>
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Исход</strong>
+                        <span class="ui-badge">Обещание</span>
+                      </div>
+                      <div class="ui-meta">Платёж · завтра</div>
+                    </div>
                   </div>
                   <div class="ui-card">
                     <div class="ui-card-top">
-                      <strong>Исход</strong>
-                      <span class="ui-badge">PTP</span>
+                      <strong>Журнал действий</strong>
+                      <span class="ui-badge ok">Проверки</span>
                     </div>
-                    <div class="ui-meta">Обещание платежа · завтра</div>
-                  </div>
-                </div>
-                <div class="ui-card">
-                  <div class="ui-card-top">
-                    <strong>Журнал действий</strong>
-                    <span class="ui-badge ok">Compliance</span>
-                  </div>
-                  <div class="ui-log">
-                    <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
-                    <div class="ui-log-item"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
-                    <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
+                    <div class="ui-log">
+                      <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
+                      <div class="ui-log-item"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
+                      <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
+                <h2>Назначить демо</h2>
+                <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
+                <ul class="demo-expect">
+                  <li>проверки до звонка;</li>
+                  <li>передача спорного случая специалисту;</li>
+                  <li>журнал действий по шагам.</li>
+                </ul>
+                <form class="demo-form" id="demoForm" novalidate>
+                  <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+
+                  <div class="form-notice error" id="demoError" hidden></div>
+
+                  <label>
+                    <span>Имя</span>
+                    <input id="demoName" name="name" type="text" autocomplete="name" required>
+                  </label>
+                  <label>
+                    <span>Компания</span>
+                    <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
+                  </label>
+                  <label>
+                    <span>Email</span>
+                    <input id="demoEmail" name="email" type="email" autocomplete="email" required>
+                  </label>
+                  <label>
+                    <span>Телефон</span>
+                    <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
+                  </label>
+                  <label class="check-row">
+                    <input id="demoAgree" name="agree" type="checkbox" required>
+                    <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
+                  </label>
+                  <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
+                  <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+                </form>
+              </aside>
             </div>
-
-            <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
-              <h2>Назначить демо</h2>
-              <p>На встрече пройдём управляемый сценарий пилота. Без обзвона вашей боевой базы.</p>
-              <ul class="demo-expect">
-                <li>проверки ограничений до звонка;</li>
-                <li>эскалация спорного случая специалисту;</li>
-                <li>журнал действий по шагам.</li>
-              </ul>
-              <form class="demo-form" id="demoForm" novalidate>
-                <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
-
-                <div class="form-notice error" id="demoError" hidden></div>
-
-                <label>
-                  <span>Имя</span>
-                  <input id="demoName" name="name" type="text" autocomplete="name" required>
-                </label>
-                <label>
-                  <span>Компания</span>
-                  <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
-                </label>
-                <label>
-                  <span>Email</span>
-                  <input id="demoEmail" name="email" type="email" autocomplete="email" required>
-                </label>
-                <label>
-                  <span>Телефон</span>
-                  <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
-                </label>
-                <label class="check-row">
-                  <input id="demoAgree" name="agree" type="checkbox" required>
-                  <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
-                </label>
-                <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
-                <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-              </form>
-            </aside>
           </div>
         </div>
       </div>
@@ -1219,19 +1447,18 @@
       <div class="container">
         <div class="metrics-grid">
           <article class="metric-card reveal">
-            <strong>до −60%</strong>
-            <span>стоимости контакта в пилоте относительно ручного обзвона</span>
+            <strong>Меньше ручных звонков</strong>
+            <span>ИИ берёт на себя повторяющийся обзвон, а команда смотрит результат и спорные случаи.</span>
           </article>
           <article class="metric-card reveal reveal-delay-1">
-            <strong>24/7</strong>
-            <span>автоматизация допустимых сценариев в согласованном окне</span>
+            <strong>Только в разрешённые часы</strong>
+            <span>Перед звонком система проверяет время, частоту и правила — и не идёт дальше, если нельзя.</span>
           </article>
           <article class="metric-card reveal reveal-delay-2">
-            <strong>100%</strong>
-            <span>существенных действий фиксируются в журнале</span>
+            <strong>Всё видно в журнале</strong>
+            <span>Кто звонил, что сказал должник, какой исход и почему принято решение — без «чёрного ящика».</span>
           </article>
         </div>
-        <p class="metric-note">Ориентиры для управляемого пилота; фактический эффект зависит от базы, сценария и ограничений.</p>
       </div>
     </section>
 
@@ -1239,16 +1466,16 @@
       <div class="container">
         <div class="value-strip">
           <article class="value-card reveal">
-            <strong>Кампании и база</strong>
-            <span>Загрузите базу, настройте сценарий и запустите обзвон в одном кабинете.</span>
+            <strong>Кампании в одном месте</strong>
+            <span>База, сценарий и запуск обзвона собираются в одном кабинете без переключений между системами.</span>
           </article>
           <article class="value-card reveal reveal-delay-1">
-            <strong>Диалоги и результат</strong>
-            <span>ИИ ведёт разговор, фиксирует исход и обещания платежа.</span>
+            <strong>Диалог и понятный исход</strong>
+            <span>ИИ ведёт разговор по сценарию, фиксирует результат и обещание платежа по каждому контакту.</span>
           </article>
           <article class="value-card reveal reveal-delay-2">
-            <strong>Контроль в процессе</strong>
-            <span>Ограничения, журнал действий и перевод оператору — без отдельного «контура безопасности».</span>
+            <strong>Контроль прямо в процессе</strong>
+            <span>Ограничения, журнал действий и передача специалисту встроены в обычную работу кампании.</span>
           </article>
         </div>
       </div>
@@ -1257,76 +1484,67 @@
     <section class="alt" id="flow">
       <div class="container">
         <div class="section-head reveal">
-          <h2>От базы до следующего действия</h2>
-          <p class="section-lead">Один контур вместо набора разрозненных инструментов.</p>
+          <h2>От базы до следующего шага</h2>
+          <p class="section-lead">Один процесс вместо набора разрозненных инструментов.</p>
         </div>
         <div class="flow reveal">
           <div class="flow-step"><b>01</b><span>База должников</span></div>
           <div class="flow-step"><b>02</b><span>Проверка ограничений</span></div>
-          <div class="flow-step"><b>03</b><span>AI-звонок</span></div>
-          <div class="flow-step"><b>04</b><span>Результат</span></div>
-          <div class="flow-step"><b>05</b><span>Следующее действие</span></div>
+          <div class="flow-step"><b>03</b><span>Звонок по сценарию</span></div>
+          <div class="flow-step"><b>04</b><span>Результат разговора</span></div>
+          <div class="flow-step"><b>05</b><span>Следующий шаг</span></div>
         </div>
       </div>
     </section>
 
     <section id="how-it-works">
       <div class="container">
-        <div class="section-head reveal">
-          <h2>Как это работает</h2>
-          <p class="section-lead">От настройки пилота до журнала действий — один управляемый процесс.</p>
+        <div class="gallery-head">
+          <div class="section-head reveal">
+            <h2>Как это работает</h2>
+            <p class="section-lead">Четыре равных шага. Листайте галерею — справа обновляется живой экран процесса.</p>
+          </div>
+          <div class="gallery-nav" aria-label="Навигация по шагам">
+            <button type="button" class="gallery-btn" id="galleryPrev" aria-label="Предыдущий шаг">←</button>
+            <button type="button" class="gallery-btn" id="galleryNext" aria-label="Следующий шаг">→</button>
+          </div>
         </div>
-        <div class="steps-grid">
-          <article class="step-card">
-            <div class="step-index">01</div>
-            <div>
-              <strong>Подключаем сценарий и контекст пилота</strong>
-              <p>Задача взыскания, сценарий диалога и рамки пилота — в одном месте.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">02</div>
-            <div>
+
+        <div class="gallery-shell">
+          <div class="gallery-track" id="galleryTrack" tabindex="0" aria-label="Шаги процесса">
+            <article class="gallery-card is-active" data-step="0">
+              <div class="step-index">01</div>
+              <strong>Подключаем сценарий и рамки пилота</strong>
+              <p>Задаём задачу взыскания, сценарий разговора и границы пилота. Всё собирается в одном месте до первого звонка.</p>
+            </article>
+            <article class="gallery-card" data-step="1">
+              <div class="step-index">02</div>
               <strong>Проверка ограничений перед действиями</strong>
-              <p>До звонка система оценивает, можно ли выполнять следующий шаг.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">03</div>
-            <div>
-              <strong>Готовим допустимые контакты и расписание</strong>
-              <p>В работу попадают только подходящие контакты в разрешённое время.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">04</div>
-            <div>
+              <p>До звонка система смотрит время, частоту и правила. Если шаг недопустим — обзвон не продолжается автоматически.</p>
+            </article>
+            <article class="gallery-card" data-step="2">
+              <div class="step-index">03</div>
               <strong>Ведём управляемый диалог</strong>
-              <p>ИИ ведёт разговор по сценарию и фиксирует исход.</p>
+              <p>ИИ говорит по сценарию, держит тон и фиксирует исход. Спорные моменты не «проглатываются» в общем потоке.</p>
+            </article>
+            <article class="gallery-card" data-step="3">
+              <div class="step-index">04</div>
+              <strong>Передаём специалисту и пишем журнал</strong>
+              <p>Сложный случай уходит человеку с контекстом. По каждому шагу остаётся запись: что сделали и какой результат.</p>
+            </article>
+          </div>
+
+          <aside class="gallery-live" id="galleryLive" aria-live="polite">
+            <div class="gallery-live-label">Живой экран</div>
+            <div class="gallery-live-title" id="galleryLiveTitle">Подключаем сценарий и рамки пилота</div>
+            <div class="gallery-live-body" id="galleryLiveBody">В кабинете видны задача, сценарий и границы пилота. Команда понимает, что именно запускается.</div>
+            <div class="gallery-live-status" id="galleryLiveStatus">
+              <span class="gallery-chip">Сценарий готов</span>
+              <span class="gallery-chip">Пилот ограничен</span>
             </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">05</div>
-            <div>
-              <strong>Выделяем спорные ситуации</strong>
-              <p>Рискованные и неоднозначные случаи отделяются от автоматического потока.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">06</div>
-            <div>
-              <strong>Передаём специалисту</strong>
-              <p>Спорный случай уходит человеку с полным контекстом разговора.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">07</div>
-            <div>
-              <strong>Результат и журнал действий</strong>
-              <p>Исходы, прогресс кампании и журнал — по фактам, без выдуманных цифр.</p>
-            </div>
-          </article>
+          </aside>
         </div>
+        <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
       </div>
     </section>
 
@@ -1642,6 +1860,109 @@
         { threshold: 0.16, rootMargin: '0px 0px -8% 0px' }
       );
       nodes.forEach((node) => observer.observe(node));
+    })();
+
+    (() => {
+      const track = document.getElementById('galleryTrack');
+      const prev = document.getElementById('galleryPrev');
+      const next = document.getElementById('galleryNext');
+      const dotsWrap = document.getElementById('galleryDots');
+      const liveTitle = document.getElementById('galleryLiveTitle');
+      const liveBody = document.getElementById('galleryLiveBody');
+      const liveStatus = document.getElementById('galleryLiveStatus');
+      if (!track || !prev || !next || !liveTitle || !liveBody || !liveStatus) return;
+
+      const cards = Array.from(track.querySelectorAll('.gallery-card'));
+      const scenes = [
+        {
+          title: 'Подключаем сценарий и рамки пилота',
+          body: 'В кабинете видны задача, сценарий и границы пилота. Команда понимает, что именно запускается.',
+          chips: ['Сценарий готов', 'Пилот ограничен']
+        },
+        {
+          title: 'Проверка ограничений перед действиями',
+          body: 'Перед звонком система проверяет время и частоту. Если звонить нельзя — шаг останавливается.',
+          chips: ['Время ок', 'Частота ок']
+        },
+        {
+          title: 'Ведём управляемый диалог',
+          body: 'Идёт разговор по сценарию. Исход и ключевые фразы фиксируются в карточке контакта.',
+          chips: ['Диалог 02:14', 'Исход: обещание']
+        },
+        {
+          title: 'Передаём специалисту и пишем журнал',
+          body: 'Спорный случай уходит человеку вместе с историей. В журнале остаётся полная цепочка шагов.',
+          chips: ['Передано специалисту', 'Журнал обновлён']
+        }
+      ];
+
+      let index = 0;
+
+      function renderDots() {
+        if (!dotsWrap) return;
+        dotsWrap.innerHTML = '';
+        cards.forEach((_, i) => {
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.className = 'gallery-dot' + (i === index ? ' is-active' : '');
+          dot.setAttribute('aria-label', 'Шаг ' + (i + 1));
+          dot.addEventListener('click', () => goTo(i));
+          dotsWrap.appendChild(dot);
+        });
+      }
+
+      function syncLive() {
+        const scene = scenes[index];
+        liveTitle.textContent = scene.title;
+        liveBody.textContent = scene.body;
+        liveStatus.innerHTML = scene.chips
+          .map((chip) => '<span class="gallery-chip">' + chip + '</span>')
+          .join('');
+        cards.forEach((card, i) => card.classList.toggle('is-active', i === index));
+        renderDots();
+      }
+
+      function goTo(nextIndex) {
+        index = (nextIndex + cards.length) % cards.length;
+        const card = cards[index];
+        card.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        syncLive();
+      }
+
+      prev.addEventListener('click', () => goTo(index - 1));
+      next.addEventListener('click', () => goTo(index + 1));
+      cards.forEach((card, i) => card.addEventListener('click', () => goTo(i)));
+
+      track.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          goTo(index + 1);
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goTo(index - 1);
+        }
+      });
+
+      let autoTimer = null;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function startAuto() {
+        if (reduced) return;
+        stopAuto();
+        autoTimer = window.setInterval(() => goTo(index + 1), 4200);
+      }
+      function stopAuto() {
+        if (autoTimer) window.clearInterval(autoTimer);
+        autoTimer = null;
+      }
+
+      track.addEventListener('mouseenter', stopAuto);
+      track.addEventListener('mouseleave', startAuto);
+      prev.addEventListener('mouseenter', stopAuto);
+      next.addEventListener('mouseenter', stopAuto);
+
+      syncLive();
+      startAuto();
     })();
   </script>
 </body>
