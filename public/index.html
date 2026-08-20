@@ -177,23 +177,24 @@
 
     .hero {
       position: relative;
-      padding: 48px 0 28px;
+      padding: 56px 0 40px;
       overflow: hidden;
     }
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 32px;
-      align-items: stretch;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 48px;
+      align-items: center;
+      min-height: min(560px, 72vh);
     }
 
     .hero-copy {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      min-height: 100%;
-      padding: 8px 0;
+      padding: 12px 0;
+      max-width: 540px;
     }
 
     .eyebrow {
@@ -250,13 +251,13 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
+      align-items: center;
       margin-top: 28px;
     }
 
     .hero-link {
       display: inline-flex;
       align-items: center;
-      margin-top: 16px;
       color: var(--muted);
       font-weight: 600;
       font-size: 14px;
@@ -273,29 +274,47 @@
 
     .hero-aside {
       display: flex;
-      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hero-aside::before {
+      content: "";
+      position: absolute;
+      inset: 8% -4% 8% 8%;
+      background: radial-gradient(circle at 70% 30%, rgba(27, 77, 255, 0.18), transparent 55%);
+      filter: blur(8px);
+      z-index: 0;
+      pointer-events: none;
     }
 
     .hero-panel {
       width: 100%;
-      display: flex;
-      flex-direction: column;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      max-width: 520px;
+      position: relative;
+      z-index: 1;
+      display: block;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
       animation: float-in 0.7s ease both;
     }
 
     .product-frame {
-      background: linear-gradient(180deg, #f8faff, #f3f6fc);
-      border: 0;
-      border-radius: 0;
-      box-shadow: none;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
       overflow: hidden;
-      animation: none;
-      flex: 1 1 auto;
+      transform: perspective(1200px) rotateY(-6deg) rotateX(2deg);
+      transition: transform 0.35s ease;
+    }
+
+    .product-frame:hover {
+      transform: perspective(1200px) rotateY(-2deg) rotateX(0deg) translateY(-4px);
     }
 
     .product-chrome {
@@ -329,7 +348,7 @@
       display: grid;
       gap: 10px;
       padding: 14px;
-      background: transparent;
+      background: linear-gradient(180deg, #f7f9fc, #eef2f8);
     }
 
     .ui-card {
@@ -410,44 +429,92 @@
       font-weight: 700;
     }
 
+    .hero-form-band {
+      margin-top: 36px;
+    }
+
     .hero-form-card {
       background: #fff;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      box-shadow: none;
-      padding: 18px 18px 20px;
-      animation: none;
-      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      animation: float-in 0.7s ease 0.08s both;
     }
 
     .hero-form-card h2 {
       margin: 0;
-      font-size: 20px;
+      font-size: 22px;
       line-height: 1.15;
       letter-spacing: -0.03em;
       font-weight: 800;
     }
 
-    .hero-form-card > p {
+    .hero-form-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .hero-form-card > p,
+    .hero-form-top p {
       margin: 6px 0 0;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 14px;
+      max-width: 36rem;
     }
 
     .demo-expect {
-      margin: 10px 0 0;
-      padding: 0 0 0 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
       color: var(--muted);
       font-size: 13px;
-      display: grid;
-      gap: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      max-width: 420px;
+    }
+
+    .demo-expect li {
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .demo-expect li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.45em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
     }
 
     .demo-form {
       display: grid;
-      gap: 10px;
-      margin-top: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      gap: 12px;
+      margin-top: 0;
+      align-items: end;
+    }
+
+    .demo-form .check-row,
+    .demo-form .form-notice,
+    .demo-form .form-success,
+    .demo-form input[hidden],
+    .demo-form input[type="hidden"] {
+      grid-column: 1 / -1;
+    }
+
+    .demo-form .btn-block {
+      width: auto;
+      white-space: nowrap;
+      min-height: 44px;
+      padding-inline: 20px;
     }
 
     .demo-form label {
@@ -557,25 +624,33 @@
     }
 
     .metrics {
-      padding: 8px 0 28px;
+      padding: 8px 0 8px;
     }
 
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
+      gap: 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     .metric-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 22px 20px;
-      box-shadow: var(--shadow-sm);
-      min-height: 148px;
+      background: transparent;
+      border: 0;
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      padding: 28px 24px;
+      box-shadow: none;
+      min-height: 0;
       display: flex;
       flex-direction: column;
     }
+
+    .metric-card:last-child { border-right: 0; }
 
     .metric-card strong {
       display: block;
@@ -583,23 +658,21 @@
       letter-spacing: -0.035em;
       line-height: 1.15;
       color: var(--ink);
-      min-height: 2.4em;
+      min-height: 0;
     }
 
     .metric-card span {
       display: block;
-      margin-top: auto;
-      padding-top: 12px;
+      margin-top: 10px;
+      padding-top: 0;
       color: var(--muted);
       font-size: 14px;
       line-height: 1.45;
-      min-height: 4.2em;
+      min-height: 0;
     }
 
     .metric-note {
-      margin: 12px 0 0;
-      color: #8791a3;
-      font-size: 12px;
+      display: none;
     }
 
     .value-band {
@@ -1275,6 +1348,28 @@
       .gallery-track {
         grid-auto-columns: minmax(78%, 1fr);
       }
+
+      .demo-form {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .demo-form .btn-block {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
+      .hero-form-top {
+        flex-direction: column;
+      }
+
+      .product-frame {
+        transform: none;
+      }
+
+      .hero-grid {
+        min-height: 0;
+        gap: 28px;
+      }
     }
 
     @media (max-width: 760px) {
@@ -1303,6 +1398,10 @@
       }
 
       .ui-row { grid-template-columns: 1fr; }
+
+      .demo-form {
+        grid-template-columns: 1fr;
+      }
 
       .sticky-shell {
         flex-direction: column;
@@ -1345,9 +1444,8 @@
             <p class="hero-points">Проверки · специалист · журнал</p>
             <div class="hero-cta-row">
               <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
-              <a class="btn btn-ghost" href="#audit">Смотреть журнал проверок</a>
+              <a class="hero-link" href="#how-it-works">Как устроен продукт</a>
             </div>
-            <a class="hero-link" href="#how-it-works">Как устроен продукт</a>
           </div>
 
           <div class="hero-aside">
@@ -1399,46 +1497,52 @@
                   </div>
                 </div>
               </div>
-
-              <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
-                <h2>Назначить демо</h2>
-                <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
-                <ul class="demo-expect">
-                  <li>проверки до звонка;</li>
-                  <li>передача спорного случая специалисту;</li>
-                  <li>журнал действий по шагам.</li>
-                </ul>
-                <form class="demo-form" id="demoForm" novalidate>
-                  <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
-
-                  <div class="form-notice error" id="demoError" hidden></div>
-
-                  <label>
-                    <span>Имя</span>
-                    <input id="demoName" name="name" type="text" autocomplete="name" required>
-                  </label>
-                  <label>
-                    <span>Компания</span>
-                    <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
-                  </label>
-                  <label>
-                    <span>Email</span>
-                    <input id="demoEmail" name="email" type="email" autocomplete="email" required>
-                  </label>
-                  <label>
-                    <span>Телефон</span>
-                    <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
-                  </label>
-                  <label class="check-row">
-                    <input id="demoAgree" name="agree" type="checkbox" required>
-                    <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
-                  </label>
-                  <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
-                  <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-                </form>
-              </aside>
             </div>
           </div>
+        </div>
+
+        <div class="hero-form-band">
+          <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
+            <div class="hero-form-top">
+              <div>
+                <h2>Назначить демо</h2>
+                <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
+              </div>
+              <ul class="demo-expect">
+                <li>проверки до звонка</li>
+                <li>передача специалисту</li>
+                <li>журнал по шагам</li>
+              </ul>
+            </div>
+            <form class="demo-form" id="demoForm" novalidate>
+              <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+
+              <div class="form-notice error" id="demoError" hidden></div>
+
+              <label>
+                <span>Имя</span>
+                <input id="demoName" name="name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                <span>Компания</span>
+                <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
+              </label>
+              <label>
+                <span>Email</span>
+                <input id="demoEmail" name="email" type="email" autocomplete="email" required>
+              </label>
+              <label>
+                <span>Телефон</span>
+                <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
+              </label>
+              <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
+              <label class="check-row">
+                <input id="demoAgree" name="agree" type="checkbox" required>
+                <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
+              </label>
+              <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+            </form>
+          </aside>
         </div>
       </div>
     </section>
@@ -1457,25 +1561,6 @@
           <article class="metric-card reveal reveal-delay-2">
             <strong>Всё видно в журнале</strong>
             <span>Кто звонил, что сказал должник, какой исход и почему принято решение — без «чёрного ящика».</span>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="value-band" aria-label="Что даёт продукт">
-      <div class="container">
-        <div class="value-strip">
-          <article class="value-card reveal">
-            <strong>Кампании в одном месте</strong>
-            <span>База, сценарий и запуск обзвона собираются в одном кабинете без переключений между системами.</span>
-          </article>
-          <article class="value-card reveal reveal-delay-1">
-            <strong>Диалог и понятный исход</strong>
-            <span>ИИ ведёт разговор по сценарию, фиксирует результат и обещание платежа по каждому контакту.</span>
-          </article>
-          <article class="value-card reveal reveal-delay-2">
-            <strong>Контроль прямо в процессе</strong>
-            <span>Ограничения, журнал действий и передача специалисту встроены в обычную работу кампании.</span>
           </article>
         </div>
       </div>
