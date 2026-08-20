@@ -14,19 +14,19 @@ describe('Rate limiting middleware', () => {
 
     const first = await app.inject({
       method: 'GET',
-      url: '/healthz'
+      url: '/'
     });
     expect(first.statusCode).toBe(200);
 
     const second = await app.inject({
       method: 'GET',
-      url: '/healthz'
+      url: '/'
     });
     expect(second.statusCode).toBe(200);
 
     const blocked = await app.inject({
       method: 'GET',
-      url: '/healthz'
+      url: '/'
     });
     expect(blocked.statusCode).toBe(429);
     expect(blocked.json().error).toBe('RATE_LIMIT_EXCEEDED');
@@ -49,13 +49,13 @@ describe('Rate limiting middleware', () => {
 
     const first = await app.inject({
       method: 'GET',
-      url: '/healthz'
+      url: '/'
     });
     expect(first.statusCode).toBe(200);
 
     const blocked = await app.inject({
       method: 'GET',
-      url: '/healthz'
+      url: '/'
     });
     expect(blocked.statusCode).toBe(429);
 
@@ -63,7 +63,7 @@ describe('Rate limiting middleware', () => {
     expect(onLimitExceeded).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: null,
-        requestPath: '/healthz',
+        requestPath: '/',
         method: 'GET',
         limit: 1,
         used: 2,

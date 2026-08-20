@@ -46,7 +46,8 @@ describe('credentials and platform speech env', () => {
       ...required,
       NODE_ENV: 'production',
       CREDENTIALS_ENCRYPTION_KEY: validDek,
-      CORS_ORIGINS: 'https://cabinet.example.ru'
+      CORS_ORIGINS: 'https://cabinet.example.ru',
+      JWT_SECRET: 'production-jwt-secret-at-least-32-chars'
     });
     expect(parsed.CREDENTIALS_ENCRYPTION_KEY).toBe(validDek);
   });
@@ -56,8 +57,18 @@ describe('credentials and platform speech env', () => {
       ...required,
       NODE_ENV: 'production',
       CREDENTIALS_ENCRYPTION_KEY: validDek,
-      CORS_ORIGINS: '*'
+      CORS_ORIGINS: '*',
+      JWT_SECRET: 'production-jwt-secret-at-least-32-chars'
     })).toThrow(/CORS_ORIGINS/);
+  });
+
+  it('rejects default JWT_SECRET in production', () => {
+    expect(() => parseEnv({
+      ...required,
+      NODE_ENV: 'production',
+      CREDENTIALS_ENCRYPTION_KEY: validDek,
+      CORS_ORIGINS: 'https://cabinet.example.ru'
+    })).toThrow(/JWT_SECRET/);
   });
 
   it('uses a test fixture when encryption key is omitted in test', () => {

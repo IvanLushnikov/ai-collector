@@ -7,12 +7,16 @@ export const TEST_CREDENTIALS_ENCRYPTION_KEY = 'a'.repeat(64);
 
 const hex32 = z.string().regex(/^[0-9a-fA-F]{64}$/, 'CREDENTIALS_ENCRYPTION_KEY must be 32 bytes hex');
 
+const DEFAULT_JWT_SECRET = 'change-me-in-secret-store';
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid PostgreSQL URL'),
-  JWT_SECRET: z.string().default('change-me-in-secret-store'),
+  JWT_SECRET: z.string().default(DEFAULT_JWT_SECRET),
+  // When true, Fastify trusts X-Forwarded-* from the reverse proxy (required behind Caddy/nginx).
+  TRUST_PROXY: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   CORS_ORIGINS: z.string().default('*'),
   BILLING_CONNECTED_MINUTE_RATE_RUB: z.coerce.number().positive('BILLING_CONNECTED_MINUTE_RATE_RUB must be a positive number').default(1.2),
   API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive('API_RATE_LIMIT_MAX_REQUESTS must be a positive integer').default(120),
@@ -35,11 +39,18 @@ export const envSchema = z.object({
         message: 'CREDENTIALS_ENCRYPTION_KEY is required in production (32-byte hex)'
       });
     }
-    if (value.CORS_ORIGINS.trim() === '*') {
+    if (value.CORS_ORIGINS.trim() === '*' || value.CORS_ORIGINS.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['CORS_ORIGINS'],
         message: 'CORS_ORIGINS must list explicit trusted origins in production'
+      });
+    }
+    if (value.JWT_SECRET === DEFAULT_JWT_SECRET || value.JWT_SECRET.length < 32) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JWT_SECRET'],
+        message: 'JWT_SECRET must be a unique secret at least 32 characters in production'
       });
     }
     return;

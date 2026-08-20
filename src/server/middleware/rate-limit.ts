@@ -10,6 +10,7 @@ export type RateLimitConfig = {
   windowMs: number;
   errorCode?: string;
   statusCode?: number;
+  skip?: (request: FastifyRequest) => boolean;
   onLimitExceeded?: (payload: {
     tenantId: string | null;
     requestPath: string;
@@ -58,6 +59,10 @@ export const createRateLimitMiddleware = (config: RateLimitConfig) => {
   const statusCode = config.statusCode ?? DEFAULT_STATUS_CODE;
 
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    if (config.skip?.(request)) {
+      return;
+    }
+
     const key = request.ip;
     const tenantId = resolveTenantId(request);
     const now = Date.now();

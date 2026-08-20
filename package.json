@@ -3,17 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20 <23"
+  },
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
     "dev:ui": "node scripts/dev-gateway.mjs",
     "dev:local": "bash scripts/cloud-dev-start.sh",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server/index.js",
+    "db:generate": "prisma generate --schema=src/db/prisma/schema.prisma",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:push": "prisma db push --schema=src/db/prisma/schema.prisma",
     "verify:skills": "node scripts/verify-skills-bootstrap.mjs",
-    "typecheck": "npm run verify:skills && tsc --noEmit",
+    "typecheck": "npm run verify:skills && tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:staged": "lint-staged",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "test": "npm run verify:skills && vitest run"
   },
   "lint-staged": {
@@ -26,6 +32,7 @@
     "dotenv": "^16.5.0",
     "fastify": "^4.29.0",
     "ioredis": "^6.0.0",
+    "prisma": "^5.22.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -35,7 +42,6 @@
     "globals": "^17.11.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
-    "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.67.0",

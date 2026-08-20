@@ -179,8 +179,22 @@ type AppCallDependencies = CampaignDependencies & {
   };
 };
 
+const isHealthPath = (path: string): boolean =>
+  path === '/healthz'
+  || path === '/health'
+  || path === '/health/live'
+  || path === '/health/ready'
+  || path.startsWith('/health/');
+
+const livenessPayload = () => ({
+  status: 'ok' as const,
+  service: 'ai-collector-backend'
+});
+
 export const createApp = (dependencies: AppDependencies = {}): any => {
   const app = fastify({
+    // Required behind Caddy/nginx so request.ip / protocol reflect the client.
+    trustProxy: env.TRUST_PROXY || env.NODE_ENV === 'production',
     logger: env.NODE_ENV === 'test'
       ? false
       : {
@@ -198,6 +212,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     request.allowHeaderIdentity = allowHeaderIdentity;
   });
   app.addHook('onRequest', async (request, reply) => {
+    const path = request.url.split('?')[0] ?? request.url;
+    if (isHealthPath(path)) {
+      return;
+    }
     const origin = request.headers.origin;
     if (!origin) return;
     const allowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
@@ -223,6 +241,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     createRateLimitMiddleware({
       maxRequests: rateLimitConfig.maxRequests,
       windowMs: rateLimitConfig.windowMs,
+      skip: (request) => {
+        const path = request.url.split('?')[0] ?? request.url;
+        return isHealthPath(path);
+      },
       onLimitExceeded: async (payload) => {
         if (rateLimitConfig.onLimitExceeded) {
           await rateLimitConfig.onLimitExceeded(payload);
@@ -237,11 +259,20 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     })
   );
 
-  app.get('/healthz', async () => ({
-    status: 'ok',
-    service: 'ai-collector-backend',
-    env: env.NODE_ENV
-  }));
+  // Liveness: process is up (no dependency checks). Kept for backward compatibility.
+  app.get('/healthz', async () => livenessPayload());
+  app.get('/health', async () => livenessPayload());
+  app.get('/health/live', async () => livenessPayload());
+
+  // Readiness: can serve traffic (database reachable). No secrets in response.
+  app.get('/health/ready', async (_request, reply) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', checks: { database: 'up' } };
+    } catch {
+      return reply.code(503).send({ status: 'degraded', checks: { database: 'down' } });
+    }
+  });
 
   app.get('/', async () => ({
     status: 'ok',
