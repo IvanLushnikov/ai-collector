@@ -106,3 +106,53 @@
 - `404` — `TENANT_NOT_FOUND` или `CAMPAIGN_NOT_FOUND`
 - `401` — `USER_ROLE_MISSING`
 - `403` — `FORBIDDEN`
+
+## Остановка кампании: graceful vs force (OP-T-002a)
+
+Канонический статус остановки в домене и API — **`completed`**. Отдельный enum `stopped` / `force_stopped` **не вводится**.
+
+Связанные UI-термины: `PRODUCT_LANGUAGE.md` — «Приостановить кампанию» (локальная пауза) vs «Остановить» → `completed`.
+
+### Текущее поведение (до OP-T-002b)
+
+- Остановка через `PATCH /tenants/:tenantId/campaigns/:campaignId/status` с телом `{ "status": "completed" }` при допустимом переходе (сейчас из `running`).
+- Смысл по умолчанию — **graceful stop**: кампания перестаёт планировать **новые** попытки; уже созданные попытки не объявляются принудительно прерванными этим контрактом.
+- Ручная пауза («приостановлена») — прототипное UI-состояние, **не** Prisma-enum и не отдельный stop-mode API.
+- Системная автопауза — статус `auto_paused`; снятие только через safe-resume, не через Force.
+
+### Целевое поведение (реализация — OP-T-002b)
+
+Additive контракт (черновик, без ломающих изменений):
+
+```http
+PATCH /tenants/:tenantId/campaigns/:campaignId/status
+Content-Type: application/json
+
+{ "status": "completed", "stopMode": "graceful" }
+```
+
+или
+
+```json
+{ "status": "completed", "stopMode": "force" }
+```
+
+| `stopMode` | Поведение | Audit |
+|---|---|---|
+| `graceful` (default) | Не создавать новые попытки; активные дозволить завершиться штатно; статус → `completed` | `campaign.status_updated` + `stopMode=graceful` |
+| `force` | Не создавать новые попытки **и** запросить прерывание активных попыток у voice/worker контура; статус → `completed` | отдельное действие/`stopMode=force` |
+
+Инварианты:
+
+1. **Нет обхода compliance:** Force не разрешает звонок, который был заблокирован проверкой ограничений; не снимает `auto_paused` и не подменяет safe-resume.
+2. **Нет нового статуса:** оба режима заканчиваются в `completed`.
+3. **UI:** кнопку «Остановить немедленно» (Force) показывать только после готовности `OP-T-002b`; до этого в кабинете только graceful «Остановить кампанию».
+
+### Связь с pause
+
+| Действие | Эффект | Статус API |
+|---|---|---|
+| Приостановить | Новые звонки не создаются; можно продолжить обзвон | UI `manual_paused` (не PATCH `completed`) |
+| Остановить (graceful) | Кампания завершена; нужен новый запуск | `completed` |
+| Остановить немедленно (force) | Как graceful + прерывание активных | `completed` + `stopMode=force` (после OP-T-002b) |
+

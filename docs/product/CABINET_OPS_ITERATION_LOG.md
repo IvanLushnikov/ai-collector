@@ -3,12 +3,30 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-002 (`split`)
-- Следующая кандидат: OP-T-002a
-- Риски/договорённости: Force UI ждёт OP-T-002b; канон статуса остановки = `completed`, не `stopped`.
-- Инварианты: OP-D-001…004, OP-T-001; OP-T-002 разрезан на 002a (док) / 002b (код).
+- Последняя закрытая: OP-T-002a
+- Следующая кандидат: OP-T-002b
+- Риски/договорённости: Force UI только после OP-T-002b; канон stop = `completed`.
+- Инварианты: OP-D-001…004, OP-T-001, OP-T-002 split, OP-T-002a docs.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-002a — done
+
+### Взял
+- OP-T-002a: документ graceful vs force stop.
+
+### Сделал
+- Раздел в `docs/campaigns-api.md`: graceful/force, канон `completed`, no compliance bypass, UI Force deferred.
+- Тест `tests/campaigns-stop-mode-docs.test.ts`.
+
+### Проверка
+- vitest docs test — PASS
+
+### Состояние бэклога
+- Следующая `todo`: OP-T-002b
+
+### Handoff
+- **OP-T-002b**: реализовать `stopMode` + audit по документу; не вводить `stopped`.
 
 ## 2026-08-20 — OP-T-002 — split
 
