@@ -437,6 +437,71 @@
 
     .cta-repeat { margin-top: 24px; }
 
+    .compare-table {
+      display: grid;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.7fr) 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .compare-row:first-child { border-top: 0; }
+
+    .compare-row > * {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .compare-row > strong {
+      color: var(--ink);
+      font-size: 14px;
+      background: #f7f9fb;
+    }
+
+    .compare-head > * {
+      font-weight: 700;
+      color: var(--ink);
+      background: #f7f9fb;
+      font-size: 13px;
+    }
+
+    .compare-row > span:last-child {
+      color: var(--ink);
+      background: var(--accent-soft);
+    }
+
+    @media (max-width: 760px) {
+      .compare-row {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-head { display: none; }
+
+      .compare-row > strong {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .compare-row > span:first-of-type::before {
+        content: "Без контура: ";
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .compare-row > span:last-child::before {
+        content: "С ИИ-коллектором: ";
+        font-weight: 700;
+      }
+    }
+
     .roles-secondary-lead {
       margin: 28px 0 12px;
       color: var(--muted);
@@ -789,26 +854,35 @@
     <section id="benefits">
       <div class="container">
         <div class="section-head">
-          <h2>Что получает команда</h2>
-          <p class="section-lead">Продукт для операционной работы: меньше ручной рутины, больше прозрачности по кампании.</p>
+          <h2>До и после управляемого контура</h2>
+          <p class="section-lead">Короткое сравнение: как меняется работа команды с ИИ-коллектором.</p>
         </div>
-        <div class="benefits-grid">
-          <article class="benefit-card">
-            <strong>Автоматизация обзвона</strong>
-            <p>ИИ ведёт диалог по сценарию, команда контролирует процесс, а не каждый звонок вручную.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Кампании в одном кабинете</strong>
-            <p>База, сценарий, телефония, звонки и отчёт — без переключения между системами.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Результат по фактам</strong>
-            <p>Исходы звонков, обещания платежа и прогресс кампании видны сразу.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Контроль без отдельного «контура»</strong>
-            <p>Проверка ограничений и журнал действий встроены в обычный рабочий процесс.</p>
-          </article>
+        <div class="compare-table" role="table" aria-label="Сравнение без контура и с ИИ-коллектором">
+          <div class="compare-row compare-head" role="row">
+            <span role="columnheader"></span>
+            <span role="columnheader">Без управляемого контура</span>
+            <span role="columnheader">С ИИ-коллектором</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Рутина обзвона</strong>
+            <span>Операторы тратят время на повторяющиеся звонки.</span>
+            <span>ИИ ведёт диалог по сценарию, команда смотрит прогресс.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Спорные случаи</strong>
+            <span>Риск остаётся в общем потоке или теряется.</span>
+            <span>Случай выделяется и передаётся специалисту с контекстом.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Прозрачность</strong>
+            <span>Сложно восстановить, почему сделан следующий шаг.</span>
+            <span>Журнал действий и исходы видны по фактам.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Контроль запуска</strong>
+            <span>Запуск зависит от ручных проверок вне процесса.</span>
+            <span>Проверка ограничений встроена до звонка; пилот ограничен.</span>
+          </div>
         </div>
         <div class="cta-repeat">
           <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
