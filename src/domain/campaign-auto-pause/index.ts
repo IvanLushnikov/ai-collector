@@ -96,6 +96,7 @@ export class CampaignAutoPauseService {
         entityType: 'campaign',
         entityId: input.campaignId,
         metadata: {
+          actorType: 'system',
           reasonCode: input.reasonCode,
           reasonText: input.reasonText,
           source: 'campaign_auto_pause_service',

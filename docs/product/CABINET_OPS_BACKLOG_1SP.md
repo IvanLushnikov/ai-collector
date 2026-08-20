@@ -44,13 +44,13 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 13 | OP-D-008 | design | Empty state очереди · `blocked` (IA / product) |
 | 14 | OP-T-006 | tech | Pause-before-edit сценария/телефонии running |
 | 15 | OP-D-009 | design | Исключения: постоянно / временно / пауза кампании |
-| 16 | OP-T-007 | tech | Типы suppression + reason в ответе/журнале |
+| 16 | OP-T-007 | tech | Типы suppression + reason в ответе/журнале · `done` |
 | 17 | OP-D-010 | design | Пороги метрик (threshold color) на Обзоре |
 | 18 | OP-T-008 | tech | Progress completed/total из реальных событий |
 | 19 | OP-D-011 | design | Microcopy pass по рыночным формулировкам |
-| 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы |
+| 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы · `done` |
 | 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» |
-| 22 | OP-T-010 | tech | Who changed status в audit (actor type) |
+| 22 | OP-T-010 | tech | Who changed status в audit (actor type) — done |
 | 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
 | 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
 | 25 | OP-T-012 | tech | Force stop: реальное прерывание in-flight у worker |
@@ -561,7 +561,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-007: Типы suppression и reason в ответах
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: NICE DNC vs suppression
 
@@ -612,7 +612,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-009: Фильтры журнала аудита под ops
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`
 
 Что сделать:
@@ -636,7 +636,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-010: Actor type в смене статуса
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Kit — кто сменил статус: agent / supervisor / system
 

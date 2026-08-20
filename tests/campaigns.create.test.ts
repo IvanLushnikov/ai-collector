@@ -927,6 +927,8 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
         entityType: 'campaign',
         entityId: 'campaign-draft',
         metadata: {
+          actorType: 'user',
+          actorRole: 'tenant_owner',
           campaignId: 'campaign-draft',
           fromStatus: 'draft',
           toStatus: 'review',
@@ -1153,6 +1155,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/safe-resume', () => {
         entityType: 'campaign',
         entityId: 'campaign-paused',
         metadata: expect.objectContaining({
+          actorType: 'user',
+          actorRole: 'tenant_owner',
           fromStatus: 'auto_paused',
           toStatus: 'review',
           checklist,

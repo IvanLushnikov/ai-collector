@@ -69,6 +69,48 @@
 - В MVP-реализации фильтрация делается по уже полученным событиям для указанного tenant на уровне приложения.
 - Результат отсортирован по `createdAt` убыванием в контрактном виде.
 
+## Metadata: actor type (OP-T-010)
+
+Для смены статуса кампании, автопаузы и safe-resume в `metadata` пишутся additive поля:
+
+- `actorType` — `user` | `system` (кто инициировал действие);
+- `actorRole` — опционально, каноническая роль пользователя при `actorType=user` (например `tenant_owner`, `compliance_officer`); PII не пишется.
+
+Правила:
+
+- `campaign.auto_paused` → всегда `actorType: system` (даже если в `userId` указан технический пользователь-триггер);
+- `campaign.status_updated` и `campaign.safe_resumed` → `actorType: user` + `actorRole` из RBAC контекста запроса.
+
+Пример автопаузы:
+
+```json
+{
+  "action": "campaign.auto_paused",
+  "metadata": {
+    "actorType": "system",
+    "reasonCode": "recording_failed",
+    "reasonText": "Answered live call has no recording or transcript URL"
+  }
+}
+```
+
+Пример ручной смены статуса:
+
+```json
+{
+  "action": "campaign.status_updated",
+  "metadata": {
+    "actorType": "user",
+    "actorRole": "tenant_owner",
+    "campaignId": "uuid",
+    "fromStatus": "draft",
+    "toStatus": "review",
+    "previousValue": "draft",
+    "nextValue": "review"
+  }
+}
+```
+
 ## Metadata: previous / next (OP-T-003)
 
 Для критичных переходов (смена статуса кампании, safe-resume) в `metadata` пишутся additive поля:

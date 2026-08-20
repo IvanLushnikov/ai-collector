@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
 import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
-import { resolveActorId } from '../server/authz/actor.js';
+import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor.js';
 import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
@@ -1273,6 +1273,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         entityType: 'campaign',
         entityId: params.data.campaignId,
         metadata: {
+          ...resolveAuditActorMetadata(request),
           campaignId: params.data.campaignId,
           fromStatus: previousStatus,
           toStatus: nextStatus,
@@ -1377,6 +1378,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           entityType: 'campaign',
           entityId: params.data.campaignId,
           metadata: {
+            ...resolveAuditActorMetadata(request),
             campaignId: params.data.campaignId,
             fromStatus: 'auto_paused',
             toStatus: payload.data.targetStatus,

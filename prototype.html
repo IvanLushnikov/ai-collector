@@ -287,7 +287,24 @@
 <script>
 (()=>{
 	const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];let toastTimer,wizardStep=1,campaignValidationTimer;
-  const formatActorLabel=(actor='')=>{
+  const formatActorLabel=(actor='', metadata={})=>{
+    if (metadata?.actorType === 'system') {
+      return 'Система';
+    }
+    if (metadata?.actorType === 'user') {
+      const role = metadata.actorRole || actor;
+      const map={
+        operator:'Оператор',
+        tenant_viewer:'Оператор',
+        collection_manager:'Менеджер кампании',
+        campaign_manager:'Менеджер кампании',
+        qa_analyst:'Контроль качества',
+        compliance_officer:'Специалист по ограничениям',
+        tenant_owner:'Владелец',
+        owner:'Владелец'
+      };
+      return map[String(role)] || 'Сотрудник';
+    }
     const map={
       system:'Система',
       operator:'Оператор',
@@ -1515,7 +1532,11 @@
     const metadata = item.metadata || {};
     return {
       id: item.id || `${item.createdAt || 'audit'}-${item.action || 'event'}`,
-      actor: item.actor || 'system',
+      actor: metadata.actorType === 'system'
+        ? 'system'
+        : (metadata.actorRole || item.actor || 'system'),
+      actorType: metadata.actorType,
+      actorRole: metadata.actorRole,
       createdAt: item.createdAt || '',
       action: item.action || 'system',
       entityType: item.entityType || 'unknown',
@@ -1574,9 +1595,11 @@
         setAuditNotice(auditLogErrorNotice, true);
         return;
       }
-      auditLogItems = body.map((entry, index) => ({
+      auditLogItems = body.map((entry) => ({
         ...mapApiAuditItem(entry),
-        actor: entry.userId ? `user:${entry.userId}` : 'system'
+        actor: entry.metadata?.actorType === 'system'
+          ? 'system'
+          : (entry.metadata?.actorRole || (entry.userId ? `user:${entry.userId}` : 'system'))
       }));
       auditLogSource='live';
       auditLogErrorNotice='';
@@ -1595,6 +1618,9 @@
   const SYSTEM_AUDIT_ACTORS = ['system', 'compliance', 'compliance_engine', 'compliance_officer_bot', 'engine', 'provider', 'usage', 'usage-event'];
 
   function isStaffAuditEvent(item) {
+    const metadata = item.metadata || {};
+    if (metadata.actorType === 'system') return false;
+    if (metadata.actorType === 'user') return true;
     const actor = String(item.actor || item.actorName || '').trim();
     if (!actor) return false;
     if (SYSTEM_AUDIT_ACTORS.includes(actor)) return false;
@@ -1645,7 +1671,7 @@
       const technicalId=item.technicalId || metadata.callAttemptId || metadata.entityId || item.entityId || '';
       return {
         time: formatAuditTime(item.createdAt || ''),
-        who: item.actorName || formatActorLabel(item.actor) || 'Сотрудник',
+        who: item.actorName || formatActorLabel(item.actor, item.metadata) || 'Сотрудник',
         event: item.eventLabel || item.action || 'Событие',
         object: item.entityLabel || item.campaignName || item.entityType || '—',
         transition: formatAuditTransition(item, metadata),

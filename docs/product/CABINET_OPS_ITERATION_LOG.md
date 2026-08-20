@@ -3,11 +3,62 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-006
-- Следующая кандидат: OP-D-009 / OP-T-007
-- Инварианты: + pause-before-edit locks; OP-T-011 blocked.
+- Последняя закрытая: OP-T-007
+- Следующая кандидат: OP-D-009 / OP-T-008
+- Инварианты: + blockKind permanent/temporary/campaign_pause; OP-T-011 blocked.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-007 — done
+
+### Взял
+- OP-T-007: типы suppression/block + reasonText RU + additive `blockKind`.
+
+### Сделал
+- `src/domain/compliance-block-kind`: mapping `SUPPRESSION_BLOCK`→permanent, окно/частота→temporary; `campaign_pause` для ops (не suppression row).
+- RU `reasonText` в suppression/call-window/frequency rules.
+- API: compliance check/decisions, calls journal, review-items, `CAMPAIGN_JOB_BLOCKED` — поле `blockKind`.
+- docs/compliance-api.md + rulebook note; light UI label в prototype.
+- tests/compliance/block-kind + обновлены контрактные тесты.
+
+### Проверка
+- vitest tests/compliance + tests/calls/calls-journal-row.contract.test.ts
+
+### Handoff
+- Следующие: OP-D-009 (UI mapping исключений), OP-T-008.
+
+## 2026-08-20 — OP-T-009 — done
+
+### Взял
+- OP-T-009: фильтр журнала по группам блокировки / статусы / решения.
+
+### Сделал
+- `actionGroup` query на tenant/campaign audit-logs (`block|campaign_status|decision`, alias `blocks|review`).
+- Группы action в `src/domain/audit-log/action-groups.ts`; док в `docs/audit-logs-api.md`.
+- Prototype `#auditKindFilter` → API `actionGroup` в live-режиме; sync `public/prototype.html`.
+
+### Проверка
+- vitest domain-audit-log-action-groups + campaign-audit-log.api + prototype-audit-api-trail
+
+### Handoff
+- Следующие: OP-D-012 / OP-T-007.
+
+## 2026-08-20 — OP-T-010 — done
+
+### Взял
+- OP-T-010: actorType в audit metadata для status_updated / auto_paused / safe_resumed.
+
+### Сделал
+- Audit writers: `metadata.actorType` (`user`|`system`) + optional `actorRole` для user-действий.
+- Auto-pause → `actorType: system`.
+- docs/audit-logs-api.md: раздел Metadata actor type.
+- prototype `formatActorLabel` / `mapApiAuditItem` используют `actorType`.
+
+### Проверка
+- vitest campaigns.audit-actor-type + campaign-auto-pause + prototype-audit-actor-type
+
+### Handoff
+- Следующие: OP-T-007 / OP-D-009, затем остальные todo без блокеров.
 
 ## 2026-08-20 — OP-T-006 — done
 
