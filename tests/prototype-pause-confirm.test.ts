@@ -6,7 +6,8 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 describe('prototype pause confirmation', () => {
   it('asks before pausing from the status menu and does not use a bare Pause label', () => {
     expect(html).toContain('Приостановить кампанию?');
-    expect(html).toContain('Новые звонки не создаются.');
+    expect(html).toContain('новые звонки перестанут создаваться');
+    expect(html).toContain('Это не завершение кампании');
     expect(html).toContain('applyCampaignStatusFromMenu');
     expect(html).not.toContain('id="pauseCampaign">Пауза');
     expect(html).not.toContain('id="pauseCampaign">Приостановить кампанию');

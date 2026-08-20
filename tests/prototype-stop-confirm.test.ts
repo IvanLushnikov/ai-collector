@@ -6,9 +6,15 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 describe('prototype stop confirmation', () => {
   it('confirms stop as completed without a one-step toast', () => {
     expect(html).toContain('Остановить кампанию?');
+    expect(html).toContain('будет завершена');
+    expect(html).toContain('нужен новый запуск');
     expect(html).toContain("setCampaignState('completed'");
+    expect(html).toContain("setCampaignState('stopping'");
+    expect(html).toContain("label:'останавливается…'");
     expect(html).not.toContain("setCampaignState('stopped'");
     expect(html).toContain("label:'завершена'");
+    expect(html).not.toContain('Остановить немедленно');
+    expect(html).not.toContain('Force Stop');
   });
 
   it('stops via PATCH completed and does not invent a stopped enum', () => {

@@ -2784,11 +2784,11 @@
 
   const campaignStatusMenuOptions=[
     {status:'running', label:'работает'},
-    {status:'manual_paused', label:'приостановлена'},
+    {status:'manual_paused', label:'приостановить — новые звонки не создаются'},
     {status:'auto_paused', label:'приостановлена системой', systemOnly:true},
     {status:'ready', label:'готова к запуску'},
     {status:'draft', label:'черновик'},
-    {status:'completed', label:'завершена'}
+    {status:'completed', label:'остановить и завершить'}
   ];
   function closeCampaignStatusMenu(){
     q('#campaignStatusMenu')?.classList.remove('open');
@@ -2797,12 +2797,14 @@
     const menu=q('#campaignStatusMenu');
     if (!menu) return;
     menu.textContent='';
+    const stopping=campaignLifecycle.status === 'stopping';
     for (const option of campaignStatusMenuOptions) {
       if (option.systemOnly && campaignLifecycle.status !== 'auto_paused') continue;
       const btn=document.createElement('button');
       btn.type='button';
       btn.textContent=option.label;
       btn.dataset.status=option.status;
+      btn.disabled=stopping;
       if (campaignLifecycle.status === option.status) btn.style.fontWeight='800';
       menu.appendChild(btn);
     }
@@ -2810,6 +2812,7 @@
   async function applyCampaignStatusFromMenu(nextStatus){
     closeCampaignStatusMenu();
     if (!nextStatus || nextStatus === campaignLifecycle.status) return;
+    if (campaignLifecycle.status === 'stopping') return;
     if (nextStatus === 'auto_paused') {
       toast('Статус системный','Автопаузу можно снять только после проверки причины.');
       return;
@@ -2818,11 +2821,14 @@
       const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
       openConfirm(
         'Остановить кампанию?',
-        `Остановить «${name}»? Для продолжения нужен новый запуск.`,
+        `«${name}» будет завершена. Новые звонки не начнутся. Чтобы снова обзванивать, нужен новый запуск. Немедленной принудительной остановки в этом контуре нет.`,
         'Остановить кампанию',
         async ()=>{
+          const previousStatus=campaignLifecycle.status;
+          setCampaignState('stopping',{actor:'operator',reason:'остановка кампании',force:true});
           const result=await patchCampaignStatus('completed');
           if (!result.ok) {
+            setCampaignState(previousStatus,{actor:'operator',reason:'остановка не выполнена',force:true});
             toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
             return;
           }
@@ -2850,11 +2856,11 @@
       const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
       openConfirm(
         'Приостановить кампанию?',
-        `Приостановить «${name}»? Новые звонки не создаются.`,
+        `«${name}»: новые звонки перестанут создаваться. Потом можно снова продолжить обзвон. Это не завершение кампании.`,
         'Приостановить кампанию',
         ()=>{
           setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
-          toast('Кампания приостановлена','Новые звонки не создаются.');
+          toast('Кампания приостановлена','Новые звонки не создаются. Можно продолжить позже.');
         }
       );
       return;
