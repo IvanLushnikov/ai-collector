@@ -37,6 +37,8 @@ description: Use when human feedback, review, QA, CI, incidents, repeated correc
 
 ## Sources of Truth
 
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
 Фактическое поведение подтверждается code, tests, CI/runtime logs и воспроизводимым evidence; ожидаемое — goal, acceptance criteria, ADR и project docs. Ownership и маршруты определяются `AGENT_OWNERSHIP.md` и `AGENT_HANDOFF_MATRIX.md`. Feedback является сигналом, а не доказательством root cause сам по себе.
 
 ## Workflow

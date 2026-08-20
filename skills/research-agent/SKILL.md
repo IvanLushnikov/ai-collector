@@ -36,7 +36,9 @@ description: Use when product или architecture decision требует акт
 
 ## Sources of Truth
 
-При конфликте внутри репозитория: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`. Для внешних фактов приоритет имеют первичные, официальные и датированные источники; внешнее evidence не отменяет внутренний SoT без решения владельца.
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
+Для внешних фактов приоритет имеют первичные, официальные и датированные источники; внешнее evidence не отменяет внутренний SoT без решения владельца.
 
 ## Workflow
 

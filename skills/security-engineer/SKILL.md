@@ -38,7 +38,9 @@ description: Use when задача затрагивает auth, session, RBAC, t
 
 ## Sources of Truth
 
-При конфликте: утверждённые legal/compliance документы и ADR > code > rulebook/backlog > roadmap. Неизвестный или противоречивый security/legal статус означает blocked и fail-closed, а не разрешение.
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
+Утверждённые legal/compliance документы и rulebook задают обязательные zone-specific gates. Неизвестный или противоречивый security/legal статус означает blocked и fail-closed, а не разрешение.
 
 ## Workflow
 

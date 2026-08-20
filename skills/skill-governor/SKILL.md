@@ -38,6 +38,8 @@ description: Use when review, QA, CI, incidents, repeated corrections, routing f
 
 ## Sources of Truth
 
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
 `AGENTS.md` — каноническая routing table; `CLAUDE.md` только загружает и усиливает её. Ownership и handoff определяются `docs/agents/AGENT_OWNERSHIP.md` и `docs/agents/AGENT_HANDOFF_MATRIX.md`; project constraints — `PROJECT_AGENT_CONTEXT.md` и ADR. Существующие механизмы расширяются вместо создания альтернативных инструкций или проверок.
 
 ## Workflow

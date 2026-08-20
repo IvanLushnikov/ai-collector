@@ -38,7 +38,9 @@ description: Use when задача затрагивает CI, GitHub Actions, do
 
 ## Sources of Truth
 
-При конфликте: ADR > фактические workflow/runtime config > ops docs > backlog > roadmap. CI status не заменяет проверку валидности конфигурации и воспроизводимости локального контура.
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
+Фактические workflow/runtime config и ops docs задают zone-specific operational evidence. CI status не заменяет проверку валидности конфигурации и воспроизводимости локального контура.
 
 ## Workflow
 

@@ -38,7 +38,9 @@ description: Use when задача требует определить cut crite
 
 ## Sources of Truth
 
-При конфликте: утверждённые legal/DPA и ADR > проверяемый code/config/test evidence > release/backlog docs > roadmap. Missing evidence означает blocked; optimistic status или устное ожидание не закрывают gate.
+При конфликте: ADR > code > `TECH_BACKLOG_1SP.md` > `ROADMAP_B2B_SAAS.md`.
+
+Утверждённые legal/DPA документы и проверяемый config/test/release evidence задают обязательные release gates. Missing evidence означает blocked; optimistic status или устное ожидание не закрывают gate.
 
 ## Workflow
 
