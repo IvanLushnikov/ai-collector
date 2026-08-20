@@ -85,11 +85,11 @@ const makeSessionStore = (roleName: string) => {
 };
 
 describe('security regressions', () => {
-  it('does not elevate review-item access via X-User-Role when session role is weaker', async () => {
+  it('does not elevate review-item access via X-User-Role even when header identity is enabled', async () => {
     const { cookie, store } = makeSessionStore('tenant_viewer');
     const app = createApp({
       campaignStore: store as any,
-      allowHeaderIdentity: false
+      allowHeaderIdentity: true
     });
     await app.ready();
 
@@ -104,6 +104,31 @@ describe('security regressions', () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json().error).toBe('FORBIDDEN');
+    await app.close();
+  });
+
+  it('allows compliance_officer to pass authz for compliance check', async () => {
+    const app = createApp({
+      campaignStore: {
+        tenant: { findUnique: vi.fn(async () => ({ id: tenantId })) },
+        campaign: { findUnique: vi.fn(async () => ({ id: campaignId, tenantId })) },
+        debtorRecord: { findUnique: vi.fn(async () => null) },
+        user: { findFirst: vi.fn(async () => ({ id: 'user-1' })) },
+        session: { findFirst: vi.fn(async () => null) }
+      } as any,
+      allowHeaderIdentity: true
+    });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/tenants/${tenantId}/campaigns/${campaignId}/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check`,
+      headers: { 'x-user-role': 'compliance_officer' }
+    });
+
+    // Authz must pass; missing debtor yields 404 rather than 403.
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error).toBe('DEBTOR_RECORD_NOT_FOUND');
     await app.close();
   });
 

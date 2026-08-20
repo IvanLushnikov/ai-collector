@@ -14,13 +14,9 @@
 
 ### RBAC
 
-- Требуется `X-User-Role` с одним из значений:
-  - `owner`
-  - `collection_manager`
-  - `operator`
-  - `qa_analyst`
-  - `compliance_officer`
-  - `integration_admin`
+- Требуется роль с `compliance:write` или `calls:write` (канонические: `tenant_owner`, `campaign_manager`, `compliance_officer`; legacy: `owner`, `collection_manager`).
+- `tenant_viewer` / `operator` / `qa_analyst` — запрещены (эндпоинт пишет compliance decisions).
+- В production доступ через cookie-сессию; `X-User-Role` — только при `ALLOW_HEADER_IDENTITY` (dev/test).
 
 ### Успешный ответ `200`
 

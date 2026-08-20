@@ -2532,9 +2532,9 @@
       const result=formatConversationResult(item);
       const turns=parseTranscriptTurns(item.transcript || '');
       const transcriptHtml=turns.length
-        ? turns.map((turn)=>`<div class="dialog-turn ${turn.role === 'agent' ? 'ai' : 'person'}"><small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${turn.text}</div>`).join('')
+        ? turns.map((turn)=>`<div class="dialog-turn ${turn.role === 'agent' ? 'ai' : 'person'}"><small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${escapeHtml(turn.text)}</div>`).join('')
         : '<div class="panel-sub">Расшифровки этого разговора нет.</div>';
-      return `<div class="call-expand-block"><div class="call-expand-head"><b>${item.startedAt}</b><span class="tag ${result.pill}">${result.label}</span></div><div class="panel-sub" style="margin-bottom:8px">Результат разговора</div><div style="margin-bottom:10px">${transcriptHtml}</div></div>`;
+      return `<div class="call-expand-block"><div class="call-expand-head"><b>${escapeHtml(item.startedAt)}</b><span class="tag ${escapeHtml(result.pill)}">${escapeHtml(result.label)}</span></div><div class="panel-sub" style="margin-bottom:8px">Результат разговора</div><div style="margin-bottom:10px">${transcriptHtml}</div></div>`;
     }).join('');
   }
   function renderCallsTable() {
@@ -2669,9 +2669,9 @@
     const resultEl=q('#callCardResult');
     if (resultEl) {
       resultEl.innerHTML=`
-      <b>Статус попытки:</b> ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}<br/>
-      <b>Результат разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
-      <b>Состояние разговора:</b> ${formatConversationStatusLabel(displayItem.conversationStatus)}
+      <b>Статус попытки:</b> ${escapeHtml(formatDialStatusLabel(displayItem.dialStatus || displayItem.status))}<br/>
+      <b>Результат разговора:</b> <span class="tag ${escapeHtml(outcomeMeta.pill)}">${escapeHtml(outcomeMeta.label)}</span><br/>
+      <b>Состояние разговора:</b> ${escapeHtml(formatConversationStatusLabel(displayItem.conversationStatus))}
     `;
     }
     const progress=q('#callCardProgress');

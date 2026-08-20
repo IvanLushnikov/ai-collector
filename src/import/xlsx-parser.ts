@@ -37,10 +37,6 @@ export const extractZipEntries = (buffer: Buffer): ZipEntry[] => {
     if (uncompressedSize > MAX_UNCOMPRESSED_ENTRY_BYTES) {
       throw new Error('IMPORT_TOO_LARGE: spreadsheet entry exceeds size limit');
     }
-    totalUncompressed += uncompressedSize;
-    if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-      throw new Error('IMPORT_TOO_LARGE: spreadsheet uncompressed size exceeds limit');
-    }
     const compressed = buffer.subarray(dataStart, dataStart + compressedSize);
     let data: Buffer;
     if (method === 0) {
@@ -60,6 +56,10 @@ export const extractZipEntries = (buffer: Buffer): ZipEntry[] => {
     }
     if (uncompressedSize > 0 && data.length > uncompressedSize) {
       throw new Error('IMPORT_TOO_LARGE: spreadsheet entry exceeds declared size');
+    }
+    totalUncompressed += data.length;
+    if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+      throw new Error('IMPORT_TOO_LARGE: spreadsheet uncompressed size exceeds limit');
     }
     entries.push({ name, data });
     offset = dataStart + compressedSize;
