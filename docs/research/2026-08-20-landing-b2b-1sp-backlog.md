@@ -31,7 +31,7 @@
 4. `LT-01`…`LT-05` (техника под изменения copy/UI)  
 5. `LD-09` (финальная сверка anti-patterns)
 
-Первая `todo`: `LD-08`.
+Первая `todo`: `LT-01`.
 
 ---
 
@@ -270,7 +270,14 @@
 
 ### LD-08: 2–3 осознанных motion для иерархии
 
-Статус: `todo`
+Статус: `done`
+
+Контекст для следующих задач:
+
+- Motion: `step-in` на `#how-it-works .step-card`, hover/focus lift на `.btn-primary`, `sticky-in` на `.sticky-cta`.
+- `@media (prefers-reduced-motion: reduce)` отключает animation/transition.
+- Sticky фон сделан solid (без rgba glass).
+- Риск: не добавлять particle/orb/glow; не убирать reduced-motion блок.
 
 Паттерн: research «motion = иерархия, не шум».
 
@@ -471,6 +478,7 @@
 | 2026-08-20 | `LD-05` | `#roles`: сегменты рынка + вторичные роли + CTA |
 | 2026-08-20 | `LD-06` | Форма: `.demo-expect` (проверки/специалист/журнал), без боевой базы |
 | 2026-08-20 | `LD-07` | IBM Plex + ops-палитра; убран glass blur шапки |
+| 2026-08-20 | `LD-08` | Motion: steps / CTA hover / sticky; respects reduced-motion |
 
 ---
 
