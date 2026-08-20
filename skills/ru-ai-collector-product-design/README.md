@@ -17,11 +17,13 @@ Skill специально не содержит конкретных юриди
 
 ## Рекомендуемый стек
 
-Этот skill используется первым как продуктовый контекст. При наличии дополнительных skills можно подключать:
+Этот skill используется первым как продуктовый контекст. Рекомендуемый стек craft/review skills в репозитории:
 
-1. `design-systems`
-2. `ui-ux-pro-max`
-3. `ux-writing`
-4. `data-visualization`
-5. `design-review` / `refactoring-ui`
-6. `i18n-check`
+1. `ui-ux-audit` — аудит текущего состояния до изменений
+2. `interface-design` — craft кабинета / SaaS tools (не маркетинг)
+3. `frontend-design` — craft лендинга / маркетинговых поверхностей
+4. `russian-product-copy` — русские пользовательские тексты
+5. `laws-of-ux` + `accessibility` — эвристики и a11y
+6. `ux-design-review` — оркестрация финального UX/design review
+
+Не подключай marketplace `ui-ux-pro-max` по умолчанию: каталог стилей часто тянет к generic AI-эстетике и конфликтует с compliance-first плотностью кабинета.

@@ -1,0 +1,66 @@
+{
+  "updatedAt": "2026-08-20",
+  "marketplace": "https://lobehub.com/skills",
+  "installTool": "npx -y @lobehub/market-cli skills install <identifier>",
+  "policy": "Vendor only curated skills listed here. Prefer product skills over craft. Never mass-install marketplace forks.",
+  "skills": [
+    {
+      "localDir": "skills/frontend-design",
+      "identifier": "anthropics-claude-code-frontend-design",
+      "upstream": "https://github.com/anthropics/claude-code",
+      "role": "Marketing/landing visual craft; optional cabinet polish after product skill"
+    },
+    {
+      "localDir": "skills/interface-design",
+      "identifier": "dammyjay93-interface-design-interface-design",
+      "upstream": "https://github.com/Dammyjay93/interface-design",
+      "role": "SaaS cabinet/tools craft after ru-ai-collector-product-design"
+    },
+    {
+      "localDir": "skills/ui-ux-audit",
+      "identifier": "nicepkg-ai-workflow-ui-ux-audit",
+      "adapted": true,
+      "role": "Audit-before-implement adapted to prototype.html/public paths"
+    },
+    {
+      "localDir": "skills/laws-of-ux",
+      "identifier": "mollymillions-code-sayan-claude-skills-laws-of-ux",
+      "role": "Heuristic UX review lens"
+    },
+    {
+      "localDir": "skills/accessibility",
+      "identifier": "davila7-claude-code-templates-accessibility",
+      "upstream": "https://github.com/davila7/claude-code-templates",
+      "license": "MIT",
+      "role": "WCAG audit/implementation for HTML surfaces"
+    },
+    {
+      "localDir": "skills/prd-from-context",
+      "identifier": "madteacher-skills-prd-from-context",
+      "role": "Russian PRD synthesis from existing context"
+    },
+    {
+      "localDir": "skills/russian-product-copy/references/ux-writing-patterns-en.md",
+      "identifier": "elie222-inbox-zero-ux-writing",
+      "role": "English microcopy patterns as reference only; not a primary skill"
+    }
+  ],
+  "rejected": [
+    {
+      "pattern": "ui-ux-pro-max*",
+      "reason": "Style catalog noise; conflicts with compliance-first cabinet density and anti-slop rules"
+    },
+    {
+      "pattern": "*code-review* (non-superpowers)",
+      "reason": "Duplicates obra/superpowers requesting/receiving-code-review"
+    },
+    {
+      "pattern": "garrytan-gstack-*-design-review",
+      "reason": "Heavy tooling coupling; use local ux-design-review instead"
+    },
+    {
+      "pattern": "dashboard-design KPI packs",
+      "reason": "Generic KPI cards outrank risk/readiness contrary to product UX"
+    }
+  ]
+}

@@ -39,14 +39,19 @@ AI Collector — это прототип продукта для compliance-firs
 
 - корневой bootstrap живет в `AGENTS.md`
 - дополнительный bootstrap для Claude/Codex-потока живет в `CLAUDE.md`
+- карта слоёв и routing recipes: [`skills/README.md`](./skills/README.md)
+- ресерч LobeHub + Superpowers: [`docs/skills/research-lobehub-superpowers-2026-08-20.md`](./docs/skills/research-lobehub-superpowers-2026-08-20.md)
 - базовое правило маршрутизации начинается с `skills/using-superpowers/SKILL.md`
 
 Что это значит на практике:
 
 - перед разработкой, доработкой, проектированием, UX/UI-работой или написанием требований агент обязан сначала выбрать и прочитать релевантный skill
-- для AI Collector product/UI/UX задач первым должен идти `skills/ru-ai-collector-product-design/SKILL.md`
+- для AI Collector product/UI/UX задач первым должен идти `skills/ru-ai-collector-product-design/SKILL.md` (перед redesign — ещё `skills/ui-ux-audit/SKILL.md`)
 - для пользовательского русского текста после продуктового design skill должен применяться `skills/russian-product-copy/SKILL.md`
-- для feature work, plan/design, debugging, review и verification используются маршруты из `AGENTS.md`
+- для UX/design review — `skills/ux-design-review/SKILL.md`
+- craft-слой: `skills/interface-design` (кабинет) / `skills/frontend-design` (лендинг)
+- process-слой — полный набор [obra/superpowers](https://github.com/obra/superpowers), см. routing в `AGENTS.md`
+- внешние curated skills pin'ятся в `third_party/lobehub/manifest.json`
 
 Проверка bootstrap не оставлена на память модели:
 
