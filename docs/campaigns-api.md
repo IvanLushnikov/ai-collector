@@ -120,9 +120,9 @@
 - Ручная пауза («приостановлена») — прототипное UI-состояние, **не** Prisma-enum и не отдельный stop-mode API.
 - Системная автопауза — статус `auto_paused`; снятие только через safe-resume, не через Force.
 
-### Целевое поведение (реализация — OP-T-002b)
+### Контракт `stopMode` (OP-T-002b)
 
-Additive контракт (черновик, без ломающих изменений):
+Additive на `PATCH .../status` при `status: "completed"` (без нового enum):
 
 ```http
 PATCH /tenants/:tenantId/campaigns/:campaignId/status
@@ -146,7 +146,7 @@ Content-Type: application/json
 
 1. **Нет обхода compliance:** Force не разрешает звонок, который был заблокирован проверкой ограничений; не снимает `auto_paused` и не подменяет safe-resume.
 2. **Нет нового статуса:** оба режима заканчиваются в `completed`.
-3. **UI:** кнопку «Остановить немедленно» (Force) показывать только после готовности `OP-T-002b`; до этого в кабинете только graceful «Остановить кампанию».
+3. **UI:** Force («Остановить немедленно») — отдельный design-pass после контракта; кабинет по умолчанию шлёт `stopMode: "graceful"` / default.
 
 ### Связь с pause
 

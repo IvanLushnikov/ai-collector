@@ -3,12 +3,31 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-T-002a
-- Следующая кандидат: OP-T-002b
-- Риски/договорённости: Force UI только после OP-T-002b; канон stop = `completed`.
-- Инварианты: OP-D-001…004, OP-T-001, OP-T-002 split, OP-T-002a docs.
+- Последняя закрытая: OP-T-002b
+- Следующая кандидат: OP-D-005
+- Риски/договорённости: Force UI ещё не добавлен; force в API — audit + флаг прерывания.
+- Инварианты: stop=`completed`+`stopMode`; auto_paused нельзя force-complete.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-002b — done
+
+### Взял
+- OP-T-002b: stopMode + audit.
+
+### Сделал
+- PATCH status: stopMode graceful|force; default graceful; audit metadata; complianceBypass=false.
+- Прототип шлёт stopMode graceful.
+- Docs + tests.
+
+### Проверка
+- vitest stop-mode / docs / stop-confirm — PASS
+
+### Состояние бэклога
+- Следующая `todo`: OP-D-005
+
+### Handoff
+- **OP-D-005**: журнал decision trail.
 
 ## 2026-08-20 — OP-T-002a — done
 

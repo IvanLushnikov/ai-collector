@@ -4299,7 +4299,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
           'Content-Type':'application/json',
           'X-User-Role':currentAuth.role
         },
-        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed' } : { status })
+        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed', stopMode: 'graceful' } : { status })
       });
       const body=await response.json().catch(()=>({}));
       if (!response.ok) {

@@ -104,7 +104,16 @@ const campaignStatusTransitionSchema = z.object({
 });
 
 const campaignStatusUpdateSchema = z.object({
-  status: z.enum(campaignStatusValues)
+  status: z.enum(campaignStatusValues),
+  stopMode: z.enum(['graceful', 'force']).optional()
+}).superRefine((value, ctx) => {
+  if (value.stopMode && value.status !== 'completed') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['stopMode'],
+      message: 'stopMode is only allowed when status is completed'
+    });
+  }
 });
 
 const campaignSafeResumeSchema = z.object({
@@ -1232,6 +1241,9 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     }
 
     const previousStatus = campaign.status;
+    const stopMode = nextStatus === 'completed'
+      ? (payload.data.stopMode ?? 'graceful')
+      : undefined;
 
     const updated = await (deps.campaign.update?.({
       where: { id: params.data.campaignId },
@@ -1263,12 +1275,22 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         metadata: {
           campaignId: params.data.campaignId,
           fromStatus: previousStatus,
-          toStatus: nextStatus
+          toStatus: nextStatus,
+          ...(stopMode
+            ? {
+                stopMode,
+                forceInterruptsActiveAttempts: stopMode === 'force',
+                complianceBypass: false
+              }
+            : {})
         }
       }
     });
 
-    return reply.code(200).send(updated);
+    return reply.code(200).send({
+      ...updated,
+      ...(stopMode ? { stopMode } : {})
+    });
   });
 
   app.post(
