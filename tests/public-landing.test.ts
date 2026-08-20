@@ -18,8 +18,11 @@ describe('public GitHub Pages landing', () => {
     expect(landing).toContain('Спасибо, мы свяжемся с вами в ближайшее время.');
     expect(landing).not.toMatch(/маги[яи]/i);
     expect(landing).not.toContain('demoModalOverlay');
-    expect(landing).not.toContain('Что покажем на демо');
     expect(landing).not.toContain('заявка не отправляется на сервер');
+    expect(landing).toContain('class="demo-expect"');
+    expect(landing).toMatch(/проверк/i);
+    expect(landing).toMatch(/специалист/i);
+    expect(landing).toMatch(/журнал/i);
   });
 
   it('submits demo leads through lead-relay when configured', () => {
@@ -35,13 +38,39 @@ describe('public GitHub Pages landing', () => {
     expect(hero).toContain('hero-grid');
     expect(hero).toContain('hero-form-card');
     expect(hero).toContain('id="demo-form"');
+    expect(hero).toContain('hero-points');
+    expect(hero).not.toContain('value-strip');
     expect(hero).not.toContain('side-panel');
     expect(hero).not.toContain('hero-actions');
 
     const h1 = hero.match(/<h1>([\s\S]*?)<\/h1>/)?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
     expect(h1).toMatch(/ИИ-коллектор/i);
+    expect(h1).toMatch(/управляемый пилот/i);
     expect(h1).not.toMatch(/только там, где/i);
     expect(h1).not.toMatch(/разрешено/i);
+  });
+
+  it('orders how-it-works with restriction checks before dialogue', () => {
+    const how = landing.match(/id="how-it-works"[\s\S]*?<\/section>/)?.[0] ?? '';
+    const checksAt = how.search(/Проверка ограничений перед действиями/i);
+    const dialogueAt = how.search(/Ведём управляемый диалог/i);
+    expect(checksAt).toBeGreaterThan(-1);
+    expect(dialogueAt).toBeGreaterThan(-1);
+    expect(checksAt).toBeLessThan(dialogueAt);
+    expect(how).not.toMatch(/CSV|XLSX|исходящий контур/i);
+  });
+
+  it('shows market segments before secondary roles', () => {
+    const roles = landing.match(/id="roles"[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect(roles).toContain('Сегмент');
+    expect(roles).toMatch(/Банки/);
+    expect(roles).toMatch(/МФО/);
+    expect(roles).toMatch(/ПКО/);
+    expect(roles).toContain('Назначить демо');
+    const segmentAt = roles.indexOf('Сегмент');
+    const roleAt = roles.indexOf('Роли в команде клиента');
+    expect(segmentAt).toBeGreaterThan(-1);
+    expect(roleAt).toBeGreaterThan(segmentAt);
   });
 
   it('does not pin a dock CTA over desktop content', () => {
@@ -60,6 +89,7 @@ describe('public GitHub Pages landing', () => {
     expect(landing).not.toContain('Звонки только там, где это разрешено');
     expect(landing).toMatch(/автоматизац/i);
     expect(landing).toMatch(/Контроль — часть процесса/i);
+    expect(landing).toMatch(/не полностью автономное взыскание/i);
     expect(countMatches(landing, /ограниченн(ый|ого|ом)\s+пилот/gi)).toBeLessThanOrEqual(2);
 
     const title = landing.match(/<h1>([\s\S]*?)<\/h1>/)?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
