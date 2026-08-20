@@ -1359,7 +1359,8 @@
           decision: apiDecision.decision,
           reasonCode: apiDecision.reasonCode || null,
           reasonText: apiDecision.reasonText || null,
-          checkedAt: apiDecision.checkedAt || null
+          checkedAt: apiDecision.checkedAt || null,
+          blockKind: apiDecision.blockKind || null
         }
       : (complianceStatusDecisionMap[item.complianceStatus]
         ? { decision: complianceStatusDecisionMap[item.complianceStatus] }
@@ -2746,7 +2747,7 @@
         <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
         <td>${formatDialStatusLabel(item.dialStatus || item.status)}<div style="font-size:12px;color:var(--muted)">${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
         <td><span class="tag ${result.pill}">${result.label}</span></td>
-        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
+        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span>${formatBlockKindLabel(item.complianceDecision?.blockKind) ? `<div style="font-size:11px;color:var(--muted)">${formatBlockKindLabel(item.complianceDecision?.blockKind)}</div>` : ''}<div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
       `;
       tbody.appendChild(tr);
       if (expandedDebtorKey === debtorKey) {
