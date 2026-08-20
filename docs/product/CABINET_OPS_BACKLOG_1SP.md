@@ -49,9 +49,9 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 18 | OP-T-008 | tech | Progress completed/total из реальных событий · `done` |
 | 19 | OP-D-011 | design | Microcopy pass по рыночным формулировкам |
 | 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы · `done` |
-| 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» |
+| 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» · `done` |
 | 22 | OP-T-010 | tech | Who changed status в audit (actor type) — done |
-| 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
+| 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) · `done` (P2 draft) |
 | 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
 | 25 | OP-T-012 | tech | Force stop: sandbox interrupt in-flight (`done`); live Exolve hangup — `T-149` |
 | 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) · `done` |
@@ -321,7 +321,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-012: Карточка кампании — блоки готовности без «магии»
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Genesys building blocks; Oktell activate pipeline
 
@@ -344,7 +344,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-013: Компактный supervisor-вид мониторинга (P2)
 
-Статус: `todo`  
+Статус: `done` (P2 draft — не блокирует P1)  
 Тип: `design`  
 Референс: Oktell Resources; Five9; Kit Live; Talkdesk Live campaigns
 
@@ -362,6 +362,13 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 - Есть согласованный макет на 1 экран без KPI-карточного дашборда.
 - Явно помечено P2 — не блокирует P1.
+
+Реализация (20.08.2026):
+
+- На Главной под списком кампаний — панель `#supervisorMonitorP2` с бейджем **P2** и плотной таблицей: кампания · статус · прогресс · риск · очередь проверки · обновлено.
+- HTML-комментарий wireframe для полного экрана супервизора (меню, автообновление, bulk — без TV wallboard).
+- `renderSupervisorMonitor()` собирает строки из `#homeCampaignsBody` + `reviewQueueItems`; без KPI-карточек и геймификации.
+- Тесты: `tests/prototype-supervisor-monitor.test.ts`.
 
 ---
 
