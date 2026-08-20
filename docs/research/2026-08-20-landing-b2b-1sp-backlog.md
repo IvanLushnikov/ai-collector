@@ -31,7 +31,7 @@
 4. `LT-01`…`LT-05` (техника под изменения copy/UI)  
 5. `LD-09` (финальная сверка anti-patterns)
 
-Первая `todo`: `LT-03`.
+Первая `todo`: `LT-04`.
 
 ---
 
@@ -409,7 +409,16 @@
 
 ### LT-03: Доступность CTA, sticky и формы на mobile
 
-Статус: `todo`
+Статус: `done`
+
+Контекст для следующих задач:
+
+- Sticky button label = «Назначить демо» (`href="#demo-form"`); убрано «Перейти к форме».
+- Тест фиксирует `--sticky-height` / `padding-bottom` / mobile 84px и лейбл sticky.
+- Desktop sticky по-прежнему `display:none` ≥761px.
+- Риск: не вернуть «Перейти к форме»; не убрать `--sticky-height` на mobile.
+
+
 
 Что сделать:
 
@@ -497,6 +506,7 @@
 | 2026-08-20 | `LD-08` | Motion: steps / CTA hover / sticky; respects reduced-motion |
 | 2026-08-20 | `LT-01` | Контрактные тесты лендинга под LD-01…06 (8 кейсов) |
 | 2026-08-20 | `LT-02` | Спека = inline `#demo-form` (путь A), модалка отложена |
+| 2026-08-20 | `LT-03` | Sticky «Назначить демо» + assertions padding/лейбла |
 
 ---
 

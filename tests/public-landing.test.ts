@@ -96,4 +96,14 @@ describe('public GitHub Pages landing', () => {
     expect(title.length).toBeGreaterThan(12);
     expect(title.length).toBeLessThanOrEqual(72);
   });
+
+  it('keeps sticky CTA labeled for demo and reserves mobile bottom space', () => {
+    expect(landing).toContain('--sticky-height');
+    expect(landing).toMatch(/padding-bottom:\s*var\(--sticky-height\)/);
+    expect(landing).toMatch(/@media \(max-width:\s*760px\)[\s\S]{0,200}--sticky-height:\s*84px/);
+    const sticky = landing.match(/class="sticky-cta"[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? '';
+    expect(sticky).toContain('href="#demo-form"');
+    expect(sticky).toContain('Назначить демо');
+    expect(sticky).not.toContain('Перейти к форме');
+  });
 });
