@@ -20,6 +20,8 @@ Typical triggers:
 
 Read [PRODUCT_LANGUAGE.md](../../PRODUCT_LANGUAGE.md) first and follow its terminology table.
 
+Optional English microcopy patterns (buttons, errors, empty states) live in [references/ux-writing-patterns-en.md](references/ux-writing-patterns-en.md). Translate principles into Russian; never paste English labels into the operator cabinet.
+
 ## Core principle
 
 The interface speaks the user's language, not the developer's.

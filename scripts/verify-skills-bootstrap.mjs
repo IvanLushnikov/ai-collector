@@ -11,6 +11,9 @@ const files = {
   agents: path.join(repoRoot, "AGENTS.md"),
   claude: path.join(repoRoot, "CLAUDE.md"),
   readme: path.join(repoRoot, "README.md"),
+  skillsReadme: path.join(repoRoot, "skills", "README.md"),
+  research: path.join(repoRoot, "docs", "skills", "research-lobehub-superpowers-2026-08-20.md"),
+  lobehubManifest: path.join(repoRoot, "third_party", "lobehub", "manifest.json"),
   goal: path.join(repoRoot, "CODEX_SPARK_5_3_GOAL.md"),
   backlog: path.join(repoRoot, "TECH_BACKLOG_1SP.md"),
 };
@@ -29,25 +32,34 @@ const requiredSkillFiles = [
   "writing-plans",
   "ru-ai-collector-product-design",
   "russian-product-copy",
+  "frontend-design",
+  "interface-design",
+  "ui-ux-audit",
+  "laws-of-ux",
+  "accessibility",
+  "ux-design-review",
+  "prd-from-context",
 ];
 
 const expectedSnippets = [
   {
     file: files.agents,
     snippets: [
-      "read `/Users/ivanlusnikov/ai-collector/skills/using-superpowers/SKILL.md` before doing anything else",
-      "use `/Users/ivanlusnikov/ai-collector/skills/ru-ai-collector-product-design/SKILL.md` first",
-      "use `/Users/ivanlusnikov/ai-collector/skills/russian-product-copy/SKILL.md` after",
-      "Treat `/Users/ivanlusnikov/ai-collector/CODEX_SPARK_5_3_GOAL.md` as the delivery contract",
-      "Follow `/Users/ivanlusnikov/ai-collector/TECH_BACKLOG_1SP.md` and complete at most one `1 SP` task per iteration",
+      "read `skills/using-superpowers/SKILL.md` before doing anything else",
+      "use `skills/ru-ai-collector-product-design/SKILL.md` first",
+      "use `skills/russian-product-copy/SKILL.md` after",
+      "use `skills/ui-ux-audit/SKILL.md`",
+      "use `skills/ux-design-review/SKILL.md`",
+      "Treat `CODEX_SPARK_5_3_GOAL.md` as the delivery contract",
+      "Follow `TECH_BACKLOG_1SP.md` and complete at most one `1 SP` task per iteration",
     ],
   },
   {
     file: files.claude,
     snippets: [
-      "read `/Users/ivanlusnikov/ai-collector/AGENTS.md` and then `/Users/ivanlusnikov/ai-collector/skills/using-superpowers/SKILL.md`",
-      "Treat `/Users/ivanlusnikov/ai-collector/AGENTS.md` as the canonical routing table",
-      "Do not finish a non-trivial task without reading `/Users/ivanlusnikov/ai-collector/skills/verification-before-completion/SKILL.md`",
+      "read `AGENTS.md` and then `skills/using-superpowers/SKILL.md`",
+      "Treat `AGENTS.md` as the canonical routing table",
+      "Do not finish a non-trivial task without reading `skills/verification-before-completion/SKILL.md`",
     ],
   },
   {
@@ -56,6 +68,15 @@ const expectedSnippets = [
       "## Agent bootstrap и обязательные skills",
       "`npm run verify:skills`",
       "Если `verify:skills` падает, значит skill-маршрутизация репозитория нарушена",
+      "skills/README.md",
+    ],
+  },
+  {
+    file: files.skillsReadme,
+    snippets: [
+      "Layer 0 — Process (obra/superpowers)",
+      "Layer 1 — Product",
+      "Layer 2 — Craft / audit",
     ],
   },
 ];
@@ -82,6 +103,18 @@ for (const target of Object.values(files)) {
 
 for (const skillName of requiredSkillFiles) {
   assertExists(skillPath(skillName));
+  const sourcePath = path.join(repoRoot, "skills", skillName, "SOURCE.md");
+  const vendoredWithSource = [
+    "frontend-design",
+    "interface-design",
+    "ui-ux-audit",
+    "laws-of-ux",
+    "accessibility",
+    "prd-from-context",
+  ];
+  if (vendoredWithSource.includes(skillName)) {
+    assertExists(sourcePath);
+  }
 }
 
 for (const { file, snippets } of expectedSnippets) {
@@ -94,15 +127,13 @@ for (const { file, snippets } of expectedSnippets) {
 }
 
 const bootstrapTexts = [readText(files.agents), readText(files.claude)];
+const skillRefPattern = /skills\/[a-z0-9-]+\/SKILL\.md/g;
 const referencedSkillPaths = new Set(
-  bootstrapTexts
-    .flatMap((text) =>
-      text.match(/\/Users\/ivanlusnikov\/ai-collector\/skills\/[a-z0-9-]+\/SKILL\.md/g) ?? [],
-    ),
+  bootstrapTexts.flatMap((text) => text.match(skillRefPattern) ?? []),
 );
 
-for (const absoluteSkillPath of referencedSkillPaths) {
-  assertExists(absoluteSkillPath);
+for (const relativeSkillPath of referencedSkillPaths) {
+  assertExists(path.join(repoRoot, relativeSkillPath));
 }
 
 if (process.exitCode) {
