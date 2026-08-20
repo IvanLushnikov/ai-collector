@@ -359,7 +359,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         name: true,
         status: true,
         timezone: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     }) as unknown as Array<{
       id: string;
@@ -367,9 +368,64 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       status: string;
       timezone: string;
       createdAt: string;
+      updatedAt: string;
     }>)) ?? [];
 
-    return reply.code(200).send(campaigns);
+    const autoPausedIds = campaigns
+      .filter((campaign) => campaign.status === 'auto_paused')
+      .map((campaign) => campaign.id);
+
+    const pauseAudits = autoPausedIds.length > 0 && deps.auditLog?.findMany
+      ? ((await deps.auditLog.findMany({
+          where: {
+            tenantId: params.data.tenantId,
+            entityType: 'campaign',
+            action: 'campaign.auto_paused',
+            entityId: { in: autoPausedIds }
+          },
+          orderBy: { createdAt: 'desc' }
+        })) as Array<{
+          entityId: string;
+          createdAt: string;
+          metadata?: { reasonText?: unknown };
+        }>)
+      : [];
+
+    const latestReasonByCampaignId = new Map<string, string>();
+    for (const audit of pauseAudits) {
+      if (latestReasonByCampaignId.has(audit.entityId)) {
+        continue;
+      }
+      const reasonText = typeof audit.metadata?.reasonText === 'string' ? audit.metadata.reasonText.trim() : '';
+      if (reasonText) {
+        latestReasonByCampaignId.set(audit.entityId, reasonText);
+      }
+    }
+
+    const enriched = await Promise.all(campaigns.map(async (campaign) => {
+      const [totalRecords, attemptedCalls] = await Promise.all([
+        deps.debtorRecord?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0),
+        deps.callAttempt?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0)
+      ]);
+
+      return {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        timezone: campaign.timezone,
+        createdAt: campaign.createdAt,
+        updatedAt: campaign.updatedAt,
+        statusReason: campaign.status === 'auto_paused'
+          ? (latestReasonByCampaignId.get(campaign.id) ?? null)
+          : null,
+        progress: {
+          attemptedCalls,
+          totalRecords
+        }
+      };
+    }));
+
+    return reply.code(200).send(enriched);
   });
 
   app.get(

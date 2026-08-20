@@ -3,12 +3,37 @@
 ## Текущее состояние волны
 
 - Дата: 2026-08-20
-- Последняя закрытая: OP-D-002
-- Следующая кандидат: OP-T-001
-- Риски/договорённости: колонки Причина/Режим/Обновлено пока «н/д» до OP-T-001; CTA «Открыть причину» в клиентском кабинете не добавляли (PRODUCT_LANGUAGE) — вход в причину через имя → Обзор.
-- Инварианты уже в коде: без AI glow/glass (OP-D-001); плотная таблица кампаний с колонками Название/Статус/Причина/Режим/Прогресс/Обновлено (OP-D-002).
+- Последняя закрытая: OP-T-001
+- Следующая кандидат: OP-D-003
+- Риски/договорённости: `statusReason` берётся из audit `campaign.auto_paused`; режим в таблице по-прежнему «н/д» (не в DoD OP-T-001).
+- Инварианты уже в коде: OP-D-001 визуал; OP-D-002 колонки; OP-T-001 list API: `updatedAt`, `statusReason`, `progress{attemptedCalls,totalRecords}`.
 
 ## Проходы
+
+## 2026-08-20 — OP-T-001 — done
+
+### Взял
+- OP-T-001: поля списка кампаний для ops-таблицы.
+
+### Контекст из прошлых проходов
+- UI уже ждёт Причина/Прогресс/Обновлено; нужны additive API fields.
+
+### Сделал
+- `GET /tenants/:tenantId/campaigns`: `updatedAt`, `statusReason` (из audit auto_paused), `progress.attemptedCalls/totalRecords`.
+- Документация `docs/campaigns-api.md`.
+- Прототип маппит поля в таблицу.
+- Тест `tests/campaigns.list-ops-fields.test.ts` + обновлены контракты в `campaigns.create.test.ts`.
+
+### Проверка
+- `vitest` list-ops + campaigns.create + prototype list tests — 66/66 PASS
+
+### Состояние бэклога
+- OP-D-001, OP-D-002, OP-T-001: `done`
+- Следующая `todo`: OP-D-003
+
+### Handoff следующей задаче
+- Следующий ID: **OP-D-003** (риск-баннер выше KPI на Обзоре).
+- Не ломать additive list fields.
 
 ## 2026-08-20 — OP-D-002 — done
 

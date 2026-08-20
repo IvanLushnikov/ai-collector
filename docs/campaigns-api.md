@@ -43,19 +43,28 @@
 
 #### Успешный ответ `200`
 
-Массив объектов в порядке возрастания `createdAt`:
+Массив объектов в порядке возрастания `createdAt`. Поля `updatedAt`, `statusReason` и `progress` — additive (старые клиенты их могут игнорировать):
 
 ```json
 [
   {
     "id": "uuid",
     "name": "Campaign name",
-    "status": "draft",
+    "status": "auto_paused",
     "timezone": "Europe/Moscow",
-    "createdAt": "2026-08-16T00:00:00.000Z"
+    "createdAt": "2026-08-16T00:00:00.000Z",
+    "updatedAt": "2026-08-19T09:30:00.000Z",
+    "statusReason": "Нет записи разговора",
+    "progress": {
+      "attemptedCalls": 1974,
+      "totalRecords": 4200
+    }
   }
 ]
 ```
+
+- `statusReason` — человекочитаемая причина при `auto_paused` (из последнего audit `campaign.auto_paused`); иначе `null`.
+- `progress.attemptedCalls` — число попыток звонка; `progress.totalRecords` — число записей базы кампании.
 
 #### Ответы с ошибками
 

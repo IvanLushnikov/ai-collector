@@ -3629,7 +3629,8 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
 
         const tdReason=document.createElement('td');
         tdReason.className='campaign-reason';
-        tdReason.textContent='н/д';
+        const reasonText=typeof c.statusReason==='string' && c.statusReason.trim() ? c.statusReason.trim() : '';
+        tdReason.textContent=reasonText || 'н/д';
 
         const tdMode=document.createElement('td');
         tdMode.className='campaign-mode';
@@ -3637,11 +3638,28 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
 
         const tdProgress=document.createElement('td');
         tdProgress.className='campaign-progress';
-        tdProgress.textContent=meta.progress;
+        const progress=c.progress && typeof c.progress==='object' ? c.progress : null;
+        const attempted=progress ? Number(progress.attemptedCalls) : NaN;
+        const total=progress ? Number(progress.totalRecords) : NaN;
+        if (Number.isFinite(total) && total>0 && Number.isFinite(attempted)) {
+          tdProgress.textContent=`Обзвонили ${formatRuInt(attempted)} из ${formatRuInt(total)}`;
+        } else if (Number.isFinite(total) && total<=0) {
+          tdProgress.textContent='База не загружена';
+        } else {
+          tdProgress.textContent=meta.progress;
+        }
 
         const tdUpdated=document.createElement('td');
         tdUpdated.className='campaign-updated';
-        tdUpdated.textContent='н/д';
+        const updatedRaw=c.updatedAt || c.createdAt || '';
+        let updatedLabel='н/д';
+        if (updatedRaw) {
+          const d=new Date(updatedRaw);
+          if (!Number.isNaN(d.getTime())) {
+            updatedLabel=d.toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+          }
+        }
+        tdUpdated.textContent=updatedLabel;
 
         tr.appendChild(tdSelect);
         tr.appendChild(tdName);

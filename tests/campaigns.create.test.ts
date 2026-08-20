@@ -426,14 +426,16 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Old campaign',
         status: 'draft',
         timezone: 'Europe/Moscow',
-        createdAt: '2026-08-10T10:00:00.000Z'
+        createdAt: '2026-08-10T10:00:00.000Z',
+        updatedAt: '2026-08-10T10:00:00.000Z'
       },
       {
         id: 'campaign-new',
         name: 'New campaign',
         status: 'ready',
         timezone: 'UTC',
-        createdAt: '2026-08-16T10:00:00.000Z'
+        createdAt: '2026-08-16T10:00:00.000Z',
+        updatedAt: '2026-08-16T10:00:00.000Z'
       }
     ]);
 
@@ -457,14 +459,20 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Old campaign',
         status: 'draft',
         timezone: 'Europe/Moscow',
-        createdAt: '2026-08-10T10:00:00.000Z'
+        createdAt: '2026-08-10T10:00:00.000Z',
+        updatedAt: '2026-08-10T10:00:00.000Z',
+        statusReason: null,
+        progress: { attemptedCalls: 5, totalRecords: 2 }
       },
       {
         id: 'campaign-new',
         name: 'New campaign',
         status: 'ready',
         timezone: 'UTC',
-        createdAt: '2026-08-16T10:00:00.000Z'
+        createdAt: '2026-08-16T10:00:00.000Z',
+        updatedAt: '2026-08-16T10:00:00.000Z',
+        statusReason: null,
+        progress: { attemptedCalls: 5, totalRecords: 2 }
       }
     ]);
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
@@ -477,7 +485,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: true,
         status: true,
         timezone: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     });
 
@@ -492,7 +501,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Offset campaign',
         status: 'draft',
         timezone: 'UTC',
-        createdAt: '2026-08-12T10:00:00.000Z'
+        createdAt: '2026-08-12T10:00:00.000Z',
+        updatedAt: '2026-08-12T10:00:00.000Z'
       }
     ]);
 
@@ -515,7 +525,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Offset campaign',
         status: 'draft',
         timezone: 'UTC',
-        createdAt: '2026-08-12T10:00:00.000Z'
+        createdAt: '2026-08-12T10:00:00.000Z',
+        updatedAt: '2026-08-12T10:00:00.000Z',
+        statusReason: null,
+        progress: { attemptedCalls: 5, totalRecords: 2 }
       }
     ]);
     expect(campaignStore.campaign.findMany).toHaveBeenCalledWith({
@@ -528,7 +541,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: true,
         status: true,
         timezone: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     });
 
@@ -543,7 +557,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Only this tenant',
         status: 'draft',
         timezone: 'UTC',
-        createdAt: '2026-08-16T09:00:00.000Z'
+        createdAt: '2026-08-16T09:00:00.000Z',
+        updatedAt: '2026-08-16T09:00:00.000Z'
       }
     ]);
 
@@ -566,7 +581,10 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: 'Only this tenant',
         status: 'draft',
         timezone: 'UTC',
-        createdAt: '2026-08-16T09:00:00.000Z'
+        createdAt: '2026-08-16T09:00:00.000Z',
+        updatedAt: '2026-08-16T09:00:00.000Z',
+        statusReason: null,
+        progress: { attemptedCalls: 5, totalRecords: 2 }
       }
     ]);
 
@@ -583,7 +601,8 @@ describe('GET /tenants/:tenantId/campaigns', () => {
         name: true,
         status: true,
         timezone: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     });
 
