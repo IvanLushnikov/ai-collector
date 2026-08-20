@@ -232,6 +232,15 @@
       font-size: 14px;
     }
 
+    .demo-expect {
+      margin: 12px 0 0;
+      padding: 0 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
     .demo-form {
       display: grid;
       gap: 12px;
@@ -616,7 +625,12 @@
 
           <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
             <h2>Назначить демо</h2>
-            <p>Покажем кампанию, сценарий и результат на вашем примере.</p>
+            <p>На встрече пройдём управляемый сценарий пилота. Без обзвона вашей боевой базы.</p>
+            <ul class="demo-expect">
+              <li>проверки ограничений до звонка;</li>
+              <li>эскалация спорного случая специалисту;</li>
+              <li>журнал действий по шагам.</li>
+            </ul>
             <form class="demo-form" id="demoForm" novalidate>
               <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
 
