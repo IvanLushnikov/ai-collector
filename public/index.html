@@ -10,24 +10,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #e4ebe6;
-      --bg-deep: #0f1c18;
-      --surface: #f7faf8;
-      --ink: #10211c;
-      --muted: #4d635a;
-      --line: #c5d2cb;
-      --accent: #0f7a5f;
-      --accent-strong: #0a5a46;
-      --accent-soft: #d7efe6;
-      --signal: #e8a317;
-      --hero-bg: var(--bg-deep);
-      --shadow: 0 18px 50px rgba(16, 33, 28, 0.28);
-      --radius: 4px;
+      --bg: #eef6f1;
+      --bg-deep: #0b1814;
+      --surface: #ffffff;
+      --ink: #0d1f19;
+      --muted: #3f5a4f;
+      --line: #c9dbd2;
+      --accent: #12a07a;
+      --accent-strong: #0c7a5c;
+      --accent-soft: #d4f5ea;
+      --signal: #ffb020;
+      --signal-hot: #ff8a1f;
+      --hero-bg: #081410;
+      --shadow: 0 22px 60px rgba(8, 20, 16, 0.35);
+      --radius: 6px;
       --container: 1140px;
       --sticky-height: 0px;
       --font: "Source Sans 3", "Segoe UI", sans-serif;
       --font-display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
-      --grid-line: rgba(247, 250, 248, 0.06);
+      --grid-line: rgba(255, 255, 255, 0.07);
     }
 
     * { box-sizing: border-box; }
@@ -148,15 +149,16 @@
     }
 
     .btn-primary {
-      background: var(--signal);
+      background: linear-gradient(135deg, var(--signal) 0%, var(--signal-hot) 100%);
       color: var(--bg-deep);
+      box-shadow: 0 8px 24px rgba(255, 176, 32, 0.28);
     }
 
     .btn-primary:hover,
     .btn-primary:focus-visible {
-      background: #f0b43a;
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(232, 163, 23, 0.28);
+      background: linear-gradient(135deg, #ffc14d 0%, #ff9a3d 100%);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 14px 34px rgba(255, 138, 31, 0.38);
     }
 
     .btn-secondary {
@@ -171,27 +173,56 @@
       position: relative;
       padding: 72px 0 56px;
       background:
-        linear-gradient(115deg, rgba(15, 122, 95, 0.22), transparent 42%),
+        radial-gradient(900px 420px at 85% 15%, rgba(255, 176, 32, 0.22), transparent 55%),
+        radial-gradient(700px 380px at 10% 80%, rgba(18, 160, 122, 0.28), transparent 50%),
         linear-gradient(var(--grid-line) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
         var(--hero-bg);
-      background-size: auto, 48px 48px, 48px 48px, auto;
+      background-size: auto, auto, 42px 42px, 42px 42px, auto;
       color: #f2f7f4;
       border-bottom: 0;
       overflow: hidden;
+      animation: hero-bg-shift 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes hero-bg-shift {
+      from {
+        background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+      }
+      to {
+        background-position: 0 0, 0 0, 18px 12px, -14px 20px, 0 0;
+      }
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -20% -10%;
+      background: conic-gradient(from 210deg at 70% 30%, rgba(255, 176, 32, 0.12), transparent 28%, rgba(18, 160, 122, 0.16), transparent 62%);
+      animation: hero-sweep 9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes hero-sweep {
+      to { transform: rotate(360deg); }
     }
 
     .hero::after {
       content: "";
       position: absolute;
-      right: -8%;
-      top: -20%;
-      width: 46vw;
-      height: 120%;
-      background:
-        radial-gradient(circle at 30% 40%, rgba(232, 163, 23, 0.16), transparent 42%),
-        radial-gradient(circle at 70% 60%, rgba(15, 122, 95, 0.28), transparent 50%);
+      right: -6%;
+      bottom: -18%;
+      width: min(520px, 48vw);
+      height: min(520px, 48vw);
+      border: 2px solid rgba(255, 176, 32, 0.22);
+      border-radius: 50%;
+      animation: ring-pulse 4.5s ease-in-out infinite;
       pointer-events: none;
+    }
+
+    @keyframes ring-pulse {
+      0%, 100% { transform: scale(0.92); opacity: 0.35; }
+      50% { transform: scale(1.06); opacity: 0.8; }
     }
 
     .hero .container { position: relative; z-index: 1; }
@@ -316,6 +347,14 @@
       font-weight: 600;
     }
 
+    .demo-form label:not(.check-row) span {
+      transition: color 0.2s ease;
+    }
+
+    .demo-form label:not(.check-row):focus-within span {
+      color: var(--accent-strong);
+    }
+
     .demo-form input:not([type="checkbox"]) {
       width: 100%;
       min-height: 46px;
@@ -323,10 +362,14 @@
       border-radius: 2px;
       padding: 0 12px;
       background: #fff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     .demo-form input:not([type="checkbox"]):focus {
       border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(18, 160, 122, 0.16);
+      transform: translateY(-1px);
+      outline: none;
     }
 
     .form-note {
@@ -335,24 +378,64 @@
       font-size: 12px;
     }
 
-    .check-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      font-size: 12px;
+    .demo-form label.check-row {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      column-gap: 12px;
+      align-items: start;
+      font-size: 13px;
       font-weight: 400;
       color: var(--muted);
       line-height: 1.45;
+      cursor: pointer;
     }
 
-    .check-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      min-height: 0;
-      margin-top: 3px;
-      flex-shrink: 0;
+    .demo-form label.check-row input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      min-height: 18px;
+      margin: 1px 0 0;
       padding: 0;
-      accent-color: var(--accent);
+      border: 2px solid var(--line);
+      border-radius: 3px;
+      background: #fff;
+      display: grid;
+      place-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+
+    .demo-form label.check-row input[type="checkbox"]::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      transform: scale(0);
+      transition: transform 0.15s ease;
+      box-shadow: inset 1em 1em var(--bg-deep);
+      clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 80% 0, 38% 62%);
+      background: var(--bg-deep);
+    }
+
+    .demo-form label.check-row input[type="checkbox"]:checked {
+      background: var(--signal);
+      border-color: var(--signal-hot);
+    }
+
+    .demo-form label.check-row input[type="checkbox"]:checked::before {
+      transform: scale(1);
+    }
+
+    .demo-form label.check-row input[type="checkbox"]:focus-visible {
+      outline: 3px solid rgba(255, 176, 32, 0.45);
+      outline-offset: 2px;
+    }
+
+    .demo-form label.check-row > span {
+      min-width: 0;
     }
 
     .check-row a {
@@ -419,6 +502,14 @@
       border-radius: 0;
       padding: 28px 24px;
       min-height: 148px;
+      transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .value-card:hover {
+      background: var(--accent-soft);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(12, 122, 92, 0.12);
+      z-index: 1;
     }
 
     .value-card:last-child { border-right: 0; }
@@ -500,6 +591,12 @@
       border-top: 2px solid var(--ink);
       border-radius: 0;
       padding: 18px 4px 10px;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .step-card:hover {
+      transform: translateX(6px);
+      border-top-color: var(--signal-hot);
     }
 
     .step-index {
@@ -514,6 +611,13 @@
       font-weight: 800;
       font-size: 16px;
       letter-spacing: -0.04em;
+      transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+
+    .step-card:hover .step-index {
+      background: var(--signal);
+      color: var(--bg-deep);
+      transform: scale(1.06);
     }
 
     .cta-repeat { margin-top: 28px; }
@@ -607,16 +711,45 @@
       letter-spacing: 0.12em;
     }
 
-    .segments-grid .role-card {
-      border-top: 3px solid var(--accent);
-      min-height: 168px;
-    }
-
     .control-card {
       border-left: 4px solid var(--accent);
       border-radius: 0;
       background: #f7faf8;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
+
+    .control-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 18px 40px rgba(12, 122, 92, 0.14);
+      border-left-color: var(--signal-hot);
+    }
+
+    .segments-grid .role-card {
+      border-top: 3px solid var(--accent);
+      min-height: 168px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .segments-grid .role-card:hover {
+      transform: translateY(-6px);
+      border-top-color: var(--signal);
+      box-shadow: 0 18px 40px rgba(8, 20, 16, 0.12);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
 
     .faq-wrap { display: grid; gap: 10px; }
 
@@ -667,11 +800,19 @@
       display: grid;
       gap: 16px;
       background:
-        linear-gradient(120deg, rgba(15, 122, 95, 0.35), transparent 50%),
+        linear-gradient(120deg, rgba(18, 160, 122, 0.45), transparent 48%),
+        linear-gradient(300deg, rgba(255, 176, 32, 0.22), transparent 40%),
         var(--bg-deep);
+      background-size: 160% 160%, 160% 160%, auto;
+      animation: cta-shift 8s ease-in-out infinite alternate;
       border: 0;
       color: #f2f7f4;
       border-radius: 0;
+    }
+
+    @keyframes cta-shift {
+      from { background-position: 0% 40%, 100% 0%, 0 0; }
+      to { background-position: 100% 60%, 0% 100%, 0 0; }
     }
 
     .cta-panel h2 { color: #fff; max-width: 18ch; }
@@ -732,6 +873,20 @@
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
+
+      .hero,
+      .hero::before,
+      .hero::after,
+      .cta-panel {
+        animation: none !important;
+      }
+
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+
       *,
       *::before,
       *::after {
@@ -899,15 +1054,15 @@
     <section class="value-band" aria-label="Что даёт продукт">
       <div class="container">
         <div class="value-strip">
-          <article class="value-card">
+          <article class="value-card reveal">
             <strong>Кампании и база</strong>
             <span>Загрузите базу, настройте сценарий и запустите обзвон в одном кабинете.</span>
           </article>
-          <article class="value-card">
+          <article class="value-card reveal reveal-delay-1">
             <strong>Диалоги и результат</strong>
             <span>ИИ ведёт разговор, фиксирует исход и обещания платежа.</span>
           </article>
-          <article class="value-card">
+          <article class="value-card reveal reveal-delay-2">
             <strong>Контроль в процессе</strong>
             <span>Ограничения, журнал действий и перевод оператору — без отдельного «контура безопасности».</span>
           </article>
@@ -917,7 +1072,7 @@
 
     <section id="how-it-works">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>Как это работает</h2>
           <p class="section-lead">От настройки пилота до журнала действий — один управляемый процесс.</p>
         </div>
@@ -977,11 +1132,11 @@
 
     <section id="benefits">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>До и после управляемого контура</h2>
           <p class="section-lead">Короткое сравнение: как меняется работа команды с ИИ-коллектором.</p>
         </div>
-        <div class="compare-table" role="table" aria-label="Сравнение без контура и с ИИ-коллектором">
+        <div class="compare-table reveal reveal-delay-1" role="table" aria-label="Сравнение без контура и с ИИ-коллектором">
           <div class="compare-row compare-head" role="row">
             <span role="columnheader"></span>
             <span role="columnheader">Без управляемого контура</span>
@@ -1016,24 +1171,24 @@
 
     <section id="control">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>Контроль — часть процесса, не отдельный продукт</h2>
           <p class="section-lead">Процедуры встроены в обзвон: перед звонком, в спорных случаях и после действия.</p>
         </div>
         <div class="control-grid">
-          <article class="control-card">
+          <article class="control-card reveal">
             <strong>Проверка до звонка</strong>
             <p>Перед следующим шагом система оценивает, допустимо ли действие.</p>
           </article>
-          <article class="control-card">
+          <article class="control-card reveal reveal-delay-1">
             <strong>Передача специалисту</strong>
             <p>Спорный случай уходит человеку с контекстом, а не в автоматический поток.</p>
           </article>
-          <article class="control-card">
+          <article class="control-card reveal reveal-delay-2">
             <strong>Журнал действий</strong>
             <p>Можно восстановить, что произошло и почему принято решение.</p>
           </article>
-          <article class="control-card">
+          <article class="control-card reveal reveal-delay-3">
             <strong>Ограниченный пилот</strong>
             <p>Старт в управляемых рамках: объём, сценарий и критерии остановки согласованы заранее.</p>
           </article>
@@ -1043,27 +1198,27 @@
 
     <section id="roles">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>Кому подходит</h2>
           <p class="section-lead">Пилот для команд взыскания — не массовый сервис «подключись сам» и не продукт для частных лиц.</p>
         </div>
         <div class="roles-grid segments-grid">
-          <article class="role-card">
+          <article class="role-card reveal">
             <small>Сегмент</small>
             <strong>Банки</strong>
             <p>Управляемый пилот телефонного взыскания с проверками и эскалацией спорных кейсов.</p>
           </article>
-          <article class="role-card">
+          <article class="role-card reveal reveal-delay-1">
             <small>Сегмент</small>
             <strong>МФО</strong>
             <p>Обзвон портфеля в согласованных рамках пилота — с журналом действий.</p>
           </article>
-          <article class="role-card">
+          <article class="role-card reveal reveal-delay-2">
             <small>Сегмент</small>
             <strong>ПКО</strong>
             <p>Масштабирование телефонного взыскания без потери контроля над спорными случаями.</p>
           </article>
-          <article class="role-card">
+          <article class="role-card reveal reveal-delay-3">
             <small>Сегмент</small>
             <strong>КЦ взыскания</strong>
             <p>Автоматизация рутины обзвона, чтобы специалисты брали сложные диалоги.</p>
@@ -1131,7 +1286,7 @@
 
     <section>
       <div class="container">
-        <div class="cta-panel">
+        <div class="cta-panel reveal">
           <h2>Назначьте демо управляемого пилота</h2>
           <p>Покажем проверки до звонка, передачу специалисту и журнал действий — без обзвона вашей боевой базы.</p>
           <div>
@@ -1239,6 +1394,26 @@
           submitButton.disabled = false;
         }
       });
+    })();
+
+    (() => {
+      const nodes = document.querySelectorAll('.reveal');
+      if (!nodes.length) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        nodes.forEach((node) => node.classList.add('is-visible'));
+        return;
+      }
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.16, rootMargin: '0px 0px -8% 0px' }
+      );
+      nodes.forEach((node) => observer.observe(node));
     })();
   </script>
 </body>
