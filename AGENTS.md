@@ -24,6 +24,11 @@ Default skill routing for this repo:
 - When the work requires a written plan artifact: use `skills/writing-plans/SKILL.md`.
 - When creating or editing user-visible Russian text (UI, forms, buttons, errors, notifications, onboarding, empty states, presentations, demos, mockups): use `skills/russian-product-copy/SKILL.md` after `skills/ru-ai-collector-product-design/SKILL.md` whenever the text belongs to the AI collector product.
 - When synthesizing a Russian PRD from already-known context without an interview: use `skills/prd-from-context/SKILL.md`.
+- Multi-zone or unclear owner: use `skills/team-orchestrator/SKILL.md`.
+- Auth, secrets, BYOK, or compliance rule changes: use `skills/security-engineer/SKILL.md` before code.
+- CI, Docker, Pages, deploy/rollback: use `skills/devops-sre/SKILL.md`.
+- Repeated agent mistakes or skill/routing fixes: use `skills/skill-governor/SKILL.md` (signals via `skills/feedback-analyzer/SKILL.md`).
+- Shared agent SoT: `docs/agents/PROJECT_AGENT_CONTEXT.md` and `docs/agents/AGENT_WORK_CONTRACT.md`.
 
 Project-specific rules:
 

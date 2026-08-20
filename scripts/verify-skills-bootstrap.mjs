@@ -16,6 +16,12 @@ const files = {
   lobehubManifest: path.join(repoRoot, "third_party", "lobehub", "manifest.json"),
   goal: path.join(repoRoot, "CODEX_SPARK_5_3_GOAL.md"),
   backlog: path.join(repoRoot, "TECH_BACKLOG_1SP.md"),
+  agentsContext: path.join(repoRoot, "docs", "agents", "PROJECT_AGENT_CONTEXT.md"),
+  agentsContract: path.join(repoRoot, "docs", "agents", "AGENT_WORK_CONTRACT.md"),
+  agentsOwnership: path.join(repoRoot, "docs", "agents", "AGENT_OWNERSHIP.md"),
+  agentsHandoff: path.join(repoRoot, "docs", "agents", "AGENT_HANDOFF_MATRIX.md"),
+  agentsSimulations: path.join(repoRoot, "docs", "agents", "SIMULATION_SCENARIOS.md"),
+  agentsChangelog: path.join(repoRoot, "docs", "agents", "CHANGELOG_AGENT_SKILLS.md"),
 };
 
 const requiredSkillFiles = [
@@ -39,6 +45,22 @@ const requiredSkillFiles = [
   "accessibility",
   "ux-design-review",
   "prd-from-context",
+  "team-orchestrator",
+  "final-reviewer",
+  "product-agent",
+  "architect-agent",
+  "backend-engineer",
+  "frontend-engineer",
+  "product-designer",
+  "qa-engineer",
+  "test-automation-engineer",
+  "security-engineer",
+  "devops-sre",
+  "release-manager",
+  "documentation-agent",
+  "research-agent",
+  "skill-governor",
+  "feedback-analyzer",
 ];
 
 const expectedSnippets = [
@@ -52,6 +74,10 @@ const expectedSnippets = [
       "use `skills/ux-design-review/SKILL.md`",
       "Treat `CODEX_SPARK_5_3_GOAL.md` as the delivery contract",
       "Follow `TECH_BACKLOG_1SP.md` and complete at most one `1 SP` task per iteration",
+      "skills/team-orchestrator/SKILL.md",
+      "skills/security-engineer/SKILL.md",
+      "skills/skill-governor/SKILL.md",
+      "docs/agents/PROJECT_AGENT_CONTEXT.md",
     ],
   },
   {
@@ -69,6 +95,8 @@ const expectedSnippets = [
       "`npm run verify:skills`",
       "Если `verify:skills` падает, значит skill-маршрутизация репозитория нарушена",
       "skills/README.md",
+      "docs/agents/PROJECT_AGENT_CONTEXT.md",
+      "Layer 3",
     ],
   },
   {
@@ -77,6 +105,9 @@ const expectedSnippets = [
       "Layer 0 — Process (obra/superpowers)",
       "Layer 1 — Product",
       "Layer 2 — Craft / audit",
+      "Layer 3 — Role agents",
+      "team-orchestrator",
+      "skill-governor",
     ],
   },
 ];
