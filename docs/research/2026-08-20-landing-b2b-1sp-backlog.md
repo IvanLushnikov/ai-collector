@@ -396,9 +396,9 @@
 
 Контекст для следующих задач:
 
-- Канон: **путь A** — inline `#demo-form` в hero; модалка не возвращается без отдельного A/B.
-- Спека `2026-08-19-ii-collector-marketing-landing-prototype-design.md` обновлена под Pages.
-- Риск: не добавлять `demoModalOverlay` обратно «по старой спеке».
+- Канон (2026-08-21): **путь C** — drawer `#demo-form` по клику «Назначить демо»; без inline-полосы в hero и без `demoModalOverlay`.
+- Спека `2026-08-19-ii-collector-marketing-landing-prototype-design.md` обновлена под drawer.
+- Риск: не возвращать центрированную модалку со старым id `demoModalOverlay`.
 
 
 
@@ -537,6 +537,7 @@
 | 2026-08-20 | `LD-08` | Motion: steps / CTA hover / sticky; respects reduced-motion |
 | 2026-08-20 | `LT-01` | Контрактные тесты лендинга под LD-01…06 (8 кейсов) |
 | 2026-08-20 | `LT-02` | Спека = inline `#demo-form` (путь A), модалка отложена |
+| 2026-08-21 | `LT-02` | Канон → drawer `#demo-form` (путь C): CTA открывает панель; hero без inline-формы; интерактив product tabs |
 | 2026-08-20 | `LT-03` | Sticky «Назначить демо» + assertions padding/лейбла |
 | 2026-08-20 | `LT-04` | Title/description под управляемый пилот |
 | 2026-08-20 | `LT-05` | Указатель волны в TECH_BACKLOG_1SP.md |
