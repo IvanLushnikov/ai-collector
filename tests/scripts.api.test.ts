@@ -136,7 +136,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -211,7 +210,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: 'Hello script'
       }
@@ -264,7 +262,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -331,7 +328,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(404);
@@ -358,7 +354,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(404);
@@ -396,7 +391,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -431,7 +425,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -478,7 +471,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -568,7 +560,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -595,7 +586,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: ''
       }
@@ -636,7 +626,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
@@ -666,7 +655,6 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
       headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
-      headers: { 'x-user-role': 'owner' },
       payload: {
         content: lockedDisclosureContent
       }
