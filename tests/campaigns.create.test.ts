@@ -70,6 +70,9 @@ const makeCampaignStore = (): any => ({
       id: 'audit-1'
     }))
   },
+  outboxEvent: {
+    create: vi.fn(async () => ({ id: 'outbox-1' }))
+  },
   scriptVersion: {
     findMany: vi.fn(async () => [
       {
@@ -184,6 +187,13 @@ describe('POST /campaigns', () => {
           source: 'api',
           sourceRoute: '/campaigns'
         })
+      })
+    });
+    expect(campaignStore.outboxEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        eventType: 'campaign.created',
+        aggregateId: 'campaign-1',
+        idempotencyKey: 'campaign.created:campaign-1'
       })
     });
 
@@ -914,7 +924,75 @@ describe('PATCH /tenants/:tenantId/campaigns/:campaignId/status', () => {
         }
       }
     });
+    expect(campaignStore.outboxEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        eventType: 'campaign.status_changed',
+        aggregateId: 'campaign-draft',
+        idempotencyKey: 'campaign.status_changed:campaign-draft:draft:review'
+      })
+    });
 
+    await app.close();
+  });
+
+  it('uses a transaction for status, audit and outbox when supported', async () => {
+    const campaignStore = makeCampaignStore();
+    const transaction = vi.fn(async (callback: (tx: any) => Promise<unknown>) => callback(campaignStore));
+    campaignStore.$transaction = transaction;
+    campaignStore.campaign.findUnique = vi.fn(async () => ({
+      id: 'campaign-draft', tenantId: '11111111-1111-1111-1111-111111111111', status: 'draft'
+    }));
+    const app = createApp({ campaignStore });
+    await app.ready();
+    const response = await app.inject({ method: 'PATCH', url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-draft/status', headers: { 'X-User-Role': authorizedRole }, payload: { status: 'review' } });
+    expect(response.statusCode).toBe(200);
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(campaignStore.outboxEvent.create).toHaveBeenCalledTimes(1);
+    await app.close();
+  });
+
+  it('allows a manual pause and subsequent continuation with an audit event', async () => {
+    const campaignStore = makeCampaignStore();
+    let status = 'running';
+    campaignStore.campaign.findUnique = vi.fn(async (query: { where: { id: string } }) => ({
+      id: query.where.id,
+      tenantId: '11111111-1111-1111-1111-111111111111',
+      name: 'Campaign running',
+      status,
+      timezone: 'UTC',
+      createdAt: new Date().toISOString()
+    }));
+    campaignStore.campaign.update = vi.fn(async ({ data, where }: { data: { status: string }; where: { id: string } }) => {
+      status = data.status;
+      return {
+        id: where.id,
+        tenantId: '11111111-1111-1111-1111-111111111111',
+        name: 'Campaign running',
+        status,
+        timezone: 'UTC',
+        createdAt: new Date().toISOString()
+      };
+    });
+    const app = createApp({ campaignStore });
+    await app.ready();
+
+    for (const nextStatus of ['manual_paused', 'running']) {
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-running/status',
+        headers: { 'X-User-Role': authorizedRole },
+        payload: { status: nextStatus }
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.json().status).toBe(nextStatus);
+    }
+
+    expect(campaignStore.auditLog.create).toHaveBeenLastCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        action: 'campaign.status_updated',
+        metadata: expect.objectContaining({ fromStatus: 'manual_paused', toStatus: 'running' })
+      })
+    }));
     await app.close();
   });
 

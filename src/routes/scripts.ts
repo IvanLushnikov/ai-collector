@@ -2,8 +2,10 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { isLockedDisclosureContent, serializeScriptContent } from '../domain/script-version/index.js';
 import { authorizeZone } from '../server/authz/index.js';
+import { resolveActorId } from '../server/authz/actor.js';
 
 type ScriptDependencies = {
+  $transaction?: <T>(callback: (tx: any) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: any) => Promise<unknown>;
   };
@@ -38,7 +40,6 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
     '/tenants/:tenantId/campaigns/:campaignId/scripts',
     { preValidation: authorizeZone('campaigns', 'read') },
     async (request, reply) => {
-
     const params = tenantCampaignScriptsSchema.safeParse(request.params);
     if (!params.success) {
       return reply.code(400).send({
@@ -125,69 +126,72 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
       return reply.code(409).send({ error: 'SCRIPT_VERSION_LOCKED' });
     }
 
-    const actor = await deps.user.findFirst({
-      where: {
-        tenantId: params.data.tenantId,
-        isActive: true,
-        status: 'active'
-      }
-    }) as { id: string } | null;
-    if (!actor) {
+    const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
+    if (!actorId) {
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
-    const previousScript = await deps.scriptVersion.findFirst({
-      where: { campaignId: params.data.campaignId },
-      orderBy: {
-        version: 'desc'
-      },
-      select: { version: true }
-    }) as { version: number } | null;
+    const serializedContent = serializeScriptContent(payload.data.content);
+    const persistScriptChange = async (store: Pick<ScriptDependencies, 'scriptVersion' | 'campaign' | 'auditLog'>) => {
+      const previousScript = await store.scriptVersion.findFirst({
+        where: { campaignId: params.data.campaignId },
+        orderBy: {
+          version: 'desc'
+        },
+        select: { version: true }
+      }) as { version: number } | null;
 
-    const script = await deps.scriptVersion.create({
-      data: {
-        tenantId: params.data.tenantId,
-        campaignId: params.data.campaignId,
-        version: (previousScript?.version ?? 0) + 1,
-        content: serializeScriptContent(payload.data.content),
-        createdByUserId: actor.id
-      }
-    }) as {
-      id: string;
-      tenantId: string;
-      campaignId: string;
-      version: number;
-      status: string;
-      content: string;
-      createdByUserId: string;
-      createdAt: string;
-    };
-
-    const updatedCampaign = await deps.campaign.update({
-      where: { id: params.data.campaignId },
-      data: { status: 'review' }
-    }) as {
-      id: string;
-      status: string;
-    };
-
-    if (deps.auditLog?.create) {
-      await deps.auditLog.create({
+      const script = await store.scriptVersion.create({
         data: {
           tenantId: params.data.tenantId,
-          userId: actor.id,
-          action: 'script_version.created',
-          entityType: 'scriptVersion',
-          entityId: script.id,
-          metadata: {
-            campaignId: params.data.campaignId,
-            version: script.version,
-            campaignStatus: updatedCampaign.status,
-            sourceRoute: '/tenants/{tenantId}/campaigns/{campaignId}/scripts'
-          }
+          campaignId: params.data.campaignId,
+          version: (previousScript?.version ?? 0) + 1,
+          content: serializedContent,
+          createdByUserId: actorId
         }
-      });
-    }
+      }) as {
+        id: string;
+        tenantId: string;
+        campaignId: string;
+        version: number;
+        status: string;
+        content: string;
+        createdByUserId: string;
+        createdAt: string;
+      };
+
+      const updatedCampaign = await store.campaign.update({
+        where: { id: params.data.campaignId },
+        data: { status: 'review' }
+      }) as {
+        id: string;
+        status: string;
+      };
+
+      if (store.auditLog?.create) {
+        await store.auditLog.create({
+          data: {
+            tenantId: params.data.tenantId,
+            userId: actorId,
+            action: 'script_version.created',
+            entityType: 'scriptVersion',
+            entityId: script.id,
+            metadata: {
+              campaignId: params.data.campaignId,
+              version: script.version,
+              campaignStatus: updatedCampaign.status,
+              sourceRoute: '/tenants/{tenantId}/campaigns/{campaignId}/scripts'
+            }
+          }
+        });
+      }
+
+      return { script, updatedCampaign };
+    };
+
+    const { script, updatedCampaign } = deps.$transaction
+      ? await deps.$transaction((tx) => persistScriptChange(tx))
+      : await persistScriptChange(deps);
 
     return reply.code(201).send({
       ...script,

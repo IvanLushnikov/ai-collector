@@ -10,6 +10,7 @@ import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 type CampaignDependencies = {
+  $transaction?: <T>(callback: (tx: any) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: any) => Promise<unknown>;
   };
@@ -32,6 +33,9 @@ type CampaignDependencies = {
   auditLog?: {
     create?: (args: any) => Promise<unknown>;
     findMany?: (args: any) => Promise<unknown>;
+  };
+  outboxEvent?: {
+    create?: (args: any) => Promise<unknown>;
   };
   debtorRecord?: {
     count?: (args: any) => Promise<number>;
@@ -83,6 +87,7 @@ const campaignStatusValues = [
   'review',
   'ready',
   'running',
+  'manual_paused',
   'auto_paused',
   'completed',
   'archived'
@@ -92,7 +97,8 @@ const allowedStatusTransitions: Record<string, string[]> = {
   draft: ['review'],
   review: ['ready'],
   ready: ['running'],
-  running: ['auto_paused', 'completed'],
+  running: ['manual_paused', 'auto_paused', 'completed'],
+  manual_paused: ['running', 'completed'],
   auto_paused: [],
   completed: ['archived'],
   archived: []
@@ -316,25 +322,17 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       telephonyConnectionId = connection.id;
     }
 
-  const campaign = await deps.campaign.create({
-      data: {
-        tenantId,
-        name: payload.data.name,
-        timezone: payload.data.timezone,
-        status: 'draft',
-        createdByUserId: actorId,
-        telephonyConnectionId
-      }
-    });
-
-    if (deps.auditLog?.create) {
-      await deps.auditLog.create({
+    const persistCampaign = async (store: Pick<CampaignDependencies, 'campaign' | 'auditLog' | 'outboxEvent'>) => {
+      const campaign = await store.campaign.create({
+        data: { tenantId, name: payload.data.name, timezone: payload.data.timezone, status: 'draft', createdByUserId: actorId, telephonyConnectionId }
+      }) as { id: string };
+      await store.auditLog?.create?.({
         data: {
           tenantId,
           userId: actorId,
           action: 'campaign.created',
           entityType: 'campaign',
-          entityId: (campaign as { id: string }).id,
+          entityId: campaign.id,
           metadata: {
             name: payload.data.name,
             timezone: payload.data.timezone,
@@ -343,7 +341,18 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           }
         }
       });
-    }
+      await store.outboxEvent?.create?.({
+        data: {
+          tenantId, eventType: 'campaign.created', aggregateType: 'campaign', aggregateId: campaign.id,
+          idempotencyKey: `campaign.created:${campaign.id}`,
+          payload: { campaignId: campaign.id, name: payload.data.name, actorId }
+        }
+      });
+      return campaign;
+    };
+    const campaign = deps.$transaction
+      ? await deps.$transaction((tx) => persistCampaign(tx))
+      : await persistCampaign(deps);
 
     return reply.code(201).send(campaign);
   });
@@ -1203,27 +1212,14 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
     const previousStatus = campaign.status;
 
-    const updated = await (deps.campaign.update?.({
-      where: { id: params.data.campaignId },
-      data: { status: nextStatus },
-      select: {
-        id: true,
-        tenantId: true,
-        name: true,
-        status: true,
-        timezone: true,
-        createdAt: true
-      }
-    }) ?? Promise.resolve(null)) as {
-      id: string;
-      tenantId: string;
-      name: string;
-      status: string;
-      timezone: string;
-      createdAt: string;
-    };
+    const persistStatusChange = async (store: Pick<CampaignDependencies, 'campaign' | 'auditLog' | 'outboxEvent'>) => {
+      const updated = await (store.campaign.update?.({
+        where: { id: params.data.campaignId },
+        data: { status: nextStatus },
+        select: { id: true, tenantId: true, name: true, status: true, timezone: true, createdAt: true }
+      }) ?? Promise.resolve(null)) as { id: string; tenantId: string; name: string; status: string; timezone: string; createdAt: string };
 
-    await deps.auditLog?.create?.({
+      await store.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
         userId: actorId,
@@ -1236,7 +1232,22 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           toStatus: nextStatus
         }
       }
-    });
+      });
+      await store.outboxEvent?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          eventType: 'campaign.status_changed',
+          aggregateType: 'campaign',
+          aggregateId: params.data.campaignId,
+          idempotencyKey: `campaign.status_changed:${params.data.campaignId}:${previousStatus}:${nextStatus}`,
+          payload: { campaignId: params.data.campaignId, fromStatus: previousStatus, toStatus: nextStatus, actorId }
+        }
+      });
+      return updated;
+    };
+    const updated = deps.$transaction
+      ? await deps.$transaction((tx) => persistStatusChange(tx))
+      : await persistStatusChange(deps);
 
     return reply.code(200).send(updated);
   });

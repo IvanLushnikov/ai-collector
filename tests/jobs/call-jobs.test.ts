@@ -13,14 +13,16 @@ describe('sandbox call jobs', () => {
       tenantId: 't1',
       campaignId: 'c1',
       debtorRecordId: 'd1',
-      campaignStatus: 'auto_paused'
+      campaignStatus: 'auto_paused',
+      idempotencyKey: 'job-request-1'
     })).resolves.toMatchObject({ ok: false, skipped: 'auto_paused' });
 
     await expect(processSandboxStartJob({
       tenantId: 't1',
       campaignId: 'c1',
       debtorRecordId: 'd1',
-      campaignStatus: 'completed'
+      campaignStatus: 'completed',
+      idempotencyKey: 'job-request-2'
     })).resolves.toMatchObject({ ok: false, skipped: 'completed' });
   });
 
@@ -29,7 +31,8 @@ describe('sandbox call jobs', () => {
       tenantId: 't1',
       campaignId: 'c1',
       debtorRecordId: 'd1',
-      campaignStatus: 'ready'
+      campaignStatus: 'ready',
+      idempotencyKey: 'job-request-3'
     })).resolves.toEqual({
       ok: true,
       job: 'calls.sandbox_start',

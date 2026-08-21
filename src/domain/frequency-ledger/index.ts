@@ -65,6 +65,28 @@ export type FrequencyLedgerRepository = {
   markAttemptRecorded: (callAttemptId: string) => Promise<void>;
   incrementBucket: (key: FrequencyLedgerKey) => Promise<void>;
   getCount: (key: FrequencyLedgerKey) => Promise<number>;
+  recordAttemptAtomically?: (input: RecordFrequencyAttemptInput) => Promise<RecordFrequencyAttemptResult>;
+};
+
+type FrequencyLedgerPrismaTransaction = {
+  frequencyLedgerAttempt: {
+    create: (args: unknown) => Promise<unknown>;
+  };
+  frequencyLedger: {
+    upsert: (args: unknown) => Promise<unknown>;
+  };
+};
+
+type FrequencyLedgerPrismaClient = {
+  $transaction: <T>(callback: (tx: FrequencyLedgerPrismaTransaction) => Promise<T>) => Promise<T>;
+  frequencyLedgerAttempt: {
+    findUnique: (args: unknown) => Promise<unknown>;
+    create: (args: unknown) => Promise<unknown>;
+  };
+  frequencyLedger: {
+    findUnique: (args: unknown) => Promise<{ count: number } | null>;
+    upsert: (args: unknown) => Promise<unknown>;
+  };
 };
 
 const utcDateParts = (value: Date): { year: number; month: number; day: number } => {
@@ -124,12 +146,106 @@ export const createInMemoryFrequencyLedgerRepository = (): FrequencyLedgerReposi
   };
 };
 
+const isUniqueConstraintError = (error: unknown): boolean => {
+  return typeof error === 'object'
+    && error !== null
+    && 'code' in error
+    && (error as { code?: unknown }).code === 'P2002';
+};
+
+const prismaLedgerWhere = (key: FrequencyLedgerKey) => ({
+  tenantId_creditorKey_obligationId_bucket_periodStart: key
+});
+
+/**
+ * Durable adapter for production. The attempt insert is the idempotency gate;
+ * the three bucket increments happen in the same database transaction.
+ */
+export const createPrismaFrequencyLedgerRepository = (
+  client: FrequencyLedgerPrismaClient
+): FrequencyLedgerRepository => ({
+  async wasAttemptRecorded(callAttemptId) {
+    return Boolean(await client.frequencyLedgerAttempt.findUnique({
+      where: { callAttemptId },
+      select: { id: true }
+    }));
+  },
+  async markAttemptRecorded(callAttemptId) {
+    await client.frequencyLedgerAttempt.create({
+      data: { callAttemptId }
+    });
+  },
+  async incrementBucket(key) {
+    await client.frequencyLedger.upsert({
+      where: prismaLedgerWhere(key),
+      create: { ...key, count: 1 },
+      update: { count: { increment: 1 } }
+    });
+  },
+  async getCount(key) {
+    const ledger = await client.frequencyLedger.findUnique({
+      where: prismaLedgerWhere(key),
+      select: { count: true }
+    });
+    return ledger?.count ?? 0;
+  },
+  async recordAttemptAtomically(input) {
+    try {
+      return await client.$transaction(async (tx) => {
+        try {
+          await tx.frequencyLedgerAttempt.create({
+            data: {
+              callAttemptId: input.callAttemptId,
+              tenantId: input.tenantId,
+              creditorKey: input.creditorKey,
+              obligationId: input.obligationId,
+              status: input.status,
+              occurredAt: input.occurredAt
+            }
+          });
+        } catch (error) {
+          if (isUniqueConstraintError(error)) {
+            return 'duplicate';
+          }
+          throw error;
+        }
+
+        for (const bucket of ['day', 'week', 'month'] as const) {
+          const key: FrequencyLedgerKey = {
+            tenantId: input.tenantId,
+            creditorKey: input.creditorKey,
+            obligationId: input.obligationId,
+            bucket,
+            periodStart: periodStartForBucket(bucket, input.occurredAt)
+          };
+          await tx.frequencyLedger.upsert({
+            where: prismaLedgerWhere(key),
+            create: { ...key, count: 1 },
+            update: { count: { increment: 1 } }
+          });
+        }
+
+        return 'counted';
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        return 'duplicate';
+      }
+      throw error;
+    }
+  }
+});
+
 export const recordFrequencyAttempt = async (
   repo: FrequencyLedgerRepository,
   input: RecordFrequencyAttemptInput
 ): Promise<RecordFrequencyAttemptResult> => {
   if (!COUNTABLE_STATUSES.has(input.status)) {
     return 'ignored';
+  }
+
+  if (repo.recordAttemptAtomically) {
+    return repo.recordAttemptAtomically(input);
   }
 
   if (await repo.wasAttemptRecorded(input.callAttemptId)) {

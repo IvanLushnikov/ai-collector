@@ -13,9 +13,10 @@ describe('prototype pause confirmation', () => {
     expect(html).toContain('Продолжить обзвон');
   });
 
-  it('keeps manual pause as a local UI state, not an API enum', () => {
-    expect(html).toContain("setCampaignState('manual_paused'");
-    expect(html).not.toContain("status: 'manual_paused'");
+  it('persists manual pause through the status API before changing the UI', () => {
+    expect(html).toContain("await persistCampaignStatus('manual_paused')");
+    expect(html).toContain("persistCampaignStatus('running')");
+    expect(html).toContain("body:JSON.stringify({status})");
     expect(html).not.toContain("status: 'stopped'");
   });
 });

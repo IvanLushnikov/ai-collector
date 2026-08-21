@@ -4,7 +4,7 @@ import { env } from '../config/env.js';
 import type { ProviderCredential } from '../domain/provider-credential/index.js';
 import { resolveActorId } from '../server/authz/actor.js';
 import { authorizeZone } from '../server/authz/index.js';
-import type { CredentialSecretStore } from '../secrets/credential-store.js';
+import { createPrismaCredentialSecretStore, type CredentialSecretStore } from '../secrets/credential-store.js';
 import { encryptSecret, parseDekHex, secretHintFromKey } from '../secrets/envelope.js';
 import { isSpeechProviderAllowed } from '../speech/credentials/allowlist.js';
 import { fakeSpeechCredentialProbe } from '../speech/credentials/fake-probe.js';
@@ -12,6 +12,7 @@ import type { SpeechCredentialProbe } from '../speech/credentials/probe.js';
 import { resolveSpeechCredential, type PlatformSpeechEnv } from '../speech/credentials/resolve.js';
 
 type ProviderCredentialDependencies = {
+  $transaction?: <T>(callback: (transaction: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog'>) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
   };
@@ -26,6 +27,11 @@ type ProviderCredentialDependencies = {
     update: (args: { where: { id: string }; data: Record<string, unknown> }) => Promise<ProviderCredential>;
   };
   secretStore: CredentialSecretStore;
+  credentialSecret?: {
+    findUnique: (args: { where: { providerCredentialId: string } }) => Promise<any>;
+    upsert: (args: { where: { providerCredentialId: string }; create: Record<string, unknown>; update: Record<string, unknown> }) => Promise<any>;
+    deleteMany: (args: { where: { providerCredentialId: string; tenantId: string } }) => Promise<{ count: number }>;
+  };
   auditLog?: {
     create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
   };
@@ -119,6 +125,13 @@ const platformEnvOf = (deps: ProviderCredentialDependencies): PlatformSpeechEnv 
     YANDEX_FOLDER_ID: env.YANDEX_FOLDER_ID
   };
 
+const secretStoreOf = (
+  store: Pick<ProviderCredentialDependencies, 'credentialSecret'>,
+  fallback: CredentialSecretStore
+): CredentialSecretStore => store.credentialSecret
+  ? createPrismaCredentialSecretStore({ credentialSecret: store.credentialSecret })
+  : fallback;
+
 export const registerProviderCredentialRoutes = (
   app: FastifyInstance,
   deps: ProviderCredentialDependencies
@@ -192,47 +205,53 @@ export const registerProviderCredentialRoutes = (
         ? secretHintFromKey(payload.data.apiKey)
         : null;
 
-      const created = await deps.providerCredential.create({
-        data: {
-          tenantId: params.data.tenantId,
-          capability: payload.data.capability,
-          provider: payload.data.provider,
-          mode: payload.data.mode,
-          status,
-          displayName: payload.data.displayName,
-          secretHint,
-          metadata: payload.data.metadata ?? {},
-          lastProbedAt: null,
-          lastProbeResult: null
-        }
-      });
-
-      if (payload.data.mode === 'byok' && payload.data.apiKey) {
-        const encrypted = encryptSecret(payload.data.apiKey, resolveDek(deps));
-        await deps.secretStore.put({
-          tenantId: params.data.tenantId,
-          providerCredentialId: created.id,
-          ...encrypted
-        });
-      }
-
-      await deps.auditLog?.create?.({
-        data: {
-          tenantId: params.data.tenantId,
-          userId: actorId,
-          action: 'provider_credential.created',
-          entityType: 'providerCredential',
-          entityId: created.id,
-          metadata: {
-            capability: created.capability,
-            provider: created.provider,
-            mode: created.mode,
-            secretHint: created.secretHint,
-            status: created.status,
-            sourceRoute: '/tenants/:tenantId/provider-credentials'
+      const persistCredential = async (store: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog'>) => {
+        const created = await store.providerCredential.create({
+          data: {
+            tenantId: params.data.tenantId,
+            capability: payload.data.capability,
+            provider: payload.data.provider,
+            mode: payload.data.mode,
+            status,
+            displayName: payload.data.displayName,
+            secretHint,
+            metadata: payload.data.metadata ?? {},
+            lastProbedAt: null,
+            lastProbeResult: null
           }
+        });
+
+        if (payload.data.mode === 'byok' && payload.data.apiKey) {
+          const encrypted = encryptSecret(payload.data.apiKey, resolveDek(deps));
+          await secretStoreOf(store, deps.secretStore).put({
+            tenantId: params.data.tenantId,
+            providerCredentialId: created.id,
+            ...encrypted
+          });
         }
-      });
+
+        await store.auditLog?.create?.({
+          data: {
+            tenantId: params.data.tenantId,
+            userId: actorId,
+            action: 'provider_credential.created',
+            entityType: 'providerCredential',
+            entityId: created.id,
+            metadata: {
+              capability: created.capability,
+              provider: created.provider,
+              mode: created.mode,
+              secretHint: created.secretHint,
+              status: created.status,
+              sourceRoute: '/tenants/:tenantId/provider-credentials'
+            }
+          }
+        });
+        return created;
+      };
+      const created = deps.$transaction
+        ? await deps.$transaction((transaction) => persistCredential(transaction))
+        : await persistCredential(deps);
 
       const body = toPublicCredential(created);
       assertNoSecretLeak(body);

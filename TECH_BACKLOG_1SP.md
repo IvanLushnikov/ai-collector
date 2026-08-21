@@ -33,6 +33,7 @@
 - Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
 - Auth: cookie-сессия `ac_session` (`POST /auth/register|login|logout`, `GET /auth/me`) + fallback заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
 - UI: публичный вход `landing.html` / `register.html` / `login.html`; GitHub Pages отдаёт `public/index.html` (маркетинговый лендинг, не корневой `index.html`); `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
+- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`; evidence и отчёт fail closed без локальной подмены при ошибке API.
 - Биллинг v0: connected minute из usage + тариф tenant/env.
 - `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
 
@@ -73,8 +74,282 @@
 12. **API-backed клиентский кабинет (19.08.2026)** — `T-232`–`T-238` (`done`).
 13. **Controlled Pilot skeleton (19.08.2026)** — `T-239`–`T-243` (`done`).
 
-Первая `todo`: нет.  
+### T-253: Закрыть header-based доступ в production и защитить scripts API
+
+Статус: `done`
+
+Что сделать:
+
+- Разрешать header-based tenant/role контекст только в test/development runtime.
+- Require authenticated actor for production tenant-scoped routes.
+- Подключить единый RBAC authorizer к scripts API и получать audit actor из request identity.
+- Восстановить и расширить тесты RBAC/import/billing, затронутые переходом на единую модель доступа.
+
+Где менять:
+
+- `src/server/middleware/*`
+- `src/server/authz/*`
+- `src/routes/scripts.ts`
+- `tests/*`
+
+Критерии готовности:
+
+- В production spoofed `X-Tenant-Id`/`X-User-Role` не открывают tenant route.
+- Scripts read/write требуют зоны `campaigns`.
+- Полный test suite проходит.
+
+Первая `todo`: нет; выполнена `T-253`.
 Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — до legal memo и DPA.
+
+### T-254: Сделать frequency ledger durable и идемпотентным
+
+Статус: `done`
+
+Что сделать:
+
+- Хранить идентификатор учтённой попытки в PostgreSQL, а не в process memory.
+- Инкрементировать day/week/month buckets атомарно в одной транзакции с идемпотентностью по `callAttemptId`.
+- Создавать один repository на приложение и прокидывать его в calls/compliance routes.
+
+Где менять:
+
+- `src/domain/frequency-ledger/*`
+- `src/db/prisma/schema.prisma`, `src/db/migrations/*`
+- `src/server/app.ts`
+- `tests/compliance/*`
+
+Критерии готовности:
+
+- Повтор доставки одной попытки не меняет счётчики.
+- Durable adapter использует transaction и upsert/increment для всех трёх buckets.
+- Приложение не создаёт новый in-memory ledger на каждый request.
+
+### T-255: Сделать audit append-only и транзакционным для script changes
+
+Статус: `done`
+
+Что сделать:
+
+- Запретить UPDATE/DELETE audit rows на уровне БД для application role.
+- Выполнять создание script version, перевод campaign в review и audit append в одной Prisma transaction.
+- Сохранить тестовый dependency-injection path без требования PostgreSQL в unit/API tests.
+
+Где менять:
+
+- `src/db/migrations/*`
+- `src/routes/scripts.ts`
+- `tests/scripts.api.test.ts`
+
+Критерии готовности:
+
+- В production Prisma path не может вернуть успешный script change без audit append.
+- Trigger отклоняет update/delete из application connection.
+- API tests доказывают, что mutation path использует transaction.
+
+### T-256: Перевести ручную паузу кампании на server-authoritative status
+
+Статус: `done`
+
+Что сделать:
+
+- Добавить отдельный `manual_paused` status и допустимые переходы в backend.
+- Писать ручную паузу/продолжение через существующий status API с audit trail.
+- Не менять состояние кампании в кабинете, пока сервер не подтвердил mutation.
+
+Где менять:
+
+- `src/db/prisma/schema.prisma`, `src/db/migrations/*`
+- `src/routes/campaigns.ts`
+- `prototype.html`, `tests/*`
+
+Критерии готовности:
+
+- Ручная пауза и продолжение сохраняются в БД и аудите.
+- При API error UI не показывает успешную смену статуса.
+- Автопауза не получает one-click resume.
+
+### T-257: Сделать webhook inbox durable
+
+Статус: `done`
+
+Что сделано:
+
+- Добавлен Prisma adapter для `WebhookInboxEvent` с deduplication по существующему unique key.
+- Повторный provider event становится no-op по `P2002`; in-memory adapter остаётся для unit tests.
+
+Критерии готовности:
+
+- Дедупликация не хранится только в process memory.
+- Проверка adapter покрыта тестом.
+
+### T-258: Ввести transactional outbox для внешних side effects
+
+Статус: `doing`
+
+Что сделано:
+
+- Добавлена durable схема `OutboxEvent` и базовый Prisma dispatch adapter с retry state.
+- Create/status campaign mutations пишут outbox events в той же транзакции, что domain change и audit.
+- Claim использует conditional update; 60-секундная lease может быть reclaimed, а finish/fail разрешены только владельцу актуальной lease.
+- Ошибки delivery получают bounded exponential backoff; после 10 попыток event получает durable `deadLetteredAt` и больше не выбирается worker-ом.
+
+Осталось:
+
+- Добавлять outbox event атомарно с оставшимися domain mutations.
+- Добавить lease expiry и ownership check для нескольких workers.
+- Подключить consumer к конкретному provider/webhook flow.
+
+### T-259: Убрать локальную подмену отчёта в кабинете
+
+Статус: `done`
+
+Что сделано:
+
+- При отсутствии campaign context или ошибке report API кабинет очищает report snapshot и показывает отсутствие данных вместо метрик из demo calls.
+- KPI на обзоре становятся `—`, пока серверный snapshot не получен.
+- Добавлен regression test fail-closed поведения.
+
+Критерии готовности:
+
+- API error не создаёт видимость реальных показателей кампании.
+- Тесты report/campaign header/prototype проходят.
+
+### T-260: Зафиксировать ownership и покрытие OpenAPI v1 для кабинета
+
+Статус: `done`
+
+Что сделано:
+
+- Расширен опубликованный `/openapi/v1.json` до маршрутов кабинета: campaign create/list/status, import, calls/evidence, audit, readiness, report и sandbox call.
+- Contract test фиксирует operation IDs ключевых API-вызовов frontend.
+- Добавлены правила ownership, совместимости и будущей генерации typed client в `docs/architecture/api-contract-governance.md`.
+
+Критерии готовности:
+
+- Backend публикует единственный versioned contract для используемых UI API.
+- Breaking changes требуют новой версии, а не неявно ломают кабинет.
+
+### T-261: Защитить cookie-сессии от cross-origin mutation
+
+Статус: `done`
+
+Что сделано:
+
+- Для production cookie-authenticated `POST`/`PUT`/`PATCH`/`DELETE`, а также `/auth/login` и `/auth/register`, добавлена fail-closed проверка явного trusted `Origin`.
+- Не затронуты безопасные методы и service/worker requests без browser session.
+- Middleware и интеграция с Fastify покрыты regression tests; тестовый override не меняет production default.
+
+Критерии готовности:
+
+- Cookie mutation без `Origin` получает machine-readable 403.
+- Только origin из explicit CORS allowlist может выполнить mutation в production.
+
+### T-262: Убрать локальную очередь compliance/QA из кабинета
+
+Статус: `done`
+
+Что сделано:
+
+- Из `prototype.html` удалены захардкоженные review items с решениями и псевдо-доказательствами.
+- Очередь и её метрики начинаются пустыми; клиент не создаёт и не меняет review decision локально.
+- До появления server-side write endpoint попытка решения явно сообщает, что оно доступно только через серверную очередь.
+
+Критерии готовности:
+
+- В статическом клиенте нет demo compliance/QA work items.
+- UI не показывает локально сохранённое решение без server confirmation.
+
+### T-263: Сделать запуск звонка идемпотентным
+
+Статус: `done`
+
+Что сделано:
+
+- Sandbox/live start требуют валидный `Idempotency-Key` до выполнения provider side effect.
+- `CallAttempt` хранит ключ с tenant-scoped unique constraint; повтор возвращает уже созданную попытку без нового набора.
+- При race, проигравший unique constraint не создаёт usage/audit evidence второй раз.
+- Ключ передаётся voice adapter и queued job, опубликован в OpenAPI; кабинет создаёт ключ для тестового звонка.
+
+Критерии готовности:
+
+- Повтор HTTP-запроса не создаёт второй звонок.
+- Отсутствующий или невалидный ключ завершается 400 до `startCall`.
+- Миграция и contract tests проходят.
+
+### T-264: Ввести воспроизводимый SQL migration workflow
+
+Статус: `done`
+
+Что сделано:
+
+- Добавлены `db:validate`, `db:generate` и `db:migrate`; последний применяет `src/db/migrations` в лексическом порядке.
+- `AppSchemaMigration` хранит checksum каждой применённой миграции в одной транзакции с SQL и останавливает deploy при изменении истории.
+- CI валидирует schema, а local bootstrap больше не использует `db push --accept-data-loss`.
+
+Критерии готовности:
+
+- Документированная команда миграции существует и не зависит от неверсируемого schema push.
+- Изменение применённой миграции обнаруживается до изменения схемы.
+
+### T-265: Исключить sandbox fallback из live call API
+
+Статус: `done`
+
+Что сделано:
+
+- `POST .../calls/live` при выключенном флаге возвращает `LIVE_CALLS_DISABLED`, а при включённом — явный `501 LIVE_CALLS_NOT_IMPLEMENTED`.
+- Live request больше не проксируется в sandbox, не создаёт `CallAttempt` и не запускает провайдера.
+- Контрактная документация обновлена: production call остаётся blocked до HTTP adapter, signed ingress и legal/DPA gate.
+
+Критерии готовности:
+
+- Нельзя ошибочно представить sandbox side effect как live обзвон.
+- Tests доказывают отсутствие `CallAttempt` в обоих live-state сценариях.
+
+### T-266: Удалить неиспользуемые demo evidence из кабинета
+
+Статус: `done`
+
+Что сделано:
+
+- Из static bundle удалены локальные примеры звонков, расшифровок и audit rows.
+- Браузер начинает evidence views пустыми и не имеет запасного локального источника данных.
+- Неопределённый источник в карточке теперь маркируется честно, без слова «демо».
+
+Критерии готовности:
+
+- В `prototype.html` нет локальных call/audit demo collections.
+- Regression test фиксирует отсутствие этих источников.
+
+### T-267: Сделать изменения телефонии транзакционными с audit
+
+Статус: `done`
+
+Что сделано:
+
+- Создание `TelephonyConnection` и `telephony_connection.created` audit append выполняются в одной `$transaction`, когда store её поддерживает.
+- PATCH соединения и `telephony_connection.updated` audit append также выполняются в одной `$transaction`.
+- Fallback DI path для unit tests сохранён.
+
+Критерии готовности:
+
+- Production Prisma path не может подтвердить создание или изменение соединения без попытки audit append в той же транзакции.
+- API tests доказывают transactional path для POST и PATCH.
+
+### T-268: Атомарно сохранять BYOK credential, secret и audit при создании
+
+Статус: `done`
+
+Что сделано:
+
+- Production Prisma path создаёт `ProviderCredential`, encrypted `CredentialSecret` и `provider_credential.created` audit append в одной `$transaction`.
+- Инъекционный test path сохраняет свой secret store и не требует PostgreSQL.
+- API test доказывает transactional creation для BYOK credential.
+
+Критерии готовности:
+
+- Успешный API-ответ не может зафиксировать credential без соответствующего encrypted secret и audit append в Prisma transaction.
+- В ответе и аудите не появляется api key.
 
 ## Закрытые волны (не переписывать)
 
@@ -6531,6 +6806,15 @@ Live-трафик не включать до legal memo и разблокиро�
 - 19.08.2026: Post-review hardening: CSRF Origin middleware для cookie-mutations в production; `allowHeaderIdentity=false` в production (header auth только dev/test); явный `CORS_ORIGINS` без wildcard в production; live route возвращает `501 LIVE_CALLS_NOT_IMPLEMENTED` вместо proxy в sandbox; Secure cookie в production; синхронизация `public/prototype.html`; ESLint + husky pre-commit. Проверка: `npm run typecheck`; `npm run lint`; `npm run test` (466/466).
 
 - 19.08.2026: GitHub Pages лендинг `public/index.html` переписан: короче copy, один главный CTA в hero, sticky-плашка только на мобиле. Проверка: `npx vitest run tests/public-landing.test.ts`. На github.io попадёт только после commit+push в `main` (workflow смотрит `public/**`).
+- 19.08.2026: `T-257` done: `WebhookInboxEvent` получил Prisma adapter, использующий уникальный `(tenantId, sourceSystem, eventId)` как durable duplicate gate. Проверка: `npm run typecheck`; `vitest run tests/integrations/webhook-inbox.test.ts` (3/3).
+
+- 19.08.2026: `T-256` done: добавлен `CampaignStatus.manual_paused` и migration `0027`; backend допускает `running ↔ manual_paused` и фиксирует оба перехода в audit; кабинет отправляет PATCH status и обновляет UI только по ответу сервера, с явной ошибкой без локального fallback. Автопауза остаётся без one-click resume. Проверка: `npm run typecheck`; targeted tests (67/67).
+
+- 19.08.2026: `T-255` done: migration `0026` добавляет trigger append-only для `AuditLog`; script version, campaign review status и audit append объединены в одну Prisma transaction (DI path сохраняет unit tests). Проверка: `npm run typecheck`; `vitest run tests/scripts.api.test.ts` (14/14).
+
+- 19.08.2026: `T-254` done: добавлены `FrequencyLedgerAttempt` и migration `0025`; durable Prisma adapter использует уникальный `callAttemptId` как idempotency key и в одной transaction обновляет day/week/month buckets; bootstrap прокидывает один ledger в compliance/calls routes. In-memory adapter сохранён как тестовый fallback. Решение зафиксировано в ADR `0006`. Проверка: `prisma validate`; `npm run typecheck`; `npm test` (439/439).
+
+- 19.08.2026: `T-253` done: header-based tenant/role context допускается только вне production; scripts API переведён на zone-based RBAC и получает actor для audit из request identity; review queue больше не читает role header при выключенном header identity; введены canonical QA/compliance зоны. Проверка: `npm run typecheck`; `npm test` (437/437).
 
 - 19.08.2026: после упрощения спеки `docs/superpowers/specs/2026-08-19-rbac-role-model-design.md` добавлена отдельная волна `P1. RBAC SaaS v1` (`T-245`–`T-252`) и сохранён план `docs/superpowers/plans/2026-08-19-rbac-saas-v1.md`; новая очередь покрывает канонические роли, role normalization, единый authorizer, миграцию существующих endpoints, membership-based role resolution, tenant user management и support access path.
 

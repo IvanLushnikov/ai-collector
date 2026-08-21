@@ -10,15 +10,14 @@ const extractInlineScript = (source: string): string => {
 };
 
 describe('prototype wizard create', () => {
-  it('creates campaign via POST /campaigns with RBAC headers (no local-only success)', () => {
+  it('creates campaign via POST /campaigns with the authenticated cookie session', () => {
     const script = extractInlineScript(html);
 
     expect(script).toContain("q('#wizardCreate').addEventListener('click'");
     expect(script).toContain('apiFetch(`${reportApiBaseUrl}/campaigns`');
     expect(script).toMatch(/method\s*:\s*['"]POST['"]/);
 
-    expect(script).toContain("'X-Tenant-Id'");
-    expect(script).toContain("'X-User-Role'");
+    expect(script).not.toContain("'X-Tenant-Id'");
+    expect(script).not.toContain("'X-User-Role'");
   });
 });
-

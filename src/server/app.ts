@@ -9,7 +9,6 @@ import { registerScriptRoutes } from '../routes/scripts.js';
 import { registerReportRoutes } from '../routes/reports.js';
 import { registerUsageRoutes } from '../routes/usage.js';
 import { registerTelephonyRoutes } from '../routes/telephony.js';
-import { registerTelephonyWebhookRoutes } from '../routes/telephony-webhooks.js';
 import { registerTenantRoutes } from '../routes/tenants.js';
 import { registerProviderCredentialRoutes } from '../routes/provider-credentials.js';
 import { registerAuthRoutes } from '../routes/auth.js';
@@ -18,14 +17,20 @@ import { registerSupportAccessRoutes } from '../routes/support-access.js';
 import { prisma } from '../db/client.js';
 import { tenantContextMiddleware } from './middleware/tenant-context.js';
 import { authContextMiddleware } from './middleware/auth-context.js';
-import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
 import { createCsrfOriginMiddleware } from './middleware/csrf-origin.js';
+import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/rate-limit.js';
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
 import { MangoVoiceProvider } from '../telephony/mango/index.js';
 import { createVoiceProviderResolver, type VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 import { createPrismaCredentialSecretStore } from '../secrets/credential-store.js';
+import { openApiV1 } from '../contracts/openapi-v1.js';
+import {
+  createInMemoryFrequencyLedgerRepository,
+  createPrismaFrequencyLedgerRepository,
+  type FrequencyLedgerRepository
+} from '../domain/frequency-ledger/index.js';
 
 type CampaignDependencies = {
   tenant: {
@@ -146,18 +151,24 @@ const createRateLimitAuditEntry = async (
   });
 };
 
-export type AppDependencies = {
+export 
+const isHealthPath = (path: string): boolean =>
+  path === '/healthz' || path === '/health' || path.startsWith('/healthz/') || path.startsWith('/health/');
+
+type AppDependencies = {
   campaignStore?: any;
   allowHeaderIdentity?: boolean;
   csrfProtection?: boolean;
   csrfAllowedOrigins?: readonly string[];
   corsOrigins?: string;
+  frequencyLedger?: FrequencyLedgerRepository;
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
     onLimitExceeded?: RateLimitConfig['onLimitExceeded'];
   };
 };
+
 
 type AppCallDependencies = CampaignDependencies & {
   campaign: {
@@ -180,22 +191,14 @@ type AppCallDependencies = CampaignDependencies & {
   };
 };
 
-const isHealthPath = (path: string): boolean =>
-  path === '/healthz'
-  || path === '/health'
-  || path === '/health/live'
-  || path === '/health/ready'
-  || path.startsWith('/health/');
 
-const livenessPayload = () => ({
-  status: 'ok' as const,
-  service: 'ai-collector-backend'
-});
+
+
+
+
 
 export const createApp = (dependencies: AppDependencies = {}): any => {
   const app = fastify({
-    // Required behind Caddy/nginx so request.ip / protocol reflect the client.
-    trustProxy: env.TRUST_PROXY || env.NODE_ENV === 'production',
     logger: env.NODE_ENV === 'test'
       ? false
       : {
@@ -211,6 +214,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  const frequencyLedger = dependencies.frequencyLedger
+    ?? (campaignStore.$transaction && campaignStore.frequencyLedger && campaignStore.frequencyLedgerAttempt
+      ? createPrismaFrequencyLedgerRepository(campaignStore)
+      : createInMemoryFrequencyLedgerRepository());
 
   app.addHook('onRequest', async (request) => {
     request.allowHeaderIdentity = allowHeaderIdentity;
@@ -244,6 +251,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     }
   });
 
+
   app.addHook('onSend', async (_request, reply, payload) => {
     if (!reply.hasHeader('X-Content-Type-Options')) {
       reply.header('X-Content-Type-Options', 'nosniff');
@@ -272,10 +280,6 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     createRateLimitMiddleware({
       maxRequests: rateLimitConfig.maxRequests,
       windowMs: rateLimitConfig.windowMs,
-      skip: (request) => {
-        const path = request.url.split('?')[0] ?? request.url;
-        return isHealthPath(path);
-      },
       onLimitExceeded: async (payload) => {
         if (rateLimitConfig.onLimitExceeded) {
           await rateLimitConfig.onLimitExceeded(payload);
@@ -290,25 +294,17 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     })
   );
 
-  // Liveness: process is up (no dependency checks). Kept for backward compatibility.
-  app.get('/healthz', async () => livenessPayload());
-  app.get('/health', async () => livenessPayload());
-  app.get('/health/live', async () => livenessPayload());
-
-  // Readiness: can serve traffic (database reachable). No secrets in response.
-  app.get('/health/ready', async (_request, reply) => {
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-      return { status: 'ok', checks: { database: 'up' } };
-    } catch {
-      return reply.code(503).send({ status: 'degraded', checks: { database: 'down' } });
-    }
-  });
+  app.get('/healthz', async () => ({
+    status: 'ok',
+    service: 'ai-collector-backend',
+    env: env.NODE_ENV
+  }));
 
   app.get('/', async () => ({
     status: 'ok',
     message: 'AI Collector API is running'
   }));
+  app.get('/openapi/v1.json', async () => openApiV1);
 
   app.addHook('preValidation', authContextMiddleware(campaignStore));
   app.addHook('preValidation', tenantContextMiddleware);
@@ -319,9 +315,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
 
   registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
   registerCampaignRoutes(app as any, campaignStore as any);
-  registerComplianceRoutes(app as any, campaignStore as any);
+  registerComplianceRoutes(app as any, { ...(campaignStore as any), frequencyLedger });
   registerCallRoutes(app as any, {
     ...(campaignStore as AppCallDependencies),
+    frequencyLedger,
     voiceProviderResolver: (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
       sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
       mango: new MangoVoiceProvider()
@@ -332,12 +329,12 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   registerReportRoutes(app as any, campaignStore as any);
   registerUsageRoutes(app as any, campaignStore as any);
   registerTelephonyRoutes(app as any, campaignStore as any);
-  registerTelephonyWebhookRoutes(app as any, campaignStore as any);
   registerTenantRoutes(app as any, campaignStore as any);
   registerTenantUserRoutes(app as any, campaignStore as any);
   registerProviderCredentialRoutes(app as any, {
     ...(campaignStore as any),
     providerCredential: (campaignStore as any).providerCredential ?? (prisma as any).providerCredential,
+    credentialSecret: (campaignStore as any).credentialSecret,
     secretStore: (campaignStore as any).secretStore ?? createPrismaCredentialSecretStore(prisma as any),
     dek: (campaignStore as any).dek,
     speechProbe: (campaignStore as any).speechProbe,

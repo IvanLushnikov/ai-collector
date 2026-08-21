@@ -64,6 +64,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         csvContent: 'externalId,phone,timezone,debtAmount,debtStatus,consentStatus\n'
           + 'AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given\n'
@@ -105,6 +106,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         csvContent: 'externalId,phone,timezone,debtAmount,debtStatus,consentStatus,displayName,agreementRef\n'
           + 'AB-1001,+7 (950) 123-45-67,Europe/Moscow,15320.50,active,given,Иванов И.И.,ДГ-4412\n'
@@ -158,6 +160,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-missing/debtors/import',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         csvContent: 'externalId,phone,timezone,debtAmount,debtStatus,consentStatus\nAB-1001,+7 1111111,Europe/Moscow,100,active,given'
       }
@@ -176,6 +179,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/import', () => {
     const response = await injectImport(app, {
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/campaign-1/debtors/import',
+      headers: { 'x-user-role': 'owner' },
       payload: {
         csvContent: 'externalId,phone,timezone,debtAmount,debtStatus,consentStatus\nAB-1001,+7 1111111,Europe/Moscow,invalid-amount,active,given'
       }

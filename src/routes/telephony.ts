@@ -4,6 +4,7 @@ import { resolveActorId } from '../server/authz/actor.js';
 import { authorizeZone } from '../server/authz/index.js';
 
 type TelephonyDependencies = {
+  $transaction?: <T>(callback: (transaction: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
   };
@@ -158,32 +159,38 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
-    const connection = (await (deps.telephonyConnection.create({
-      data: {
-        tenantId: params.data.tenantId,
-        provider: payload.data.provider,
-        mode: payload.data.mode,
-        status: payload.data.status,
-        displayName: payload.data.displayName
-      }
-    }))) as TelephonyConnectionRow;
-
-    await deps.auditLog?.create?.({
-      data: {
-        tenantId: params.data.tenantId,
-        userId: actorId,
-        action: 'telephony_connection.created',
-        entityType: 'telephonyConnection',
-        entityId: connection.id,
-        metadata: {
-          provider: connection.provider,
-          mode: connection.mode,
-          status: connection.status,
-          sourceRoute: '/tenants/:tenantId/telephony-connections',
-          tenantId: params.data.tenantId
+    const persistConnection = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => {
+      const connection = (await store.telephonyConnection.create({
+        data: {
+          tenantId: params.data.tenantId,
+          provider: payload.data.provider,
+          mode: payload.data.mode,
+          status: payload.data.status,
+          displayName: payload.data.displayName
         }
-      }
-    });
+      })) as TelephonyConnectionRow;
+
+      await store.auditLog?.create?.({
+        data: {
+          tenantId: params.data.tenantId,
+          userId: actorId,
+          action: 'telephony_connection.created',
+          entityType: 'telephonyConnection',
+          entityId: connection.id,
+          metadata: {
+            provider: connection.provider,
+            mode: connection.mode,
+            status: connection.status,
+            sourceRoute: '/tenants/:tenantId/telephony-connections',
+            tenantId: params.data.tenantId
+          }
+        }
+      });
+      return connection;
+    };
+    const connection = deps.$transaction
+      ? await deps.$transaction((transaction) => persistConnection(transaction))
+      : await persistConnection(deps);
 
     return reply.code(201).send({
       id: connection.id,
@@ -252,27 +259,33 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
-      const updated = (await deps.telephonyConnection.update?.({
-        where: { id: connection.id },
-        data: payload.data
-      })) as TelephonyConnectionRow;
+      const persistUpdate = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => {
+        const updated = (await store.telephonyConnection.update?.({
+          where: { id: connection.id },
+          data: payload.data
+        })) as TelephonyConnectionRow;
 
-      await deps.auditLog?.create?.({
-        data: {
-          tenantId: params.data.tenantId,
-          userId: actorId,
-          action: 'telephony_connection.updated',
-          entityType: 'telephonyConnection',
-          entityId: updated.id,
-          metadata: {
-            provider: updated.provider,
-            mode: updated.mode,
-            status: updated.status,
-            sourceRoute: '/tenants/:tenantId/telephony-connections/:connectionId',
-            tenantId: params.data.tenantId
+        await store.auditLog?.create?.({
+          data: {
+            tenantId: params.data.tenantId,
+            userId: actorId,
+            action: 'telephony_connection.updated',
+            entityType: 'telephonyConnection',
+            entityId: updated.id,
+            metadata: {
+              provider: updated.provider,
+              mode: updated.mode,
+              status: updated.status,
+              sourceRoute: '/tenants/:tenantId/telephony-connections/:connectionId',
+              tenantId: params.data.tenantId
+            }
           }
-        }
-      });
+        });
+        return updated;
+      };
+      const updated = deps.$transaction
+        ? await deps.$transaction((transaction) => persistUpdate(transaction))
+        : await persistUpdate(deps);
 
       return reply.code(200).send({
         id: updated.id,

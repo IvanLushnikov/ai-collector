@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import { CallWindowComplianceRule } from '../compliance/rules/call-window.js';
@@ -67,6 +67,7 @@ type CallDependencies = {
   };
   callAttempt: {
     create: (args: any) => Promise<unknown>;
+    findFirst?: (args: any) => Promise<unknown>;
     findUnique: (args: any) => Promise<unknown>;
     findMany: (args: any) => Promise<unknown>;
   };
@@ -117,6 +118,18 @@ const tenantCampaignDebtorCallSchema = z.object({
 const callStartSchema = z.object({
   telephonyConnectionId: z.string().min(1).optional()
 });
+
+const idempotencyKeySchema = z.string().min(8).max(128).regex(/^[A-Za-z0-9._:-]+$/);
+
+const getIdempotencyKey = (request: FastifyRequest): string | null => {
+  const raw = request.headers['idempotency-key'];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const parsed = idempotencyKeySchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
+const isUniqueConstraintError = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'P2002';
 
 const tenantCampaignCallSchema = z.object({
   tenantId: z.string().uuid(),
@@ -421,6 +434,11 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       });
     }
 
+    const idempotencyKey = getIdempotencyKey(request);
+    if (!idempotencyKey) {
+      return reply.code(400).send({ error: 'IDEMPOTENCY_KEY_REQUIRED' });
+    }
+
     const tenant = await deps.tenant.findUnique({
       where: { id: params.data.tenantId }
     }) as { id: string } | null;
@@ -478,6 +496,22 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
     if (!debtorRecord || debtorRecord.campaignId !== params.data.campaignId || debtorRecord.tenantId !== params.data.tenantId) {
       return reply.code(404).send({ error: 'DEBTOR_RECORD_NOT_FOUND' });
+    }
+
+    const priorAttempt = await deps.callAttempt.findFirst?.({
+      where: {
+        tenantId: params.data.tenantId,
+        campaignId: params.data.campaignId,
+        idempotencyKey
+      }
+    }) as { id: string; status: string } | null | undefined;
+    if (priorAttempt) {
+      return reply.code(200).send({
+        allowed: true,
+        replayed: true,
+        callStatus: priorAttempt.status,
+        callAttempt: priorAttempt
+      });
     }
 
     const actorId = await resolveActorId(request, deps.user, params.data.tenantId);
@@ -557,7 +591,8 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
           tenantId: params.data.tenantId,
           campaignId: params.data.campaignId,
           debtorRecordId: params.data.debtorRecordId,
-          campaignStatus: campaign.status ?? 'draft'
+          campaignStatus: campaign.status ?? 'draft',
+          idempotencyKey
         })
       });
     }
@@ -593,33 +628,48 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       tenantId: params.data.tenantId,
       campaignId: params.data.campaignId,
       debtorRecordId: params.data.debtorRecordId,
-      phone: debtorRecord.phone
+      phone: debtorRecord.phone,
+      idempotencyKey
     });
 
+    let created: unknown;
+    try {
+      created = await deps.callAttempt.create({
+        data: {
+          tenantId: params.data.tenantId,
+          campaignId: params.data.campaignId,
+          debtorRecordId: params.data.debtorRecordId,
+          telephonyConnectionId: campaign.telephonyConnectionId ?? body.data.telephonyConnectionId ?? `${params.data.tenantId}-sandbox`,
+          scriptVersionId: activeScript.id,
+          status: mapVoiceStatusToCallAttemptStatus(providerCall.status),
+          providerCallId: providerCall.providerCallId,
+          idempotencyKey,
+          identityVerified: false,
+          identityVerifiedAt: null,
+          startedAt: new Date(),
+          endedAt: isTerminalCallStatus(providerCall.status) ? new Date() : undefined
+        }
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
+      }
+      const concurrentAttempt = await deps.callAttempt.findFirst?.({
+        where: { tenantId: params.data.tenantId, campaignId: params.data.campaignId, idempotencyKey }
+      }) as { id: string; status: string } | null | undefined;
+      if (concurrentAttempt) {
+        return reply.code(200).send({ allowed: true, replayed: true, callStatus: concurrentAttempt.status, callAttempt: concurrentAttempt });
+      }
+      throw error;
+    }
+
+    const callAttemptId = (created as { id: string }).id;
     await createUsageEvent(deps.usageEvent, {
       tenantId: params.data.tenantId,
       campaignId: params.data.campaignId,
       eventType: 'call_started',
       sourceId: `sandbox-call:${providerCall.providerCallId}:started`
     });
-
-    const created = await deps.callAttempt.create({
-      data: {
-        tenantId: params.data.tenantId,
-        campaignId: params.data.campaignId,
-        debtorRecordId: params.data.debtorRecordId,
-        telephonyConnectionId: campaign.telephonyConnectionId ?? body.data.telephonyConnectionId ?? `${params.data.tenantId}-sandbox`,
-        scriptVersionId: activeScript.id,
-        status: mapVoiceStatusToCallAttemptStatus(providerCall.status),
-        providerCallId: providerCall.providerCallId,
-        identityVerified: false,
-        identityVerifiedAt: null,
-        startedAt: new Date(),
-        endedAt: isTerminalCallStatus(providerCall.status) ? new Date() : undefined
-      }
-    });
-
-    const callAttemptId = (created as { id: string }).id;
     const telephonyMode = telephonyConnection?.mode ?? 'sandbox';
 
     if (
@@ -702,6 +752,10 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
         return reply.code(403).send({ error: 'LIVE_CALLS_DISABLED' });
       }
 
+      // A live call must never silently degrade to sandbox. This route stays
+      // closed until the configured provider has a reviewed HTTP adapter,
+      // signed webhook ingress and legal/DPA approval.
+      void request;
       return reply.code(501).send({ error: 'LIVE_CALLS_NOT_IMPLEMENTED' });
     }
   );

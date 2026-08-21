@@ -29,6 +29,7 @@ enum CampaignStatus {
   review
   ready
   running
+  manual_paused
   auto_paused
   completed
   archived
@@ -202,6 +203,7 @@ model Tenant {
   usageEvents UsageEvent[]
   auditLogs AuditLog[]
   frequencyLedgers FrequencyLedger[]
+  frequencyLedgerAttempts FrequencyLedgerAttempt[]
   suppressionEntries SuppressionEntry[]
   providerCredentials ProviderCredential[]
   credentialSecrets CredentialSecret[]
@@ -210,6 +212,7 @@ model Tenant {
   callTranscripts CallTranscript[]
   callRecordingAssets CallRecordingAsset[]
   callReconciliationIssues CallReconciliationIssue[]
+  outboxEvents OutboxEvent[]
 }
 
 model Role {
@@ -471,6 +474,7 @@ model CallAttempt {
   reviewReasonCode      String?
   cdrReconciliationStatus String?
   providerCallId        String
+  idempotencyKey        String?
   identityVerified      Boolean           @default(false)
   identityVerifiedAt    DateTime?
   startedAt             DateTime
@@ -485,6 +489,7 @@ model CallAttempt {
   reconciliationIssues CallReconciliationIssue[]
 
   @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model CallResult {
@@ -661,6 +666,20 @@ model FrequencyLedger {
   @@unique([tenantId, creditorKey, obligationId, bucket, periodStart])
 }
 
+model FrequencyLedgerAttempt {
+  id            String   @id @default(uuid())
+  callAttemptId String   @unique
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creditorKey   String
+  obligationId  String
+  status        String
+  occurredAt    DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, creditorKey, obligationId, occurredAt])
+}
+
 model SuppressionEntry {
   id         String   @id @default(uuid())
   tenantId   String
@@ -717,4 +736,26 @@ model WebhookInboxEvent {
   createdAt    DateTime @default(now())
 
   @@unique([tenantId, sourceSystem, eventId])
+}
+
+model OutboxEvent {
+  id             String   @id @default(uuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventType      String
+  aggregateType  String
+  aggregateId    String
+  payload        Json
+  idempotencyKey String   @unique
+  attempts       Int      @default(0)
+  availableAt    DateTime @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  processedAt    DateTime?
+  deadLetteredAt DateTime?
+  lastError      String?
+  createdAt      DateTime @default(now())
+
+  @@index([processedAt, availableAt])
+  @@index([tenantId, createdAt])
 }
