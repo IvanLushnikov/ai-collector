@@ -30,7 +30,10 @@
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 90px;
+    }
     body {
       margin: 0;
       font: 16px/1.55 var(--font);
@@ -1396,7 +1399,7 @@
     .faq-answer {
       padding: 0 0 18px;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 16px;
     }
 
     .cta-panel {
@@ -1525,6 +1528,7 @@
       }
     }
 
+    /* Планшет горизонтальный: 980px */
     @media (max-width: 980px) {
       .hero-grid,
       .value-strip,
@@ -1580,6 +1584,7 @@
       }
     }
 
+    /* Планшет вертикальный: 760px */
     @media (max-width: 760px) {
       :root { --sticky-height: 84px; }
 
@@ -1632,6 +1637,35 @@
       }
 
       .sticky-shell .btn-primary { width: 100%; }
+    }
+
+    /* Мобайл малый: 480px */
+    @media (max-width: 480px) {
+      main section { padding: 40px 0; }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid .step-card:last-child:nth-child(odd) {
+        max-width: 100%;
+        grid-column: auto;
+      }
+
+      .benefits-grid,
+      .roles-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 </head>

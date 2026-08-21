@@ -35,11 +35,12 @@
       <button data-screen="telephony">Телефония</button>
       <button data-screen="analytics">Аналитика</button>
       <button data-screen="auditLog">Журнал действий</button>
+      <button type="button" id="logoutButtonMobile" class="nav-logout-mobile" style="display:none;border:0;border-radius:8px;background:transparent;color:#9ec2d8;text-align:left;padding:11px 12px;font-size:15px">Выйти</button>
     </nav>
     <div class="side-user"><b id="sideUserName">Пользователь</b><small id="sideUserRole">Кабинет организации</small><button type="button" id="logoutButton" class="btn link" style="color:#9ec2d8;padding:8px 0">Выйти</button></div>
   </aside>
   <div class="work">
-    <header class="topbar"><div class="crumb"><b id="crumb">Главная</b><span id="orgCrumb">Организация</span></div><div class="top-actions"><div class="search"><input placeholder="Найти кампанию"></div><button class="btn primary" data-open-wizard>Создать кампанию</button><button class="btn">Помощь</button></div></header>
+    <header class="topbar"><div class="crumb"><b id="crumb">Главная</b><span id="orgCrumb">Организация</span></div><div class="top-actions"><div class="search"><input placeholder="Найти кампанию"></div><button class="btn">Помощь</button></div></header>
     <main>
       <div id="globalScreens">
         <section class="screen active" id="home">
@@ -319,6 +320,7 @@
 </div>
 
 <div class="overlay" id="overlay"></div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
 <div class="modal" id="campaignWizard" aria-hidden="true"><div class="modal-head"><div><h2>Создание кампании</h2><p>Кампания, база, сценарий и телефония. Запуск — на Обзоре.</p></div><button class="close" data-close>×</button></div><div class="modal-body"><div class="wizard-nav"><button class="wizard-step-btn active" data-wstep="1">1. Кампания</button><button class="wizard-step-btn" data-wstep="2">2. База</button><button class="wizard-step-btn" data-wstep="3">3. Сценарий</button><button class="wizard-step-btn" data-wstep="4">4. Телефония</button></div><div class="wizard-content">
   <div class="wizard-pane active" data-wpane="1"><h3>Основные параметры</h3><p>Название, продукт и сегмент кампании.</p><div class="wizard-state state-empty" id="campaignStatePanel"><span class="status-pill state-empty" id="campaignStateBadge">Не выполнено</span><div><b>Состояние параметров</b><small id="campaignStateText">Заполните параметры кампании, чтобы перейти к следующим шагам.</small><ul class="state-reasons" id="campaignStateReasons"></ul></div></div><div class="form-grid"><div class="field full"><label>Название кампании</label><input id="wizardName" value="Просрочка 1–7 дней · Займы"></div><div class="field"><label>Продукт</label><select id="wizardProduct"><option>Займы</option><option>Рассрочка</option></select></div><div class="field"><label>Сегмент</label><select id="wizardSegment"><option>Просрочка 1–7 дней</option><option>Просрочка 8–30 дней</option></select></div><div class="field"><label>Время в будни</label><input id="wizardWeekdays" value="08:30–20:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div><div class="field"><label>Время в выходные</label><input id="wizardWeekends" value="09:30–19:30"><small>Системный минимум 08:00–22:00. Можно только сузить.</small></div></div></div>
   <div class="wizard-pane" data-wpane="2"><h3>Загрузка базы должников</h3><p>Поддерживаются CSV и XLSX. Система проверит обязательные поля и исключения.</p><div class="wizard-state state-empty" id="baseStatePanel"><span class="status-pill state-empty" id="baseStateBadge">Не запущено</span><div><b>Статус импорта</b><small id="baseStateText">Файл базы не выбран. Для проверки запускайте шаг импорта после загрузки.</small><ul class="state-reasons" id="baseStateReasons"></ul></div></div><div class="dropzone"><b id="uploadTitle">Перетащите файл сюда</b><p id="uploadText">До 100 МБ · телефон, номер клиента, сумма и срок просрочки</p><input id="baseFile" type="file" accept=".csv,.xlsx" hidden><button class="btn" id="chooseFile">Выбрать файл</button> <button class="btn" id="loadDemoBase">Загрузить пример</button></div><div id="mappingBlock" style="display:none;margin-top:18px"><div class="notice" id="importReportNotice">Пример базы: найдено 10 000, готовы 8 740, исправить 1 176, дубли 84. Это пример, не боевой импорт.</div><div class="notice" id="importAcceptedVsEligibleNotice" style="margin-top:12px">Принято в базу — ещё не допуск к звонку. Перед звонком система отдельно проверит ограничения.</div><div class="grid g4" id="importReportCounts" style="margin:12px 0"><div class="metric info"><small>Найдено</small><strong id="importFoundCount">10 000</strong></div><div class="metric ok"><small>Принято в базу</small><strong id="importReadyCount">8 740</strong></div><div class="metric warn"><small>Отклонено</small><strong id="importFixCount">1 176</strong></div><div class="metric info"><small>Ошибки по строкам</small><strong id="importDupCount">84</strong></div></div><ul class="state-reasons" id="importRowReasons"><li>Строка 12: нет часового пояса</li><li>Строка 41: дубль номера клиента</li></ul><div class="mapping"><span>client_id</span><b>→</b><select><option>Номер клиента</option></select></div><div class="mapping"><span>phone</span><b>→</b><select><option>Телефон</option></select></div><div class="mapping"><span>timezone</span><b>→</b><select><option>Часовой пояс</option></select></div><div class="mapping"><span>debt_amount</span><b>→</b><select><option>Сумма долга</option></select></div><div class="mapping"><span>debt_status</span><b>→</b><select><option>Статус долга</option></select></div><div class="mapping"><span>consent_status</span><b>→</b><select><option>Статус согласия</option></select></div><div class="row-actions" style="margin-top:12px"><button class="btn primary" id="importContinueAccepted">Продолжить с принятыми записями</button><button class="btn" id="importFixFile">Исправить файл</button></div></div></div>
@@ -3038,7 +3040,7 @@
       recording.textContent = stored ? 'Запись хранится' : 'Записи нет';
     }
 
-    openLayer(q('#callCardDrawer'));
+    openDrawer(q('#callCardDrawer'));
   }
 
   function parseTranscriptTurns(transcript='') {
@@ -3842,7 +3844,8 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     updateWizardReadiness();
   }
   function toast(title,text){q('#toastTitle').textContent=title;q('#toastText').textContent=text;q('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>q('#toast').classList.remove('show'),2800)}
-  function closeAll(){qa('.modal.open,.drawer.open').forEach(x=>x.classList.remove('open'));q('#overlay').classList.remove('open');qa('.modal').forEach(x=>x.setAttribute('aria-hidden','true'))}
+  function closeAll(){qa('.modal.open,.drawer.open').forEach(x=>x.classList.remove('open'));q('#overlay').classList.remove('open');q('#drawerOverlay').classList.remove('open');qa('.modal').forEach(x=>x.setAttribute('aria-hidden','true'))}
+  function openDrawer(el){qa('.drawer.open').forEach(x=>x.classList.remove('open'));el.classList.add('open');q('#drawerOverlay').classList.add('open')}
   function openLayer(el){closeAll();el.classList.add('open');el.setAttribute?.('aria-hidden','false');q('#overlay').classList.add('open')}
   async function renderAnalytics() {
     const reached=q('#analyticsReached');
@@ -4574,7 +4577,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       setWizardScriptState('loading',['Запущена проверка сценария и правил формулировок']);
       setTimeout(()=>{
         setWizardScriptState(checkResult.status || 'error', wizardBackendSim.summarizeBlockingReasons(checkResult));
-        openLayer(q('#dialogDrawer'));
+        openDrawer(q('#dialogDrawer'));
         toast('Проверка сценария завершена', (checkResult.status || 'error') === 'ready'
           ? 'Проверка успешно пройдена.'
           : 'Сценарий требует доработки или повторной проверки.');
@@ -4799,7 +4802,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   bootstrapCabinetAuth().then((ok)=>{
     if (ok) loadHomeCampaignsFromApi();
   });
-  qa('[data-close]').forEach(b=>b.addEventListener('click',closeAll));q('#overlay').addEventListener('click',closeAll);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+  qa('[data-close]').forEach(b=>b.addEventListener('click',closeAll));q('#overlay').addEventListener('click',closeAll);q('#drawerOverlay').addEventListener('click',closeAll);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
 })();
 </script>
 </body>
