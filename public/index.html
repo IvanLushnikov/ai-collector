@@ -2116,8 +2116,15 @@
         return root.classList.contains('is-open');
       }
 
+      document.querySelectorAll('a[href="#demo-form"]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          openDrawer();
+        });
+      });
+
       document.addEventListener('click', (event) => {
-        const link = event.target.closest('a[href="#demo-form"]');
+        const link = event.target.closest?.('a[href="#demo-form"]');
         if (!link) return;
         event.preventDefault();
         openDrawer();
