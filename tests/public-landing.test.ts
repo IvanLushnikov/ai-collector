@@ -8,13 +8,15 @@ function countMatches(source: string, pattern: RegExp): number {
 }
 
 describe('public GitHub Pages landing', () => {
-  it('keeps conversion CTA, cabinet links and inline demo form', () => {
+  it('keeps conversion CTA, cabinet links and demo drawer form', () => {
     expect(landing).toContain('ИИ-коллектор');
     expect(landing).toContain('Назначить демо');
     expect(landing).toContain('login.html');
     expect(landing).toContain('register.html');
     expect(landing).toContain('id="demoForm"');
     expect(landing).toContain('id="demo-form"');
+    expect(landing).toContain('demo-drawer-root');
+    expect(landing).toContain('id="demoDrawerRoot"');
     expect(landing).toContain('Спасибо, мы свяжемся с вами в ближайшее время.');
     expect(landing).not.toMatch(/маги[яи]/i);
     expect(landing).not.toContain('demoModalOverlay');
@@ -33,15 +35,21 @@ describe('public GitHub Pages landing', () => {
     expect(landing).toContain('id="demoAgree"');
   });
 
-  it('uses hero with product copy and inline demo form instead of side panel', () => {
+  it('uses hero with product copy and opens demo form in drawer', () => {
     const hero = landing.match(/<section class="hero">[\s\S]*?<\/section>/)?.[0] ?? '';
     expect(hero).toContain('hero-grid');
-    expect(hero).toContain('hero-form-card');
-    expect(hero).toContain('id="demo-form"');
     expect(hero).toContain('hero-points');
+    expect(hero).toContain('product-tab');
+    expect(hero).not.toContain('id="demo-form"');
+    expect(hero).not.toContain('hero-form-band');
     expect(hero).not.toContain('value-strip');
     expect(hero).not.toContain('side-panel');
     expect(hero).not.toContain('hero-actions');
+
+    expect(landing).toContain('hero-form-card');
+    expect(landing).toContain('id="demo-form"');
+    expect(landing).toContain('data-demo-close');
+    expect(landing).toContain('aria-modal="true"');
 
     const h1 = hero.match(/<h1>([\s\S]*?)<\/h1>/)?.[1]?.replace(/\s+/g, ' ').trim() ?? '';
     expect(h1).toMatch(/ИИ-коллектор/i);

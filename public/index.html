@@ -431,9 +431,7 @@
     }
 
     .hero-form-band {
-      margin-top: 48px;
-      padding-top: 28px;
-      border-top: 1px solid var(--line);
+      display: none;
     }
 
     .hero-form-card {
@@ -442,28 +440,25 @@
       border-radius: 0;
       box-shadow: none;
       padding: 0;
-      animation: float-in 0.65s ease 0.1s both;
     }
 
     .hero-form-card h2 {
       margin: 0;
-      font-size: 20px;
-      line-height: 1.2;
+      font-size: 24px;
+      line-height: 1.15;
       letter-spacing: -0.03em;
       font-weight: 800;
     }
 
     .hero-form-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-      align-items: end;
-      margin-bottom: 18px;
+      display: grid;
+      gap: 14px;
+      margin-bottom: 22px;
     }
 
     .hero-form-card > p,
     .hero-form-top p {
-      margin: 6px 0 0;
+      margin: 8px 0 0;
       color: var(--muted);
       font-size: 14px;
       max-width: 36rem;
@@ -475,11 +470,10 @@
       list-style: none;
       color: var(--muted);
       font-size: 13px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 18px;
-      max-width: 440px;
-      justify-content: flex-end;
+      display: grid;
+      gap: 8px;
+      max-width: none;
+      justify-content: start;
     }
 
     .demo-expect li {
@@ -498,12 +492,88 @@
       background: var(--accent);
     }
 
+    .demo-drawer-root {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .demo-drawer-root.is-open {
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    .demo-drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 18, 32, 0.42);
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .demo-drawer-root.is-open .demo-drawer-backdrop {
+      opacity: 1;
+    }
+
+    .demo-drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: min(440px, 100%);
+      background: #fff;
+      border-left: 1px solid var(--line);
+      box-shadow: -24px 0 60px rgba(15, 23, 42, 0.18);
+      transform: translateX(104%);
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+      padding: 22px 22px 28px;
+    }
+
+    .demo-drawer-root.is-open .demo-drawer-panel {
+      transform: translateX(0);
+    }
+
+    .demo-drawer-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .demo-drawer-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .demo-drawer-close:hover {
+      background: var(--accent-soft);
+      border-color: #9db0ff;
+    }
+
+    body.demo-drawer-open {
+      overflow: hidden;
+    }
+
     .demo-form {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-      gap: 12px;
+      grid-template-columns: 1fr;
+      gap: 14px;
       margin-top: 0;
-      align-items: end;
+      align-items: stretch;
     }
 
     .demo-form .check-row,
@@ -515,10 +585,11 @@
     }
 
     .demo-form .btn-block {
-      width: auto;
+      width: 100%;
       white-space: nowrap;
-      min-height: 44px;
+      min-height: 48px;
       padding-inline: 20px;
+      margin-top: 4px;
     }
 
     .demo-form label {
@@ -530,10 +601,10 @@
 
     .demo-form input:not([type="checkbox"]) {
       width: 100%;
-      min-height: 44px;
+      min-height: 48px;
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 0 12px;
+      padding: 0 14px;
       background: #fff;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
@@ -626,6 +697,34 @@
       opacity: 0.7;
       cursor: wait;
     }
+
+    .product-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 0 12px 10px;
+      background: linear-gradient(180deg, #f7f9fc, #eef2f8);
+    }
+
+    .product-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .product-tab.is-active {
+      background: #fff;
+      color: var(--ink);
+      border-color: var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .product-scene[hidden] { display: none; }
 
     .metrics {
       padding: 0 0 8px;
@@ -1444,20 +1543,16 @@
       .gallery-live { position: static; min-height: 240px; }
 
       .demo-form {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
       }
 
       .demo-form .btn-block {
-        grid-column: 1 / -1;
         width: 100%;
       }
 
-      .hero-form-top {
-        flex-direction: column;
-        align-items: start;
+      .demo-drawer-panel {
+        width: min(440px, 100%);
       }
-
-      .demo-expect { justify-content: flex-start; }
 
       .product-frame {
         transform: none;
@@ -1511,6 +1606,21 @@
       }
 
       .ui-row { grid-template-columns: 1fr; }
+
+      .demo-drawer-panel {
+        width: 100%;
+        border-left: 0;
+        border-radius: 18px 18px 0 0;
+        top: auto;
+        bottom: 0;
+        height: min(92vh, 760px);
+        transform: translateY(104%);
+        box-shadow: 0 -24px 60px rgba(15, 23, 42, 0.18);
+      }
+
+      .demo-drawer-root.is-open .demo-drawer-panel {
+        transform: translateY(0);
+      }
 
       .demo-form {
         grid-template-columns: 1fr;
@@ -1571,40 +1681,66 @@
                   <span>Кабинет · кампания взыскания</span>
                 </div>
                 <div class="product-body">
-                  <div class="ui-card">
-                    <div class="ui-card-top">
-                      <strong>Кампания «Портфель Q2»</strong>
-                      <span class="ui-badge">В работе</span>
-                    </div>
-                    <div class="ui-meta">
-                      <div>Готово к звонку: <b>1 284</b></div>
-                      <div>На проверке: <b>37</b></div>
-                    </div>
+                  <div class="product-tabs" role="tablist" aria-label="Сцены кабинета">
+                    <button type="button" class="product-tab is-active" role="tab" aria-selected="true" data-scene="campaign">Кампания</button>
+                    <button type="button" class="product-tab" role="tab" aria-selected="false" data-scene="call">Звонок</button>
+                    <button type="button" class="product-tab" role="tab" aria-selected="false" data-scene="journal">Журнал</button>
                   </div>
-                  <div class="ui-row">
+
+                  <div class="product-scene" data-scene-panel="campaign">
                     <div class="ui-card">
                       <div class="ui-card-top">
-                        <strong>Звонок</strong>
-                        <span class="ui-badge ok">Идёт</span>
+                        <strong>Кампания «Портфель Q2»</strong>
+                        <span class="ui-badge">В работе</span>
                       </div>
-                      <div class="ui-meta">Диалог по сценарию · 02:14</div>
+                      <div class="ui-meta">
+                        <div>Готово к звонку: <b>1 284</b></div>
+                        <div>На проверке: <b>37</b></div>
+                      </div>
                     </div>
-                    <div class="ui-card">
-                      <div class="ui-card-top">
-                        <strong>Исход</strong>
-                        <span class="ui-badge">Обещание</span>
+                    <div class="ui-row" style="margin-top:8px">
+                      <div class="ui-card">
+                        <div class="ui-card-top">
+                          <strong>Звонок</strong>
+                          <span class="ui-badge ok">Идёт</span>
+                        </div>
+                        <div class="ui-meta">Диалог по сценарию · 02:14</div>
                       </div>
-                      <div class="ui-meta">Платёж · завтра</div>
+                      <div class="ui-card">
+                        <div class="ui-card-top">
+                          <strong>Исход</strong>
+                          <span class="ui-badge">Обещание</span>
+                        </div>
+                        <div class="ui-meta">Платёж · завтра</div>
+                      </div>
                     </div>
                   </div>
-                  <div class="ui-card">
-                    <div class="ui-card-top">
-                      <strong>Журнал действий</strong>
-                      <span class="ui-badge ok">Проверки</span>
+
+                  <div class="product-scene" data-scene-panel="call" hidden>
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Активный диалог</strong>
+                        <span class="ui-badge ok">02:14</span>
+                      </div>
+                      <div class="ui-meta">
+                        <div>Сценарий: <b>мягкое напоминание</b></div>
+                        <div>Тон: <b>нейтральный</b></div>
+                        <div>Следующий шаг: <b>зафиксировать обещание</b></div>
+                      </div>
                     </div>
-                    <div class="ui-log">
-                      <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
-                      <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
+                  </div>
+
+                  <div class="product-scene" data-scene-panel="journal" hidden>
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Журнал действий</strong>
+                        <span class="ui-badge ok">Проверки</span>
+                      </div>
+                      <div class="ui-log">
+                        <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
+                        <div class="ui-log-item"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
+                        <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1613,49 +1749,6 @@
           </div>
         </div>
 
-        <div class="hero-form-band">
-          <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
-            <div class="hero-form-top">
-              <div>
-                <h2>Назначить демо</h2>
-                <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
-              </div>
-              <ul class="demo-expect">
-                <li>проверки до звонка</li>
-                <li>передача специалисту</li>
-                <li>журнал по шагам</li>
-              </ul>
-            </div>
-            <form class="demo-form" id="demoForm" novalidate>
-              <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
-
-              <div class="form-notice error" id="demoError" hidden></div>
-
-              <label>
-                <span>Имя</span>
-                <input id="demoName" name="name" type="text" autocomplete="name" required>
-              </label>
-              <label>
-                <span>Компания</span>
-                <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
-              </label>
-              <label>
-                <span>Email</span>
-                <input id="demoEmail" name="email" type="email" autocomplete="email" required>
-              </label>
-              <label>
-                <span>Телефон</span>
-                <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
-              </label>
-              <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
-              <label class="check-row">
-                <input id="demoAgree" name="agree" type="checkbox" required>
-                <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
-              </label>
-              <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-            </form>
-          </aside>
-        </div>
       </div>
     </section>
 
@@ -1924,17 +2017,166 @@
     </div>
   </footer>
 
+
+  <div class="demo-drawer-root" id="demoDrawerRoot" aria-hidden="true">
+    <div class="demo-drawer-backdrop" data-demo-close tabindex="-1"></div>
+    <aside
+      class="demo-drawer-panel hero-form-card"
+      id="demo-form"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demoDrawerTitle"
+      aria-label="Заявка на демо"
+    >
+      <div class="demo-drawer-head">
+        <div class="hero-form-top">
+          <div>
+            <h2 id="demoDrawerTitle">Назначить демо</h2>
+            <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
+          </div>
+          <ul class="demo-expect">
+            <li>проверки до звонка</li>
+            <li>передача специалисту</li>
+            <li>журнал по шагам</li>
+          </ul>
+        </div>
+        <button type="button" class="demo-drawer-close" data-demo-close aria-label="Закрыть">×</button>
+      </div>
+      <form class="demo-form" id="demoForm" novalidate>
+        <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+        <div class="form-notice error" id="demoError" hidden></div>
+        <label>
+          <span>Имя</span>
+          <input id="demoName" name="name" type="text" autocomplete="name" required>
+        </label>
+        <label>
+          <span>Компания</span>
+          <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
+        </label>
+        <label>
+          <span>Email</span>
+          <input id="demoEmail" name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          <span>Телефон</span>
+          <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
+        </label>
+        <label class="check-row">
+          <input id="demoAgree" name="agree" type="checkbox" required>
+          <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
+        <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+      </form>
+    </aside>
+  </div>
+
   <div class="sticky-cta" aria-label="Назначить демо">
     <div class="sticky-shell">
       <div class="sticky-copy">
         <strong>Назначить демо</strong>
-        <span>Форма заявки — вверху страницы.</span>
+        <span>Откроем заявку в боковой панели.</span>
       </div>
       <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
     </div>
   </div>
 
   <script>
+    (() => {
+      const root = document.getElementById('demoDrawerRoot');
+      const panel = document.getElementById('demo-form');
+      const closeNodes = document.querySelectorAll('[data-demo-close]');
+      if (!root || !panel) return;
+
+      let lastFocus = null;
+
+      function openDrawer() {
+        lastFocus = document.activeElement;
+        root.classList.add('is-open');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('demo-drawer-open');
+        const first = panel.querySelector('input:not([type="hidden"]), button, textarea, select');
+        window.setTimeout(() => first?.focus(), 40);
+        if (location.hash !== '#demo-form') {
+          history.replaceState(null, '', '#demo-form');
+        }
+      }
+
+      function closeDrawer() {
+        root.classList.remove('is-open');
+        root.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('demo-drawer-open');
+        if (location.hash === '#demo-form') {
+          history.replaceState(null, '', location.pathname + location.search);
+        }
+        if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+      }
+
+      function isOpen() {
+        return root.classList.contains('is-open');
+      }
+
+      document.addEventListener('click', (event) => {
+        const link = event.target.closest('a[href="#demo-form"]');
+        if (!link) return;
+        event.preventDefault();
+        openDrawer();
+      });
+
+      closeNodes.forEach((node) => {
+        node.addEventListener('click', (event) => {
+          event.preventDefault();
+          closeDrawer();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isOpen()) {
+          event.preventDefault();
+          closeDrawer();
+        }
+      });
+
+      if (location.hash === '#demo-form') openDrawer();
+      window.addEventListener('hashchange', () => {
+        if (location.hash === '#demo-form') openDrawer();
+        else if (isOpen()) closeDrawer();
+      });
+
+      window.__demoDrawer = { open: openDrawer, close: closeDrawer };
+    })();
+
+    (() => {
+      const tabs = Array.from(document.querySelectorAll('.product-tab'));
+      const panels = Array.from(document.querySelectorAll('[data-scene-panel]'));
+      if (!tabs.length || !panels.length) return;
+
+      function activate(scene) {
+        tabs.forEach((tab) => {
+          const on = tab.getAttribute('data-scene') === scene;
+          tab.classList.toggle('is-active', on);
+          tab.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach((panel) => {
+          panel.hidden = panel.getAttribute('data-scene-panel') !== scene;
+        });
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => activate(tab.getAttribute('data-scene')));
+      });
+
+      let i = 0;
+      const order = ['campaign', 'call', 'journal'];
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduced) {
+        window.setInterval(() => {
+          i = (i + 1) % order.length;
+          activate(order[i]);
+        }, 4800);
+      }
+    })();
+
     (() => {
       const relayUrl = document.querySelector('meta[name="lead-relay-url"]')?.getAttribute('content') ?? '';
       const form = document.getElementById('demoForm');
