@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/server/app.js';
 import { ComplianceEngine } from '../../src/compliance/engine/compliance-engine.js';
-import { FakeAllowComplianceRule } from '../../src/compliance/rules/fake-allow.js';
+import { createSandboxApiComplianceEngine } from '../helpers/sandbox-compliance-engine.js';
 import { ConsentStatusRule } from '../../src/compliance/rules/consent-status.js';
 import { DebtStatusRule } from '../../src/compliance/rules/debt-status.js';
 import { CallWindowComplianceRule } from '../../src/compliance/rules/call-window.js';
@@ -81,12 +81,7 @@ const makeStore = (overrides: Record<string, unknown> = {}) => ({
   auditLog: {
     create: vi.fn(async () => ({}))
   },
-  complianceEngine: new ComplianceEngine([
-    new FakeAllowComplianceRule(),
-    new CallWindowComplianceRule(),
-    new ConsentStatusRule(),
-    new DebtStatusRule()
-  ]),
+  complianceEngine: createSandboxApiComplianceEngine(),
   ...overrides
 });
 

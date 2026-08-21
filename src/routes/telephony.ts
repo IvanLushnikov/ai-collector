@@ -2,9 +2,10 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { resolveActorId } from '../server/authz/actor.js';
 import { authorizeZone } from '../server/authz/index.js';
+import { appendOutboxEvent } from '../integrations/outbox-write.js';
 
 type TelephonyDependencies = {
-  $transaction?: <T>(callback: (transaction: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => Promise<T>) => Promise<T>;
+  $transaction?: <T>(callback: (transaction: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog' | 'outboxEvent'>) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
   };
@@ -39,6 +40,9 @@ type TelephonyDependencies = {
     }) => Promise<unknown>;
   };
   auditLog?: {
+    create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+  };
+  outboxEvent?: {
     create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
   };
 };
@@ -159,7 +163,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
       return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
     }
 
-    const persistConnection = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => {
+    const persistConnection = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog' | 'outboxEvent'>) => {
       const connection = (await store.telephonyConnection.create({
         data: {
           tenantId: params.data.tenantId,
@@ -185,6 +189,14 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
             tenantId: params.data.tenantId
           }
         }
+      });
+      await appendOutboxEvent(store, {
+        tenantId: params.data.tenantId,
+        eventType: 'telephony_connection.created',
+        aggregateType: 'telephonyConnection',
+        aggregateId: connection.id,
+        idempotencyKey: `telephony_connection.created:${connection.id}`,
+        payload: { connectionId: connection.id, provider: connection.provider, actorId }
       });
       return connection;
     };
@@ -259,7 +271,7 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
-      const persistUpdate = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog'>) => {
+      const persistUpdate = async (store: Pick<TelephonyDependencies, 'telephonyConnection' | 'auditLog' | 'outboxEvent'>) => {
         const updated = (await store.telephonyConnection.update?.({
           where: { id: connection.id },
           data: payload.data
@@ -280,6 +292,14 @@ export const registerTelephonyRoutes = (app: FastifyInstance, deps: TelephonyDep
               tenantId: params.data.tenantId
             }
           }
+        });
+        await appendOutboxEvent(store, {
+          tenantId: params.data.tenantId,
+          eventType: 'telephony_connection.updated',
+          aggregateType: 'telephonyConnection',
+          aggregateId: updated.id,
+          idempotencyKey: `telephony_connection.updated:${updated.id}:${updated.updatedAt}`,
+          payload: { connectionId: updated.id, provider: updated.provider, status: updated.status, actorId }
         });
         return updated;
       };

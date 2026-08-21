@@ -75,7 +75,6 @@ Definition of Done определяется goal prompt задачи и `docs/ag
 - `T-149` — Exolve HTTP; live-интеграция заблокирована до legal/DPA.
 - `T-157` — SpeechKit HTTP; live-интеграция заблокирована до legal/DPA.
 - `T-203` — retention; выполнение заблокировано до legal/DPA.
-- `T-258` — transactional outbox ещё не закрыт на все mutations / consumer.
 - Adjacent freeze: не расширять support/billing/GigaChat surface без задачи следующего этапа.
 
 ## 11. Опасные операции

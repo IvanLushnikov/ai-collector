@@ -8,16 +8,16 @@
 - ORM/DB toolkit: **Prisma**.
 - Database: **PostgreSQL 16**.
 - Validation: **Zod** for request schemas and env validation.
-- Background/scheduler: позже `BullMQ + Redis`; на MVP can start with in-process job queue when needed.
+- Background/scheduler: **BullMQ + Redis** (platform dependency; MVP/Pilot may use in-process helpers + transactional Outbox for side effects — see `docs/architecture/2026-08-21-async-sot.md`).
 - Telephony/AI integrations: сначала через adapter interfaces, потом sandbox и один реальный провайдер.
-- API testing: **Vitest** (unit + интеграционные) + **Supertest**.
-- Lint/format/type: **ESLint**, **Prettier**, **TypeScript strict mode**.
+- API testing: **Vitest** (unit + integration через `app.inject` Fastify; отдельный Supertest в deps **не** используется).
+- Lint/type: **ESLint** + **TypeScript strict mode**. Prettier в репозитории **не** подключён (не считать обязательным tooling SoT).
 
 ## Почему этот стек подходит для MVP Lab
 
 1. **Скорость запуска** — Fastify + TypeScript дают быстрый REST API и прозрачную типизацию.
 2. **Масштабируемость на этапе роста** — Prisma + PostgreSQL хорошо подходят для tenant-based модели и последующего расширения в SaaS.
-3. **Надежный test-first контроль** — Vitest + Supertest позволяют быстро наращивать coverage для compliance и API-ограничений.
+3. **Надежный test-first контроль** — Vitest + Fastify inject позволяют быстро наращивать coverage для compliance и API-ограничений.
 4. **Простота эксплуатации** — Node/PostgreSQL/Docker хорошо поддерживаются в локальном и облачном запуске.
 5. **Совместимость с продуктовым порядком** — позволяет параллельно внедрять compliance engine, domain entities, sandbox провайдер и usage ledger.
 
@@ -32,7 +32,7 @@
 ## Команды тестов и проверки
 
 - `npm run test` — unit/integration тесты.
-- `npm run lint` — ESLint/типизация (если настроено в CI/локально).
+- `npm run lint` — ESLint (если настроено в CI/локально).
 - `npm run typecheck` — проверка типов TypeScript.
 - `npm run db:validate` — проверка Prisma schema без подключения к БД.
 

@@ -1,6 +1,6 @@
 import { expect, describe, it, vi } from 'vitest';
 import { ComplianceEngine } from '../../src/compliance/engine/compliance-engine.js';
-import { FakeAllowComplianceRule } from '../../src/compliance/rules/fake-allow.js';
+import { FakeAllowComplianceRule } from '../helpers/fake-allow-rule.js';
 import { DebtStatusRule } from '../../src/compliance/rules/debt-status.js';
 import { ConsentStatusRule } from '../../src/compliance/rules/consent-status.js';
 

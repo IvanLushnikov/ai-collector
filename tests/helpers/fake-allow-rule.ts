@@ -1,4 +1,4 @@
-import { ComplianceRule, ComplianceRuleContext, ComplianceRuleResult } from './decision.js';
+import { ComplianceRule, ComplianceRuleContext, ComplianceRuleResult } from '../../src/compliance/rules/decision.js';
 
 export class FakeAllowComplianceRule implements ComplianceRule {
   name = 'fake-allow';

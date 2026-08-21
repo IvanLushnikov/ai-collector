@@ -52,7 +52,7 @@
 - Compliance pilot rules: call-window + праздники, consent, debt status, frequency 1/2/8, suppression, legalBasis.
 - Телефония: sandbox + скелеты **Exolve (primary)** и Mango (backup) без HTTP live.
 - Речь/диалог: ASR/TTS/LLM adapters (fake + Yandex/GigaChat skeleton), BYOK store, state machine, extractor, golden set.
-- Platform: docker-compose (PG+Redis), BullMQ skeleton, transactional outbox (в работе), fake object store, structured logger.
+- Platform: docker-compose (PG+Redis), BullMQ skeleton, transactional outbox + pilot deliverer, fake object store, structured logger.
 - UI: корневой `prototype.html` — рабочий кабинет; `public/` — GitHub Pages publish root (копии для сайта).
 - Auth: **cookie session SoT**; header identity только при `ALLOW_HEADER_IDENTITY` вне production (ADR 0002).
 
@@ -63,7 +63,6 @@
 - third-party disclosure guard и AI disclosure в runtime не на live path;
 - CDR reconciliation, payment outcome, complaint/holdout для пилота;
 - клиентский кабинет не полностью API-backed; OpenAPI v1 = cabinet subset, не полный surface;
-- outbox consumer ещё не закрыт на все mutations (`T-258`).
 
 ## 2.1. Async и UI SoT (кратко)
 

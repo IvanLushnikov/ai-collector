@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { isLockedDisclosureContent, serializeScriptContent } from '../domain/script-version/index.js';
 import { authorizeZone } from '../server/authz/index.js';
 import { resolveActorId } from '../server/authz/actor.js';
+import { appendOutboxEvent } from '../integrations/outbox-write.js';
 
 type ScriptDependencies = {
   $transaction?: <T>(callback: (tx: any) => Promise<T>) => Promise<T>;
@@ -22,6 +23,9 @@ type ScriptDependencies = {
     findMany: (args: any) => Promise<unknown>;
   };
   auditLog?: {
+    create?: (args: any) => Promise<unknown>;
+  };
+  outboxEvent?: {
     create?: (args: any) => Promise<unknown>;
   };
 };
@@ -185,6 +189,14 @@ export const registerScriptRoutes = (app: FastifyInstance, deps: ScriptDependenc
           }
         });
       }
+      await appendOutboxEvent(store, {
+        tenantId: params.data.tenantId,
+        eventType: 'script_version.created',
+        aggregateType: 'scriptVersion',
+        aggregateId: script.id,
+        idempotencyKey: `script_version.created:${script.id}`,
+        payload: { scriptVersionId: script.id, campaignId: params.data.campaignId, actorId }
+      });
 
       return { script, updatedCampaign };
     };

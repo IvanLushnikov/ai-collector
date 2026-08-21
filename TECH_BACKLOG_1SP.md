@@ -180,20 +180,21 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 ### T-258: Ввести transactional outbox для внешних side effects
 
-Статус: `doing`
+Статус: `done`
 
 Что сделано:
 
 - Добавлена durable схема `OutboxEvent` и базовый Prisma dispatch adapter с retry state.
-- Create/status campaign mutations пишут outbox events в той же транзакции, что domain change и audit.
-- Claim использует conditional update; 60-секундная lease может быть reclaimed, а finish/fail разрешены только владельцу актуальной lease.
-- Ошибки delivery получают bounded exponential backoff; после 10 попыток event получает durable `deadLetteredAt` и больше не выбирается worker-ом.
+- Campaign create/status/safe-resume, telephony create/update, script create, BYOK credential create пишут outbox в той же транзакции, что domain+audit.
+- Claim: expired lease reclaim + `availableAt` в conditional update; markProcessed/markFailed требуют ownership (`lockedBy`) или throw.
+- Pilot deliverer ack известных event types; unknown → fail-closed; `processOutboxTick` в `src/jobs/worker.ts`.
+- Bounded retry + dead-letter после 10 попыток.
 
-Осталось:
+Критерии готовности:
 
-- Добавлять outbox event атомарно с оставшимися domain mutations.
-- Добавить lease expiry и ownership check для нескольких workers.
-- Подключить consumer к конкретному provider/webhook flow.
+- Domain mutations с внешним side-effect path пишут outbox атомарно с audit где уже есть `$transaction`.
+- Worker ownership mismatch не silent-success.
+- Consumer подключён к pilot deliverer (без live HTTP до legal/DPA).
 
 ### T-259: Убрать локальную подмену отчёта в кабинете
 
@@ -346,6 +347,16 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 - Успешный API-ответ не может зафиксировать credential без соответствующего encrypted secret и audit append в Prisma transaction.
 - В ответе и аудите не появляется api key.
+
+### T-270: Убрать FakeAllow из production src и sandbox API tests
+
+Статус: `done`
+
+Что сделано:
+
+- `FakeAllowComplianceRule` перенесён в `tests/helpers/fake-allow-rule.ts` (удалён из `src/compliance/rules`).
+- Sandbox/live API tests используют `createSandboxApiComplianceEngine()` (реальные consent/debt/frequency/suppression + test-open call-window).
+- ADR 0001: Vitest inject / без Prettier+Supertest как SoT; Pages HTML root quarantine уточнён.
 
 ### T-269: Выровнять SoT Controlled Pilot (auth / OpenAPI / voice / async / UI)
 
@@ -6827,6 +6838,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ## Журнал изменений плана
 
+- 21.08.2026: `T-258` `done` — outbox на telephony/scripts/credentials/safe-resume; lease ownership fail-closed; pilot deliverer + processOutboxTick. Также: FakeAllow вынесен из `src/` в `tests/helpers`; sandbox API tests на real consent/debt/freq/suppression + test-open window; ADR 0001 tooling footnote; HTML root quarantine.
 - 21.08.2026: `T-269` `done` — выравнивание SoT Controlled Pilot (ADR 0002 cookie, OpenAPI cabinet subset, Exolve primary resolver, authorizeCanonicalRoles/safe-resume, async Outbox note, Pages/`public` SoT, CABINET_OPS freeze, analytics без demo fallback). `T-258` остаётся `doing`.
 - 19.08.2026: Post-review hardening: CSRF Origin middleware для cookie-mutations в production; `allowHeaderIdentity=false` в production (header auth только dev/test); явный `CORS_ORIGINS` без wildcard в production; live route возвращает `501 LIVE_CALLS_NOT_IMPLEMENTED` вместо proxy в sandbox; Secure cookie в production; синхронизация `public/prototype.html`; ESLint + husky pre-commit. Проверка: `npm run typecheck`; `npm run lint`; `npm run test` (466/466).
 

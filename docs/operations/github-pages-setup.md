@@ -2,7 +2,7 @@
 
 Публичный сайт (`public/`) публикуется через GitHub Pages.
 
-**Publish SoT:** только содержимое `public/`. Корневые `index.html` / `login.html` / `register.html` / `landing.html` — не Pages root; не править их «вместо» `public/` для деплоя сайта. Рабочий кабинет для локальной разработки — корневой `prototype.html`; перед Pages-релевантным изменением кабинета синхронизируйте `public/prototype.html`.
+**Publish SoT:** только содержимое `public/`. Корневые `index.html` / `login.html` / `register.html` / `landing.html` — **legacy/dev mirrors** (не Pages root); не править их «вместо» `public/` для деплоя сайта. Расхождение root↔`public/` для login/register/index — известный quarantine: канон для сайта всегда `public/`. Рабочий кабинет для локальной разработки — корневой `prototype.html`; перед Pages-релевантным изменением кабинета синхронизируйте `public/prototype.html`.
 
 Заявки с лид-формы пересылаются в Telegram через relay + GitHub Actions — без хранения Telegram-токена в браузере или репозитории.
 

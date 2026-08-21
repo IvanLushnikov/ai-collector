@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/server/app.js';
 import { VoiceCallStatus, VoiceProviderAdapter } from '../../src/telephony/voice-provider/adapter.js';
 import { ComplianceEngine } from '../../src/compliance/engine/compliance-engine.js';
-import { FakeAllowComplianceRule } from '../../src/compliance/rules/fake-allow.js';
+import { createSandboxApiComplianceEngine } from '../helpers/sandbox-compliance-engine.js';
 import { ConsentStatusRule } from '../../src/compliance/rules/consent-status.js';
 import { DebtStatusRule } from '../../src/compliance/rules/debt-status.js';
 import { CallWindowComplianceRule } from '../../src/compliance/rules/call-window.js';
@@ -304,7 +304,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
   it('requires an idempotency key before starting an external call side effect', async () => {
     const provider = makeProvider();
-    const store = makeStore({ complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]), voiceProvider: provider });
+    const store = makeStore({ complianceEngine: createSandboxApiComplianceEngine(), voiceProvider: provider });
     const app = createApp({ campaignStore: store });
     await app.ready();
 
@@ -324,7 +324,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
   it('returns the existing attempt for a repeated idempotency key without dialing again', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       callAttempt: {
         create: vi.fn(async () => ({ id: 'unexpected' })),
@@ -357,7 +357,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'existing-attempt', status: 'queued' });
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       callAttempt: {
         create: vi.fn(async () => { throw { code: 'P2002' }; }),
@@ -433,7 +433,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
 
   it('returns 403 when role is not allowed for sandbox call', async () => {
     const appStore = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()])
+      complianceEngine: createSandboxApiComplianceEngine()
     });
     const app = createApp({
       campaignStore: appStore
@@ -1588,7 +1588,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       getCount: vi.fn(async () => 0)
     };
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       frequencyLedger
     });
@@ -1646,7 +1646,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('uses the campaign telephony connection for sandbox CallAttempt', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       campaign: {
         create: vi.fn(async () => ({})),
@@ -1686,7 +1686,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('does not start a sandbox call when the selected connection is production', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       telephonyConnection: {
         findUnique: vi.fn(async (query: { where: { id: string } }) => ({
@@ -1726,7 +1726,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('queues sandbox start when the queue flag is on and does not dial', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       sandboxCallsQueueEnabled: true
     });
@@ -1756,13 +1756,13 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('does not start a sandbox call when telephony provider is unknown', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       telephonyConnection: {
         findUnique: vi.fn(async (query: { where: { id: string } }) => ({
           id: query.where.id,
           tenantId: '11111111-1111-1111-1111-111111111111',
-          provider: 'exolve',
+          provider: 'acme-unknown-cpaas',
           mode: 'sandbox',
           status: 'active',
           lastProbeAt: '2026-08-16T10:00:00.000Z',
@@ -1786,7 +1786,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
     expect(response.statusCode).toBe(422);
     expect(response.json()).toEqual({
       error: 'UNKNOWN_VOICE_PROVIDER',
-      provider: 'exolve'
+      provider: 'acme-unknown-cpaas'
     });
     expect(provider.startCall).not.toHaveBeenCalled();
     expect(store.callAttempt.create).not.toHaveBeenCalled();
@@ -1797,7 +1797,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('returns 409 and does not create CallAttempt when readiness is blocked', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       campaign: {
         create: vi.fn(async () => ({})),
@@ -1856,7 +1856,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('returns 409 and does not create CallAttempt when readiness is stale after script change', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       campaign: {
         create: vi.fn(async () => ({})),
@@ -1905,7 +1905,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('returns 409 SCRIPT_VERSION_MISSING when campaign has no active script version', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       scriptVersion: {
         findMany: vi.fn(async () => [
@@ -1940,7 +1940,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('creates call_completed usage event for terminal sandbox call status', async () => {
     const provider = makeProvider({ initialStatus: 'completed' });
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider
     });
 
@@ -1982,7 +1982,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
   it('creates audit trail when sandbox call is successfully started', async () => {
     const provider = makeProvider();
     const store = makeStore({
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()]),
+      complianceEngine: createSandboxApiComplianceEngine(),
       voiceProvider: provider,
       auditLog: {
         create: vi.fn(async () => ({}))
@@ -2173,7 +2173,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       user: {
         findFirst: vi.fn(async () => null)
       },
-      complianceEngine: new ComplianceEngine([new FakeAllowComplianceRule()])
+      complianceEngine: createSandboxApiComplianceEngine()
     });
 
     const app = createApp({

@@ -1,5 +1,5 @@
 import { expect, describe, it } from 'vitest';
-import { FakeAllowComplianceRule } from '../../src/compliance/rules/fake-allow.js';
+import { FakeAllowComplianceRule } from '../helpers/fake-allow-rule.js';
 
 describe('FakeAllowComplianceRule', () => {
   it('returns allow decision through interface contract', async () => {

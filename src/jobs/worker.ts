@@ -1,5 +1,11 @@
 import { SANDBOX_START_JOB_NAME, type SandboxStartJobData } from './queue.js';
 import { transitionDialogue, type DialogueState } from '../dialogue/state-machine.js';
+import {
+  createPrismaOutbox,
+  dispatchOutboxBatch,
+  type OutboxStore
+} from '../integrations/outbox.js';
+import { createPilotOutboxDeliverer } from '../integrations/outbox-deliver.js';
 
 export const processHealthPing = async (): Promise<{ ok: true }> => ({ ok: true });
 
@@ -43,3 +49,15 @@ export const processSandboxStartJob = async (
     usageEventsCreated: orchestrator.usageEventsCreated
   };
 };
+
+/** Drain durable outbox with the pilot deliverer (no live provider HTTP). */
+export const processOutboxTick = async (
+  store: OutboxStore,
+  workerId: string,
+  limit = 25
+): Promise<{ processed: number; failed: number }> =>
+  dispatchOutboxBatch(store, workerId, createPilotOutboxDeliverer(), limit);
+
+export const createDefaultOutboxStore = (
+  client: Parameters<typeof createPrismaOutbox>[0]
+): OutboxStore => createPrismaOutbox(client);

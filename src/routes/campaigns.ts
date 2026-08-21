@@ -5,6 +5,7 @@ import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-p
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
 import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor.js';
 import { authorizeCanonicalRoles, authorizeZone, normalizeRole } from '../server/authz/index.js';
+import { appendOutboxEvent } from '../integrations/outbox-write.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import { interruptActiveCallAttempts } from '../campaigns/force-stop-interrupt.js';
 import { matchesAuditActionGroup, normalizeAuditActionGroup } from '../domain/audit-log/index.js';
@@ -403,12 +404,10 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           }
         }
       });
-      await store.outboxEvent?.create?.({
-        data: {
-          tenantId, eventType: 'campaign.created', aggregateType: 'campaign', aggregateId: campaign.id,
-          idempotencyKey: `campaign.created:${campaign.id}`,
-          payload: { campaignId: campaign.id, name: payload.data.name, actorId }
-        }
+      await appendOutboxEvent(store, {
+        tenantId, eventType: 'campaign.created', aggregateType: 'campaign', aggregateId: campaign.id,
+        idempotencyKey: `campaign.created:${campaign.id}`,
+        payload: { campaignId: campaign.id, name: payload.data.name, actorId }
       });
       return campaign;
     };
@@ -1385,15 +1384,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         }
       }
       });
-      await store.outboxEvent?.create?.({
-        data: {
-          tenantId: params.data.tenantId,
-          eventType: 'campaign.status_changed',
-          aggregateType: 'campaign',
-          aggregateId: params.data.campaignId,
-          idempotencyKey: `campaign.status_changed:${params.data.campaignId}:${previousStatus}:${nextStatus}`,
-          payload: { campaignId: params.data.campaignId, fromStatus: previousStatus, toStatus: nextStatus, actorId }
-        }
+      await appendOutboxEvent(store, {
+        tenantId: params.data.tenantId,
+        eventType: 'campaign.status_changed',
+        aggregateType: 'campaign',
+        aggregateId: params.data.campaignId,
+        idempotencyKey: `campaign.status_changed:${params.data.campaignId}:${previousStatus}:${nextStatus}`,
+        payload: { campaignId: params.data.campaignId, fromStatus: previousStatus, toStatus: nextStatus, actorId }
       });
       return updated;
     };
@@ -1460,46 +1457,66 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         return reply.code(422).send({ error: 'NO_ACTIVE_USER_FOR_TENANT' });
       }
 
-      const updated = await (deps.campaign.update?.({
-        where: { id: params.data.campaignId },
-        data: { status: payload.data.targetStatus },
-        select: {
-          id: true,
-          tenantId: true,
-          name: true,
-          status: true,
-          timezone: true,
-          createdAt: true
-        }
-      }) ?? Promise.resolve(null)) as {
-        id: string;
-        tenantId: string;
-        name: string;
-        status: string;
-        timezone: string;
-        createdAt: string;
-      };
+      const persistSafeResume = async (store: Pick<CampaignDependencies, 'campaign' | 'auditLog' | 'outboxEvent'>) => {
+        const updated = await (store.campaign.update?.({
+          where: { id: params.data.campaignId },
+          data: { status: payload.data.targetStatus },
+          select: {
+            id: true,
+            tenantId: true,
+            name: true,
+            status: true,
+            timezone: true,
+            createdAt: true
+          }
+        }) ?? Promise.resolve(null)) as {
+          id: string;
+          tenantId: string;
+          name: string;
+          status: string;
+          timezone: string;
+          createdAt: string;
+        };
 
-      await deps.auditLog?.create?.({
-        data: {
+        await store.auditLog?.create?.({
+          data: {
+            tenantId: params.data.tenantId,
+            userId: actorId,
+            action: 'campaign.safe_resumed',
+            entityType: 'campaign',
+            entityId: params.data.campaignId,
+            metadata: {
+              ...resolveAuditActorMetadata(request),
+              campaignId: params.data.campaignId,
+              fromStatus: 'auto_paused',
+              toStatus: payload.data.targetStatus,
+              previousValue: 'auto_paused',
+              nextValue: payload.data.targetStatus,
+              reason: 'safe_resume',
+              checklist,
+              forceCall: false
+            }
+          }
+        });
+        await appendOutboxEvent(store, {
           tenantId: params.data.tenantId,
-          userId: actorId,
-          action: 'campaign.safe_resumed',
-          entityType: 'campaign',
-          entityId: params.data.campaignId,
-          metadata: {
-            ...resolveAuditActorMetadata(request),
+          eventType: 'campaign.safe_resumed',
+          aggregateType: 'campaign',
+          aggregateId: params.data.campaignId,
+          idempotencyKey: `campaign.safe_resumed:${params.data.campaignId}:${payload.data.targetStatus}`,
+          payload: {
             campaignId: params.data.campaignId,
             fromStatus: 'auto_paused',
             toStatus: payload.data.targetStatus,
-            previousValue: 'auto_paused',
-            nextValue: payload.data.targetStatus,
-            reason: 'safe_resume',
-            checklist,
-            forceCall: false
+            actorId
           }
-        }
-      });
+        });
+        return updated;
+      };
+
+      const updated = deps.$transaction
+        ? await deps.$transaction((tx) => persistSafeResume(tx))
+        : await persistSafeResume(deps);
 
       return reply.code(200).send(updated);
     }

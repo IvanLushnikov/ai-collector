@@ -51,6 +51,7 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
           id: event.id,
           processedAt: null,
           deadLetteredAt: null,
+          availableAt: { lte: now },
           OR: [{ lockedAt: null }, { lockedAt: { lt: leaseExpiredAt } }]
         },
         data: { lockedAt: now, lockedBy: workerId, attempts: { increment: 1 } }
@@ -60,10 +61,13 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
     return claimed.filter((event): event is OutboxEvent => event !== null);
   },
   async markProcessed(eventId, workerId) {
-    await client.outboxEvent.updateMany({
+    const result = await client.outboxEvent.updateMany({
       where: { id: eventId, processedAt: null, lockedBy: workerId },
       data: { processedAt: new Date(), lockedAt: null, lockedBy: null, lastError: null },
     });
+    if (result.count !== 1) {
+      throw new Error(`OUTBOX_LEASE_OWNERSHIP_MISMATCH:processed:${eventId}`);
+    }
   },
   async markFailed(eventId, workerId, error, attemptNumber = 1) {
     const now = new Date();
@@ -75,10 +79,13 @@ export const createPrismaOutbox = (client: OutboxPrismaClient): OutboxStore => (
       return;
     }
 
-    await client.outboxEvent.updateMany({
+    const retried = await client.outboxEvent.updateMany({
       where: { id: eventId, processedAt: null, lockedBy: workerId, attempts: { lt: OUTBOX_MAX_ATTEMPTS } },
       data: { lockedAt: null, lockedBy: null, lastError: error, availableAt: new Date(now.getTime() + retryDelayMs(attemptNumber)) }
     });
+    if (retried.count !== 1) {
+      throw new Error(`OUTBOX_LEASE_OWNERSHIP_MISMATCH:failed:${eventId}`);
+    }
   }
 });
 

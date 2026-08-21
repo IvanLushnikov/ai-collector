@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import type { ProviderCredential } from '../domain/provider-credential/index.js';
 import { resolveActorId } from '../server/authz/actor.js';
 import { authorizeZone } from '../server/authz/index.js';
+import { appendOutboxEvent } from '../integrations/outbox-write.js';
 import { createPrismaCredentialSecretStore, type CredentialSecretStore } from '../secrets/credential-store.js';
 import { encryptSecret, parseDekHex, secretHintFromKey } from '../secrets/envelope.js';
 import { isSpeechProviderAllowed } from '../speech/credentials/allowlist.js';
@@ -12,7 +13,7 @@ import type { SpeechCredentialProbe } from '../speech/credentials/probe.js';
 import { resolveSpeechCredential, type PlatformSpeechEnv } from '../speech/credentials/resolve.js';
 
 type ProviderCredentialDependencies = {
-  $transaction?: <T>(callback: (transaction: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog'>) => Promise<T>) => Promise<T>;
+  $transaction?: <T>(callback: (transaction: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog' | 'outboxEvent'>) => Promise<T>) => Promise<T>;
   tenant: {
     findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
   };
@@ -33,6 +34,9 @@ type ProviderCredentialDependencies = {
     deleteMany: (args: { where: { providerCredentialId: string; tenantId: string } }) => Promise<{ count: number }>;
   };
   auditLog?: {
+    create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
+  };
+  outboxEvent?: {
     create?: (args: { data: Record<string, unknown> }) => Promise<unknown>;
   };
   speechProbe?: SpeechCredentialProbe;
@@ -205,7 +209,7 @@ export const registerProviderCredentialRoutes = (
         ? secretHintFromKey(payload.data.apiKey)
         : null;
 
-      const persistCredential = async (store: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog'>) => {
+      const persistCredential = async (store: Pick<ProviderCredentialDependencies, 'providerCredential' | 'credentialSecret' | 'auditLog' | 'outboxEvent'>) => {
         const created = await store.providerCredential.create({
           data: {
             tenantId: params.data.tenantId,
@@ -245,6 +249,19 @@ export const registerProviderCredentialRoutes = (
               status: created.status,
               sourceRoute: '/tenants/:tenantId/provider-credentials'
             }
+          }
+        });
+        await appendOutboxEvent(store, {
+          tenantId: params.data.tenantId,
+          eventType: 'provider_credential.created',
+          aggregateType: 'providerCredential',
+          aggregateId: created.id,
+          idempotencyKey: `provider_credential.created:${created.id}`,
+          payload: {
+            providerCredentialId: created.id,
+            capability: created.capability,
+            provider: created.provider,
+            actorId
           }
         });
         return created;
