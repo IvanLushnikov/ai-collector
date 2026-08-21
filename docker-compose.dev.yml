@@ -1,0 +1,44 @@
+# Local development dependencies only (API runs via `npm run dev`, UI via `npm run dev:ui`).
+# Does not start the application containers.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   cp -n .env.example .env
+#   npm run db:migrate   # or npm run db:push for throwaway schemas
+#   npm run dev
+#   npm run dev:ui
+
+name: ai-collector-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_collector
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_collector"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

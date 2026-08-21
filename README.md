@@ -59,20 +59,23 @@ AI Collector — это прототип продукта для compliance-firs
 
 - `npm run verify:skills` валидирует наличие bootstrap-файлов и всех обязательных `SKILL.md`
 - `npm run test` и `npm run typecheck` сначала запускают `verify:skills`, а потом уже основной контур
-- CI (GitHub Actions): [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) на `pull_request` и `push` в `main`/`master` запускает `npm ci`, `npm run typecheck`, `npm run test`. Секреты в workflow не используются; тесты не требуют PostgreSQL service.
+- CI (GitHub Actions): [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) на `pull_request` и `push` в `main`/`master` запускает `npm ci`, `typecheck`, `lint`, `test`, `build` и валидацию `docker-compose.yml`. Секреты в workflow не используются; тесты не требуют PostgreSQL service.
 
 Если `verify:skills` падает, значит skill-маршрутизация репозитория нарушена и это нужно починить до дальнейшей работы.
 
 ## Локальный запуск (текущий)
 
 1. Клонируйте репозиторий.
-2. Откройте `index.html` или `prototype.html` в браузере для просмотра текущих прототипов.
-3. Backend:
-   - `cp .env.example .env`
-   - `docker compose up -d` — PostgreSQL 16 (`DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ai_collector`) и Redis (`REDIS_URL=redis://127.0.0.1:6379`), без секретов в git
-   - `npm install`
-   - `npm run dev`
-   - проверки: `npm run typecheck`, `npm run lint`, `npm run test` (без живого Postgres/Redis)
+2. Backend + cabinet (рекомендуется):
+   - `cp -n .env.example .env`
+   - `docker compose -f docker-compose.dev.yml up -d` — PostgreSQL 16 и Redis с persistent volumes
+   - `npm ci && npm run db:generate && npm run db:migrate`
+   - `npm run dev` — API на `:3000`
+   - `npm run dev:ui` — кабинет на `:8080` (проксирует API)
+3. Проверки: `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build`
+4. Production VPS (Docker Compose + Caddy + HTTPS): см. [docs/operations/DEPLOYMENT.md](./docs/operations/DEPLOYMENT.md)
+
+Статические прототипы `index.html` / `prototype.html` можно открыть в браузере, но cookie-auth кабинет рассчитан на `dev:ui` или production reverse proxy.
 
 ## Рекомендуемый рабочий цикл на итерации
 
@@ -87,6 +90,7 @@ AI Collector — это прототип продукта для compliance-firs
 - [Roadmap B2B SaaS](./ROADMAP_B2B_SAAS.md)
 - [Technical Backlog 1 SP](./TECH_BACKLOG_1SP.md)
 - [CI](./.github/workflows/ci.yml)
+- [Production deployment](./docs/operations/DEPLOYMENT.md)
 - [Design Backlog 1 SP](./DESIGN_BACKLOG_1SP.md) (архив UX, не очередь)
 - [Backend stack decision](./docs/decisions/0001-backend-stack.md)
 - [PRD](./docs/product/prd-draft.md)

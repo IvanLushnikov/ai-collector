@@ -120,4 +120,9 @@ describe('credentials and platform speech env', () => {
     expect(parsed.GIGACHAT_API_KEY).toBe('');
     expect(parsed.YANDEX_FOLDER_ID).toBe('');
   });
+
+  it('defaults TRUST_PROXY to false and accepts true', () => {
+    expect(parseEnv(required).TRUST_PROXY).toBe(false);
+    expect(parseEnv({ ...required, TRUST_PROXY: 'true' }).TRUST_PROXY).toBe(true);
+  });
 });

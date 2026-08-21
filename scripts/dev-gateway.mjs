@@ -23,7 +23,7 @@ const MIME = {
   '.csv': 'text/csv; charset=utf-8'
 };
 
-const API_PREFIXES = ['/tenants', '/campaigns', '/healthz', '/auth'];
+const API_PREFIXES = ['/tenants', '/campaigns', '/healthz', '/health', '/auth', '/support'];
 
 const shouldProxy = (pathname) => API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 

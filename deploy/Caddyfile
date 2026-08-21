@@ -1,0 +1,39 @@
+# Caddy reverse proxy for AI Collector
+# Set DOMAIN and ACME_EMAIL in .env for Let's Encrypt (production).
+# For local/smoke tests without DNS, use DOMAIN=localhost (HTTP only via :80).
+
+{
+	email {$ACME_EMAIL:admin@example.com}
+	# Uncomment for staging CA while testing certificates:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$DOMAIN:localhost} {
+	encode gzip
+
+	# API + health (cookie sessions stay same-origin with the cabinet)
+	@api path /auth* /tenants* /campaigns* /health* /healthz* /support* /openapi*
+	handle @api {
+		reverse_proxy backend:3000 {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	handle {
+		reverse_proxy frontend:8080
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

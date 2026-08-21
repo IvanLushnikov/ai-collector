@@ -1,22 +1,156 @@
+# Production-oriented stack for a single VPS.
+# Local API development: use docker-compose.dev.yml instead.
+#
+# Required secrets in .env — see .env.example and docs/operations/DEPLOYMENT.md
+
+name: ai-collector
+
 services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ai_collector
-    # Bind to loopback only — do not expose Postgres on shared/cloud networks.
+  proxy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
     ports:
-      - "127.0.0.1:5432:5432"
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: ai-collector-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - app
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_collector"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-collector-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      TRUST_PROXY: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ai_collector}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_collector}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY:?CREDENTIALS_ENCRYPTION_KEY is required}
+      BILLING_CONNECTED_MINUTE_RATE_RUB: ${BILLING_CONNECTED_MINUTE_RATE_RUB:-1.2}
+      API_RATE_LIMIT_MAX_REQUESTS: ${API_RATE_LIMIT_MAX_REQUESTS:-120}
+      API_RATE_LIMIT_WINDOW_MS: ${API_RATE_LIMIT_WINDOW_MS:-60000}
+      LIVE_CALLS_ENABLED: ${LIVE_CALLS_ENABLED:-false}
+      SANDBOX_CALLS_QUEUE_ENABLED: ${SANDBOX_CALLS_QUEUE_ENABLED:-false}
+      EXOLVE_API_KEY: ${EXOLVE_API_KEY:-}
+      EXOLVE_APPLICATION_ID: ${EXOLVE_APPLICATION_ID:-}
+      MANGO_API_KEY: ${MANGO_API_KEY:-}
+      MANGO_API_SALT: ${MANGO_API_SALT:-}
+      YANDEX_SPEECHKIT_API_KEY: ${YANDEX_SPEECHKIT_API_KEY:-}
+      YANDEXGPT_API_KEY: ${YANDEXGPT_API_KEY:-}
+      GIGACHAT_API_KEY: ${GIGACHAT_API_KEY:-}
+      YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  migrate:
+    image: ai-collector-backend:${IMAGE_TAG:-latest}
+    profiles: ["migrate"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ai_collector}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_collector}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app
+    restart: "no"
+    command: ["node", "scripts/db-migrate.mjs"]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ai_collector}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_collector}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Not published to the host — only reachable on the internal network
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - app
 
   redis:
-    image: redis:7
-    # Bind to loopback only — Redis has no AUTH in local compose.
-    ports:
-      - "127.0.0.1:6379:6379"
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app:
+    driver: bridge

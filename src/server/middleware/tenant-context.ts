@@ -46,6 +46,7 @@ const isPublicOrServicePath = (path: string): boolean => {
   if (
     path === '/'
     || path.startsWith('/healthz')
+    || path.startsWith('/health')
     || path.startsWith('/auth')
     || path.startsWith('/support')
     || path.startsWith('/openapi/')
