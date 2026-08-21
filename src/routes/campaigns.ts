@@ -229,32 +229,58 @@ const campaignAuditLogQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(1000).default(0)
 });
 
+const REVIEW_ITEM_ROLES = new Set([
+  'tenant_owner',
+  'campaign_manager',
+  'qa_analyst',
+  'compliance_officer'
+]);
+
+/**
+ * Session role always wins. Header identity is only accepted when
+ * allowHeaderIdentity is enabled and no authenticated role is present.
+ */
 const reviewItemRoleMiddleware = async (
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> => {
-  const canonicalRole = request.authContext?.role ?? request.userRole;
-  if (canonicalRole === 'tenant_owner' || canonicalRole === 'campaign_manager') {
-    return;
+  let role = request.authContext?.role ?? request.actor?.canonicalRole ?? request.userRole;
+
+  if (!role && request.allowHeaderIdentity) {
+    const roleHeader = request.headers['x-user-role'];
+    const rawRole = Array.isArray(roleHeader) ? roleHeader[0] : roleHeader;
+    if (typeof rawRole === 'string' && rawRole.trim()) {
+      const headerRole = normalizeRole(rawRole);
+      if (!headerRole) {
+        return reply.code(403).send({
+          error: 'FORBIDDEN',
+          message: 'User role is not allowed for this endpoint'
+        });
+      }
+      role = headerRole;
+      request.userRole = headerRole;
+      request.actor = {
+        canonicalRole: headerRole,
+        source: 'header',
+        tenantId: request.tenantContext?.tenantId,
+        supportGrant: null
+      };
+    }
   }
 
-  const roleHeader = request.headers['x-user-role'];
-  const rawRole = (Array.isArray(roleHeader) ? roleHeader[0] : roleHeader)?.trim().toLowerCase();
-  const headerRole = typeof rawRole === 'string' ? normalizeRole(rawRole) : null;
-  if (headerRole === 'tenant_owner' || headerRole === 'campaign_manager') {
-    request.userRole = headerRole;
-    return;
-  }
-  if (rawRole === 'qa_analyst' || rawRole === 'compliance_officer') {
-    return;
+  if (!role) {
+    return reply.code(401).send({
+      error: 'USER_ROLE_MISSING',
+      message: 'Authenticated role is required for this endpoint'
+    });
   }
 
-  return reply.code(typeof rawRole === 'string' && rawRole ? 403 : 401).send({
-    error: typeof rawRole === 'string' && rawRole ? 'FORBIDDEN' : 'USER_ROLE_MISSING',
-    message: typeof rawRole === 'string' && rawRole
-      ? 'User role is not allowed for this endpoint'
-      : 'X-User-Role header is required'
-  });
+  if (!REVIEW_ITEM_ROLES.has(role)) {
+    return reply.code(403).send({
+      error: 'FORBIDDEN',
+      message: 'User role is not allowed for this endpoint'
+    });
+  }
 };
 
 export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDependencies): void => {

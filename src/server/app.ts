@@ -151,6 +151,7 @@ export type AppDependencies = {
   allowHeaderIdentity?: boolean;
   csrfProtection?: boolean;
   csrfAllowedOrigins?: readonly string[];
+  corsOrigins?: string;
   rateLimit?: {
     maxRequests: number;
     windowMs: number;
@@ -191,8 +192,11 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   } as any);
 
   const campaignStore: any = dependencies.campaignStore ?? prisma;
-  const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.NODE_ENV !== 'production';
-  const allowedOrigins = env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean);
+  const allowHeaderIdentity = dependencies.allowHeaderIdentity ?? env.ALLOW_HEADER_IDENTITY;
+  const allowedOrigins = (dependencies.corsOrigins ?? env.CORS_ORIGINS)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.addHook('onRequest', async (request) => {
     request.allowHeaderIdentity = allowHeaderIdentity;
@@ -200,18 +204,45 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   app.addHook('onRequest', async (request, reply) => {
     const origin = request.headers.origin;
     if (!origin) return;
-    const allowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin);
+    const wildcard = allowedOrigins.includes('*');
+    const allowed = wildcard || allowedOrigins.includes(origin);
     if (!allowed) {
       return reply.code(403).send({ error: 'CORS_ORIGIN_FORBIDDEN' });
     }
-    reply.header('Access-Control-Allow-Origin', origin);
-    reply.header('Access-Control-Allow-Credentials', 'true');
-    reply.header('Vary', 'Origin');
+    // Never pair Access-Control-Allow-Credentials with a reflected arbitrary Origin
+    // under CORS_ORIGINS=*. Credentialed CORS requires an explicit allowlist.
+    if (wildcard) {
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Vary', 'Origin');
+    } else {
+      reply.header('Access-Control-Allow-Origin', origin);
+      reply.header('Access-Control-Allow-Credentials', 'true');
+      reply.header('Vary', 'Origin');
+    }
     if (request.method === 'OPTIONS') {
       reply.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
       reply.header('Access-Control-Allow-Headers', 'Content-Type,Accept');
       return reply.code(204).send();
     }
+  });
+
+  app.addHook('onSend', async (_request, reply, payload) => {
+    if (!reply.hasHeader('X-Content-Type-Options')) {
+      reply.header('X-Content-Type-Options', 'nosniff');
+    }
+    if (!reply.hasHeader('Referrer-Policy')) {
+      reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    }
+    if (!reply.hasHeader('X-Frame-Options')) {
+      reply.header('X-Frame-Options', 'DENY');
+    }
+    if (!reply.hasHeader('Permissions-Policy')) {
+      reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    }
+    if (env.NODE_ENV === 'production' && !reply.hasHeader('Strict-Transport-Security')) {
+      reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    return payload;
   });
 
   const rateLimitConfig = dependencies.rateLimit ?? {

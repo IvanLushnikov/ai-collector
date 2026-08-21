@@ -10,7 +10,70 @@ import {
   createInMemoryFrequencyLedgerRepository,
   type FrequencyLedgerRepository
 } from '../domain/frequency-ledger/index.js';
-import { authorizeZone } from '../server/authz/index.js';
+import { authorizeZone, canAccessZone, normalizeRole } from '../server/authz/index.js';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+
+const authorizeComplianceCheck = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> => {
+  let actor = request.actor;
+  if (!actor) {
+    const roleHeader = request.headers['x-user-role'];
+    const rawRole = Array.isArray(roleHeader) ? roleHeader[0] : roleHeader;
+    if (request.allowHeaderIdentity && typeof rawRole === 'string' && rawRole.trim()) {
+      const canonicalRole = normalizeRole(rawRole);
+      if (!canonicalRole) {
+        return reply.code(403).send({
+          error: 'FORBIDDEN',
+          message: 'User role is not allowed for this endpoint'
+        });
+      }
+      actor = {
+        canonicalRole,
+        source: 'header',
+        tenantId: request.tenantContext?.tenantId,
+        supportGrant: null
+      };
+      request.actor = actor;
+      request.userRole = canonicalRole;
+    }
+  }
+
+  if (!actor) {
+    return reply.code(401).send({
+      error: 'USER_ROLE_MISSING',
+      message: 'X-User-Role header is required'
+    });
+  }
+
+  if (actor.canonicalRole === 'support_engineer') {
+    const grant = actor.supportGrant;
+    const requestTenantId = request.tenantContext?.tenantId;
+    const validGrant = Boolean(
+      grant
+      && requestTenantId
+      && grant.tenantId === requestTenantId
+      && grant.revokedAt == null
+      && new Date(grant.expiresAt).getTime() > Date.now()
+    );
+    if (!validGrant) {
+      return reply.code(403).send({
+        error: 'SUPPORT_ACCESS_REQUIRED',
+        message: 'Support access grant is required for tenant data access'
+      });
+    }
+  }
+
+  const allowed = canAccessZone(actor.canonicalRole, 'compliance', 'write')
+    || canAccessZone(actor.canonicalRole, 'calls', 'write');
+  if (!allowed) {
+    return reply.code(403).send({
+      error: 'FORBIDDEN',
+      message: 'User role is not allowed for this endpoint'
+    });
+  }
+};
 
 type ComplianceDependencies = {
   tenant: {
@@ -120,7 +183,7 @@ type ComplianceDecisionListRaw = {
 export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceDependencies): void => {
   app.post(
     '/tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/compliance/check',
-    { preValidation: authorizeZone('calls', 'read') },
+    { preValidation: authorizeComplianceCheck },
     async (request, reply) => {
     const params = tenantCampaignDebtorComplianceSchema.safeParse(request.params);
     if (!params.success) {

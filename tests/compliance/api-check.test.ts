@@ -99,7 +99,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/compliance/check',
-      headers: { 'x-user-role': 'operator' }
+      headers: { 'x-user-role': 'collection_manager' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -144,7 +144,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/cccccccc-cccc-cccc-cccc-cccccccccccc/compliance/check',
-      headers: { 'x-user-role': 'operator' }
+      headers: { 'x-user-role': 'collection_manager' }
     });
 
     expect(response.statusCode).toBe(200);
@@ -189,7 +189,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
     const response = await app.inject({
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/11111111-1111-1111-1111-111111111111/debtors/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/compliance/check',
-      headers: { 'x-user-role': 'operator' }
+      headers: { 'x-user-role': 'collection_manager' }
     });
 
     expect(response.statusCode).toBe(404);

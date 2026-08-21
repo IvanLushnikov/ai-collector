@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/server/app.js';
 import { serializeScriptContent } from '../src/domain/script-version/index.js';
 
+const scriptAuthHeaders = { 'x-user-role': 'collection_manager' };
+
 const lockedDisclosureContent = {
   agentName: 'Anna',
   agentId: 'agent-1',
@@ -116,6 +118,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -169,6 +172,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -220,6 +224,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
     });
@@ -285,6 +290,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
     });
@@ -310,6 +316,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts'
     });
@@ -346,6 +353,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'GET',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts'
     });
@@ -379,6 +387,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -424,6 +433,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -468,6 +478,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -493,6 +504,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -532,6 +544,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
@@ -560,6 +573,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.ready();
 
     const response = await app.inject({
+      headers: scriptAuthHeaders,
       method: 'POST',
       url: '/tenants/00000000-0000-0000-0000-000000000000/campaigns/22222222-2222-2222-2222-222222222222/scripts',
       payload: {
