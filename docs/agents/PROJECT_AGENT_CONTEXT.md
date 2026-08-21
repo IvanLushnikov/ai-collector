@@ -15,17 +15,21 @@ AI Collector — compliance-first B2B-продукт для коллекшн-к�
 - API: Fastify.
 - Доступ к данным: Prisma.
 - Основная БД: PostgreSQL 16.
-- Очереди и фоновые задания: Redis и BullMQ.
+- Очереди и фоновые задания: Redis и BullMQ (skeleton); **async SoT для side effects — transactional Outbox** (`docs/architecture/2026-08-21-async-sot.md`).
 - Тесты: Vitest.
+- Auth Phase 1: cookie session (ADR 0002); header identity только вне production.
+- OpenAPI v1: cabinet-critical subset (`docs/architecture/api-contract-governance.md`).
+- UI: рабочий кабинет — корневой `prototype.html`; GitHub Pages publish root — `public/`.
 
 ## 3. Карта репозитория
 
 - `src/` — backend: auth, compliance, routes, telephony, speech, dialogue, secrets, jobs и другие модули.
 - `tests/` — Vitest-тесты и тестовая инфраструктура.
-- `prototype.html` — кликабельный прототип кабинета.
-- `public/` — публичный сайт и материалы GitHub Pages.
+- `prototype.html` — кликабельный кабинет (dev SoT); при publish-правках синхронизировать `public/prototype.html`.
+- `public/` — публичный сайт и материалы GitHub Pages (**единственный** Pages root).
 - `docs/` — ADR, compliance, API, operations и продуктовая документация.
 - `skills/` — process-, product- и role-skills; правила маршрутизации описаны в `AGENTS.md` и `skills/README.md`.
+- `TECH_BACKLOG_1SP.md` — каноническая очередь задач. `docs/product/CABINET_OPS_BACKLOG_1SP.md` — staging дизайн/ops; в работу только после `moved → T-XXX`.
 
 ## 4. Критические инварианты
 
@@ -71,6 +75,8 @@ Definition of Done определяется goal prompt задачи и `docs/ag
 - `T-149` — Exolve HTTP; live-интеграция заблокирована до legal/DPA.
 - `T-157` — SpeechKit HTTP; live-интеграция заблокирована до legal/DPA.
 - `T-203` — retention; выполнение заблокировано до legal/DPA.
+- `T-258` — transactional outbox ещё не закрыт на все mutations / consumer.
+- Adjacent freeze: не расширять support/billing/GigaChat surface без задачи следующего этапа.
 
 ## 11. Опасные операции
 

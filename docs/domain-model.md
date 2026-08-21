@@ -11,16 +11,21 @@
   - `id` (UUID, PK)
   - `name` (string, required)
   - `status` (enum: `active`, `suspended`, `blocked`)
+  - `legalBasisStatus` (enum: `pending`, `confirmed`, `rejected` — gate для production dial)
+  - `connectedMinuteRateRub` (optional billing v0)
   - `createdAt` (timestamp)
   - `updatedAt` (timestamp)
 - Связи:
   - 1:N `User`
+  - 1:N `Session`
+  - 1:N `TenantMembership`
   - 1:N `Campaign`
   - 1:N `DebtorRecord`
   - 1:N `ScriptVersion`
   - 1:N `TelephonyConnection`
   - 1:N `UsageEvent`
   - 1:N `ProviderCredential`
+  - 1:N `OutboxEvent` / `WebhookInboxEvent` / `FrequencyLedger`
 
 ### User
 
@@ -38,6 +43,20 @@
   - N:1 `Role` (через роль/назначение)
   - 1:N `Campaign` как `createdBy`
   - 1:N `ScriptVersion` как `createdBy`
+  - 1:N `Session`
+  - 1:N `TenantMembership`
+
+### Session
+
+- Назначение: cookie-сессия Phase 1 (ADR 0002).
+- Поля: `tokenHash`, `userId`, `tenantId`, `roleName` (snapshot), `expiresAt`, `revokedAt`.
+- Роль из сессии не побеждает `TenantMembership`.
+
+### TenantMembership
+
+- Назначение: **primary SoT роли** пользователя в tenant.
+- Поля: `tenantId`, `userId`, `roleName` (canonical).
+- При auth: membership → иначе `User.role` → иначе platform membership → иначе session snapshot.
 
 ### Role
 

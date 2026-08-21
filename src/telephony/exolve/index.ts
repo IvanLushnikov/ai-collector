@@ -9,6 +9,10 @@ import {
   VendorCallStatus
 } from '../voice-provider/adapter.js';
 
+/**
+ * Controlled Pilot primary live-provider stub (ADR 0003).
+ * HTTP start/status/hangup remain blocked until legal/DPA (T-149).
+ */
 export class ExolveNotConfiguredError extends Error {
   constructor() {
     super('not configured');

@@ -43,27 +43,33 @@
 
 ## 2. Текущее состояние (as-is)
 
-На 19.08.2026 проект находится **между поздним MVP Lab и подготовкой Controlled Pilot**. Закрыта волна клиентского кабинета CJ (`T-229`).
+На 21.08.2026 проект находится **между поздним MVP Lab и подготовкой Controlled Pilot**. Закрыта волна клиентского кабинета CJ; идёт выравнивание SoT (auth cookie, OpenAPI cabinet subset, voice resolver, async outbox).
 
 Уже есть:
 
 - Backend: Node.js 20 + TypeScript + Fastify + Prisma + PostgreSQL 16 + Vitest.
-- Домен расширен: SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent и др.
+- Домен расширен: SuppressionEntry, FrequencyLedger (+ durable attempts), ProviderCredential, PromptVersion, WebhookInboxEvent, OutboxEvent и др.
 - Compliance pilot rules: call-window + праздники, consent, debt status, frequency 1/2/8, suppression, legalBasis.
-- Телефония: sandbox + скелеты Exolve/Mango (без HTTP live).
+- Телефония: sandbox + скелеты **Exolve (primary)** и Mango (backup) без HTTP live.
 - Речь/диалог: ASR/TTS/LLM adapters (fake + Yandex/GigaChat skeleton), BYOK store, state machine, extractor, golden set.
-- Platform: docker-compose (PG+Redis), BullMQ/call jobs skeleton, fake object store, structured logger.
-- UI: `prototype.html` — CJ-меню и вкладки; partial API (calls, report, readiness, audit). Аналитика/список/launch/import — demo/local (волна `T-232`–`T-238`).
-- Auth: mock headers `X-Tenant-Id` / `X-User-Role`.
+- Platform: docker-compose (PG+Redis), BullMQ skeleton, transactional outbox (в работе), fake object store, structured logger.
+- UI: корневой `prototype.html` — рабочий кабинет; `public/` — GitHub Pages publish root (копии для сайта).
+- Auth: **cookie session SoT**; header identity только при `ALLOW_HEADER_IDENTITY` вне production (ADR 0002).
 
 Критические пробелы ядра:
 
 - нет HTTP live Exolve/SpeechKit (blocked на DPA/legal);
-- нет `POST .../calls/live` и runtime orchestrator wiring end-to-end;
+- нет полноценного live call orchestrator end-to-end (`POST .../calls/live` → 501);
 - third-party disclosure guard и AI disclosure в runtime не на live path;
 - CDR reconciliation, payment outcome, complaint/holdout для пилота;
-- клиентский кабинет не полностью API-backed;
-- `npm run typecheck` красный (CI blocker).
+- клиентский кабинет не полностью API-backed; OpenAPI v1 = cabinet subset, не полный surface;
+- outbox consumer ещё не закрыт на все mutations (`T-258`).
+
+## 2.1. Async и UI SoT (кратко)
+
+- Async side effects: Outbox — канон; jobs — skeleton. См. [async SoT](./2026-08-21-async-sot.md).
+- Pages: только `public/`. Кабинет в разработке: корневой `prototype.html` (синхронизировать в `public/prototype.html` при publish-relevant правках).
+- Adjacent freeze: support grants, tenant billing settings API, GigaChat stub — не расширять без задачи этапа Scale/SaaS.
 
 ## 3. Нормативный контур → технические контроли
 
@@ -74,7 +80,7 @@
 | Источник | Что требует продукт | Технический контроль | Когда обязательно | Статус |
 |---|---|---|---|---|
 | ФЗ‑230 | Окно звонка по месту жительства/пребывания: 08:00–22:00 рабочие, 09:00–20:00 выходные и праздники | Timezone + calendar + `CallWindowComplianceRule` | MVP Lab (упрощённо), Pilot (полное) | частично в коде; праздники/выходные — `legal-confirm` на полноту |
-| ФЗ‑230 | Лимит взаимодействий 1 / 2 / 8 (сутки / неделя / месяц) на кредитора и самостоятельное обязательство, не на кампанию | Frequency ledger на уровне tenant+obligation | Pilot | нет в коде; определение «состоявшегося контакта» — `legal-confirm` |
+| ФЗ‑230 | Лимит взаимодействий 1 / 2 / 8 (сутки / неделя / месяц) на кредитора и самостоятельное обязательство, не на кампанию | Frequency ledger на уровне tenant+obligation | Pilot | durable в коде (`FrequencyLedger` + attempts); определение «состоявшегося контакта» и live enforcement — `legal-confirm` |
 | ФЗ‑230 | Представиться как автоматизированный интеллектуальный агент: условное имя, ID, кредитор | Script/prompt gate + версия сценария в audit | MVP Lab (текст), Pilot (runtime enforcement) | есть в прототипе речи; нет runtime-проверки |
 | ФЗ‑230 | Продолжение взаимодействия с физическим лицом | Handoff queue, SIP transfer, SLA, автопауза при перегрузе | Pilot | модель `handoff` есть; live transfer нет |
 | ФЗ‑230 | Не раскрывать долг третьему лицу до верификации | Identity gate до disclosure; запрещённые tools у LLM | Pilot | нет |

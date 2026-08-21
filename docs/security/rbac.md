@@ -24,11 +24,11 @@ Platform-контур:
 | `owner` | `tenant_owner` |
 | `collection_manager` | `campaign_manager` |
 | `operator` | `tenant_viewer` |
-| `qa_analyst` | `tenant_viewer` |
-| `compliance_officer` | `tenant_viewer` |
-| `integration_admin` | `tenant_owner` |
+| `qa_analyst` | `qa_analyst` |
+| `compliance_officer` | `compliance_officer` |
+| `integration_admin` | `integration_admin` |
 
-Legacy aliases нужны только как переходный слой. Для новых интеграций и auth-context используйте канонические роли.
+Legacy aliases нужны только как переходный слой для header-based dev/test. Для cookie-сессий и новых интеграций используйте канонические роли.
 
 ## Зоны доступа
 
@@ -49,10 +49,16 @@ Legacy aliases нужны только как переходный слой. Д�
 
 ## Маршруты v1
 
-- Campaign routes, calls, reports, usage, compliance, telephony, provider credentials и billing settings проверяют доступ через единый zone-based authorizer.
-- Review items и `safe-resume` сохраняют более узкие route-level правила поверх общей модели, чтобы не расширить права legacy-ролей во время перехода.
+- Campaign routes, calls, reports, usage, compliance, telephony, provider credentials и billing settings проверяют доступ через единый zone-based authorizer (`authorizeZone`).
+- `safe-resume` и аналогичные узкие gate используют `authorizeCanonicalRoles` **из того же** `src/server/authz` (тот же actor resolution), а не отдельный `roleMiddleware` SoT.
 - `GET /tenants/:tenantId/users` и `PATCH /tenants/:tenantId/users/:userId/role` доступны только `tenant_owner`.
 - `POST /support/access-grants` и `POST /support/access-grants/:grantId/revoke` доступны только `platform_admin`.
+
+## Role data SoT
+
+1. `TenantMembership.roleName` — primary, если запись есть.
+2. `User.role` — legacy mirror на user row (не второй authorizer).
+3. `Session.roleName` — snapshot на момент логина; не побеждает membership.
 
 ## Audit expectations
 

@@ -1,3 +1,11 @@
+/**
+ * OpenAPI v1 — executable SoT for the *cabinet-critical* HTTP subset
+ * (auth, campaigns list/create/status, import, sandbox call, calls evidence,
+ * audit, readiness, report). Other live routes (telephony, BYOK, QA, usage,
+ * review-items, billing, support) exist in code/docs but are not yet in this
+ * document; treat markdown `docs/*-api.md` as descriptive until promoted here.
+ * See docs/architecture/api-contract-governance.md.
+ */
 const error = { $ref: '#/components/responses/Error' };
 
 export const openApiV1 = {

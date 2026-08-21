@@ -23,6 +23,7 @@ import { createRateLimitMiddleware, type RateLimitConfig } from './middleware/ra
 import type { ComplianceEngine } from '../compliance/engine/compliance-engine.js';
 import type { VoiceProviderAdapter } from '../telephony/voice-provider/adapter.js';
 import { SandboxVoiceProvider } from '../telephony/sandbox-provider/index.js';
+import { ExolveVoiceProvider } from '../telephony/exolve/index.js';
 import { MangoVoiceProvider } from '../telephony/mango/index.js';
 import { createVoiceProviderResolver, type VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 import { createPrismaCredentialSecretStore } from '../secrets/credential-store.js';
@@ -330,8 +331,10 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   }));
 
   registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
+  // ADR 0003: Exolve is the Controlled Pilot primary stub; Mango stays as backup-only.
   const voiceProviderResolver = (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
     sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
+    exolve: new ExolveVoiceProvider(),
     mango: new MangoVoiceProvider()
   });
   registerCampaignRoutes(app as any, {

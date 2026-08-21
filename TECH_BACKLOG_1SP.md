@@ -21,34 +21,28 @@ Marketing landing B2B patterns — очередь в `docs/research/2026-08-20-l
 
 - `todo` / `doing` / `done` / `blocked` / `split`
 
-## Архитектура as-is (19.08.2026)
+## Архитектура as-is (21.08.2026)
 
-Стек: Node 20, TypeScript, Fastify, Prisma, PostgreSQL 16, Vitest. ADR: `0001` backend, `0002` SSO (ещё не код), `0003` Exolve+Mango, `0004` SpeechKit+YandexGPT/GigaChat, `0005` BYOK.
+Стек: Node 20, TypeScript, Fastify, Prisma, PostgreSQL 16, Vitest. ADR: `0001` backend, `0002` cookie-session Phase 1 (+ header only non-prod), `0003` Exolve primary + Mango backup, `0004` SpeechKit+YandexGPT/GigaChat, `0005` BYOK, `0006` durable frequency ledger.
 
 Есть в коде:
 
-- Домен Lab: Tenant, User, Role, Session, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog, SuppressionEntry, FrequencyLedger, ProviderCredential, PromptVersion, WebhookInboxEvent.
+- Домен Lab: Tenant (+legalBasis), User, Role, Session, TenantMembership, Campaign, DebtorRecord, ScriptVersion, ComplianceDecision, TelephonyConnection, CallAttempt, CallResult, UsageEvent, AuditLog, SuppressionEntry, FrequencyLedger(+attempts), ProviderCredential, PromptVersion, WebhookInboxEvent, OutboxEvent.
 - API: кампании, CSV/XLSX-импорт, sandbox-звонок, отчёт, usage, QA, scripts, telephony connections, audit-logs, readiness-summary, review-items (вычисляемые), BYOK credentials, billing settings.
+- OpenAPI v1: **cabinet-critical subset** (не полный surface) — `docs/architecture/api-contract-governance.md`.
 - Compliance pilot-ready (Lab): окно будни `08:00–22:00` / выходные и праздники РФ 2026–2027 `09:00–20:00` по timezone; `consent` given/pending/revoked; `debtStatus` block-список; `FREQUENCY_LIMIT_BLOCK` 1/2/8; `SUPPRESSION_BLOCK`; `Tenant.legalBasisStatus` (production без `confirmed` → `LEGAL_BASIS_NOT_CONFIRMED`). Fail-closed до звонка.
-- Телефония: `VoiceProviderAdapter` + sandbox + скелеты Exolve/Mango (без HTTP). Production probe gates на marking/recording/handoff. Safe-resume: `POST .../safe-resume`.
-- Речь/диалог (скелеты): ASR/TTS/LLM adapters + fake, Yandex/GigaChat skeleton без HTTP, BYOK envelope/store, DialogueStateMachine, extractor, golden set, identity gate в LLM tests.
-- Platform: `docker-compose.yml` (PostgreSQL 16 + Redis), BullMQ skeleton + call jobs, fake object store, structured logger, webhook inbox idempotency, CI workflow.
-- Auth: cookie-сессия `ac_session` (`POST /auth/register|login|logout`, `GET /auth/me`) + fallback заголовки `X-Tenant-Id` / `X-User-Role`. Rate limit + audit 429.
-- UI: публичный вход `landing.html` / `register.html` / `login.html`; GitHub Pages отдаёт `public/index.html` (маркетинговый лендинг, не корневой `index.html`); `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`.
-- UI: публичный вход `landing.html` / `register.html` / `login.html`; `prototype.html` — клиентский кабинет CJ (`T-229`): меню Главная / Источники / Телефония / Аналитика / Журнал действий; вкладки Обзор · База · Сценарий · Телефония · Звонки. Частично API-backed (calls, report, readiness, audit-logs, список/создание кампаний, импорт); tenant/role после входа из `/auth/me`; evidence и отчёт fail closed без локальной подмены при ошибке API.
-- Биллинг v0: connected minute из usage + тариф tenant/env.
-- `Campaign.telephonyConnectionId`; `CallAttempt.scriptVersionId` на sandbox; identity slots `displayName`/`agreementRef`; маскировка телефона в audit metadata.
+- Телефония: `VoiceProviderAdapter` + sandbox + скелеты **Exolve (primary)** / Mango (backup) без HTTP. Production probe gates на marking/recording/handoff. Safe-resume: `authorizeCanonicalRoles`.
+- Async: Outbox = side-effect SoT; BullMQ/jobs = skeleton (`docs/architecture/2026-08-21-async-sot.md`).
+- Auth: cookie-сессия SoT; `ALLOW_HEADER_IDENTITY` запрещён в production.
+- UI: Pages SoT = `public/`; кабинет dev SoT = корневой `prototype.html` (синхрон с `public/prototype.html`). Аналитика без demo fallback цифр.
+- `CABINET_OPS_BACKLOG_1SP.md` — frozen staging; исполнение только через `T-*` в этом файле.
 
 Нет в коде (разрыв до Controlled Pilot / Production):
 
 - HTTP live Exolve (`T-149` blocked), HTTP SpeechKit/YandexGPT (`T-157` blocked), retention purge job (`T-203` blocked — ждёт legal memo).
-- Маршрут `POST .../calls/live` (контракт в docs, guards есть, реализации нет).
-- Runtime wiring orchestrator (ASR→state machine→LLM→TTS) в live/sandbox path end-to-end.
-- CDR reconciliation, payment outcome / kept PTP, complaint rate, holdout/control для пилота.
-- SSO/OIDC (только ADR 0002). Email/password web-auth есть (`T-244`); header-based режим сохранён как fallback.
-- Клиентский кабинет как единый API-backed flow (волна 12: `T-232`–`T-238`).
-- Admin-контур: речь/BYOK, внутренняя очередь QA (убран из клиентского меню в `T-229`).
-- `npm run typecheck` — ~147 ошибок; CI красный на typecheck при зелёных тестах (`T-230`).
+- Полноценный live call orchestrator (`POST .../calls/live` → 501).
+- SSO/OIDC (ADR 0002 этап 2+).
+- Полный OpenAPI surface и SPA typed client.
 
 Карта: `docs/architecture/2026-08-17-technology-map.md`. Rulebook: `docs/compliance/rulebook-v1.md`. Live без legal memo и DPA не запускать.
 
@@ -352,6 +346,34 @@ Blocked: `T-149` HTTP Exolve, `T-157` HTTP SpeechKit, `T-203` retention job — 
 
 - Успешный API-ответ не может зафиксировать credential без соответствующего encrypted secret и audit append в Prisma transaction.
 - В ответе и аудите не появляется api key.
+
+### T-269: Выровнять SoT Controlled Pilot (auth / OpenAPI / voice / async / UI)
+
+Статус: `done`
+
+Что сделано:
+
+- ADR 0002 обновлён: cookie session = Phase 1 SoT; header identity только вне production; membership = primary role SoT.
+- OpenAPI governance = cabinet-critical subset; комментарий в `openapi-v1.ts`.
+- Voice resolver: Exolve primary stub + Mango backup (ADR 0003).
+- `authorizeCanonicalRoles` в `src/server/authz`; `safe-resume` переведён с `roleMiddleware`.
+- Async SoT doc: Outbox канон, jobs skeleton.
+- tech-map / PROJECT_AGENT_CONTEXT / domain-model / rbac / Pages SoT / CABINET_OPS freeze.
+- Analytics в `prototype.html`: без demo fallback цифр; sync `public/prototype.html`.
+
+Где менять:
+
+- `docs/decisions/0002-sso-approach.md`
+- `docs/architecture/*`
+- `src/server/authz/index.ts`, `src/server/app.ts`, `src/routes/campaigns.ts`
+- `prototype.html`, `public/prototype.html`
+- `TECH_BACKLOG_1SP.md`
+
+Критерии готовности:
+
+- Нет параллельного authorizer SoT на safe-resume.
+- Docs as-is не утверждают «frequency нет в коде» / «auth = только mock headers».
+- Pages SoT = `public/`; кабинет analytics не подставляет демо-метрики при ошибке API.
 
 ## Закрытые волны (не переписывать)
 
@@ -6805,6 +6827,7 @@ Live-трафик не включать до legal memo и разблокиро�
 
 ## Журнал изменений плана
 
+- 21.08.2026: `T-269` `done` — выравнивание SoT Controlled Pilot (ADR 0002 cookie, OpenAPI cabinet subset, Exolve primary resolver, authorizeCanonicalRoles/safe-resume, async Outbox note, Pages/`public` SoT, CABINET_OPS freeze, analytics без demo fallback). `T-258` остаётся `doing`.
 - 19.08.2026: Post-review hardening: CSRF Origin middleware для cookie-mutations в production; `allowHeaderIdentity=false` в production (header auth только dev/test); явный `CORS_ORIGINS` без wildcard в production; live route возвращает `501 LIVE_CALLS_NOT_IMPLEMENTED` вместо proxy в sandbox; Secure cookie в production; синхронизация `public/prototype.html`; ESLint + husky pre-commit. Проверка: `npm run typecheck`; `npm run lint`; `npm run test` (466/466).
 
 - 19.08.2026: GitHub Pages лендинг `public/index.html` переписан: короче copy, один главный CTA в hero, sticky-плашка только на мобиле. Проверка: `npx vitest run tests/public-landing.test.ts`. На github.io попадёт только после commit+push в `main` (workflow смотрит `public/**`).

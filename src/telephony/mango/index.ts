@@ -9,6 +9,10 @@ import {
   VendorCallStatus
 } from '../voice-provider/adapter.js';
 
+/**
+ * Backup live-provider stub only (ADR 0003). Not the Controlled Pilot primary.
+ * Keep module for commercial fork; do not prefer over Exolve in resolver defaults.
+ */
 export class MangoNotConfiguredError extends Error {
   constructor() {
     super('not configured');

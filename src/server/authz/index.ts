@@ -187,10 +187,10 @@ export const allowLegacyRoles = (...roles: readonly RoleCandidate[]): readonly C
     .map((role) => normalizeRole(role))
     .filter((role): role is CanonicalRole => role !== null);
 
-export const authorizeZone = (
-  zone: AccessZone,
-  level: Exclude<AccessLevel, 'none'>
-) => async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+const resolveActorFromRequest = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<ActorContext | null> => {
   let actor = request.actor;
   if (!actor) {
     const roleHeader = request.headers['x-user-role'];
@@ -198,10 +198,11 @@ export const authorizeZone = (
     if (request.allowHeaderIdentity && typeof rawRole === 'string' && rawRole.trim()) {
       const canonicalRole = normalizeRole(rawRole);
       if (!canonicalRole) {
-        return reply.code(403).send({
+        await reply.code(403).send({
           error: 'FORBIDDEN',
           message: 'User role is not allowed for this endpoint'
         });
+        return null;
       }
 
       actor = {
@@ -216,10 +217,11 @@ export const authorizeZone = (
   }
 
   if (!actor) {
-    return reply.code(401).send({
+    await reply.code(401).send({
       error: 'USER_ROLE_MISSING',
       message: 'X-User-Role header is required'
     });
+    return null;
   }
 
   if (actor.canonicalRole === 'support_engineer') {
@@ -234,11 +236,24 @@ export const authorizeZone = (
     );
 
     if (!validGrant) {
-      return reply.code(403).send({
+      await reply.code(403).send({
         error: 'SUPPORT_ACCESS_REQUIRED',
         message: 'Support access grant is required for tenant data access'
       });
+      return null;
     }
+  }
+
+  return actor;
+};
+
+export const authorizeZone = (
+  zone: AccessZone,
+  level: Exclude<AccessLevel, 'none'>
+) => async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  const actor = await resolveActorFromRequest(request, reply);
+  if (!actor) {
+    return;
   }
 
   if (!canAccessZone(actor.canonicalRole, zone, level)) {
@@ -247,4 +262,29 @@ export const authorizeZone = (
       message: 'User role is not allowed for this endpoint'
     });
   }
+};
+
+/**
+ * Narrow allow-list on top of the same actor resolution as authorizeZone.
+ * Prefer authorizeZone for ordinary routes; use this only when a route must
+ * stay stricter than the zone matrix (e.g. safe-resume).
+ */
+export const authorizeCanonicalRoles = (
+  ...roles: readonly RoleCandidate[]
+) => {
+  const allowed = new Set(allowLegacyRoles(...roles));
+
+  return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const actor = await resolveActorFromRequest(request, reply);
+    if (!actor) {
+      return;
+    }
+
+    if (!allowed.has(actor.canonicalRole)) {
+      return reply.code(403).send({
+        error: 'FORBIDDEN',
+        message: 'User role is not allowed for this endpoint'
+      });
+    }
+  };
 };

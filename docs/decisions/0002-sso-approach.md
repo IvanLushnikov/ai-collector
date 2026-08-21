@@ -1,47 +1,50 @@
 # Decision: SSO approach for MVP Lab and enterprise migration
 
-## Решение для MVP Lab (Phase 1)
+Дата обновления: 21.08.2026  
+Статус: принято; Phase 1 выровнен с фактическим cookie-auth в коде
 
-- Для локальной разработки и внутреннего демо используем **mock-auth через заголовки запроса** (например, `X-User-Id` / `X-User-Role`, уже используемые в текущем API-механизме)
-  для ускорения цикла и фокусировки на compliance-first ядре.
-- На этапе MVP Lab не внедряем полноценный SSO в кодовую базу, чтобы не блокировать скорость доставки функциональности API/telephony/compliance.
-- Протестировать все сценарии авторизации на уровне middleware и audit trail с текущими заголовочными данными.
+## Решение для Controlled Pilot / MVP Lab (Phase 1)
+
+1. **Канонический auth SoT — cookie-сессия** (`Session` + `POST /auth/login|register`, `GET /auth/me`). Tenant и роль берутся из аутентифицированного контекста (`request.authContext` / `request.actor`), не из браузерных «прав».
+2. **Header identity** (`X-Tenant-Id` / `X-User-Role`) — только thin compatibility layer для local/dev/test при `ALLOW_HEADER_IDENTITY=true`. В **production запрещён** (env validation fail-closed).
+3. Полноценный SSO (OIDC/SAML) **не внедряем** до этапа после pilot readiness.
+4. **Role SoT:** при наличии записи `TenantMembership` её `roleName` первичен; `User.role` / `Session.roleName` — legacy mirror / snapshot для bootstrap, не второй независимый authorizer. Zone checks идут через `authorizeZone` / `authorizeCanonicalRoles` в `src/server/authz`.
 
 ## Почему не внедряем полноценный SSO сейчас
 
-1. Сейчас приоритет — стабильный вызов звонков/правил/отчётности для ограниченного контролируемого пилота.
-2. Полноценная интеграция с SAML/OIDC потребует инфраструктурной интеграции IdP и больше времени на безопасность/конфигурацию.
-3. Вендорная зависимость для MVP не должна блокировать backend-сборку и доменные задачи.
+1. Приоритет — стабильный sandbox dial, compliance, audit и кабинет для ограниченного пилота.
+2. SAML/OIDC потребуют IdP, секретов и отдельного security/ops контура.
+3. Cookie + CSRF Origin уже закрывают browser mutualation path для кабинета.
 
 ## План перехода на enterprise-auth
 
-### Этап 1 (MVP Lab)
+### Этап 1 (сейчас)
 
-- Оставить mock-auth как thin compatibility layer:
-  - обязательная проверка tenant/role в API middleware;
-  - все actions продолжают писать audit trail.
-- Зафиксировать строгую нормализацию claims (`tenantId`, `userId`, `roles`) в единый internal `request`-контракт.
+- Cookie session как SoT; header identity только вне production.
+- Нормализация claims в `request.actor` (`tenantId`, `userId`, `canonicalRole`).
+- Все значимые actions пишут audit trail с `userId` из контекста.
 
 ### Этап 2 (после pilot readiness)
 
-- Перейти на **OIDC** через корпоративный Identity Provider для всех новых tenant:
+- OIDC через корпоративный IdP:
   - frontend получает access token;
-  - backend валидирует подпись JWT и извлекает tenant/roles claim;
-  - все ранее использующиеся роли и tenantId маппятся на claims.
+  - backend валидирует JWT и мапит tenant/roles на тот же `request.actor`;
+  - cookie session либо заменяется, либо становится session-bridge — отдельный ADR.
 
 ### Этап 3 (enterprise hardening)
 
-- Поддержать **SAML** как альтернативный протокол для крупных клиентов.
-- Поддержать per-tenant IdP-конфигурацию и аудит изменений интеграционных настроек.
+- SAML как альтернатива для крупных клиентов.
+- Per-tenant IdP-конфигурация и аудит смены интеграционных настроек.
 
-## Поведенческие требования к новой реализации
+## Поведенческие требования
 
-- Любой входной `actor` должен иметь tenant context до обработки бизнес-действий.
-- Tenant isolation обязателен и должен зависеть только от аутентифицированного контекста.
-- Любое важное действие пользователя продолжает писать audit trail с `userId` из контекста.
+- Любой входной `actor` должен иметь tenant context до бизнес-действий.
+- Tenant isolation зависит только от аутентифицированного контекста (mismatch → `TENANT_SCOPE_MISMATCH`).
+- Важные действия пишут audit с `userId` из контекста.
+- Не создавать параллельный authorizer вне `src/server/authz`.
 
-## Что поменяется в коде будущего шага
+## Что поменяется на будущем шаге
 
-- Замена источника `userId`/`roles` из заголовков на OIDC/SAML claims.
-- Усиление middleware (`tenant-context`) и RBAC для проверки валидной подписи токенов.
-- Удаление mock-конфига после миграции на enterprise-доступ.
+- Источник `userId`/`roles` смещается с cookie/session (и optional headers) на OIDC/SAML claims.
+- Удаление `ALLOW_HEADER_IDENTITY` после миграции клиентов.
+- При необходимости — отдельная миграция `User.roleId` → только membership.

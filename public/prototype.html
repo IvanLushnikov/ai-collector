@@ -143,7 +143,7 @@
 
         <section class="screen" id="analytics">
           <div class="page-head"><div><h1>Аналитика</h1><p>Динамика обзвона по дням за выбранный период.</p></div></div>
-          <div class="notice" id="analyticsNotice" style="margin-bottom:16px">Демо. Цифры не из боевого учёта.</div>
+          <div class="notice" id="analyticsNotice" style="margin-bottom:16px" hidden>Сводка из API отчётов.</div>
           <div class="panel" style="margin-bottom:16px"><div class="panel-body form-grid">
             <div class="field"><label for="analyticsPeriod">Период</label><input id="analyticsPeriod" value="1–18 августа 2026" readonly></div>
             <div class="field"><label for="analyticsCampaignFilter">Кампания</label><select id="analyticsCampaignFilter"><option value="all">Все кампании</option><option value="c-loans">Просрочка 1–7 дней · Займы</option><option value="c-installment">Просрочка 8–30 дней · Рассрочка</option></select></div>
@@ -955,35 +955,6 @@
     const minutes=Math.floor(value/60);
     const secs=Math.round(value%60);
     return minutes>0 ? `${minutes}:${String(secs).padStart(2,'0')}` : `${secs} сек`;
-  };
-  const analyticsDailyDemo={
-    all:[
-      {day:'12 авг',attempts:620,connected:310,promises:14,durationSec:98},
-      {day:'13 авг',attempts:710,connected:352,promises:18,durationSec:102},
-      {day:'14 авг',attempts:840,connected:401,promises:21,durationSec:96},
-      {day:'15 авг',attempts:905,connected:428,promises:19,durationSec:104},
-      {day:'16 авг',attempts:980,connected:462,promises:24,durationSec:101},
-      {day:'17 авг',attempts:1020,connected:489,promises:22,durationSec:99},
-      {day:'18 авг',attempts:1090,connected:510,promises:26,durationSec:105}
-    ],
-    'c-loans':[
-      {day:'12 авг',attempts:420,connected:210,promises:10,durationSec:95},
-      {day:'13 авг',attempts:480,connected:238,promises:12,durationSec:100},
-      {day:'14 авг',attempts:560,connected:271,promises:14,durationSec:94},
-      {day:'15 авг',attempts:610,connected:295,promises:13,durationSec:103},
-      {day:'16 авг',attempts:650,connected:312,promises:16,durationSec:98},
-      {day:'17 авг',attempts:690,connected:331,promises:15,durationSec:97},
-      {day:'18 авг',attempts:720,connected:345,promises:17,durationSec:101}
-    ],
-    'c-installment':[
-      {day:'12 авг',attempts:200,connected:100,promises:4,durationSec:92},
-      {day:'13 авг',attempts:230,connected:114,promises:6,durationSec:96},
-      {day:'14 авг',attempts:280,connected:130,promises:7,durationSec:90},
-      {day:'15 авг',attempts:295,connected:133,promises:6,durationSec:98},
-      {day:'16 авг',attempts:330,connected:150,promises:8,durationSec:95},
-      {day:'17 авг',attempts:330,connected:158,promises:7,durationSec:93},
-      {day:'18 авг',attempts:370,connected:165,promises:9,durationSec:97}
-    ]
   };
   let expandedDebtorKey='';
   let tenantBalanceMinutes=12450;
@@ -3829,30 +3800,25 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     const charts=q('#analyticsCharts');
     const notice=q('#analyticsNotice');
     const errorBox=q('#analyticsError');
-    const filter=q('#analyticsCampaignFilter')?.value || 'all';
-    const demoDays=analyticsDailyDemo[filter] || analyticsDailyDemo.all;
-    const applyFallback=()=>{
-      const totals=demoDays.reduce((acc,item)=>({
-        attempts:acc.attempts+(Number(item.attempts)||0),
-        connected:acc.connected+(Number(item.connected)||0),
-        promises:acc.promises+(Number(item.promises)||0),
-        durationSec:acc.durationSec+(Number(item.durationSec)||0)
-      }),{attempts:0,connected:0,promises:0,durationSec:0});
-      const avgSec=totals.connected>0 ? Math.round((totals.durationSec/demoDays.length)) : 0;
-      if (reached) reached.textContent=formatMetric(totals.attempts);
-      if (connected) connected.textContent=formatMetric(totals.connected);
-      if (promises) promises.textContent=formatMetric(totals.promises);
-      if (avgDuration) avgDuration.textContent=avgSec>0 ? formatDurationLabel(avgSec) : '—';
-      renderAnalyticsDailyCharts(demoDays);
-      if (notice) { notice.hidden=false; notice.textContent='Демо. Цифры не из боевого учёта.'; }
-      if (empty) empty.hidden=true;
-      if (metrics) metrics.hidden=false;
-      if (charts) charts.hidden=false;
+    const showEmpty=(message, isError=false)=>{
+      if (reached) reached.textContent='—';
+      if (connected) connected.textContent='—';
+      if (promises) promises.textContent='—';
+      if (avgDuration) avgDuration.textContent='—';
+      renderAnalyticsDailyCharts([]);
+      if (notice) {
+        notice.hidden=!message;
+        notice.textContent=message || '';
+      }
+      if (errorBox) errorBox.hidden=!isError;
+      if (empty) empty.hidden=false;
+      if (metrics) metrics.hidden=true;
+      if (charts) charts.hidden=true;
     };
 
     const context=getCampaignContext();
     if (!context?.tenantId) {
-      applyFallback();
+      showEmpty('Нет контекста кампании. Войдите и выберите кампанию.');
       return;
     }
 
@@ -3878,9 +3844,6 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       const attempted=reports.reduce((sum,item)=>sum + (Number(item.attemptedCalls)||0), 0);
       const completed=reports.reduce((sum,item)=>sum + (Number(item.completedCalls)||0), 0);
       const ptp=reports.reduce((sum,item)=>sum + (Number(item.ptpCount)||0), 0);
-      const records=reports.reduce((sum,item)=>sum + (Number(item.totalRecords)||0), 0);
-      const costValues=reports.map((item)=>Number(item.costPerCall)).filter((value)=>Number.isFinite(value));
-      const totalCost=costValues.length ? costValues.reduce((sum,value)=>sum + value, 0) : null;
       const avgDurationSec=completed>0 && reports.some((item)=>Number.isFinite(Number(item.connectedMinutes)))
         ? Math.round((reports.reduce((sum,item)=>sum+(Number(item.connectedMinutes)||0),0)*60)/completed)
         : 0;
@@ -3888,24 +3851,25 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       if (connected) connected.textContent=formatMetric(completed);
       if (promises) promises.textContent=formatMetric(ptp);
       if (avgDuration) avgDuration.textContent=avgDurationSec>0 ? formatDurationLabel(avgDurationSec) : '—';
-      const scale=Math.max(1, demoDays.length);
-      const apiDays=demoDays.map((item,index)=>({
-        day:item.day,
-        attempts:Math.round(attempted/scale)+(index%3),
-        connected:Math.round(completed/scale)+(index%2),
-        promises:Math.round(ptp/scale),
-        durationSec:avgDurationSec || item.durationSec
-      }));
-      renderAnalyticsDailyCharts(apiDays);
+      // Daily series is not in report API yet — do not invent demo day buckets.
+      renderAnalyticsDailyCharts(reports.length ? [{
+        day: 'итого',
+        attempts: attempted,
+        connected: completed,
+        promises: ptp,
+        durationSec: avgDurationSec
+      }] : []);
       if (reached) reached.parentElement.querySelector('span').textContent='за период';
-      if (notice) notice.hidden=true;
+      if (notice) {
+        notice.hidden=false;
+        notice.textContent='Сводка из API отчётов. Дневная разбивка появится отдельным контрактом.';
+      }
       if (errorBox) errorBox.hidden=true;
       if (empty) empty.hidden=reports.length>0;
       if (metrics) metrics.hidden=false;
-      if (charts) charts.hidden=false;
+      if (charts) charts.hidden=reports.length===0;
     } catch {
-      if (errorBox) errorBox.hidden=false;
-      applyFallback();
+      showEmpty('Не удалось загрузить аналитику из API.', true);
     }
   }
 

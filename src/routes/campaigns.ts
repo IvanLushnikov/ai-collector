@@ -4,8 +4,7 @@ import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
 import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
 import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor.js';
-import { authorizeZone, normalizeRole } from '../server/authz/index.js';
-import { roleMiddleware } from '../server/middleware/rbac.js';
+import { authorizeCanonicalRoles, authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
 import { interruptActiveCallAttempts } from '../campaigns/force-stop-interrupt.js';
 import { matchesAuditActionGroup, normalizeAuditActionGroup } from '../domain/audit-log/index.js';
@@ -1410,7 +1409,7 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
   app.post(
     '/tenants/:tenantId/campaigns/:campaignId/safe-resume',
-    { preValidation: roleMiddleware(['owner', 'compliance_officer']) },
+    { preValidation: authorizeCanonicalRoles('tenant_owner', 'compliance_officer') },
     async (request, reply) => {
       const params = tenantCampaignDetailSchema.safeParse(request.params);
       if (!params.success) {
