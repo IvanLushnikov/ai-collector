@@ -53,6 +53,7 @@ AI Collector — это прототип продукта для compliance-firs
 - craft-слой: `skills/interface-design` (кабинет) / `skills/frontend-design` (лендинг)
 - process-слой — полный набор [obra/superpowers](https://github.com/obra/superpowers), см. routing в `AGENTS.md`
 - внешние curated skills pin'ятся в `third_party/lobehub/manifest.json`
+- Benjamin-Plus (token efficiency) pin'ится в `third_party/benjamin-plus/` и **инжектится** в `AGENTS.md` (не как discoverable skill folder)
 
 Проверка bootstrap не оставлена на память модели:
 

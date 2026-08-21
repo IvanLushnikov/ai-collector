@@ -14,6 +14,13 @@ const files = {
   skillsReadme: path.join(repoRoot, "skills", "README.md"),
   research: path.join(repoRoot, "docs", "skills", "research-lobehub-superpowers-2026-08-20.md"),
   lobehubManifest: path.join(repoRoot, "third_party", "lobehub", "manifest.json"),
+  benjaminPlusInject: path.join(
+    repoRoot,
+    "third_party",
+    "benjamin-plus",
+    "injected-instruction.md",
+  ),
+  benjaminPlusSource: path.join(repoRoot, "third_party", "benjamin-plus", "SOURCE.md"),
   goal: path.join(repoRoot, "CODEX_SPARK_5_3_GOAL.md"),
   backlog: path.join(repoRoot, "TECH_BACKLOG_1SP.md"),
   agentsContext: path.join(repoRoot, "docs", "agents", "PROJECT_AGENT_CONTEXT.md"),
@@ -108,6 +115,8 @@ const expectedSnippets = [
       "Layer 3 — Role agents",
       "team-orchestrator",
       "skill-governor",
+      "Token efficiency (inject, not discoverable)",
+      "third_party/benjamin-plus",
     ],
   },
 ];
@@ -165,6 +174,22 @@ const referencedSkillPaths = new Set(
 
 for (const relativeSkillPath of referencedSkillPaths) {
   assertExists(path.join(repoRoot, relativeSkillPath));
+}
+
+const agentsText = readText(files.agents);
+const benjaminPayload = readText(files.benjaminPlusInject).trim();
+if (!agentsText.includes("BENJAMIN-PLUS MODE ACTIVE")) {
+  fail("AGENTS.md must inject Benjamin-Plus (missing BENJAMIN-PLUS MODE ACTIVE)");
+}
+if (!agentsText.includes(benjaminPayload)) {
+  fail(
+    "AGENTS.md Benjamin-Plus block must match third_party/benjamin-plus/injected-instruction.md verbatim",
+  );
+}
+if (fs.existsSync(skillPath("benjamin-plus"))) {
+  fail(
+    "Do not vendor Benjamin-Plus as skills/benjamin-plus (inject only; see third_party/benjamin-plus/PACKAGING.md)",
+  );
 }
 
 if (process.exitCode) {

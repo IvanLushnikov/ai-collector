@@ -23,6 +23,14 @@
 | `using-git-worktrees` / `finishing-a-development-branch` | Изоляция ветки / завершение |
 | `writing-skills` | Создание/правка skills |
 
+### Token efficiency (inject, not discoverable)
+
+Источник: https://github.com/JetBrains/benjamin-plus-skill (pin в `third_party/benjamin-plus/`).
+
+| Что | Как |
+|-----|-----|
+| Benjamin-Plus | Текст из `injected-instruction.md` **инжектится** в корневой `AGENTS.md`. Не класть как `skills/benjamin-plus/SKILL.md` — upstream измерил ≈0 экономии для discoverable folder. См. `third_party/benjamin-plus/PACKAGING.md`. |
+
 ## Layer 1 — Product (локальные, высший приоритет для UI)
 
 | Skill | Когда |
