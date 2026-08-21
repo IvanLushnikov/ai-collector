@@ -126,7 +126,7 @@ const sessionCookie = (response: { headers: Record<string, unknown> }): string =
 describe('authContextMiddleware', () => {
   it('sets tenantContext and userRole from a valid session cookie', async () => {
     const campaignStore = makeStore();
-    const app = createApp({ campaignStore });
+    const app = createApp({ campaignStore, corsOrigins: 'https://cabinet.example.test,*' });
     await app.ready();
 
     const registered = await app.inject({
@@ -176,7 +176,7 @@ describe('authContextMiddleware', () => {
 
   it('rejects a cookie-authenticated mutation without a trusted Origin when CSRF protection is enabled', async () => {
     const campaignStore = makeStore();
-    const app = createApp({ campaignStore, csrfProtection: true, csrfAllowedOrigins: ['https://cabinet.example.test'] });
+    const app = createApp({ campaignStore, corsOrigins: 'https://cabinet.example.test', csrfProtection: true, csrfAllowedOrigins: ['https://cabinet.example.test'] });
     await app.ready();
 
     const registered = await app.inject({
@@ -217,7 +217,7 @@ describe('authContextMiddleware', () => {
         name: 'Dev'
       }
     });
-    const app = createApp({ campaignStore });
+    const app = createApp({ campaignStore, corsOrigins: 'https://cabinet.example.test,*' });
     await app.ready();
 
     const missing = await app.inject({
@@ -257,7 +257,7 @@ describe('authContextMiddleware', () => {
         name: 'Production'
       }
     });
-    const app = createApp({ campaignStore, allowHeaderIdentity: false });
+    const app = createApp({ campaignStore, allowHeaderIdentity: false, corsOrigins: 'https://cabinet.example.test,*' });
     await app.ready();
 
     const response = await app.inject({
@@ -278,7 +278,7 @@ describe('authContextMiddleware', () => {
 
   it('rejects cross-tenant request when session tenant does not match route tenant', async () => {
     const campaignStore = makeStore();
-    const app = createApp({ campaignStore });
+    const app = createApp({ campaignStore, corsOrigins: 'https://cabinet.example.test,*' });
     await app.ready();
 
     const registered = await app.inject({
@@ -312,7 +312,7 @@ describe('authContextMiddleware', () => {
 
   it('uses current membership role instead of stale session role snapshot', async () => {
     const campaignStore = makeStore();
-    const app = createApp({ campaignStore });
+    const app = createApp({ campaignStore, corsOrigins: 'https://cabinet.example.test,*' });
     await app.ready();
 
     const registered = await app.inject({

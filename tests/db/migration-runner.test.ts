@@ -22,7 +22,7 @@ describe('SQL migration runner', () => {
 
     await applyMigrations(client as any);
 
-    expect(transaction).toHaveBeenCalledTimes(30);
+    expect(transaction).toHaveBeenCalledTimes(31);
     expect(execute).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS "AppSchemaMigration"'));
     expect(execute).toHaveBeenLastCalledWith(
       'INSERT INTO "AppSchemaMigration" ("id", "checksum") VALUES ($1, $2)',

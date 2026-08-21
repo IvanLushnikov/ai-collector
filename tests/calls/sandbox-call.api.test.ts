@@ -1094,6 +1094,7 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       recording: null,
       reconciliationIssues: [],
       complianceDecision: {
+        blockKind: null,
         decision: 'allow',
         reasonCode: 'ALLOW',
         reasonText: 'Allowed',

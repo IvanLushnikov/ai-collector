@@ -9,6 +9,7 @@ import { registerScriptRoutes } from '../routes/scripts.js';
 import { registerReportRoutes } from '../routes/reports.js';
 import { registerUsageRoutes } from '../routes/usage.js';
 import { registerTelephonyRoutes } from '../routes/telephony.js';
+import { registerTelephonyWebhookRoutes } from '../routes/telephony-webhooks.js';
 import { registerTenantRoutes } from '../routes/tenants.js';
 import { registerProviderCredentialRoutes } from '../routes/provider-credentials.js';
 import { registerAuthRoutes } from '../routes/auth.js';
@@ -224,7 +225,8 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   });
   app.addHook('onRequest', async (request, reply) => {
     const path = request.url.split('?')[0] ?? request.url;
-    if (isHealthPath(path)) {
+    // Health GETs skip CORS bookkeeping, but OPTIONS preflight must still answer.
+    if (isHealthPath(path) && request.method !== 'OPTIONS') {
       return;
     }
     const origin = request.headers.origin;
@@ -294,11 +296,25 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
     })
   );
 
-  app.get('/healthz', async () => ({
+  const livenessPayload = () => ({
     status: 'ok',
-    service: 'ai-collector-backend',
-    env: env.NODE_ENV
-  }));
+    service: 'ai-collector-backend'
+  });
+
+  // Liveness: process is up (no dependency checks). Kept for backward compatibility.
+  app.get('/healthz', async () => livenessPayload());
+  app.get('/health', async () => livenessPayload());
+  app.get('/health/live', async () => livenessPayload());
+
+  // Readiness: can serve traffic (database reachable). No secrets in response.
+  app.get('/health/ready', async (_request, reply) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', checks: { database: 'up' } };
+    } catch {
+      return reply.code(503).send({ status: 'degraded', checks: { database: 'down' } });
+    }
+  });
 
   app.get('/', async () => ({
     status: 'ok',
@@ -333,6 +349,7 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   registerReportRoutes(app as any, campaignStore as any);
   registerUsageRoutes(app as any, campaignStore as any);
   registerTelephonyRoutes(app as any, campaignStore as any);
+  registerTelephonyWebhookRoutes(app as any, campaignStore as any);
   registerTenantRoutes(app as any, campaignStore as any);
   registerTenantUserRoutes(app as any, campaignStore as any);
   registerProviderCredentialRoutes(app as any, {
