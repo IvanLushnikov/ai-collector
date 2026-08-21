@@ -3,24 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ИИ-коллектор — автоматизация телефонного взыскания</title>
-  <meta name="description" content="ИИ-коллектор помогает запускать кампании взыскания: база, сценарий, обзвон и результат. Контроль ограничений и журнал действий встроены в процесс.">
+  <title>ИИ-коллектор — управляемый пилот телефонного взыскания</title>
+  <meta name="description" content="ИИ-коллектор: управляемый пилот телефонного взыскания с проверками до звонка, передачей специалисту и журналом действий. Назначьте демо пилота.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f4f6f8;
+      --bg: #f5f7fb;
+      --bg-soft: #eef2f8;
       --surface: #ffffff;
-      --ink: #0f1724;
-      --muted: #5c6b7a;
-      --line: #dde4ec;
-      --accent: #1565c0;
-      --accent-strong: #0d4a8f;
-      --accent-soft: #e8f1fb;
-      --hero-bg: linear-gradient(165deg, #f8fafc 0%, #eef3f8 48%, #f4f6f8 100%);
-      --shadow: 0 16px 40px rgba(15, 23, 36, 0.08);
-      --radius: 14px;
-      --container: 1120px;
+      --ink: #0b1220;
+      --muted: #5b6577;
+      --line: #e3e8f1;
+      --accent: #1b4dff;
+      --accent-strong: #1236c9;
+      --accent-soft: #e8eeff;
+      --ok: #0f9f6e;
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+      --shadow-sm: 0 10px 30px rgba(15, 23, 42, 0.06);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --container: 1160px;
       --sticky-height: 0px;
-      --font: Inter, "Segoe UI", system-ui, Arial, sans-serif;
+      --font: "Plus Jakarta Sans", "Segoe UI", sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -29,7 +35,10 @@
       margin: 0;
       font: 16px/1.55 var(--font);
       color: var(--ink);
-      background: var(--bg);
+      background:
+        radial-gradient(900px 420px at 10% -10%, rgba(27, 77, 255, 0.08), transparent 55%),
+        radial-gradient(700px 380px at 90% 0%, rgba(15, 159, 110, 0.06), transparent 50%),
+        var(--bg);
       padding-bottom: var(--sticky-height);
     }
     a { color: inherit; text-decoration: none; }
@@ -37,17 +46,23 @@
     button { cursor: pointer; }
 
     .container {
-      width: min(calc(100% - 32px), var(--container));
+      width: min(calc(100% - 40px), var(--container));
       margin: 0 auto;
     }
 
     .site-header {
       position: sticky;
       top: 0;
-      z-index: 20;
-      background: rgba(248, 250, 252, 0.92);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--line);
+      z-index: 30;
+      background: rgba(245, 247, 251, 0.86);
+      border-bottom: 1px solid transparent;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .site-header.is-scrolled {
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom-color: var(--line);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
     }
 
     .header-inner {
@@ -55,7 +70,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      min-height: 64px;
+      min-height: 72px;
     }
 
     .brand {
@@ -65,21 +80,24 @@
     }
 
     .brand-mark {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
       display: grid;
       place-items: center;
-      background: var(--ink);
+      background: linear-gradient(145deg, #1b4dff, #1236c9);
       color: #fff;
       font-weight: 800;
       font-size: 13px;
+      letter-spacing: -0.04em;
+      box-shadow: 0 10px 24px rgba(27, 77, 255, 0.28);
     }
 
     .brand-copy strong {
       display: block;
       font-size: 15px;
-      line-height: 1.2;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
     }
 
     .brand-copy span {
@@ -92,7 +110,7 @@
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
@@ -100,127 +118,478 @@
     .header-nav a {
       color: var(--muted);
       font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s ease;
     }
 
-    .header-nav a.btn-primary {
-      color: #fff;
-    }
+    .header-nav a:hover { color: var(--ink); }
 
+    .header-nav a.btn-primary { color: #fff; }
     .header-nav a.btn-primary:hover,
-    .header-nav a.btn-primary:focus-visible {
-      color: #fff;
-    }
+    .header-nav a.btn-primary:focus-visible { color: #fff; }
 
     .btn {
       border: 0;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      transition: background 0.15s ease;
+      letter-spacing: -0.01em;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
 
     .btn:focus-visible,
     .header-nav a:focus-visible,
     summary:focus-visible,
     input:focus-visible {
-      outline: 3px solid rgba(21, 101, 192, 0.28);
+      outline: 3px solid rgba(27, 77, 255, 0.28);
       outline-offset: 2px;
     }
 
     .btn-primary {
       background: var(--accent);
       color: #fff;
+      box-shadow: 0 12px 28px rgba(27, 77, 255, 0.24);
     }
 
     .btn-primary:hover,
     .btn-primary:focus-visible {
       background: var(--accent-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(27, 77, 255, 0.3);
     }
 
-    .btn-secondary {
+    .btn-ghost {
       background: #fff;
       color: var(--ink);
       border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
     }
 
-    .btn-block { width: 100%; }
+    .btn-ghost:hover {
+      transform: translateY(-1px);
+      border-color: #cdd6e5;
+    }
+
+    .btn-block { width: 100%; border-radius: 12px; }
 
     .hero {
-      padding: 56px 0 24px;
-      background: var(--hero-bg);
-      border-bottom: 1px solid var(--line);
+      position: relative;
+      padding: 48px 0 0;
+      overflow: hidden;
     }
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
-      gap: 32px;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 40px;
+      align-items: center;
+      min-height: min(520px, calc(100vh - 180px));
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0;
+      max-width: 480px;
     }
 
     .eyebrow {
-      display: inline-block;
-      margin-bottom: 14px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #fff;
-      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      border: 0;
       color: var(--muted);
       font-size: 13px;
       font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: none;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: none;
     }
 
     .hero h1 {
       margin: 0;
-      font-size: clamp(32px, 4.8vw, 52px);
-      line-height: 1.08;
-      letter-spacing: -0.03em;
-      max-width: 14ch;
+      font-size: clamp(36px, 4.6vw, 52px);
+      line-height: 1.06;
+      letter-spacing: -0.038em;
+      max-width: 11.5em;
+      font-weight: 800;
     }
 
     .hero-lead {
-      margin: 16px 0 0;
-      font-size: 18px;
+      margin: 20px 0 0;
+      font-size: 17px;
+      line-height: 1.55;
       color: var(--muted);
-      max-width: 520px;
+      max-width: 32rem;
+    }
+
+    .hero-points {
+      margin: 18px 0 0;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      margin-top: 32px;
     }
 
     .hero-link {
-      display: inline-block;
-      margin-top: 20px;
-      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      color: var(--muted);
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .hero-link:hover { color: var(--ink); }
+
+    @keyframes float-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.985); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .hero-aside {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      padding-top: 0;
+    }
+
+    .hero-aside::before {
+      content: none;
+    }
+
+    .hero-panel {
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      z-index: 1;
+      display: block;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+      animation: float-in 0.65s ease both;
+    }
+
+    .product-frame {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow:
+        0 1px 0 rgba(15, 23, 42, 0.04),
+        0 24px 48px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+      transform: none;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .product-frame:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 1px 0 rgba(15, 23, 42, 0.04),
+        0 28px 56px rgba(15, 23, 42, 0.1);
+    }
+
+    .product-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .product-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #d7deea;
+    }
+
+    .product-dot:nth-child(1) { background: #ff6b6b; }
+    .product-dot:nth-child(2) { background: #ffd166; }
+    .product-dot:nth-child(3) { background: #06d6a0; }
+
+    .product-chrome span {
+      margin-left: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .product-body {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      background: linear-gradient(180deg, #f7f9fc, #eef2f8);
+    }
+
+    .ui-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .ui-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .ui-card strong {
+      font-size: 13px;
+      letter-spacing: -0.01em;
+    }
+
+    .ui-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ui-badge.ok {
+      background: #e8faf2;
+      color: #0b7a54;
+    }
+
+    .ui-meta {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .ui-meta b { color: var(--ink); font-weight: 600; }
+
+    .ui-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .ui-log {
+      display: grid;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .ui-log-item {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ui-log-item time {
+      font-variant-numeric: tabular-nums;
+      color: #8892a4;
+    }
+
+    .ui-log-item em {
+      font-style: normal;
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    .hero-form-band {
+      display: none;
     }
 
     .hero-form-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: calc(var(--radius) + 2px);
-      box-shadow: var(--shadow);
-      padding: 24px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
     }
 
     .hero-form-card h2 {
       margin: 0;
-      font-size: 22px;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-weight: 800;
     }
 
-    .hero-form-card p {
+    .hero-form-top {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .hero-form-card > p,
+    .hero-form-top p {
       margin: 8px 0 0;
       color: var(--muted);
       font-size: 14px;
+      max-width: 36rem;
+    }
+
+    .demo-expect {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 13px;
+      display: grid;
+      gap: 8px;
+      max-width: none;
+      justify-content: start;
+    }
+
+    .demo-expect li {
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .demo-expect li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.45em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .demo-drawer-root {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .demo-drawer-root.is-open {
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    .demo-drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 18, 32, 0.42);
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .demo-drawer-root.is-open .demo-drawer-backdrop {
+      opacity: 1;
+    }
+
+    .demo-drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: min(440px, 100%);
+      background: #fff;
+      border-left: 1px solid var(--line);
+      box-shadow: -24px 0 60px rgba(15, 23, 42, 0.18);
+      transform: translateX(104%);
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+      padding: 22px 22px 28px;
+    }
+
+    .demo-drawer-root.is-open .demo-drawer-panel {
+      transform: translateX(0);
+    }
+
+    .demo-drawer-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .demo-drawer-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .demo-drawer-close:hover {
+      background: var(--accent-soft);
+      border-color: #9db0ff;
+    }
+
+    body.demo-drawer-open {
+      overflow: hidden;
     }
 
     .demo-form {
       display: grid;
-      gap: 12px;
-      margin-top: 18px;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 0;
+      align-items: stretch;
+    }
+
+    .demo-form .check-row,
+    .demo-form .form-notice,
+    .demo-form .form-success,
+    .demo-form input[hidden],
+    .demo-form input[type="hidden"] {
+      grid-column: 1 / -1;
+    }
+
+    .demo-form .btn-block {
+      width: 100%;
+      white-space: nowrap;
+      min-height: 48px;
+      padding-inline: 20px;
+      margin-top: 4px;
     }
 
     .demo-form label {
@@ -232,63 +601,93 @@
 
     .demo-form input:not([type="checkbox"]) {
       width: 100%;
-      min-height: 44px;
+      min-height: 48px;
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 0 12px;
+      border-radius: 12px;
+      padding: 0 14px;
+      background: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .demo-form input:not([type="checkbox"]):focus {
+      border-color: #9db0ff;
+      box-shadow: 0 0 0 4px rgba(27, 77, 255, 0.12);
+      outline: none;
+    }
+
+    .demo-form label.check-row {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      column-gap: 10px;
+      align-items: start;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.4;
+      cursor: pointer;
+    }
+
+    .demo-form label.check-row input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      margin: 0.15em 0 0;
+      padding: 0;
+      border: 1.5px solid #a8b3c7;
+      border-radius: 4px;
+      background: #fff;
+      display: grid;
+      place-content: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .demo-form label.check-row input[type="checkbox"]::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      transform: scale(0);
+      transition: transform 0.15s ease;
+      clip-path: polygon(14% 44%, 0 65%, 40% 100%, 100% 16%, 80% 0, 38% 62%);
       background: #fff;
     }
 
-    .form-note {
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
+    .demo-form label.check-row input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
-    .check-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .check-row input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      min-height: 0;
-      margin-top: 3px;
-      flex-shrink: 0;
-      padding: 0;
-      accent-color: var(--accent);
+    .demo-form label.check-row input[type="checkbox"]:checked::before {
+      transform: scale(1);
     }
 
     .check-row a {
-      color: var(--accent);
+      color: var(--accent-strong);
       text-decoration: underline;
     }
 
     .form-notice {
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px;
       font-size: 14px;
       font-weight: 600;
     }
 
     .form-notice.error {
-      background: #fdf0f0;
-      border: 1px solid #f0c8c8;
-      color: #8b1e1e;
+      background: #fff1f1;
+      border: 1px solid #f3c7c7;
+      color: #9b1c1c;
     }
 
     .form-success,
     .form-notice.success {
-      background: #edf7f1;
-      border: 1px solid #cfe6d8;
-      color: #1b5b37;
-      border-radius: 10px;
+      background: #eafaf2;
+      border: 1px solid #bfe8d3;
+      color: #0f6a46;
+      border-radius: 12px;
       padding: 12px;
       font-weight: 600;
       font-size: 14px;
@@ -299,18 +698,113 @@
       cursor: wait;
     }
 
+    .product-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 0 12px 10px;
+      background: linear-gradient(180deg, #f7f9fc, #eef2f8);
+    }
+
+    .product-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .product-tab.is-active {
+      background: #fff;
+      color: var(--ink);
+      border-color: var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .product-scene[hidden] { display: none; }
+
+    .metrics {
+      padding: 0 0 8px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0 40px;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      overflow: visible;
+      box-shadow: none;
+      padding: 28px 0;
+    }
+
+    .metric-card {
+      background: transparent;
+      border: 0;
+      border-right: 0;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .metric-card:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -20px;
+      top: 4px;
+      bottom: 4px;
+      width: 1px;
+      background: var(--line);
+    }
+
+    .metric-card:last-child { border-right: 0; }
+
+    .metric-card strong {
+      display: block;
+      font-size: clamp(18px, 2vw, 22px);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: var(--ink);
+      min-height: 0;
+      font-weight: 800;
+    }
+
+    .metric-card span {
+      display: block;
+      margin-top: 8px;
+      padding-top: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      min-height: 0;
+    }
+
+    .metric-note {
+      display: none;
+    }
+
+    .value-band {
+      padding: 8px 0 0;
+    }
+
     .value-strip {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
-      margin-top: 36px;
     }
 
     .value-card,
     .step-card,
-    .benefit-card,
-    .role-card,
-    .control-card,
     .cta-panel,
     details {
       background: var(--surface);
@@ -318,27 +812,79 @@
       border-radius: var(--radius);
     }
 
-    .value-card,
-    .step-card,
-    .benefit-card,
     .role-card,
     .control-card {
-      padding: 18px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .value-card,
+    .step-card {
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+
+    .role-card,
+    .control-card {
+      padding: 0;
+      transition: none;
+    }
+
+    .value-card {
+      min-height: 168px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .value-card strong {
+      min-height: 2.5em;
+    }
+
+    .value-card span {
+      margin-top: 10px;
+      line-height: 1.45;
+      min-height: 4.4em;
+    }
+
+    .value-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+      border-color: #d5dded;
+    }
+
+    .role-card:hover,
+    .control-card:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: transparent;
     }
 
     .value-card strong,
     .step-card strong,
-    .benefit-card strong,
     .role-card strong,
     .control-card strong {
       display: block;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .role-card strong {
+      font-size: clamp(22px, 2.4vw, 28px);
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .control-card strong {
       font-size: 16px;
-      line-height: 1.3;
+      font-weight: 700;
     }
 
     .value-card span,
     .step-card p,
-    .benefit-card p,
     .role-card p,
     .control-card p,
     .section-lead,
@@ -346,114 +892,522 @@
       color: var(--muted);
     }
 
-    main section { padding: 56px 0; }
+    main section { padding: 80px 0; }
 
-    main section:nth-of-type(even) {
-      background: #fff;
-      border-block: 1px solid var(--line);
+    main section.alt {
+      background: transparent;
+      border-block: 0;
     }
 
-    .section-head { margin-bottom: 24px; }
+    .section-head { margin-bottom: 36px; }
 
     .section-head h2,
-    .cta-panel h2 {
+    .cta-panel h2,
+    .audit-panel h2 {
       margin: 0;
-      font-size: clamp(26px, 3.6vw, 36px);
-      line-height: 1.12;
-      letter-spacing: -0.02em;
+      font-size: clamp(28px, 3.4vw, 40px);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      font-weight: 800;
+      max-width: 16ch;
     }
 
     .section-lead {
-      max-width: 640px;
-      margin: 10px 0 0;
+      max-width: 560px;
+      margin: 14px 0 0;
       font-size: 17px;
     }
 
-    .steps-grid,
-    .benefits-grid,
+    .flow {
+      display: none;
+    }
+
+    .flow-step {
+      display: none;
+    }
+
     .roles-grid,
-    .control-grid {
+    .segments-grid,
+    .roles-secondary,
+    .control-grid,
+    .steps-grid {
       display: grid;
+    }
+
+    .segments-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 32px 28px;
+    }
+
+    .roles-secondary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    .control-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 28px 32px;
+      border-top: 1px solid var(--line);
+      padding-top: 28px;
+    }
+
+    .steps-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      gap: 28px 40px;
     }
 
-    .control-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .gallery-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
     }
 
-    .step-card {
+    .gallery-head .section-head { margin: 0; flex: 1; }
+
+    .gallery-nav {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .gallery-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+      box-shadow: none;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .gallery-btn:hover {
+      transform: none;
+      border-color: #9db0ff;
+      background: var(--accent-soft);
+    }
+
+    .gallery-shell {
       display: grid;
-      grid-template-columns: 44px 1fr;
-      gap: 14px;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.92fr);
+      gap: 40px;
       align-items: start;
     }
 
-    .step-index {
-      width: 44px;
-      height: 44px;
+    .gallery-track {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: visible;
+      scroll-snap-type: none;
+      padding: 0;
+      scrollbar-width: none;
+    }
+
+    .gallery-track::-webkit-scrollbar { display: none; }
+
+    .gallery-card {
+      scroll-snap-align: none;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      padding: 22px 8px 22px 0;
+      box-shadow: none;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .gallery-card:first-child { border-top: 1px solid var(--line); }
+
+    .gallery-card.is-active {
+      border-color: var(--line);
+      box-shadow: none;
+      transform: none;
+      background: transparent;
+    }
+
+    .gallery-card .step-index {
+      width: 40px;
+      height: 40px;
       border-radius: 10px;
-      background: var(--accent-soft);
-      color: var(--accent);
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
       display: grid;
       place-items: center;
       font-weight: 800;
       font-size: 13px;
+      margin-bottom: 0;
+      grid-row: 1 / span 2;
+      align-self: start;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
-    .cta-repeat { margin-top: 24px; }
+    .gallery-card.is-active .step-index {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .gallery-card strong {
+      display: block;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      min-height: 0;
+      grid-column: 2;
+    }
+
+    .gallery-card.is-active strong { color: var(--ink); }
+
+    .gallery-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 0;
+      grid-column: 2;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.28s ease, opacity 0.22s ease, margin 0.22s ease;
+    }
+
+    .gallery-card.is-active p {
+      max-height: 120px;
+      opacity: 1;
+      margin-top: 8px;
+    }
+
+    .gallery-live {
+      background: #0b1220;
+      border-radius: 16px;
+      padding: 28px;
+      color: #e8eefc;
+      box-shadow: 0 24px 48px rgba(11, 18, 32, 0.18);
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+      position: sticky;
+      top: 96px;
+    }
+
+    .gallery-live-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(232, 238, 252, 0.55);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .gallery-live-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      min-height: 2.5em;
+      color: #fff;
+    }
+
+    .gallery-live-body {
+      margin-top: 10px;
+      color: rgba(232, 238, 252, 0.72);
+      font-size: 14px;
+      line-height: 1.45;
+      flex: 1;
+    }
+
+    .gallery-live-status {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .gallery-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .gallery-dots {
+      display: none;
+    }
+
+    .gallery-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 0;
+      background: #c9d3e6;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .gallery-dot.is-active { background: var(--accent); }
+
+    .step-card {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: start;
+      background: #fff;
+    }
+
+    .step-card:hover {
+      transform: translateY(-3px);
+      border-color: #cfd8ec;
+    }
+
+    .step-index {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .step-card:hover .step-index {
+      background: var(--accent);
+      color: #fff;
+      transform: scale(1.04);
+    }
+
+    .cta-repeat { margin-top: 28px; }
+
+    .compare-table {
+      display: grid;
+      gap: 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      overflow: visible;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: minmax(140px, 0.7fr) 1fr 1fr;
+      border-top: 1px solid var(--line);
+    }
+
+    .compare-row:first-child { border-top: 0; }
+
+    .compare-row > * {
+      padding: 20px 0 20px 24px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .compare-row > *:first-child { padding-left: 0; }
+
+    .compare-row > strong {
+      color: var(--ink);
+      background: transparent;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .compare-head > * {
+      font-weight: 700;
+      color: var(--ink);
+      background: transparent;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding-top: 0;
+      padding-bottom: 14px;
+    }
+
+    .compare-row > span:last-child {
+      color: var(--ink);
+      background: transparent;
+    }
+
+    .audit-wrap {
+      padding: 8px 0;
+    }
+
+    .audit-panel {
+      border-radius: 24px;
+      padding: clamp(32px, 4vw, 52px);
+      background:
+        radial-gradient(600px 280px at 85% 10%, rgba(27, 77, 255, 0.22), transparent 55%),
+        linear-gradient(145deg, #0b1220 0%, #121c33 55%, #0d1528 100%);
+      color: #e8eefc;
+      box-shadow: 0 30px 80px rgba(11, 18, 32, 0.22);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 36px;
+      align-items: start;
+    }
+
+    .audit-panel h2 { color: #fff; max-width: 14ch; }
+
+    .audit-panel p {
+      margin: 14px 0 0;
+      color: rgba(232, 238, 252, 0.72);
+      font-size: 16px;
+      max-width: 34rem;
+    }
+
+    .audit-trail {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .audit-line {
+      display: grid;
+      grid-template-columns: 46px 1fr auto;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      color: rgba(232, 238, 252, 0.78);
+    }
+
+    .audit-line:last-child { border-bottom: 0; }
+
+    .audit-line time {
+      color: rgba(232, 238, 252, 0.45);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .audit-line em {
+      font-style: normal;
+      color: #5dffa8;
+      font-weight: 700;
+    }
+
+    .roles-secondary-lead {
+      margin: 40px 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .roles-secondary .role-card {
+      padding: 0;
+      background: transparent;
+    }
+
+    .roles-secondary .role-card strong {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
 
     .role-card small {
       display: inline-block;
-      margin-bottom: 8px;
-      color: var(--accent);
+      margin-bottom: 10px;
+      color: var(--accent-strong);
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
     }
 
-    .faq-wrap { display: grid; gap: 10px; }
+    .role-card p {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 28rem;
+    }
 
-    details { overflow: hidden; }
+    .segments-grid .role-card { min-height: 0; }
+
+    .control-card p {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 28rem;
+    }
+
+    .faq-wrap { display: grid; gap: 0; }
+
+    details {
+      overflow: hidden;
+      box-shadow: none;
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+      border-top: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+    }
+
+    details:first-child { border-top: 1px solid var(--line); }
 
     summary {
       list-style: none;
       cursor: pointer;
-      padding: 16px 18px;
+      padding: 18px 0;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      letter-spacing: -0.02em;
     }
 
     summary::-webkit-details-marker { display: none; }
 
     summary::after {
-      content: '+';
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: var(--bg);
+      content: "+";
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
       display: grid;
       place-items: center;
-      color: var(--accent);
+      font-weight: 700;
     }
 
-    details[open] summary::after { content: '−'; }
+    details[open] summary::after { content: "−"; }
 
     .faq-answer {
-      padding: 0 18px 18px;
+      padding: 0 0 18px;
       color: var(--muted);
       font-size: 15px;
     }
 
     .cta-panel {
-      padding: 32px;
+      padding: clamp(36px, 5vw, 56px) 0;
       display: grid;
-      gap: 14px;
-      background: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
+      gap: 16px;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
     }
 
     .cta-panel p {
@@ -467,11 +1421,46 @@
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 30;
+      z-index: 40;
       padding: 12px 16px;
       background: rgba(255, 255, 255, 0.96);
       border-top: 1px solid var(--line);
+      animation: sticky-in 0.35s ease both;
     }
+
+    @keyframes sticky-in {
+      from { transform: translateY(100%); opacity: 0.4; }
+      to { transform: none; opacity: 1; }
+    }
+
+    @keyframes step-in {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    #how-it-works .gallery-card {
+      animation: step-in 0.45s ease both;
+    }
+
+    #how-it-works .gallery-card:nth-child(1) { animation-delay: 0.04s; }
+    #how-it-works .gallery-card:nth-child(2) { animation-delay: 0.08s; }
+    #how-it-works .gallery-card:nth-child(3) { animation-delay: 0.12s; }
+    #how-it-works .gallery-card:nth-child(4) { animation-delay: 0.16s; }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
 
     .sticky-shell {
       width: min(100%, var(--container));
@@ -492,9 +1481,11 @@
     .sticky-copy span { color: var(--muted); }
 
     .site-footer {
-      padding: 20px 0 28px;
+      padding: 28px 0 36px;
       color: var(--muted);
       font-size: 14px;
+      border-top: 1px solid var(--line);
+      background: #fff;
     }
 
     .footer-row {
@@ -507,21 +1498,86 @@
 
     .footer-row nav { display: flex; gap: 14px; }
 
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
     @media (min-width: 761px) {
       .sticky-cta { display: none; }
+    }
+
+    @media (max-width: 1100px) and (min-width: 981px) {
+      .segments-grid,
+      .roles-secondary,
+      .control-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 980px) {
       .hero-grid,
       .value-strip,
+      .metrics-grid,
       .control-grid,
       .steps-grid,
-      .benefits-grid,
-      .roles-grid {
+      .roles-grid,
+      .segments-grid,
+      .roles-secondary,
+      .audit-panel,
+      .gallery-shell {
         grid-template-columns: 1fr;
       }
 
       .hero h1 { max-width: none; }
+      .gallery-live { position: static; min-height: 240px; }
+
+      .demo-form {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-form .btn-block {
+        width: 100%;
+      }
+
+      .demo-drawer-panel {
+        width: min(440px, 100%);
+      }
+
+      .product-frame {
+        transform: none;
+      }
+
+      .hero-aside { justify-content: stretch; }
+      .hero-panel { max-width: none; }
+
+      .hero-grid {
+        min-height: 0;
+        gap: 28px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 24px 0;
+      }
+
+      .metric-card:not(:last-child)::after { content: none; }
+
+      .metric-card:not(:last-child) {
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--line);
+      }
     }
 
     @media (max-width: 760px) {
@@ -534,8 +1590,41 @@
       }
 
       .header-nav { width: 100%; justify-content: flex-start; }
+      .hero { padding-top: 28px; }
 
-      .hero { padding-top: 32px; }
+      .compare-row { grid-template-columns: 1fr; }
+      .compare-head { display: none; }
+      .compare-row > strong { border-bottom: 1px solid var(--line); }
+      .compare-row > span:first-of-type::before {
+        content: "Без контура: ";
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .compare-row > span:last-child::before {
+        content: "С ИИ-коллектором: ";
+        font-weight: 700;
+      }
+
+      .ui-row { grid-template-columns: 1fr; }
+
+      .demo-drawer-panel {
+        width: 100%;
+        border-left: 0;
+        border-radius: 18px 18px 0 0;
+        top: auto;
+        bottom: 0;
+        height: min(92vh, 760px);
+        transform: translateY(104%);
+        box-shadow: 0 -24px 60px rgba(15, 23, 42, 0.18);
+      }
+
+      .demo-drawer-root.is-open .demo-drawer-panel {
+        transform: translateY(0);
+      }
+
+      .demo-form {
+        grid-template-columns: 1fr;
+      }
 
       .sticky-shell {
         flex-direction: column;
@@ -553,7 +1642,7 @@
         <span class="brand-mark">ИИ</span>
         <span class="brand-copy">
           <strong>ИИ-коллектор</strong>
-          <span>Автоматизация телефонного взыскания</span>
+          <span>Платформа управления взысканием</span>
         </span>
       </a>
       <nav class="header-nav" aria-label="Навигация по лендингу">
@@ -571,59 +1660,112 @@
     <section class="hero">
       <div class="container">
         <div class="hero-grid">
-          <div>
-            <span class="eyebrow">Для МФО, банков и ПКО</span>
-            <h1>ИИ-коллектор для телефонного взыскания</h1>
-            <p class="hero-lead">Запускайте кампании, ведите диалоги и собирайте результат. Проверка ограничений, перевод оператору и журнал действий уже встроены в процесс.</p>
-            <a class="hero-link" href="#how-it-works">Как устроен продукт →</a>
+          <div class="hero-copy">
+            <span class="eyebrow">Для банков, МФО и ПКО</span>
+            <h1>ИИ-коллектор: управляемый пилот телефонного взыскания</h1>
+            <p class="hero-lead">Автоматизируем диалог с должником: система соблюдает правила коммуникации и фиксирует каждое действие. Это не полностью автономное взыскание: спорные случаи остаются у специалиста.</p>
+            <p class="hero-points">Проверки · специалист · журнал</p>
+            <div class="hero-cta-row">
+              <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
+              <a class="hero-link" href="#how-it-works">Как устроен продукт</a>
+            </div>
           </div>
 
-          <aside class="hero-form-card" id="demo-form" aria-label="Заявка на демо">
-            <h2>Назначить демо</h2>
-            <p>Покажем кампанию, сценарий и результат на вашем примере.</p>
-            <form class="demo-form" id="demoForm" novalidate>
-              <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+          <div class="hero-aside">
+            <div class="hero-panel">
+              <div class="product-frame" aria-hidden="true">
+                <div class="product-chrome">
+                  <span class="product-dot"></span>
+                  <span class="product-dot"></span>
+                  <span class="product-dot"></span>
+                  <span>Кабинет · кампания взыскания</span>
+                </div>
+                <div class="product-body">
+                  <div class="product-tabs" role="tablist" aria-label="Сцены кабинета">
+                    <button type="button" class="product-tab is-active" role="tab" aria-selected="true" data-scene="campaign">Кампания</button>
+                    <button type="button" class="product-tab" role="tab" aria-selected="false" data-scene="call">Звонок</button>
+                    <button type="button" class="product-tab" role="tab" aria-selected="false" data-scene="journal">Журнал</button>
+                  </div>
 
-              <div class="form-notice error" id="demoError" hidden></div>
+                  <div class="product-scene" data-scene-panel="campaign">
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Кампания «Портфель Q2»</strong>
+                        <span class="ui-badge">В работе</span>
+                      </div>
+                      <div class="ui-meta">
+                        <div>Готово к звонку: <b>1 284</b></div>
+                        <div>На проверке: <b>37</b></div>
+                      </div>
+                    </div>
+                    <div class="ui-row" style="margin-top:8px">
+                      <div class="ui-card">
+                        <div class="ui-card-top">
+                          <strong>Звонок</strong>
+                          <span class="ui-badge ok">Идёт</span>
+                        </div>
+                        <div class="ui-meta">Диалог по сценарию · 02:14</div>
+                      </div>
+                      <div class="ui-card">
+                        <div class="ui-card-top">
+                          <strong>Исход</strong>
+                          <span class="ui-badge">Обещание</span>
+                        </div>
+                        <div class="ui-meta">Платёж · завтра</div>
+                      </div>
+                    </div>
+                  </div>
 
-              <label>
-                <span>Имя</span>
-                <input id="demoName" name="name" type="text" autocomplete="name" required>
-              </label>
-              <label>
-                <span>Компания</span>
-                <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
-              </label>
-              <label>
-                <span>Email</span>
-                <input id="demoEmail" name="email" type="email" autocomplete="email" required>
-              </label>
-              <label>
-                <span>Телефон</span>
-                <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
-              </label>
-              <label class="check-row">
-                <input id="demoAgree" name="agree" type="checkbox" required>
-                <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
-              </label>
-              <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
-              <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
-            </form>
-          </aside>
+                  <div class="product-scene" data-scene-panel="call" hidden>
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Активный диалог</strong>
+                        <span class="ui-badge ok">02:14</span>
+                      </div>
+                      <div class="ui-meta">
+                        <div>Сценарий: <b>мягкое напоминание</b></div>
+                        <div>Тон: <b>нейтральный</b></div>
+                        <div>Следующий шаг: <b>зафиксировать обещание</b></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="product-scene" data-scene-panel="journal" hidden>
+                    <div class="ui-card">
+                      <div class="ui-card-top">
+                        <strong>Журнал действий</strong>
+                        <span class="ui-badge ok">Проверки</span>
+                      </div>
+                      <div class="ui-log">
+                        <div class="ui-log-item"><time>18:42</time><span>Проверка ограничений</span><em>✓</em></div>
+                        <div class="ui-log-item"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
+                        <div class="ui-log-item"><time>18:47</time><span>Результат зафиксирован</span><em>✓</em></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="value-strip">
-          <article class="value-card">
-            <strong>Кампании и база</strong>
-            <span>Загрузите базу, настройте сценарий и запустите обзвон в одном кабинете.</span>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <div class="container">
+        <div class="metrics-grid">
+          <article class="metric-card reveal">
+            <strong>Меньше ручных звонков</strong>
+            <span>ИИ берёт на себя повторяющийся обзвон, а команда смотрит результат и спорные случаи.</span>
           </article>
-          <article class="value-card">
-            <strong>Диалоги и результат</strong>
-            <span>ИИ ведёт разговор, фиксирует исход и обещания платежа.</span>
+          <article class="metric-card reveal reveal-delay-1">
+            <strong>Только в разрешённые часы</strong>
+            <span>Перед звонком система проверяет время, частоту и правила — и не идёт дальше, если нельзя.</span>
           </article>
-          <article class="value-card">
-            <strong>Контроль в процессе</strong>
-            <span>Ограничения, журнал действий и перевод оператору — без отдельного «контура безопасности».</span>
+          <article class="metric-card reveal reveal-delay-2">
+            <strong>Всё видно в журнале</strong>
+            <span>Кто звонил, что сказал должник, какой исход и почему принято решение — без «чёрного ящика».</span>
           </article>
         </div>
       </div>
@@ -631,87 +1773,105 @@
 
     <section id="how-it-works">
       <div class="container">
-        <div class="section-head">
-          <h2>Как это работает</h2>
-          <p class="section-lead">От базы до результата — один управляемый процесс, а не набор разрозненных инструментов.</p>
+        <div class="gallery-head">
+          <div class="section-head reveal">
+            <h2>Как это работает</h2>
+            <p class="section-lead">Четыре шага от сценария до журнала. Выберите шаг — справа обновится экран процесса.</p>
+          </div>
+          <div class="gallery-nav" aria-label="Навигация по шагам">
+            <button type="button" class="gallery-btn" id="galleryPrev" aria-label="Предыдущий шаг">←</button>
+            <button type="button" class="gallery-btn" id="galleryNext" aria-label="Следующий шаг">→</button>
+          </div>
         </div>
-        <div class="steps-grid">
-          <article class="step-card">
-            <div class="step-index">01</div>
-            <div>
-              <strong>Создаёте кампанию</strong>
-              <p>Задача, база должников и сценарий диалога — в одном месте.</p>
+
+        <div class="gallery-shell">
+          <div class="gallery-track" id="galleryTrack" tabindex="0" aria-label="Шаги процесса">
+            <article class="gallery-card is-active" data-step="0">
+              <div class="step-index">01</div>
+              <strong>Подключаем сценарий и рамки пилота</strong>
+              <p>Задаём задачу взыскания, сценарий разговора и границы пилота. Всё собирается в одном месте до первого звонка.</p>
+            </article>
+            <article class="gallery-card" data-step="1">
+              <div class="step-index">02</div>
+              <strong>Проверка ограничений перед действиями</strong>
+              <p>До звонка система смотрит время, частоту и правила. Если шаг недопустим — обзвон не продолжается автоматически.</p>
+            </article>
+            <article class="gallery-card" data-step="2">
+              <div class="step-index">03</div>
+              <strong>Ведём управляемый диалог</strong>
+              <p>ИИ говорит по сценарию, держит тон и фиксирует исход. Спорные моменты не «проглатываются» в общем потоке.</p>
+            </article>
+            <article class="gallery-card" data-step="3">
+              <div class="step-index">04</div>
+              <strong>Передаём специалисту и пишем журнал</strong>
+              <p>Сложный случай уходит человеку с контекстом. По каждому шагу остаётся запись: что сделали и какой результат.</p>
+            </article>
+          </div>
+
+          <aside class="gallery-live" id="galleryLive" aria-live="polite">
+            <div class="gallery-live-label">Живой экран</div>
+            <div class="gallery-live-title" id="galleryLiveTitle">Подключаем сценарий и рамки пилота</div>
+            <div class="gallery-live-body" id="galleryLiveBody">В кабинете видны задача, сценарий и границы пилота. Команда понимает, что именно запускается.</div>
+            <div class="gallery-live-status" id="galleryLiveStatus">
+              <span class="gallery-chip">Сценарий готов</span>
+              <span class="gallery-chip">Пилот ограничен</span>
             </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">02</div>
-            <div>
-              <strong>Загружаете базу</strong>
-              <p>CSV или XLSX с проверкой обязательных полей.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">03</div>
-            <div>
-              <strong>Настраиваете телефонию</strong>
-              <p>Подключаете исходящий контур и проверяете соединение.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">04</div>
-            <div>
-              <strong>Запускаете обзвон</strong>
-              <p>ИИ ведёт диалог по сценарию, фиксирует исход.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">05</div>
-            <div>
-              <strong>Проверяете ограничения</strong>
-              <p>Перед звонком система оценивает допустимость действия.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">06</div>
-            <div>
-              <strong>Переводите оператору</strong>
-              <p>Спорные случаи уходят человеку с полным контекстом.</p>
-            </div>
-          </article>
-          <article class="step-card">
-            <div class="step-index">07</div>
-            <div>
-              <strong>Смотрите результат</strong>
-              <p>Журнал звонков, исходы и отчёт по кампании.</p>
-            </div>
-          </article>
+          </aside>
+        </div>
+        <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="audit-wrap" id="audit">
+      <div class="container">
+        <div class="audit-panel reveal">
+          <div>
+            <h2>Система не позвонит, если звонить нельзя</h2>
+            <p>Перед каждым действием — проверки. После — воспроизводимый журнал. Это и есть доверие enterprise-аудитории без «страшного compliance».</p>
+          </div>
+          <div class="audit-trail" aria-label="Пример журнала проверок">
+            <div class="audit-line"><time>18:42</time><span>Проверено разрешённое время звонка</span><em>✓</em></div>
+            <div class="audit-line"><time>18:42</time><span>Проверена частота контактов</span><em>✓</em></div>
+            <div class="audit-line"><time>18:42</time><span>Выбран разрешённый сценарий</span><em>✓</em></div>
+            <div class="audit-line"><time>18:43</time><span>Запущен звонок</span><em>✓</em></div>
+            <div class="audit-line"><time>18:47</time><span>Зафиксирован результат разговора</span><em>✓</em></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="benefits">
+    <section class="alt" id="benefits">
       <div class="container">
-        <div class="section-head">
-          <h2>Что получает команда</h2>
-          <p class="section-lead">Продукт для операционной работы: меньше ручной рутины, больше прозрачности по кампании.</p>
+        <div class="section-head reveal">
+          <h2>До и после управляемого контура</h2>
+          <p class="section-lead">Короткое сравнение: как меняется работа команды с ИИ-коллектором.</p>
         </div>
-        <div class="benefits-grid">
-          <article class="benefit-card">
-            <strong>Автоматизация обзвона</strong>
-            <p>ИИ ведёт диалог по сценарию, команда контролирует процесс, а не каждый звонок вручную.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Кампании в одном кабинете</strong>
-            <p>База, сценарий, телефония, звонки и отчёт — без переключения между системами.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Результат по фактам</strong>
-            <p>Исходы звонков, обещания платежа и прогресс кампании видны сразу.</p>
-          </article>
-          <article class="benefit-card">
-            <strong>Контроль без отдельного «контура»</strong>
-            <p>Проверка ограничений и журнал действий встроены в обычный рабочий процесс.</p>
-          </article>
+        <div class="compare-table reveal reveal-delay-1" role="table" aria-label="Сравнение без контура и с ИИ-коллектором">
+          <div class="compare-row compare-head" role="row">
+            <span role="columnheader"></span>
+            <span role="columnheader">Без управляемого контура</span>
+            <span role="columnheader">С ИИ-коллектором</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Рутина обзвона</strong>
+            <span>Операторы тратят время на повторяющиеся звонки.</span>
+            <span>ИИ ведёт диалог по сценарию, команда смотрит прогресс.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Спорные случаи</strong>
+            <span>Риск остаётся в общем потоке или теряется.</span>
+            <span>Случай выделяется и передаётся специалисту с контекстом.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Прозрачность</strong>
+            <span>Сложно восстановить, почему сделан следующий шаг.</span>
+            <span>Журнал действий и исходы видны по фактам.</span>
+          </div>
+          <div class="compare-row" role="row">
+            <strong role="rowheader">Контроль запуска</strong>
+            <span>Запуск зависит от ручных проверок вне процесса.</span>
+            <span>Проверка ограничений встроена до звонка; пилот ограничен.</span>
+          </div>
         </div>
         <div class="cta-repeat">
           <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
@@ -721,34 +1881,61 @@
 
     <section id="control">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>Контроль — часть процесса, не отдельный продукт</h2>
-          <p class="section-lead">Безопасность не продаём отдельно. Она следует из того, как устроен обзвон.</p>
+          <p class="section-lead">Процедуры встроены в обзвон: перед звонком, в спорных случаях и после действия.</p>
         </div>
         <div class="control-grid">
-          <article class="control-card">
-            <strong>Проверка перед звонком</strong>
-            <p>Система оценивает допустимость действия до следующего шага.</p>
+          <article class="control-card reveal">
+            <strong>Проверка до звонка</strong>
+            <p>Перед следующим шагом система оценивает, допустимо ли действие.</p>
           </article>
-          <article class="control-card">
-            <strong>Перевод оператору</strong>
-            <p>Спорный случай не уходит в автоматический обзвон.</p>
+          <article class="control-card reveal reveal-delay-1">
+            <strong>Передача специалисту</strong>
+            <p>Спорный случай уходит человеку с контекстом, а не в автоматический поток.</p>
           </article>
-          <article class="control-card">
+          <article class="control-card reveal reveal-delay-2">
             <strong>Журнал действий</strong>
             <p>Можно восстановить, что произошло и почему принято решение.</p>
+          </article>
+          <article class="control-card reveal reveal-delay-3">
+            <strong>Ограниченный пилот</strong>
+            <p>Старт в управляемых рамках: объём, сценарий и критерии остановки согласованы заранее.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section id="roles">
+    <section class="alt" id="roles">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>Кому подходит</h2>
-          <p class="section-lead">Командам, которым нужен управляемый обзвон, а не «чёрный ящик с ИИ».</p>
+          <p class="section-lead">Пилот для команд взыскания — не массовый сервис «подключись сам» и не продукт для частных лиц.</p>
         </div>
-        <div class="roles-grid">
+        <div class="roles-grid segments-grid">
+          <article class="role-card reveal">
+            <small>Сегмент</small>
+            <strong>Банки</strong>
+            <p>Управляемый пилот телефонного взыскания с проверками и эскалацией спорных кейсов.</p>
+          </article>
+          <article class="role-card reveal reveal-delay-1">
+            <small>Сегмент</small>
+            <strong>МФО</strong>
+            <p>Обзвон портфеля в согласованных рамках пилота — с журналом действий.</p>
+          </article>
+          <article class="role-card reveal reveal-delay-2">
+            <small>Сегмент</small>
+            <strong>ПКО</strong>
+            <p>Масштабирование телефонного взыскания без потери контроля над спорными случаями.</p>
+          </article>
+          <article class="role-card reveal reveal-delay-3">
+            <small>Сегмент</small>
+            <strong>КЦ взыскания</strong>
+            <p>Автоматизация рутины обзвона, чтобы специалисты брали сложные диалоги.</p>
+          </article>
+        </div>
+        <p class="roles-secondary-lead">Роли в команде клиента</p>
+        <div class="roles-grid roles-secondary">
           <article class="role-card">
             <small>Роль</small>
             <strong>Руководитель взыскания</strong>
@@ -756,26 +1943,29 @@
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Операционный менеджер</strong>
-            <p>Настройка базы, сценария и телефонии без лишних шагов.</p>
-          </article>
-          <article class="role-card">
-            <small>Роль</small>
-            <strong>Юристы и риск-менеджмент</strong>
+            <strong>Риск и юристы</strong>
             <p>Действия можно проверить по журналу и ограничениям.</p>
           </article>
           <article class="role-card">
             <small>Роль</small>
-            <strong>Администратор интеграций</strong>
-            <p>Понятный контур данных и подключений.</p>
+            <strong>Супервизор</strong>
+            <p>Видит отклонения, спорные случаи и передачу специалисту.</p>
           </article>
+          <article class="role-card">
+            <small>Роль</small>
+            <strong>Интеграции</strong>
+            <p>Понятный контур данных и подключений для пилота.</p>
+          </article>
+        </div>
+        <div class="cta-repeat">
+          <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
         </div>
       </div>
     </section>
 
     <section id="faq">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head reveal">
           <h2>FAQ</h2>
           <p class="faq-intro">Коротко — перед демо.</p>
         </div>
@@ -798,7 +1988,7 @@
           </details>
           <details>
             <summary>Какие результаты видны по итогам?</summary>
-            <div class="faq-answer">Исходы звонков, обещания платежа, прогресс кампании и журнал действий — по фактам, без «магических» цифр.</div>
+            <div class="faq-answer">Исходы звонков, обещания платежа, прогресс кампании и журнал действий — по фактам, без выдуманных цифр.</div>
           </details>
         </div>
       </div>
@@ -806,9 +1996,9 @@
 
     <section>
       <div class="container">
-        <div class="cta-panel">
-          <h2>Посмотреть ИИ-коллектор в работе</h2>
-          <p>30 минут — и вы увидите, как кампания проходит от базы до результата.</p>
+        <div class="cta-panel reveal">
+          <h2>Назначьте демо управляемого пилота</h2>
+          <p>Покажем проверки до звонка, передачу специалисту и журнал действий — без обзвона вашей боевой базы.</p>
           <div>
             <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
           </div>
@@ -827,17 +2017,173 @@
     </div>
   </footer>
 
+
+  <div class="demo-drawer-root" id="demoDrawerRoot" aria-hidden="true">
+    <div class="demo-drawer-backdrop" data-demo-close tabindex="-1"></div>
+    <aside
+      class="demo-drawer-panel hero-form-card"
+      id="demo-form"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demoDrawerTitle"
+      aria-label="Заявка на демо"
+    >
+      <div class="demo-drawer-head">
+        <div class="hero-form-top">
+          <div>
+            <h2 id="demoDrawerTitle">Назначить демо</h2>
+            <p>Покажем пилот на вашем сценарии. Без обзвона боевой базы.</p>
+          </div>
+          <ul class="demo-expect">
+            <li>проверки до звонка</li>
+            <li>передача специалисту</li>
+            <li>журнал по шагам</li>
+          </ul>
+        </div>
+        <button type="button" class="demo-drawer-close" data-demo-close aria-label="Закрыть">×</button>
+      </div>
+      <form class="demo-form" id="demoForm" novalidate>
+        <input type="text" name="_hp_name" id="_hp_name" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+        <div class="form-notice error" id="demoError" hidden></div>
+        <label>
+          <span>Имя</span>
+          <input id="demoName" name="name" type="text" autocomplete="name" required>
+        </label>
+        <label>
+          <span>Компания</span>
+          <input id="demoCompany" name="company" type="text" autocomplete="organization" required>
+        </label>
+        <label>
+          <span>Email</span>
+          <input id="demoEmail" name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          <span>Телефон</span>
+          <input id="demoPhone" name="phone" type="tel" autocomplete="tel" required>
+        </label>
+        <label class="check-row">
+          <input id="demoAgree" name="agree" type="checkbox" required>
+          <span>Соглашаюсь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a> и на обработку данных заявки.</span>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit" id="demoSubmit">Отправить заявку</button>
+        <div class="form-success" id="demoSuccess" hidden>Спасибо, мы свяжемся с вами в ближайшее время.</div>
+      </form>
+    </aside>
+  </div>
+
   <div class="sticky-cta" aria-label="Назначить демо">
     <div class="sticky-shell">
       <div class="sticky-copy">
         <strong>Назначить демо</strong>
-        <span>Форма заявки — вверху страницы.</span>
+        <span>Откроем заявку в боковой панели.</span>
       </div>
-      <a class="btn btn-primary" href="#demo-form">Перейти к форме</a>
+      <a class="btn btn-primary" href="#demo-form">Назначить демо</a>
     </div>
   </div>
 
   <script>
+    (() => {
+      const root = document.getElementById('demoDrawerRoot');
+      const panel = document.getElementById('demo-form');
+      const closeNodes = document.querySelectorAll('[data-demo-close]');
+      if (!root || !panel) return;
+
+      let lastFocus = null;
+
+      function openDrawer() {
+        lastFocus = document.activeElement;
+        root.classList.add('is-open');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('demo-drawer-open');
+        const first = panel.querySelector('input:not([type="hidden"]), button, textarea, select');
+        window.setTimeout(() => first?.focus(), 40);
+        if (location.hash !== '#demo-form') {
+          history.replaceState(null, '', '#demo-form');
+        }
+      }
+
+      function closeDrawer() {
+        root.classList.remove('is-open');
+        root.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('demo-drawer-open');
+        if (location.hash === '#demo-form') {
+          history.replaceState(null, '', location.pathname + location.search);
+        }
+        if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+      }
+
+      function isOpen() {
+        return root.classList.contains('is-open');
+      }
+
+      document.querySelectorAll('a[href="#demo-form"]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          openDrawer();
+        });
+      });
+
+      document.addEventListener('click', (event) => {
+        const link = event.target.closest?.('a[href="#demo-form"]');
+        if (!link) return;
+        event.preventDefault();
+        openDrawer();
+      });
+
+      closeNodes.forEach((node) => {
+        node.addEventListener('click', (event) => {
+          event.preventDefault();
+          closeDrawer();
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isOpen()) {
+          event.preventDefault();
+          closeDrawer();
+        }
+      });
+
+      if (location.hash === '#demo-form') openDrawer();
+      window.addEventListener('hashchange', () => {
+        if (location.hash === '#demo-form') openDrawer();
+        else if (isOpen()) closeDrawer();
+      });
+
+      window.__demoDrawer = { open: openDrawer, close: closeDrawer };
+    })();
+
+    (() => {
+      const tabs = Array.from(document.querySelectorAll('.product-tab'));
+      const panels = Array.from(document.querySelectorAll('[data-scene-panel]'));
+      if (!tabs.length || !panels.length) return;
+
+      function activate(scene) {
+        tabs.forEach((tab) => {
+          const on = tab.getAttribute('data-scene') === scene;
+          tab.classList.toggle('is-active', on);
+          tab.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach((panel) => {
+          panel.hidden = panel.getAttribute('data-scene-panel') !== scene;
+        });
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => activate(tab.getAttribute('data-scene')));
+      });
+
+      let i = 0;
+      const order = ['campaign', 'call', 'journal'];
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduced) {
+        window.setInterval(() => {
+          i = (i + 1) % order.length;
+          activate(order[i]);
+        }, 4800);
+      }
+    })();
+
     (() => {
       const relayUrl = document.querySelector('meta[name="lead-relay-url"]')?.getAttribute('content') ?? '';
       const form = document.getElementById('demoForm');
@@ -914,6 +2260,137 @@
           submitButton.disabled = false;
         }
       });
+    })();
+
+    (() => {
+      const header = document.querySelector('.site-header');
+      const onScroll = () => {
+        if (!header) return;
+        header.classList.toggle('is-scrolled', window.scrollY > 8);
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    })();
+
+    (() => {
+      const nodes = document.querySelectorAll('.reveal');
+      if (!nodes.length) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        nodes.forEach((node) => node.classList.add('is-visible'));
+        return;
+      }
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.16, rootMargin: '0px 0px -8% 0px' }
+      );
+      nodes.forEach((node) => observer.observe(node));
+    })();
+
+    (() => {
+      const track = document.getElementById('galleryTrack');
+      const prev = document.getElementById('galleryPrev');
+      const next = document.getElementById('galleryNext');
+      const dotsWrap = document.getElementById('galleryDots');
+      const liveTitle = document.getElementById('galleryLiveTitle');
+      const liveBody = document.getElementById('galleryLiveBody');
+      const liveStatus = document.getElementById('galleryLiveStatus');
+      if (!track || !prev || !next || !liveTitle || !liveBody || !liveStatus) return;
+
+      const cards = Array.from(track.querySelectorAll('.gallery-card'));
+      const scenes = [
+        {
+          title: 'Подключаем сценарий и рамки пилота',
+          body: 'В кабинете видны задача, сценарий и границы пилота. Команда понимает, что именно запускается.',
+          chips: ['Сценарий готов', 'Пилот ограничен']
+        },
+        {
+          title: 'Проверка ограничений перед действиями',
+          body: 'Перед звонком система проверяет время и частоту. Если звонить нельзя — шаг останавливается.',
+          chips: ['Время ок', 'Частота ок']
+        },
+        {
+          title: 'Ведём управляемый диалог',
+          body: 'Идёт разговор по сценарию. Исход и ключевые фразы фиксируются в карточке контакта.',
+          chips: ['Диалог 02:14', 'Исход: обещание']
+        },
+        {
+          title: 'Передаём специалисту и пишем журнал',
+          body: 'Спорный случай уходит человеку вместе с историей. В журнале остаётся полная цепочка шагов.',
+          chips: ['Передано специалисту', 'Журнал обновлён']
+        }
+      ];
+
+      let index = 0;
+
+      function renderDots() {
+        if (!dotsWrap) return;
+        dotsWrap.innerHTML = '';
+        cards.forEach((_, i) => {
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.className = 'gallery-dot' + (i === index ? ' is-active' : '');
+          dot.setAttribute('aria-label', 'Шаг ' + (i + 1));
+          dot.addEventListener('click', () => goTo(i));
+          dotsWrap.appendChild(dot);
+        });
+      }
+
+      function syncLive() {
+        const scene = scenes[index];
+        liveTitle.textContent = scene.title;
+        liveBody.textContent = scene.body;
+        liveStatus.innerHTML = scene.chips
+          .map((chip) => '<span class="gallery-chip">' + chip + '</span>')
+          .join('');
+        cards.forEach((card, i) => card.classList.toggle('is-active', i === index));
+        renderDots();
+      }
+
+      function goTo(nextIndex) {
+        index = (nextIndex + cards.length) % cards.length;
+        syncLive();
+      }
+
+      prev.addEventListener('click', () => goTo(index - 1));
+      next.addEventListener('click', () => goTo(index + 1));
+      cards.forEach((card, i) => card.addEventListener('click', () => goTo(i)));
+
+      track.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          goTo(index + 1);
+        }
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          goTo(index - 1);
+        }
+      });
+
+      let autoTimer = null;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function startAuto() {
+        if (reduced) return;
+        stopAuto();
+        autoTimer = window.setInterval(() => goTo(index + 1), 4200);
+      }
+      function stopAuto() {
+        if (autoTimer) window.clearInterval(autoTimer);
+        autoTimer = null;
+      }
+
+      track.addEventListener('mouseenter', stopAuto);
+      track.addEventListener('mouseleave', startAuto);
+      prev.addEventListener('mouseenter', stopAuto);
+      next.addEventListener('mouseenter', stopAuto);
+
+      syncLive();
+      startAuto();
     })();
   </script>
 </body>
