@@ -3,11 +3,17 @@ import { z } from 'zod';
 import { parseDebtorImportCsv } from '../import/debtor-import-parser.js';
 import { MAX_DEBTOR_IMPORT_BYTES, parseDebtorImportXlsx } from '../import/xlsx-parser.js';
 import { validateDebtorImportRows } from '../import/debtor-import-validator.js';
-import { resolveActorId } from '../server/authz/actor.js';
+import { resolveActorId, resolveAuditActorMetadata } from '../server/authz/actor.js';
 import { authorizeZone, normalizeRole } from '../server/authz/index.js';
 import { roleMiddleware } from '../server/middleware/rbac.js';
 import { evaluateCampaignReadiness } from '../campaigns/readiness.js';
+import { interruptActiveCallAttempts } from '../campaigns/force-stop-interrupt.js';
+import { matchesAuditActionGroup, normalizeAuditActionGroup } from '../domain/audit-log/index.js';
+import type { AuditActionGroup } from '../domain/audit-log/index.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { toComplianceDecisionSummary } from '../domain/compliance-block-kind/index.js';
+import { countCampaignCompletedCalls } from '../reports/campaign-report.js';
+import type { VoiceProviderResolver } from '../telephony/voice-provider/resolver.js';
 
 type CampaignDependencies = {
   $transaction?: <T>(callback: (tx: any) => Promise<T>) => Promise<T>;
@@ -44,10 +50,16 @@ type CampaignDependencies = {
   callAttempt?: {
     count?: (args: any) => Promise<number>;
     findMany?: (args: any) => Promise<unknown>;
+    update?: (args: any) => Promise<unknown>;
   };
+  voiceProviderResolver?: VoiceProviderResolver;
   callResult?: {
     findUnique?: (args: any) => Promise<unknown>;
     update?: (args: any) => Promise<unknown>;
+  };
+  usageEvent?: {
+    count?: (args: any) => Promise<number>;
+    findMany?: (args: any) => Promise<unknown>;
   };
   complianceDecision?: {
     count?: (args: any) => Promise<number>;
@@ -110,7 +122,16 @@ const campaignStatusTransitionSchema = z.object({
 });
 
 const campaignStatusUpdateSchema = z.object({
-  status: z.enum(campaignStatusValues)
+  status: z.enum(campaignStatusValues),
+  stopMode: z.enum(['graceful', 'force']).optional()
+}).superRefine((value, ctx) => {
+  if (value.stopMode && value.status !== 'completed') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['stopMode'],
+      message: 'stopMode is only allowed when status is completed'
+    });
+  }
 });
 
 const campaignSafeResumeSchema = z.object({
@@ -166,8 +187,25 @@ const tenantAuditLogSchema = z.object({
   tenantId: z.string().uuid()
 });
 
+const auditActionGroupQuerySchema = z
+  .string()
+  .min(1)
+  .transform((value, ctx) => {
+    const normalized = normalizeAuditActionGroup(value);
+    if (!normalized) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid actionGroup'
+      });
+      return z.NEVER;
+    }
+
+    return normalized;
+  });
+
 const tenantAuditLogQuerySchema = z.object({
   action: z.string().min(1).optional(),
+  actionGroup: auditActionGroupQuerySchema.optional(),
   entityType: z.string().min(1).optional(),
   campaignId: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -230,10 +268,35 @@ const getReviewUrgency = (itemType: 'qa' | 'compliance', outcome: string | null 
 
 const campaignAuditLogQuerySchema = z.object({
   action: z.string().min(1).optional(),
+  actionGroup: auditActionGroupQuerySchema.optional(),
   entityType: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).max(1000).default(0)
 });
+
+const matchesAuditLogFilters = (
+  action: string,
+  entityType: string,
+  filters: {
+    action?: string;
+    actionGroup?: AuditActionGroup;
+    entityType?: string;
+  }
+): boolean => {
+  if (filters.action && action !== filters.action) {
+    return false;
+  }
+
+  if (filters.actionGroup && !matchesAuditActionGroup(action, filters.actionGroup)) {
+    return false;
+  }
+
+  if (filters.entityType && entityType !== filters.entityType) {
+    return false;
+  }
+
+  return true;
+};
 
 const REVIEW_ITEM_ROLES = new Set([
   'tenant_owner',
@@ -394,7 +457,8 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         name: true,
         status: true,
         timezone: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
       }
     }) as unknown as Array<{
       id: string;
@@ -402,9 +466,70 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       status: string;
       timezone: string;
       createdAt: string;
+      updatedAt: string;
     }>)) ?? [];
 
-    return reply.code(200).send(campaigns);
+    const autoPausedIds = campaigns
+      .filter((campaign) => campaign.status === 'auto_paused')
+      .map((campaign) => campaign.id);
+
+    const pauseAudits = autoPausedIds.length > 0 && deps.auditLog?.findMany
+      ? ((await deps.auditLog.findMany({
+          where: {
+            tenantId: params.data.tenantId,
+            entityType: 'campaign',
+            action: 'campaign.auto_paused',
+            entityId: { in: autoPausedIds }
+          },
+          orderBy: { createdAt: 'desc' }
+        })) as Array<{
+          entityId: string;
+          createdAt: string;
+          metadata?: { reasonText?: unknown };
+        }>)
+      : [];
+
+    const latestReasonByCampaignId = new Map<string, string>();
+    for (const audit of pauseAudits) {
+      if (latestReasonByCampaignId.has(audit.entityId)) {
+        continue;
+      }
+      const reasonText = typeof audit.metadata?.reasonText === 'string' ? audit.metadata.reasonText.trim() : '';
+      if (reasonText) {
+        latestReasonByCampaignId.set(audit.entityId, reasonText);
+      }
+    }
+
+    const enriched = await Promise.all(campaigns.map(async (campaign) => {
+      const tenantId = params.data.tenantId;
+      const [totalRecords, attemptedCalls, completedCalls] = await Promise.all([
+        deps.debtorRecord?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0),
+        deps.callAttempt?.count?.({ where: { campaignId: campaign.id } }) ?? Promise.resolve(0),
+        countCampaignCompletedCalls(deps as Parameters<typeof countCampaignCompletedCalls>[0], {
+          tenantId,
+          campaignId: campaign.id
+        })
+      ]);
+
+      return {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        timezone: campaign.timezone,
+        createdAt: campaign.createdAt,
+        updatedAt: campaign.updatedAt,
+        statusReason: campaign.status === 'auto_paused'
+          ? (latestReasonByCampaignId.get(campaign.id) ?? null)
+          : null,
+        progress: {
+          attemptedCalls,
+          completedCalls,
+          totalRecords
+        }
+      };
+    }));
+
+    return reply.code(200).send(enriched);
   });
 
   app.get(
@@ -450,11 +575,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
 
     const filteredRows = rows
       .filter((item) => {
-        if (query.data.action && item.action !== query.data.action) {
-          return false;
-        }
-
-        if (query.data.entityType && item.entityType !== query.data.entityType) {
+        if (
+          !matchesAuditLogFilters(item.action, item.entityType, {
+            action: query.data.action,
+            actionGroup: query.data.actionGroup,
+            entityType: query.data.entityType
+          })
+        ) {
           return false;
         }
 
@@ -657,17 +784,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     });
 
     const filteredCampaignAudits = campaignAudits
-      .filter((row) => {
-        if (query.data.action && row.action !== query.data.action) {
-          return false;
-        }
-
-        if (query.data.entityType && row.entityType !== query.data.entityType) {
-          return false;
-        }
-
-        return true;
-      })
+      .filter((row) =>
+        matchesAuditLogFilters(row.action, row.entityType, {
+          action: query.data.action,
+          actionGroup: query.data.actionGroup,
+          entityType: query.data.entityType
+        })
+      )
       .map((item) => ({
         id: item.id,
         tenantId: item.tenantId,
@@ -845,9 +968,11 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       tenantId: item.tenantId,
       campaignId: item.campaignId,
       debtorRecordId: item.debtorRecordId,
-      decision: item.decision,
-      reasonCode: item.reasonCode,
-      reasonText: item.reasonText,
+      ...toComplianceDecisionSummary({
+        decision: item.decision,
+        reasonCode: item.reasonCode,
+        reasonText: item.reasonText
+      }),
       createdAt: toIsoString(item.checkedAt),
       retryCount: retryCountByDebtor.get(item.debtorRecordId) ?? 0,
       urgency: getReviewUrgency('compliance')
@@ -1211,6 +1336,9 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
     }
 
     const previousStatus = campaign.status;
+    const stopMode = nextStatus === 'completed'
+      ? (payload.data.stopMode ?? 'graceful')
+      : undefined;
 
     const persistStatusChange = async (store: Pick<CampaignDependencies, 'campaign' | 'auditLog' | 'outboxEvent'>) => {
       const updated = await (store.campaign.update?.({
@@ -1219,7 +1347,14 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         select: { id: true, tenantId: true, name: true, status: true, timezone: true, createdAt: true }
       }) ?? Promise.resolve(null)) as { id: string; tenantId: string; name: string; status: string; timezone: string; createdAt: string };
 
-      await store.auditLog?.create?.({
+    const forceInterruptResult = stopMode === 'force'
+      ? await interruptActiveCallAttempts(deps, {
+          tenantId: params.data.tenantId,
+          campaignId: params.data.campaignId
+        })
+      : undefined;
+
+    await deps.auditLog?.create?.({
       data: {
         tenantId: params.data.tenantId,
         userId: actorId,
@@ -1227,9 +1362,27 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
         entityType: 'campaign',
         entityId: params.data.campaignId,
         metadata: {
+          ...resolveAuditActorMetadata(request),
           campaignId: params.data.campaignId,
           fromStatus: previousStatus,
-          toStatus: nextStatus
+          toStatus: nextStatus,
+          previousValue: previousStatus,
+          nextValue: nextStatus,
+          ...(stopMode
+            ? {
+                stopMode,
+                reason: stopMode,
+                forceInterruptsActiveAttempts: stopMode === 'force',
+                complianceBypass: false,
+                ...(forceInterruptResult
+                  ? {
+                      interruptedActiveAttempts: forceInterruptResult.interrupted,
+                      skippedActiveAttemptsProvider: forceInterruptResult.skippedProvider,
+                      forceInterruptErrors: forceInterruptResult.errors
+                    }
+                  : {})
+              }
+            : {})
         }
       }
       });
@@ -1249,7 +1402,10 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
       ? await deps.$transaction((tx) => persistStatusChange(tx))
       : await persistStatusChange(deps);
 
-    return reply.code(200).send(updated);
+    return reply.code(200).send({
+      ...updated,
+      ...(stopMode ? { stopMode } : {})
+    });
   });
 
   app.post(
@@ -1333,9 +1489,13 @@ export const registerCampaignRoutes = (app: FastifyInstance, deps: CampaignDepen
           entityType: 'campaign',
           entityId: params.data.campaignId,
           metadata: {
+            ...resolveAuditActorMetadata(request),
             campaignId: params.data.campaignId,
             fromStatus: 'auto_paused',
             toStatus: payload.data.targetStatus,
+            previousValue: 'auto_paused',
+            nextValue: payload.data.targetStatus,
+            reason: 'safe_resume',
             checklist,
             forceCall: false
           }

@@ -314,15 +314,19 @@ export const createApp = (dependencies: AppDependencies = {}): any => {
   }));
 
   registerAuthRoutes(app as any, campaignStore as any, env.NODE_ENV === 'production');
-  registerCampaignRoutes(app as any, campaignStore as any);
+  const voiceProviderResolver = (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
+    sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
+    mango: new MangoVoiceProvider()
+  });
+  registerCampaignRoutes(app as any, {
+    ...campaignStore,
+    voiceProviderResolver
+  });
   registerComplianceRoutes(app as any, { ...(campaignStore as any), frequencyLedger });
   registerCallRoutes(app as any, {
     ...(campaignStore as AppCallDependencies),
     frequencyLedger,
-    voiceProviderResolver: (campaignStore as AppCallDependencies).voiceProviderResolver ?? createVoiceProviderResolver({
-      sandbox: (campaignStore as AppCallDependencies).voiceProvider ?? new SandboxVoiceProvider(),
-      mango: new MangoVoiceProvider()
-    })
+    voiceProviderResolver
   });
   registerQaRoutes(app as any, campaignStore as any);
   registerScriptRoutes(app as any, campaignStore as any);

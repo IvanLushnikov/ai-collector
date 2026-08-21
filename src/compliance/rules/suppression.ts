@@ -51,7 +51,7 @@ export class SuppressionRule implements ComplianceRule {
     return {
       decision: 'block',
       reasonCode: 'SUPPRESSION_BLOCK',
-      reasonText: 'Contact is on the tenant suppression list'
+      reasonText: 'Контакт в списке исключений'
     };
   }
 }

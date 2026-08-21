@@ -12,6 +12,10 @@ import {
 } from '../domain/frequency-ledger/index.js';
 import { authorizeZone, canAccessZone, normalizeRole } from '../server/authz/index.js';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import {
+  enrichBlockedReason,
+  toComplianceDecisionSummary
+} from '../domain/compliance-block-kind/index.js';
 
 const authorizeComplianceCheck = async (
   request: FastifyRequest,
@@ -242,7 +246,7 @@ export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceD
 
     return reply.code(200).send({
       decision: result.decision,
-      reasons: result.blockedReasons,
+      reasons: result.blockedReasons.map(enrichBlockedReason),
       rules: result.rules
     });
   });
@@ -306,11 +310,13 @@ export const registerComplianceRoutes = (app: FastifyInstance, deps: ComplianceD
         tenantId: decision.tenantId,
         campaignId: decision.campaignId,
         debtorRecordId: decision.debtorRecordId,
-        decision: decision.decision,
-        reasonCode: decision.reasonCode,
-        reasonText: decision.reasonText,
-        ruleVersion: decision.ruleVersion,
-        checkedAt: decision.checkedAt
+        ...toComplianceDecisionSummary({
+          decision: decision.decision,
+          reasonCode: decision.reasonCode,
+          reasonText: decision.reasonText,
+          checkedAt: decision.checkedAt
+        }),
+        ruleVersion: decision.ruleVersion
       }))
     );
   });

@@ -6,20 +6,21 @@
   <title>ИИ-коллектор · Личный кабинет</title>
   <meta name="description" content="Прототип личного кабинета голосового ИИ-агента раннего взыскания для российского рынка">
   <style>
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f6f8;color:#17212f;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}:root{--nav:#101b2d;--nav2:#192a43;--ink:#17212f;--muted:#64748b;--line:#d6dee7;--blue:#1268a8;--cyan:#15a7bd;--green:#17815b;--amber:#a65d08;--red:#b43a40;--soft:#f7f9fb;--white:#fff;--shadow:0 8px 24px rgba(21,42,70,.07)}
-    .app{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr)}.sidebar{position:sticky;top:0;height:100vh;background:var(--nav);color:#dce7f2;display:flex;flex-direction:column;padding:0 12px;overflow:auto}.brand{height:78px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #27364d}.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#eafaff,#7de2ee);color:#10223a;display:grid;place-items:center;font-weight:900}.brand b{display:block;font-size:17px}.brand small{display:block;color:#91a5bc;font-size:12px}.nav-label{margin:22px 10px 8px;color:#71869f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.nav{display:grid;gap:5px}.nav button{border:0;border-radius:8px;background:transparent;color:#aec0d3;text-align:left;padding:11px 12px;font-size:15px}.nav button:hover{background:#182b45;color:#fff}.nav button.active{background:#203957;color:#fff;box-shadow:inset 3px 0 0 #49c9d8}.side-flow{margin-top:20px;padding:14px;border:1px solid #2d415b;border-radius:10px;background:#15253a}.side-flow b{font-size:13px}.side-flow p{font-size:12px;color:#91a5bc;margin:5px 0 10px}.flow-line{height:6px;border-radius:5px;background:#2b3f58;overflow:hidden}.flow-line span{display:block;width:60%;height:100%;background:#38bfce}.side-user{margin-top:auto;padding:18px 6px;border-top:1px solid #27364d}.side-user b{display:block;font-size:13px}.side-user small{color:#8fa3b9;font-size:12px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f4f6f8;color:#17212f;font:15px/1.45 "Segoe UI", Arial, sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}:root{--nav:#101b2d;--nav2:#192a43;--ink:#17212f;--muted:#5b6b7c;--line:#cfd8e3;--blue:#1a5f8a;--cyan:#1a5f8a;--green:#1b6b4a;--amber:#9a5b0a;--red:#a83a3f;--soft:#f4f6f8;--surface:#fff;--white:#fff;--shadow:none}
+    .app{min-height:100vh;display:grid;grid-template-columns:250px minmax(0,1fr);transition:grid-template-columns .2s}.app.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)}.sidebar{position:sticky;top:0;height:100vh;background:var(--nav);color:#dce7f2;display:flex;flex-direction:column;padding:0 12px;overflow:auto;transition:padding .2s}.sidebar.collapsed{padding:0 8px}.sidebar-toggle{border:0;border-radius:8px;background:#182b45;color:#aec0d3;width:36px;height:36px;display:grid;place-items:center;margin:10px 0 0 4px;font-size:18px;line-height:1}.sidebar-toggle:hover{background:#203957;color:#fff}.brand{height:78px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #27364d}.sidebar.collapsed .brand{justify-content:center;padding:0 4px}.logo{width:40px;height:40px;border-radius:8px;background:#1a5f8a;color:#fff;display:grid;place-items:center;font-weight:900;flex-shrink:0}.brand b{display:block;font-size:17px}.brand small{display:block;color:#91a5bc;font-size:12px}.sidebar.collapsed .brand-text,.sidebar.collapsed .nav-label,.sidebar.collapsed .nav button .nav-text,.sidebar.collapsed .side-user .side-user-meta{display:none}.nav-label{margin:22px 10px 8px;color:#71869f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.nav{display:grid;gap:5px}.nav button{border:0;border-radius:8px;background:transparent;color:#aec0d3;text-align:left;padding:11px 12px;font-size:15px;display:flex;align-items:center;gap:8px}.sidebar.collapsed .nav button{justify-content:center;padding:11px 8px}.nav button:hover{background:#182b45;color:#fff}.nav button.active{background:#203957;color:#fff;box-shadow:inset 3px 0 0 #7eb3d4}.side-flow{margin-top:20px;padding:14px;border:1px solid #2d415b;border-radius:10px;background:#15253a}.side-flow b{font-size:13px}.side-flow p{font-size:12px;color:#91a5bc;margin:5px 0 10px}.flow-line{height:6px;border-radius:5px;background:#2b3f58;overflow:hidden}.flow-line span{display:block;width:60%;height:100%;background:#7eb3d4}.side-balance{margin-top:auto;padding:12px 4px 10px}.side-balance-card{border:1px solid #2d415b;border-radius:8px;background:#15253a;padding:14px 12px}.side-balance-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}.side-balance-icon{width:28px;height:28px;border-radius:6px;background:#203957;color:#b7c7d8;display:grid;place-items:center;font-size:14px;line-height:1}.side-balance b{display:block;font-size:28px;margin:2px 0 4px;line-height:1.1;letter-spacing:-.02em;color:#fff}.side-balance small{display:block;color:#8fa3b9;font-size:12px}.side-balance-hint{margin:0 0 12px;font-size:11px;color:#6f879f;line-height:1.35}.side-balance .btn{width:100%;border-color:#3d5570;background:#1a2f47;color:#dce7f2;font-weight:700}.side-balance .btn:hover{background:#24405f;border-color:#7eb3d4}.side-balance-compact{display:none;width:44px;height:44px;margin:8px auto 0;border:1px solid #2d415b;border-radius:8px;background:#15253a;color:#b7c7d8;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;padding:4px}.side-balance-compact small{font-size:10px;color:#9ec2d8;line-height:1}.sidebar.collapsed .side-balance-card,.sidebar.collapsed .side-balance-hint{display:none}.sidebar.collapsed .side-balance{padding:8px 0}.sidebar.collapsed .side-balance-compact{display:flex}.side-user{padding:10px 6px 18px}.side-user b{display:block;font-size:13px}.side-user small{color:#8fa3b9;font-size:12px;display:block;margin-top:2px}#sideUserEmail{word-break:break-all}
     .work{min-width:0}.topbar{height:78px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:18px;position:sticky;top:0;z-index:10}.crumb b{display:block;font-size:15px}.crumb span{font-size:12px;color:var(--muted)}.top-actions{display:flex;align-items:center;gap:9px}.search input{width:290px;border:1px solid #bbc7d3;border-radius:8px;padding:9px 12px;background:#f9fbfc}.btn{border:1px solid #b8c5d1;border-radius:8px;background:#fff;color:#25374b;padding:9px 13px;font-weight:700;white-space:nowrap}.btn:hover{background:#f1f5f8}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:#0f568c}.btn.success{background:var(--green);border-color:var(--green);color:#fff}.btn.small{font-size:13px;padding:7px 10px}.btn.link{border:0;background:transparent;color:var(--blue);padding:5px}.btn:disabled{opacity:.45;cursor:not-allowed}
-    main{max-width:1440px;margin:auto;padding:28px 32px 60px}.screen{display:none}.screen.active{display:block}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}.page-head h1{font-size:28px;line-height:1.2;margin:0 0 7px;letter-spacing:-.02em}.page-head p{font-size:14px;color:var(--muted);margin:0;max-width:780px}.head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #add4dd;background:#eefbfc;color:#176375;border-radius:20px;padding:5px 9px;font-size:12px;font-weight:800}.pill:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan)}
-    .hero{border:1px solid #bcd8df;border-radius:16px;background:linear-gradient(115deg,#fff 0%,#f1fbfc 60%,#e5f7fa 100%);padding:28px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:28px;box-shadow:var(--shadow);margin-bottom:22px}.hero h2{font-size:26px;line-height:1.25;margin:8px 0}.hero p{color:#52667b;margin:0 0 18px;max-width:690px}.hero-note{border:1px solid #cce2e6;border-radius:12px;background:rgba(255,255,255,.75);padding:18px}.hero-note b{font-size:14px}.hero-note ul{padding-left:18px;margin:10px 0 0;color:#4e6277;font-size:13px}.hero-note li{margin:6px 0}
-    .journey{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:24px}.journey-step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;min-height:130px}.step-number{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#e8f5f7;color:#116679;font-weight:900;font-size:13px;margin-bottom:10px}.journey-step b{display:block;font-size:14px}.journey-step p{font-size:12px;color:var(--muted);margin:5px 0 0}.panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(21,42,70,.04);margin-bottom:16px;min-width:0}.panel-head{min-height:56px;padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-title{font-size:16px;font-weight:800}.panel-sub{font-size:12px;color:var(--muted)}.panel-body{padding:18px}.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px;position:relative}.metric small{color:var(--muted);font-size:12px}.metric strong{display:block;font-size:26px;margin:4px 0;line-height:1.25}.metric span{font-size:12px;color:var(--muted)}.metric.ok{border-top:3px solid var(--green)}.metric.info{border-top:3px solid var(--blue)}.metric.warn{border-top:3px solid var(--amber)}.metric.stop{border-top:3px solid var(--red)}
-    .tag{display:inline-flex;align-items:center;gap:5px;border-radius:18px;padding:4px 8px;font-size:12px;font-weight:800;white-space:nowrap}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.tag.run{color:#116844;background:#eaf7f1}.tag.draft{color:#53677b;background:#eef2f5}.tag.warn{color:#8b510d;background:#fff4e5}.tag.stop{color:#9d3037;background:#fff0f1}.tag.info{color:#145f90;background:#edf7fd}.table-wrap{max-width:100%;overflow-x:auto}.table-wrap table{width:100%;min-width:820px;border-collapse:collapse;font-size:13px}.table-wrap th,.table-wrap td{padding:12px 14px;border-bottom:1px solid #e2e8ee;text-align:left;vertical-align:middle}.table-wrap th{background:#f3f6f8;color:#52677d;font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.table-wrap tbody tr:hover{background:#f8fbfc}.num{text-align:right!important;font-variant-numeric:tabular-nums}.row-actions{display:flex;gap:6px;justify-content:flex-end}.empty{padding:42px 20px;text-align:center;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:5px}.review-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}.review-toolbar .review-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.review-toolbar label{font-size:12px;color:var(--muted)}.review-toolbar select{min-width:180px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff;font-size:13px}.review-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.review-metric{padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:9px}.review-metric b{display:block;font-size:22px;margin:2px 0}.review-detail{display:grid;gap:11px}.review-detail-block{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}.review-events{display:grid;gap:8px;max-height:250px;overflow:auto}.review-event{padding:12px 0;border-top:1px solid #edf2f6}.review-event b{display:block;margin-bottom:4px}.review-event small{display:block;color:var(--muted);margin-bottom:4px}.review-event pre{white-space:pre-wrap;font-size:12px;background:#f3f7fb;padding:9px;border-radius:8px;margin:5px 0 0}.call-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}.call-toolbar .call-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.call-toolbar label{font-size:12px;color:var(--muted)}.call-toolbar select,.call-toolbar .btn{min-width:140px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff;font-size:13px}.call-filters .inline-label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}.call-filters .inline-label input{width:14px;height:14px}.call-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.call-metric{padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:9px}.call-metric b{display:block;font-size:22px;margin:2px 0}.call-metric small{display:block;color:var(--muted);margin-top:2px}.call-detail{display:grid;gap:11px}.call-detail-block{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}.call-timeline{display:grid;gap:8px;max-height:300px;overflow:auto}.call-timeline-item{padding:12px 0;border-top:1px solid #edf2f6}.call-timeline-item b{display:block;margin-bottom:4px}.call-timeline-item small{display:block;color:var(--muted);margin-bottom:4px}.call-timeline-item pre{white-space:pre-wrap;font-size:12px;background:#f3f7fb;padding:9px;border-radius:8px;margin:5px 0 0}.call-transcript{white-space:pre-wrap;font-size:13px;background:#f3f6fa;padding:11px;border:1px solid var(--line);border-radius:8px}.call-qa-status{display:inline-flex;align-items:center;gap:6px}
+    main{max-width:1440px;margin:auto;padding:28px 32px 60px}.screen{display:none}.screen.active{display:block}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}.page-head h1{font-size:28px;line-height:1.2;margin:0 0 7px;letter-spacing:-.02em}.page-head p{font-size:14px;color:var(--muted);margin:0;max-width:780px}.head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #c5d0db;background:#f3f6f8;color:#334155;border-radius:4px;padding:4px 8px;font-size:12px;font-weight:800}.pill:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--blue)}
+    .hero{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:20px 22px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:20px;box-shadow:none;margin-bottom:16px}.hero h2{font-size:22px;line-height:1.3;margin:6px 0}.hero p{color:#52667b;margin:0 0 14px;max-width:690px}.hero-note{border:1px solid var(--line);border-radius:8px;background:var(--soft);padding:14px 16px}.hero-note b{font-size:14px}.hero-note ul{padding-left:18px;margin:10px 0 0;color:#4e6277;font-size:13px}.hero-note li{margin:6px 0}
+    .journey{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:24px}.journey-step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;min-height:130px}.step-number{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#e8eef4;color:#1a5f8a;font-weight:900;font-size:13px;margin-bottom:10px}.journey-step b{display:block;font-size:14px}.journey-step p{font-size:12px;color:var(--muted);margin:5px 0 0}.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:none;margin-bottom:14px;min-width:0}.panel-head{min-height:56px;padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-title{font-size:16px;font-weight:800}.panel-sub{font-size:12px;color:var(--muted)}.panel-body{padding:18px}.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.metric{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;position:relative}.metric small{color:var(--muted);font-size:12px}.metric strong{display:block;font-size:26px;margin:4px 0;line-height:1.25}.metric span{font-size:12px;color:var(--muted)}.metric.ok{border-top:3px solid var(--green)}.metric.info{border-top:3px solid var(--blue)}.metric.warn{border-top:3px solid var(--amber)}.metric.stop{border-top:3px solid var(--red)}.overview-risk-stack{display:grid;gap:8px;margin-bottom:14px}.overview-risk-stack:not(:has(:not([hidden]))){display:none;margin:0}.overview-risk-stack .notice{margin:0}#campaignOverviewKpis.is-risk .metric.info{border-top-color:#b8c4ce}
+#campaignOverviewKpis.is-risk .metric.warn,#campaignOverviewKpis.is-risk .metric.stop{border-top-width:3px}
+    .tag{display:inline-flex;align-items:center;gap:5px;border-radius:4px;padding:3px 8px;font-size:12px;font-weight:800;white-space:nowrap}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.tag.run{color:#116844;background:#eaf7f1}.tag.draft{color:#53677b;background:#eef2f5}.tag.warn{color:#8b510d;background:#fff4e5}.tag.stop{color:#9d3037;background:#fff0f1}.tag.info{color:#145f90;background:#edf7fd}.tag.block-permanent{color:#9d3037;background:#fff0f1}.tag.block-temporary{color:#8b510d;background:#fff4e5}.tag.block-campaign-pause{color:#145f90;background:#edf7fd}.block-kind-block{margin-top:4px}.block-kind-hint{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}.block-kind-term{font-size:11px;color:var(--muted);margin-left:6px;font-weight:700}.base-block-kind-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.base-block-kind-card{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:#fff}.base-block-kind-card.permanent{border-top:3px solid var(--red)}.base-block-kind-card.temporary{border-top:3px solid var(--amber)}.base-block-kind-card.campaign_pause{border-top:3px solid var(--blue)}.table-wrap{max-width:100%;overflow-x:auto}.table-wrap table{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}.table-wrap td.campaign-reason,.table-wrap td.campaign-mode,.table-wrap td.campaign-updated{color:var(--muted);max-width:220px}.table-wrap th,.table-wrap td{padding:12px 14px;border-bottom:1px solid #e2e8ee;text-align:left;vertical-align:middle}.table-wrap th{background:#f3f6f8;color:#52677d;font-size:11px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}.table-wrap tbody tr:hover{background:#f8fbfc}.num{text-align:right!important;font-variant-numeric:tabular-nums}.row-actions{display:flex;gap:6px;justify-content:flex-end}.empty{padding:42px 20px;text-align:center;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:5px}.review-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}.review-toolbar .review-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.review-toolbar label{font-size:12px;color:var(--muted)}.review-toolbar select{min-width:180px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff;font-size:13px}.review-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.review-metric{padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:9px}.review-metric b{display:block;font-size:22px;margin:2px 0}.review-detail{display:grid;gap:11px}.review-detail-block{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}.review-events{display:grid;gap:8px;max-height:250px;overflow:auto}.review-event{padding:12px 0;border-top:1px solid #edf2f6}.review-event b{display:block;margin-bottom:4px}.review-event small{display:block;color:var(--muted);margin-bottom:4px}.review-event pre{white-space:pre-wrap;font-size:12px;background:#f3f7fb;padding:9px;border-radius:8px;margin:5px 0 0}.call-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}.call-toolbar .call-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.call-toolbar label{font-size:12px;color:var(--muted)}.call-toolbar select,.call-toolbar .btn{min-width:140px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff;font-size:13px}.call-filters .inline-label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}.call-filters .inline-label input{width:14px;height:14px}.call-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.call-metric{padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:9px}.call-metric b{display:block;font-size:22px;margin:2px 0}.call-metric small{display:block;color:var(--muted);margin-top:2px}.call-detail{display:grid;gap:11px}.call-detail-block{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}.call-timeline{display:grid;gap:8px;max-height:300px;overflow:auto}.call-timeline-item{padding:12px 0;border-top:1px solid #edf2f6}.call-timeline-item b{display:block;margin-bottom:4px}.call-timeline-item small{display:block;color:var(--muted);margin-bottom:4px}.call-timeline-item pre{white-space:pre-wrap;font-size:12px;background:#f3f7fb;padding:9px;border-radius:8px;margin:5px 0 0}.call-transcript{white-space:pre-wrap;font-size:13px;background:#f3f6fa;padding:11px;border:1px solid var(--line);border-radius:8px}.call-qa-status{display:inline-flex;align-items:center;gap:6px}
     .source-card,.provider,.script-card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:17px}.source-card h3,.provider h3,.script-card h3{font-size:16px;margin:0 0 5px}.source-card p,.provider p,.script-card p{font-size:13px;color:var(--muted);margin:0 0 14px}.card-top{display:flex;justify-content:space-between;gap:10px}.card-actions{display:flex;gap:7px;flex-wrap:wrap}.provider.selected,.script-card.selected{border:2px solid var(--blue);background:#f6fbff}.provider-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}.provider-meta div{border-radius:8px;background:#f3f6f8;padding:9px}.provider-meta small{display:block;color:var(--muted);font-size:11px}.provider-meta b{font-size:13px}
-    .campaign-shell{display:none}.campaign-shell.active{display:block}.campaign-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}.back{border:0;background:transparent;color:var(--blue);font-weight:750;padding:0}.campaign-title h1{font-size:26px;margin:4px 0}.campaign-title p{margin:0;color:var(--muted);font-size:13px}.campaign-tabs{display:flex;gap:5px;overflow-x:auto;padding:5px;background:#e9eef3;border-radius:11px;margin-bottom:18px}.campaign-tabs button{border:0;background:transparent;border-radius:8px;padding:9px 12px;white-space:nowrap;color:#506377;font-size:13px;font-weight:750}.campaign-tabs button.active{background:#fff;color:#17334e;box-shadow:0 2px 7px rgba(20,40,70,.1)}.campaign-view{display:none}.campaign-view.active{display:block}.readiness{display:grid;gap:8px}.ready-row{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid #e0e7ed;border-radius:9px}.ready-icon{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#e8f6f0;color:var(--green);font-weight:900}.ready-icon.warn{background:#fff2df;color:var(--amber)}.ready-row b{font-size:14px}.ready-row small{display:block;color:var(--muted);font-size:12px}.activity{display:grid;gap:4px}.activity-row{display:grid;grid-template-columns:90px 12px 1fr;gap:8px;min-height:42px}.activity-row time{font-size:12px;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;background:var(--blue);margin-top:5px}.activity-row p{margin:0;font-size:13px}.notice{border-left:4px solid var(--blue);background:#eef7fc;border-radius:6px;padding:12px 14px;font-size:13px;color:#3e5770}.notice.warn{border-left-color:var(--amber);background:#fff7e9}.notice.danger{border-left-color:var(--red);background:#fff1f2}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}.field label{display:block;font-size:13px;font-weight:800;color:#43566a;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid #b8c4cf;border-radius:8px;padding:10px 11px;background:#fff}.field textarea{min-height:96px;resize:vertical}.dropzone{border:2px dashed #a9bbc9;border-radius:12px;padding:26px;text-align:center;background:#f8fbfc}.dropzone b{display:block;font-size:16px}.dropzone p{font-size:13px;color:var(--muted);margin:5px 0 13px}.mapping{display:grid;grid-template-columns:1fr 32px 1fr;gap:8px;align-items:center;margin:8px 0}.mapping span{font-size:13px}.mapping select{border:1px solid #bac6d0;border-radius:7px;padding:7px}.script-flow{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:16px;overflow-x:auto;padding:5px 2px}.flow-node{border:1px solid #b7c4cf;border-radius:10px;background:#fff;min-height:130px;padding:13px;position:relative}.flow-node:not(:last-child):after{content:"→";position:absolute;right:-14px;top:50%;color:#7e91a5}.flow-node small{color:var(--blue);font-weight:900}.flow-node b{display:block;font-size:13px;margin:5px 0}.flow-node p{font-size:12px;color:var(--muted);margin:0}.funnel{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.funnel div{border:1px solid var(--line);border-radius:9px;padding:12px;background:#fff}.funnel small{font-size:11px;color:var(--muted)}.funnel b{display:block;font-size:19px;margin-top:4px}.report-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.report-toolbar .report-role-select{min-width:220px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff}.report-metric-block{display:grid;gap:10px}.report-metric-group{border:1px solid var(--line);border-radius:9px;padding:12px}.report-metric-group h4{margin:0 0 10px 0;font-size:16px}.report-kpi-link{border:0;background:transparent;padding:0;text-align:left;width:100%;border-radius:9px}.report-kpi-link:hover{box-shadow:0 0 0 1px #a6c8f7 inset}.report-kpi-link small{font-size:11px;color:var(--muted);display:block}.report-kpi-link b{display:block;font-size:19px;margin-top:4px}.report-kpi-subline{font-size:11px;color:var(--muted);margin-top:6px}.report-link{color:var(--blue);font-size:12px;font-weight:700;border:0;background:transparent;padding:0}.report-link:hover{text-decoration:underline}.settings-block{border-bottom:1px solid #e1e7ed;padding:16px 0}.settings-block:first-child{padding-top:0}.settings-block:last-child{border-bottom:0}.settings-block h3{font-size:15px;margin:0 0 8px}.settings-block p{font-size:13px;color:var(--muted);margin:0 0 10px}
-    .overlay{position:fixed;inset:0;background:rgba(8,18,32,.52);z-index:30;display:none}.overlay.open{display:block}.modal{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:960px;max-width:95vw;max-height:92vh;background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(5,20,40,.32);display:none;overflow:hidden}.modal.open{display:flex;flex-direction:column}.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:start;justify-content:space-between}.modal-head h2{font-size:22px;margin:0}.modal-head p{font-size:14px;color:var(--muted);margin:3px 0 0}.close{border:0;background:transparent;font-size:26px;color:#56697d}.modal-body{display:grid;grid-template-columns:220px 1fr;min-height:500px;overflow:auto}.wizard-nav{background:#f2f5f7;border-right:1px solid var(--line);padding:20px 14px;display:grid;align-content:start;gap:7px}.wizard-step-btn{border:0;background:transparent;border-radius:8px;padding:11px;text-align:left;color:#607286;font-weight:700;font-size:14px}.wizard-step-btn.active{background:#fff;color:#173752;box-shadow:0 2px 7px rgba(20,40,70,.08)}.wizard-step-btn.done{color:var(--green)}.wizard-content{padding:24px;overflow:auto}.wizard-pane{display:none}.wizard-pane.active{display:block}.wizard-pane h3{font-size:20px;margin:0 0 5px}.wizard-pane>p{font-size:14px;color:var(--muted);margin:0 0 18px}.modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#fafcfd}.foot-right{display:flex;gap:8px}.checklist{display:grid;gap:8px}.checkitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border:1px solid #dce4ea;border-radius:9px;padding:11px 13px}.checkitem b{font-size:14px}.checkitem .checkitem-reason{margin:0;padding-left:16px;font-size:12px;color:var(--red)}.checkitem .checkitem-reasons{margin:0;padding-left:16px;list-style:none;font-size:12px;color:var(--red)}.checkitem .checkitem-reasons li{margin:4px 0}.status-pill{border-radius:20px;padding:5px 9px;font-size:12px;font-weight:800;white-space:nowrap}.status-pill.state-empty{color:#53677b;background:#eef2f5}.status-pill.state-loading{color:#145f90;background:#edf7fd}.status-pill.state-partial{color:#8b510d;background:#fff7e9}.status-pill.state-awaiting{color:#5a3993;background:#f3ebff}.status-pill.state-autopause{color:#8b510d;background:#fff2df}.status-pill.state-ready{color:#116844;background:#eaf7f1}.status-pill.state-blocked,.status-pill.state-review,.status-pill.state-error{color:#9d3037;background:#fff0f1}.wizard-state{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;padding:11px 13px;border:1px solid #dce4ea;border-radius:10px}.wizard-state small{margin:0;font-size:12px;color:var(--muted)}.state-reasons{display:none;margin:8px 0 0;padding-left:16px;font-size:12px;color:var(--red)}.state-reasons li{margin:4px 0}.wizard-actions{display:grid;gap:8px;margin-top:12px}.drawer{position:fixed;z-index:45;right:0;top:0;width:520px;max-width:96vw;height:100vh;background:#fff;box-shadow:-12px 0 40px rgba(5,20,40,.22);transform:translateX(105%);transition:.2s;display:flex;flex-direction:column}.drawer.open{transform:translateX(0)}.drawer-head{padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.drawer-head h2{font-size:20px;margin:0}.drawer-body{padding:20px;overflow:auto}.dialog-turn{border-radius:10px;padding:11px 13px;margin:9px 0;font-size:14px}.dialog-turn.ai{background:#edf7fc;margin-right:45px}.dialog-turn.person{background:#fff4e6;margin-left:45px}.dialog-turn small{display:block;color:var(--muted);margin-bottom:4px}.toast{position:fixed;z-index:60;right:20px;bottom:20px;width:360px;max-width:90vw;background:#14283d;color:#fff;border-radius:10px;padding:14px 16px;transform:translateY(140%);transition:.2s;box-shadow:0 12px 32px rgba(4,20,40,.25)}.toast.show{transform:translateY(0)}.toast b{display:block}.toast span{font-size:13px;color:#bdccdb}
+    .campaign-shell{display:none}.campaign-shell.active{display:block}.campaign-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}.back{border:0;background:transparent;color:var(--blue);font-weight:750;padding:0}.campaign-title h1{font-size:26px;margin:4px 0}.campaign-title p{margin:0;color:var(--muted);font-size:13px}.campaign-tabs{display:flex;gap:5px;overflow-x:auto;padding:5px;background:#e9eef3;border-radius:11px;margin-bottom:18px}.campaign-tabs button{border:0;background:transparent;border-radius:8px;padding:9px 12px;white-space:nowrap;color:#506377;font-size:13px;font-weight:750}.campaign-tabs button.active{background:#fff;color:#17334e;box-shadow:none;border:1px solid var(--line)}.campaign-view{display:none}.campaign-view.active{display:block}.readiness{display:grid;gap:8px}.readiness-blocks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}.building-block{flex-direction:column;align-items:stretch;gap:8px}.building-block b{font-size:13px}.building-block .status-pill{align-self:flex-start}.ready-row{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid #e0e7ed;border-radius:9px}.ready-icon{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#e8f6f0;color:var(--green);font-weight:900}.ready-icon.warn{background:#fff2df;color:var(--amber)}.ready-row b{font-size:14px}.ready-row small{display:block;color:var(--muted);font-size:12px}.activity{display:grid;gap:4px}.activity-row{display:grid;grid-template-columns:90px 12px 1fr;gap:8px;min-height:42px}.activity-row time{font-size:12px;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;background:var(--blue);margin-top:5px}.activity-row p{margin:0;font-size:13px}.notice{border-left:4px solid var(--blue);background:#eef7fc;border-radius:6px;padding:12px 14px;font-size:13px;color:#3e5770}.notice.warn{border-left-color:var(--amber);background:#fff7e9}.notice.danger{border-left-color:var(--red);background:#fff1f2}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field.full{grid-column:1/-1}.field label{display:block;font-size:13px;font-weight:800;color:#43566a;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid #b8c4cf;border-radius:8px;padding:10px 11px;background:#fff}.field textarea{min-height:96px;resize:vertical}.dropzone{border:2px dashed #a9bbc9;border-radius:12px;padding:26px;text-align:center;background:#f8fbfc}.dropzone b{display:block;font-size:16px}.dropzone p{font-size:13px;color:var(--muted);margin:5px 0 13px}.mapping{display:grid;grid-template-columns:1fr 32px 1fr;gap:8px;align-items:center;margin:8px 0}.mapping span{font-size:13px}.mapping select{border:1px solid #bac6d0;border-radius:7px;padding:7px}.script-flow{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:16px;overflow-x:auto;padding:5px 2px}.flow-node{border:1px solid #b7c4cf;border-radius:10px;background:#fff;min-height:130px;padding:13px;position:relative}.flow-node:not(:last-child):after{content:"→";position:absolute;right:-14px;top:50%;color:#7e91a5}.flow-node small{color:var(--blue);font-weight:900}.flow-node b{display:block;font-size:13px;margin:5px 0}.flow-node p{font-size:12px;color:var(--muted);margin:0}.funnel{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.funnel div{border:1px solid var(--line);border-radius:9px;padding:12px;background:#fff}.funnel small{font-size:11px;color:var(--muted)}.funnel b{display:block;font-size:19px;margin-top:4px}.report-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.report-toolbar .report-role-select{min-width:220px;padding:8px 10px;border:1px solid #bac6d0;border-radius:8px;background:#fff}.report-metric-block{display:grid;gap:10px}.report-metric-group{border:1px solid var(--line);border-radius:9px;padding:12px}.report-metric-group h4{margin:0 0 10px 0;font-size:16px}.report-kpi-link{border:0;background:transparent;padding:0;text-align:left;width:100%;border-radius:9px}.report-kpi-link:hover{box-shadow:0 0 0 1px #a6c8f7 inset}.report-kpi-link small{font-size:11px;color:var(--muted);display:block}.report-kpi-link b{display:block;font-size:19px;margin-top:4px}.report-kpi-subline{font-size:11px;color:var(--muted);margin-top:6px}.report-link{color:var(--blue);font-size:12px;font-weight:700;border:0;background:transparent;padding:0}.report-link:hover{text-decoration:underline}.settings-block{border-bottom:1px solid #e1e7ed;padding:16px 0}.settings-block:first-child{padding-top:0}.settings-block:last-child{border-bottom:0}.settings-block h3{font-size:15px;margin:0 0 8px}.settings-block p{font-size:13px;color:var(--muted);margin:0 0 10px}
+    .overlay{position:fixed;inset:0;background:rgba(8,18,32,.52);z-index:30;display:none}.overlay.open{display:block}.modal{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:960px;max-width:95vw;max-height:92vh;background:#fff;border-radius:16px;box-shadow:0 24px 70px rgba(5,20,40,.32);display:none;overflow:hidden}.modal.open{display:flex;flex-direction:column}.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:start;justify-content:space-between}.modal-head h2{font-size:22px;margin:0}.modal-head p{font-size:14px;color:var(--muted);margin:3px 0 0}.close{border:0;background:transparent;font-size:26px;color:#56697d}.modal-body{display:grid;grid-template-columns:220px 1fr;min-height:500px;overflow:auto}.wizard-nav{background:#f2f5f7;border-right:1px solid var(--line);padding:20px 14px;display:grid;align-content:start;gap:7px}.wizard-step-btn{border:0;background:transparent;border-radius:8px;padding:11px;text-align:left;color:#607286;font-weight:700;font-size:14px}.wizard-step-btn.active{background:#fff;color:#173752;box-shadow:0 2px 7px rgba(20,40,70,.08)}.wizard-step-btn.done{color:var(--green)}.wizard-content{padding:24px;overflow:auto}.wizard-pane{display:none}.wizard-pane.active{display:block}.wizard-pane h3{font-size:20px;margin:0 0 5px}.wizard-pane>p{font-size:14px;color:var(--muted);margin:0 0 18px}.modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#fafcfd}.foot-right{display:flex;gap:8px}.checklist{display:grid;gap:8px}.checkitem{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border:1px solid #dce4ea;border-radius:9px;padding:11px 13px}.checkitem b{font-size:14px}.checkitem .checkitem-reason{margin:0;padding-left:16px;font-size:12px;color:var(--red)}.checkitem .checkitem-reasons{margin:0;padding-left:16px;list-style:none;font-size:12px;color:var(--red)}.checkitem .checkitem-reasons li{margin:4px 0}.status-pill{border-radius:4px;padding:4px 8px;font-size:12px;font-weight:800;white-space:nowrap}.status-pill.state-empty{color:#53677b;background:#eef2f5}.status-pill.state-loading{color:#145f90;background:#edf7fd}.status-pill.state-partial{color:#8b510d;background:#fff7e9}.status-pill.state-awaiting{color:#8b510d;background:#fff7e9}.status-pill.state-autopause{color:#8b510d;background:#fff2df}.status-pill.state-ready{color:#116844;background:#eaf7f1}.status-pill.state-blocked,.status-pill.state-review,.status-pill.state-error{color:#9d3037;background:#fff0f1}.wizard-state{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;padding:11px 13px;border:1px solid #dce4ea;border-radius:10px}.wizard-state small{margin:0;font-size:12px;color:var(--muted)}.state-reasons{display:none;margin:8px 0 0;padding-left:16px;font-size:12px;color:var(--red)}.state-reasons li{margin:4px 0}.wizard-actions{display:grid;gap:8px;margin-top:12px}.drawer{position:fixed;z-index:45;right:0;top:0;width:520px;max-width:96vw;height:100vh;background:#fff;box-shadow:-12px 0 40px rgba(5,20,40,.22);transform:translateX(105%);transition:.2s;display:flex;flex-direction:column}.drawer.open{transform:translateX(0)}.drawer-head{padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}.drawer-head h2{font-size:20px;margin:0}.drawer-body{padding:20px;overflow:auto}.dialog-turn{border-radius:10px;padding:11px 13px;margin:9px 0;font-size:14px}.dialog-turn.ai{background:#edf7fc;margin-right:45px}.dialog-turn.person{background:#fff4e6;margin-left:45px}.dialog-turn small{display:block;color:var(--muted);margin-bottom:4px}.toast{position:fixed;z-index:60;right:20px;bottom:20px;width:360px;max-width:90vw;background:#14283d;color:#fff;border-radius:10px;padding:14px 16px;transform:translateY(140%);transition:.2s;box-shadow:0 12px 32px rgba(4,20,40,.25)}.toast.show{transform:translateY(0)}.toast b{display:block}.toast span{font-size:13px;color:#bdccdb}
     .page-head p{font-size:15px}.panel-sub{font-size:13px}.metric small,.metric span{font-size:13px}.table-wrap table{font-size:14px}.table-wrap th{font-size:12px}.source-card p,.provider p,.script-card p{font-size:14px}.ready-row b{font-size:15px}.ready-row small,.activity-row p,.notice,.field label,.dropzone p,.mapping span,.flow-node b,.flow-node p,.settings-block p{font-size:14px}.campaign-tabs button{font-size:14px}.campaign-title p{font-size:14px}
-    .campaign-name-link,.debtor-link{border:0;background:transparent;color:var(--blue);font-weight:800;padding:0;text-align:left;cursor:pointer}.campaign-name-link:hover,.debtor-link:hover{text-decoration:underline}.bulk-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.table-wrap table.wide{min-width:1100px}.dialog-pick{display:grid;gap:6px;margin-bottom:12px}.metric-link{border:0;background:transparent;padding:0;text-align:left;width:100%;cursor:pointer}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .campaign-name-link,.debtor-link{border:0;background:transparent;color:var(--blue);font-weight:800;padding:0;text-align:left;cursor:pointer}.campaign-name-link:hover,.debtor-link:hover{text-decoration:underline}.status-tag-btn{cursor:pointer;font:inherit}.status-tag-btn:hover{filter:brightness(1.05)}.status-menu{position:absolute;z-index:20;margin-top:6px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:none;padding:6px;min-width:220px;display:none}.status-menu.open{display:grid;gap:4px}.status-menu button{border:0;background:transparent;text-align:left;padding:9px 11px;border-radius:7px;font-size:14px;color:var(--ink)}.status-menu button:hover{background:#f3f6f8}.call-expand-row td{background:#f8fbfc;padding:16px 18px}.call-expand-block{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:#fff}.call-expand-block:last-child{margin-bottom:0}.call-expand-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}.chart-bars{display:grid;gap:8px}.chart-bar-row{display:grid;grid-template-columns:72px 1fr 48px;gap:8px;align-items:center;font-size:13px}.chart-bar-track{height:10px;border-radius:5px;background:#e9eef3;overflow:hidden}.chart-bar-fill{height:100%;border-radius:5px;background:var(--blue)}.chart-bar-fill.ok{background:var(--green)}.chart-bar-fill.warn{background:var(--amber)}.analytics-charts{margin-top:16px}.bulk-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.table-wrap table.wide{min-width:1100px}.p2-mark{display:inline-flex;align-items:center;border:1px solid #c5d0db;background:#f3f6f8;color:#52677d;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:800;letter-spacing:.04em;margin-left:6px;vertical-align:middle}.supervisor-monitor-p2 .table-wrap table{min-width:920px}.supervisor-monitor-p2 .table-wrap th,.supervisor-monitor-p2 .table-wrap td{padding:9px 12px;font-size:13px}.supervisor-monitor-risk-risk{color:var(--red);font-weight:800}.supervisor-monitor-risk-attention{color:var(--amber);font-weight:700}.supervisor-monitor-review-risk{color:var(--red);font-weight:800}.supervisor-monitor-review-attention{color:var(--amber);font-weight:700}.supervisor-monitor-updated{color:var(--muted);white-space:nowrap}.supervisor-monitor-row-risk{background:#fff8f8}.dialog-pick{display:grid;gap:6px;margin-bottom:12px}.metric-link{border:0;background:transparent;padding:0;text-align:left;width:100%;cursor:pointer}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     @media(max-width:1100px){.journey{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.funnel{grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:820px){.app{display:block}.sidebar{position:static;height:auto;padding-bottom:12px}.brand{height:65px}.nav-label,.side-flow,.side-user{display:none}.nav{grid-template-columns:repeat(2,1fr)}.topbar{position:static;height:auto;min-height:68px;padding:10px 14px}.search{display:none}main{padding:20px 14px}.page-head,.campaign-top{align-items:start;flex-direction:column}.journey,.g2,.g3,.g4{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}.wizard-nav{grid-template-columns:repeat(5,minmax(125px,1fr));overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.funnel{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:820px){.app{display:block}.sidebar{position:static;height:auto;padding-bottom:12px}.brand{height:65px}.nav-label,.side-flow,.side-user{display:none}.nav{grid-template-columns:repeat(2,1fr)}.topbar{position:static;height:auto;min-height:68px;padding:10px 14px}.search{display:none}main{padding:20px 14px}.page-head,.campaign-top{align-items:start;flex-direction:column}.journey,.g2,.g3,.g4,.readiness-blocks{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}.wizard-nav{grid-template-columns:repeat(5,minmax(125px,1fr));overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.funnel{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:500px){body{font-size:16px}.top-actions .btn:not(.primary){display:none}.page-head h1,.campaign-title h1{font-size:24px}.hero{padding:20px}.hero h2{font-size:22px}.journey{grid-template-columns:1fr 1fr}.metric strong{font-size:23px}.campaign-tabs{border-radius:0;margin-left:-14px;margin-right:-14px}.funnel{grid-template-columns:1fr}.modal{max-width:100vw;max-height:100vh;width:100vw;height:100vh;border-radius:0}.modal-body{min-height:0;flex:1}.wizard-content{padding:18px}.modal-foot{flex-wrap:wrap}.foot-right{width:100%;justify-content:flex-end}}
   </style>
 </head>
@@ -62,31 +63,43 @@
             </div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th><span class="sr-only">Выбор</span></th><th>Название</th><th>Статус</th><th>Прогресс</th></tr></thead>
+                <thead><tr><th><span class="sr-only">Выбор</span></th><th>Название</th><th>Статус</th><th>Причина</th><th>Режим</th><th>Прогресс</th><th>Обновлено</th></tr></thead>
                 <tbody id="homeCampaignsBody">
                   <tr data-campaign-status="running" data-campaign-id="c-loans">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-loans" aria-label="Выбрать кампанию Просрочка 1–7 дней · Займы"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-loans">Просрочка 1–7 дней · Займы</button></td>
                     <td><span class="tag run">работает</span></td>
-                    <td>Обзвонили 6 800 из 10 000</td>
+                    <td class="campaign-reason">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
+                    <td class="campaign-progress">Обзвонили 6 800 из 10 000</td>
+                    <td class="campaign-updated">н/д</td>
                   </tr>
                   <tr data-campaign-status="auto_paused" data-campaign-id="c-installment">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-installment" aria-label="Выбрать кампанию Просрочка 8–30 дней · Рассрочка"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-installment">Просрочка 8–30 дней · Рассрочка</button></td>
-                    <td><span class="tag warn">приостановлена системой</span></td>
-                    <td>Обзвонили 1 974 из 4 200</td>
+                    <td><span class="tag stop">приостановлена системой</span></td>
+                    <td class="campaign-reason">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
+                    <td class="campaign-progress">Обзвонили 1 974 из 4 200</td>
+                    <td class="campaign-updated">н/д</td>
                   </tr>
                   <tr data-campaign-status="manual_paused" data-campaign-id="c-repeat">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-repeat" aria-label="Выбрать кампанию Повторный обзвон · Москва"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-repeat">Повторный обзвон · Москва</button></td>
                     <td><span class="tag warn">приостановлена</span></td>
-                    <td>Обзвонили 210 из 1 500</td>
+                    <td class="campaign-reason">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
+                    <td class="campaign-progress">Обзвонили 210 из 1 500</td>
+                    <td class="campaign-updated">н/д</td>
                   </tr>
                   <tr data-campaign-status="draft" data-campaign-id="c-draft">
                     <td><input type="checkbox" class="campaign-row-check" data-campaign-id="c-draft" aria-label="Выбрать кампанию Черновик · карта"></td>
                     <td><button class="campaign-name-link" data-open-campaign="overview" data-campaign-id="c-draft">Черновик · карта</button></td>
                     <td><span class="tag draft">черновик</span></td>
-                    <td>База не загружена</td>
+                    <td class="campaign-reason">н/д</td>
+                    <td class="campaign-mode"><span class="tag warn">демо</span></td>
+                    <td class="campaign-progress">База не загружена</td>
+                    <td class="campaign-updated">н/д</td>
                   </tr>
                 </tbody>
               </table>
@@ -94,6 +107,28 @@
             <div id="homeCampaignsEmpty" class="empty" hidden><b>Кампаний пока нет.</b>Создайте первую кампанию.</div>
             <div id="homeCampaignsFilterEmpty" class="empty" hidden><b>По этому статусу кампаний нет.</b>Сбросьте фильтр.</div>
             <div id="homeCampaignsError" class="empty" hidden><b>Не удалось показать кампании.</b>Список не изменился. Обновите страницу.</div>
+          </div>
+          <!--
+            OP-D-013 wireframe (P2 — полный экран супервизора, не P1):
+            - Отдельный пункт меню «Мониторинг»; автообновление 30–60 с из live API.
+            - Те же колонки + «Соединения» (порог Kit); фильтр «только риск».
+            - Bulk pause/resume по выбору строк; drill-down в Обзор / очередь проверки.
+            - Без TV wallboard, без leaderboard и геймификации.
+          -->
+          <div class="panel supervisor-monitor-p2" id="supervisorMonitorP2">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Мониторинг кампаний <span class="p2-mark">P2</span></div>
+                <div class="panel-sub">Работающие кампании: прогресс, риск и очередь проверки — одна таблица для супервизора. Не KPI-дашборд.</div>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="supervisor-monitor-table">
+                <thead><tr><th>Кампания</th><th>Статус</th><th>Прогресс</th><th>Риск</th><th>Очередь проверки</th><th>Обновлено</th></tr></thead>
+                <tbody id="supervisorMonitorBody"></tbody>
+              </table>
+            </div>
+            <div id="supervisorMonitorEmpty" class="empty" hidden><b>Нет кампаний в работе.</b>Здесь появятся строки со статусом «работает» или паузой.</div>
           </div>
         </section>
 
@@ -131,17 +166,18 @@
         </section>
 
         <section class="screen" id="auditLog">
-          <div class="page-head"><div><h1>Журнал действий</h1><p>Кто что изменил, когда и с каким объектом.</p></div></div>
+          <div class="page-head"><div><h1>Журнал действий</h1><p>Решения и изменения: кто, что, было → стало и почему.</p></div></div>
           <div class="panel"><div class="panel-body">
             <div id="auditLogNotice" class="notice" style="margin-bottom:12px" hidden></div>
             <div class="form-grid" style="margin-bottom:14px">
               <div class="field"><label for="auditPeriodFilter">Период</label><select id="auditPeriodFilter"><option value="all">Весь период</option><option value="today">Сегодня</option><option value="week">7 дней</option></select></div>
               <div class="field"><label for="auditActorFilter">Сотрудник</label><select id="auditActorFilter"><option value="all">Все сотрудники</option><option value="Анна Котова">Анна Котова</option><option value="Павел Орлов">Павел Орлов</option></select></div>
               <div class="field"><label for="auditCampaignFilter">Кампания</label><select id="auditCampaignFilter"><option value="all">Все кампании</option><option value="Просрочка 1–7 дней · Займы">Просрочка 1–7 дней · Займы</option><option value="Просрочка 8–30 дней · Рассрочка">Просрочка 8–30 дней · Рассрочка</option></select></div>
+              <div class="field"><label for="auditKindFilter">Тип записи</label><select id="auditKindFilter"><option value="all">Все типы</option><option value="decision">Решения</option><option value="campaign_status">Статусы кампании</option><option value="block">Причины блокировок</option></select></div>
             </div>
             <div class="table-wrap">
-              <table>
-                <thead><tr><th>Время</th><th>Кто</th><th>Объект</th><th>Что изменилось</th><th>IP</th></tr></thead>
+              <table class="wide">
+                <thead><tr><th>Время</th><th>Кто</th><th>Событие</th><th>Объект</th><th>Было → стало</th><th>Почему</th></tr></thead>
                 <tbody id="auditLogTableBody"></tbody>
               </table>
             </div>
@@ -150,27 +186,56 @@
               <span class="panel-sub" id="auditPageLabel">Страница 1</span>
               <button class="btn small" id="auditNextPage">Далее</button>
             </div>
-            <div id="auditLogEmpty" class="empty" hidden><b>Записей пока нет.</b>Здесь появятся действия сотрудников: создание кампании, загрузка базы, запуск, пауза.</div>
+            <div id="auditLogEmpty" class="empty" hidden><b>Пока нет зафиксированных действий.</b>Здесь появятся решения и изменения сотрудников.</div>
             <div id="auditLogForbidden" class="empty" hidden><b>Нет доступа к журналу.</b></div>
           </div></div>
         </section>
       </div>
 
       <section class="campaign-shell" id="campaignWorkspace" data-tenant-id="11111111-1111-1111-1111-111111111111" data-campaign-id="11111111-1111-1111-1111-111111111112" data-campaign-name="Просрочка 1–7 дней · Займы">
-        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span class="tag run" id="campaignStatus">работает</span> · <span id="campaignProgressLabel">Обзвонили 6 800 из 10 000</span></p></div></div><div class="head-actions"><button class="btn success" id="launchCampaign" style="display:none">Запустить кампанию</button><button class="btn" id="pauseCampaign">Приостановить кампанию</button><button class="btn success" id="resumeCampaign" style="display:none">Продолжить обзвон</button><button class="btn" id="stopCampaign">Остановить кампанию</button></div></div>
+        <div class="campaign-top"><div><button class="back" id="backCampaigns">← Назад к кампаниям</button><div class="campaign-title"><h1>Просрочка 1–7 дней · Займы</h1><p>Кампания 260814-01 · создана 14 августа · <span id="campaignModeBadge" class="tag warn" data-campaign-mode="demo">демо</span> · <span style="position:relative;display:inline-block"><button type="button" class="tag run status-tag-btn" id="campaignStatus" aria-haspopup="listbox">работает</button><div class="status-menu" id="campaignStatusMenu" role="listbox" aria-label="Статус кампании"></div></span> · <span id="campaignProgressLabel">68% обзвонили</span></p></div></div><div class="head-actions"><button class="btn success" id="launchCampaign" style="display:none">Запустить кампанию</button></div></div>
         <div class="campaign-tabs" aria-label="Разделы кампании"><button class="active" data-camp-tab="overview">Обзор</button><button data-camp-tab="base">База</button><button data-camp-tab="scenario">Сценарий</button><button data-camp-tab="phone">Телефония</button><button data-camp-tab="calls">Звонки</button></div>
 
         <div class="campaign-view active" data-camp-view="overview">
-          <div class="notice warn" id="campaignAutoPauseBanner" hidden>
-            <b>Кампания приостановлена системой.</b>
-            <span id="campaignAutoPauseReason">Нет записи разговора. Новые звонки не создаются.</span>
+          <div id="campaignOverviewRiskStack" class="overview-risk-stack">
+            <div class="notice danger" id="campaignAutoPauseBanner" hidden>
+              <b>Кампания приостановлена системой.</b>
+              <span id="campaignAutoPauseReason">Нет записи разговора. Новые звонки не создаются.</span>
+            </div>
+            <div class="notice warn" id="campaignManualPauseBanner" hidden>
+              <b>Кампания приостановлена.</b>
+              <span>Новые звонки не создаются, пока не продолжите обзвон.</span>
+            </div>
+            <div class="notice warn" id="campaignReviewQueueBanner" hidden>
+              <b>Есть записи на проверке.</b>
+              <span>Сначала разберите очередь проверки — запуск и обзвон ждут решения.</span>
+            </div>
+            <div class="notice danger" id="campaignInternalClosed" hidden>Запуск сейчас недоступен. Обратитесь к администратору.</div>
           </div>
-          <div class="notice danger" id="campaignInternalClosed" hidden>Запуск сейчас недоступен. Обратитесь к администратору.</div>
-          <div class="grid g4" style="margin-bottom:16px">
-            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Обзвонено</small><strong id="campaignOverviewProcessedValue">н/д</strong><span id="campaignOverviewProcessedSub">из API отчёта</span></button>
-            <button class="metric ok metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Соединилось</small><strong id="campaignOverviewCompletedValue">н/д</strong><span id="campaignOverviewCompletedSub">из попыток</span></button>
-            <button class="metric warn metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Обещания</small><strong id="campaignOverviewPtpValue">н/д</strong><span id="campaignOverviewPtpSub">из завершённых разговоров</span></button>
-            <button class="metric info metric-link" data-screen-link="analytics" data-analytics-campaign=""><small>Стоимость</small><strong id="campaignOverviewCostValue">н/д</strong><span id="campaignOverviewCostSub">ожидаем данные отчёта</span></button>
+          <div class="panel" id="campaignOverviewBlocksPanel">
+            <div class="panel-head"><div><div class="panel-title">Сборка кампании</div><div class="panel-sub">База · сценарий · телефония · готовность · режим — статус каждого блока перед запуском.</div></div></div>
+            <div class="panel-body">
+              <div class="readiness-blocks checklist" id="campaignReadinessBlocks">
+                <div class="checkitem building-block" data-block="base"><div><b>База</b><ul class="checkitem-reasons" id="campaignLaunchBaseReason" hidden></ul></div><span class="status-pill state-empty" id="campaignLaunchBaseStatus">Требует проверки</span></div>
+                <div class="checkitem building-block" data-block="scenario"><div><b>Сценарий</b><ul class="checkitem-reasons" id="campaignLaunchScriptReason" hidden></ul></div><span class="status-pill state-empty" id="campaignLaunchScriptStatus">Требует проверки</span></div>
+                <div class="checkitem building-block" data-block="telephony"><div><b>Телефония</b><ul class="checkitem-reasons" id="campaignLaunchPhoneReason" hidden></ul></div><span class="status-pill state-empty" id="campaignLaunchPhoneStatus">Требует проверки</span></div>
+                <div class="checkitem building-block" data-block="readiness"><div><b>Готовность</b><ul class="checkitem-reasons" id="campaignLaunchLimitsReason" hidden></ul></div><span class="status-pill state-empty" id="campaignLaunchLimitsStatus">Требует проверки</span></div>
+                <div class="checkitem building-block" data-block="mode"><div><b>Режим</b><ul class="checkitem-reasons" id="campaignLaunchModeReason" hidden></ul></div><span class="status-pill state-empty" id="campaignLaunchModeStatus">Требует проверки</span></div>
+              </div>
+              <div class="wizard-state state-empty" id="campaignLaunchReadinessPanel">
+                <span class="status-pill state-empty" id="campaignLaunchReadinessBadge">Не проверено</span>
+                <div><b>Итог проверки</b><small id="campaignLaunchReadinessText">Проверка ещё не запускалась.</small><ul class="state-reasons" id="campaignLaunchReadinessReasons"></ul></div>
+              </div>
+              <div class="notice warn" id="campaignLaunchReadinessNotice" style="margin-top:12px">Задайте базу, сценарий и телефонию, затем дождитесь ответа проверки готовности.</div>
+              <div id="campaignLaunchBlockingGroup" style="margin-top:12px"><b>Блокирует запуск</b><ul id="campaignLaunchBlockingReasons"></ul></div>
+              <div id="campaignLaunchWarningGroup" style="margin-top:8px"><b>Предупреждение</b><ul id="campaignLaunchWarningReasons"></ul></div>
+            </div>
+          </div>
+          <div class="grid g4" id="campaignOverviewKpis" style="margin-bottom:16px">
+            <button class="metric info metric-link" id="campaignOverviewProcessedMetric" data-screen-link="analytics" data-analytics-campaign=""><small>Обзвонено</small><strong id="campaignOverviewProcessedValue">н/д</strong><span id="campaignOverviewProcessedSub">из API отчёта</span></button>
+            <button class="metric info metric-link" id="campaignOverviewCompletedMetric" data-screen-link="analytics" data-analytics-campaign=""><small>Соединилось</small><strong id="campaignOverviewCompletedValue">н/д</strong><span id="campaignOverviewCompletedSub">из попыток</span></button>
+            <button class="metric info metric-link" id="campaignOverviewBlockedMetric" data-screen-link="analytics" data-analytics-campaign=""><small>Блокировки</small><strong id="campaignOverviewBlockedValue">н/д</strong><span id="campaignOverviewBlockedSub">доля от попыток</span></button>
+            <button class="metric info metric-link" id="campaignOverviewReviewOpenMetric" data-screen-link="reviewQueue" data-review-campaign=""><small>Очередь проверки</small><strong id="campaignOverviewReviewOpenValue">н/д</strong><span id="campaignOverviewReviewOpenSub">открытых записей</span></button>
           </div>
           <p style="margin:-6px 0 16px"><button class="btn link" data-screen-link="analytics" data-analytics-campaign="" id="overviewAnalyticsLink">Аналитика</button></p>
           <div class="grid g2">
@@ -198,19 +263,21 @@
         </div>
 
         <div class="campaign-view" data-camp-view="base">
-          <div class="page-head"><div><h1>База кампании</h1><p>Файл или обмен по API. Принято в базу — не то же самое, что можно звонить: допуск проверяется перед звонком.</p></div>
+          <div class="page-head"><div><h1>База кампании</h1><p>Загрузка файла и ограничения по контактам — отдельно от паузы кампании.</p></div>
             <div class="head-actions"><button class="btn" id="openApiSourceFromBase">Получать из API</button><button class="btn primary" data-open-wizard-step="2">Загрузить файл</button></div>
           </div>
-          <div class="grid g4" style="margin-bottom:16px"><div class="metric info"><small>Загружено</small><strong id="campaignBaseLoadedCount">10 000</strong><span>записей</span></div><div class="metric ok"><small>Принято в базу</small><strong id="campaignBaseAcceptedCount">8 740</strong><span>ещё не допуск к звонку</span></div><div class="metric warn"><small>Ошибки файла</small><strong id="campaignBaseRejectedCount">176</strong><span>строки с ошибками</span></div><div class="metric warn"><small>Пока не допущено к звонку</small><strong id="campaignBaseEligibilityHoldCount">1 084</strong><span>проверяется отдельно</span></div></div>
-          <div class="panel"><div class="panel-head"><div><div class="panel-title" id="campaignBaseFileTitle">займы_14_08.csv</div><div class="panel-sub" id="campaignBaseFileMeta">загружен Анной Котовой · 14 августа 09:12</div></div><span class="tag run" id="campaignBaseFileStatus">проверено</span></div>
-            <div class="notice" style="margin:12px">Допуск к звонку не равен приёму в базу: перед звонком система ещё проверит ограничения.</div>
-            <div class="table-wrap"><table><thead><tr><th>Поле файла</th><th>Поле системы</th><th>Заполнено</th><th>Проверка</th></tr></thead><tbody><tr><td>client_id</td><td>Номер клиента</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>phone</td><td>Телефон</td><td>99,8%</td><td><span class="tag run">готово</span></td></tr><tr><td>timezone</td><td>Часовой пояс</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_amount</td><td>Сумма долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>debt_status</td><td>Статус долга</td><td>100%</td><td><span class="tag run">готово</span></td></tr><tr><td>consent_status</td><td>Статус согласия</td><td>100%</td><td><span class="tag run">готово</span></td></tr></tbody></table></div>
+          <div class="panel"><div class="panel-head"><div><div class="panel-title" id="campaignBaseFileTitle">займы_14_08.csv</div><div class="panel-sub" id="campaignBaseFileMeta">загружен 14 августа 2026 в 09:12</div></div><span class="tag run" id="campaignBaseFileStatus">проверено</span></div>
+            <div class="panel-body"><div class="grid g4"><div class="metric info"><small>Найдено в файле</small><strong id="campaignBaseLoadedCount">10 000</strong></div><div class="metric ok"><small>Принято в базу</small><strong id="campaignBaseAcceptedCount">8 740</strong></div><div class="metric warn"><small>Отклонено при импорте</small><strong id="campaignBaseRejectedCount">1 260</strong></div><div class="metric stop"><small>Не допущено к звонку</small><strong id="campaignBaseEligibilityHoldCount">3</strong><span>по ограничениям ниже</span></div></div></div>
+          </div>
+          <div class="panel" id="campaignBaseWhyNotCalledPanel"><div class="panel-head"><div><div class="panel-title">Почему не звонили</div><div class="panel-sub">Три разных ограничения — не путать «в стоп-листе» и «кампания на паузе».</div></div></div>
+            <div class="panel-body"><div class="base-block-kind-legend" id="campaignBaseBlockKindLegend"></div><div class="table-wrap" style="margin-top:16px"><table class="wide"><thead><tr><th>Контакт</th><th>Тип ограничения</th><th>Причина</th></tr></thead><tbody id="campaignBaseHoldTableBody"></tbody></table></div></div>
           </div>
           <div id="campaignBaseEmpty" class="empty" hidden><b>База ещё не загружена.</b>Загрузите файл или подключите обмен по API.</div>
         </div>
 
         <div class="campaign-view" data-camp-view="scenario">
           <div class="page-head"><div><h1>Сценарий кампании</h1><p>Шаблон, голос, первая фраза, длительность и перевод оператору.</p></div><div class="head-actions"><button class="btn primary" id="saveScenario">Сохранить новую версию</button></div></div>
+          <div id="scenarioEditLockNotice" class="notice warn" hidden>Сначала приостановите кампанию.</div>
           <div class="panel"><div class="panel-head"><div class="panel-title">Настройки сценария</div><span class="tag run">версия 1.7</span></div>
             <div class="panel-body form-grid">
               <div class="field full"><label>Шаблон</label><select><option>Мягкое взыскание</option><option>Работа с возражениями</option><option>Короткое информирование</option></select></div>
@@ -224,6 +291,7 @@
 
         <div class="campaign-view" data-camp-view="phone">
           <div class="page-head"><div><h1>Телефония кампании</h1><p>Выберите соединение. Проверка соединения не запускает кампанию.</p></div><button class="btn" data-open-phone>Подключить другое соединение</button></div>
+          <div id="phoneEditLockNotice" class="notice warn" hidden>Сначала приостановите кампанию.</div>
           <div class="panel"><div class="panel-head"><div class="panel-title">Выбранное соединение</div><span class="tag run" id="campaignPhoneStatus">готово</span></div>
             <div class="panel-body form-grid">
               <div class="field full"><label>Поставщик</label><select><option>МТС Exolve · Основной контур</option><option>Mango Office · Резервный</option></select></div>
@@ -238,11 +306,11 @@
         </div>
 
         <div class="campaign-view" data-camp-view="calls">
-          <div class="page-head"><div><h1>Звонки кампании</h1><p>Нажмите имя должника, чтобы открыть разговоры.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button></div>
-          <div id="callsDataSourceState" style="margin-top:10px;display:none"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div>
+          <div class="page-head"><div><h1>Звонки кампании</h1><p>Нажмите имя должника, чтобы раскрыть историю звонков ниже.</p></div><button class="btn" id="exportCallsLog">Выгрузить журнал</button></div>
+          <div id="callsDataSourceState" style="margin-top:10px"><span id="callsDataSourceBadge" class="tag warn">демо</span><span id="callsDataSourceLabel" style="font-size:12px;color:var(--muted);margin-left:6px">Локальный источник демо-данных</span></div>
           <div id="callsNotice" class="notice" style="margin-bottom:12px"></div>
-          <div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание платежа</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select></div></div>
-          <div class="panel"><div class="table-wrap"><table class="wide"><thead><tr><th>Время</th><th>Должник</th><th>Статус попытки</th><th>Исход</th><th>Результат разговора</th><th>Решение</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Звонков пока нет.</b>Они появятся после запуска кампании.</div></div>
+          <div class="call-toolbar"><div class="call-filters"><label for="callOutcomeFilter">Исход разговора:</label><select id="callOutcomeFilter"><option value="all">Все</option><option value="ptp_created">Обещание платежа</option><option value="handoff">Перевод оператору</option><option value="no_answer">Нет ответа</option><option value="blocked">Заблокирован</option><option value="unknown">Не определён</option></select><label for="callComplianceReasonFilter">Ограничение:</label><select id="callComplianceReasonFilter"><option value="all">Все</option></select></div></div>
+          <div class="panel"><div class="table-wrap"><table class="wide"><thead><tr><th>Время</th><th>Должник</th><th>Статус попытки</th><th>Исход разговора</th><th>Решение</th></tr></thead><tbody id="callsTableBody"></tbody></table></div><div id="callsEmpty" class="empty" hidden><b>Звонков пока нет.</b>Они появятся после запуска кампании.</div></div>
         </div>
       </section>
 
@@ -263,14 +331,33 @@
 <div class="modal" id="apiSourceModal" aria-hidden="true"><div class="modal-head"><div><h2>Подключить по API</h2><p>Макет обмена. Живая система не подключается.</p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"><div class="wizard-content"><div class="form-grid"><div class="field full"><label>Адрес обмена</label><input id="apiSourceUrl" placeholder="https://example.ru/exchange"></div><div class="field"><label>Логин</label><input id="apiSourceLogin" placeholder="Укажите логин"></div><div class="field"><label>Пароль</label><input id="apiSourceSecret" type="password" autocomplete="off" placeholder="Укажите пароль"></div><div class="field full"><label>Кампания</label><select id="apiSourceCampaign"><option>Просрочка 1–7 дней · Займы</option><option>Просрочка 8–30 дней · Рассрочка</option></select></div></div><div class="notice" id="apiSourceNotice" style="margin-top:16px">Подключение не настроено. Укажите данные обмена, чтобы записи поступали сами.</div></div></div><div class="modal-foot"><button class="btn" data-close>Отмена</button><div class="foot-right"><button class="btn primary" id="saveApiSource">Сохранить подключение</button></div></div></div>
 
 <aside class="drawer" id="dialogDrawer"><div class="drawer-head"><div><h2>Тестовый диалог</h2><span class="panel-sub">Мягкое взыскание · версия кампании</span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="dialog-turn ai"><small>ИИ-агент</small>Здравствуйте. Я автоматизированный интеллектуальный агент «Фин-1», звоню от имени ООО МКК «ФинЛиния». Могу я поговорить с Иваном Сергеевичем?</div><div class="dialog-turn person"><small>Клиент</small>Да, это я.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Для защиты информации назовите последние две цифры года рождения.</div><div class="dialog-turn person"><small>Клиент</small>Восемьдесят семь. Смогу оплатить часть долга после зарплаты.</div><div class="dialog-turn ai"><small>ИИ-агент</small>Правильно понимаю, вы сможете внести 8 000 рублей 21 августа?</div><div class="notice">Извлечено: обещание платежа · 8 000 ₽ · 21.08 · причина «ожидание зарплаты».</div></div></aside>
-      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Исход попытки и результат разговора</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div></div></div></aside>
+      <aside class="drawer" id="callCardDrawer"><div class="drawer-head"><div><h2 id="callCardDrawerTitle">Разговоры с должником</h2><span class="panel-sub" id="callCardDrawerMeta"></span></div><button class="close" data-close>×</button></div><div class="drawer-body"><div class="call-detail"><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Разговоры</div><div class="dialog-pick" id="callCardDialogList"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Ход звонка</div><div id="callCardProgress"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Статус попытки · исход · решение</div><div id="callCardResult"></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Расшифровка</div><div id="callCardTranscriptTurns"></div><div class="call-transcript" id="callCardTranscript" hidden>—</div><div id="callCardTranscriptEmpty" class="empty" hidden><b>Расшифровки этого разговора нет.</b></div><div style="margin-top:10px"><span id="callCardRecordingStatus">Записи нет</span></div></div><div class="call-detail-block"><div class="panel-title" style="margin-bottom:8px">Техническая диагностика</div><div id="callCardDiagnostics"></div></div></div></div></aside>
 <div class="modal" id="confirmActionModal" aria-hidden="true"><div class="modal-head"><div><h2 id="confirmActionTitle">Подтверждение</h2><p id="confirmActionText"></p></div><button class="close" data-close>×</button></div><div class="modal-body" style="display:block;min-height:0"></div><div class="modal-foot"><button class="btn" data-close id="confirmActionCancel">Отмена</button><div class="foot-right"><button class="btn primary" id="confirmActionOk">Запустить кампанию</button></div></div></div>
+<span class="status-pill state-empty" id="readinessLimitsStatus" hidden>Требует проверки</span>
+<small id="overviewReadyWindowIcon" hidden>Будни 08:30–20:30 · выходные 09:30–19:30. Системный минимум 08:00–22:00. Можно только сузить.</small>
 <div class="toast" id="toast"><b id="toastTitle">Готово</b><span id="toastText">Изменения сохранены</span></div>
 
 <script>
 (()=>{
 	const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];let toastTimer,wizardStep=1,campaignValidationTimer;
-  const formatActorLabel=(actor='')=>{
+  const formatActorLabel=(actor='', metadata={})=>{
+    if (metadata?.actorType === 'system') {
+      return 'Система';
+    }
+    if (metadata?.actorType === 'user') {
+      const role = metadata.actorRole || actor;
+      const map={
+        operator:'Оператор',
+        tenant_viewer:'Оператор',
+        collection_manager:'Менеджер кампании',
+        campaign_manager:'Менеджер кампании',
+        qa_analyst:'Контроль качества',
+        compliance_officer:'Специалист по ограничениям',
+        tenant_owner:'Владелец',
+        owner:'Владелец'
+      };
+      return map[String(role)] || 'Сотрудник';
+    }
     const map={
       system:'Система',
       operator:'Оператор',
@@ -289,13 +376,99 @@
     return map[String(actor)] || 'Система';
   };
   const formatDecisionLabel=(decision='')=>{
-    const map={allow:'Разрешено',block:'Запрещено',review_required:'Нужна проверка',unknown:'Нет решения'};
+    const map={allow:'Разрешено',block:'Запрещено',review_required:'Требует проверки',unknown:'Нет решения'};
     return map[String(decision)] || 'Нет решения';
   };
   const formatCallStatusLabel=(status='')=>{
     const map={completed:'завершён',initiated:'начат',ringing:'идёт вызов',no_answer:'нет ответа',failed:'ошибка',blocked:'заблокирован'};
     return map[String(status)] || 'в работе';
   };
+  function formatDialStatusLabel(status){
+    const labels = {
+      created: 'Подготовка',
+      queued: 'В очереди',
+      dialing: 'Набор',
+      ringing: 'Идет вызов',
+      answered: 'Соединение установлено',
+      in_conversation: 'Идет разговор',
+      transferred_to_handoff: 'Переведен оператору',
+      handoff_requested: 'Переведен оператору',
+      completed: 'Завершен',
+      no_answer: 'Нет ответа',
+      busy: 'Занято',
+      voicemail: 'Голосовая почта',
+      failed: 'Ошибка звонка',
+      blocked: 'Звонок заблокирован',
+      cancelled: 'Отменен',
+      unknown: 'Статус уточняется'
+    };
+    return labels[status] || 'Статус уточняется';
+  }
+  function formatEvidenceStatusLabel(item){
+    if (item.reviewRequired) return 'Требует проверки';
+    if (item.recordingStatus === 'missing' || item.recordingStatus === 'none' || item.recordingStatus === 'failed') return 'Записи нет';
+    if (item.transcriptStatus === 'processing' || item.transcriptStatus === 'pending') return 'Расшифровка в обработке';
+    if (item.transcriptStatus === 'failed') return 'Расшифровку получить не удалось';
+    if (item.recordingStatus === 'ready' && item.transcriptStatus === 'ready') return 'Запись хранится · Расшифровка готова';
+    if (item.recordingStatus === 'pending') return 'Запись ещё готовится';
+    return 'Статус уточняется';
+  }
+  function formatConversationStatusLabel(status){
+    const labels = {
+      not_started: 'Разговор не начался',
+      in_progress: 'Идет разговор',
+      awaiting_recording: 'Ожидается запись',
+      awaiting_transcription: 'Ожидается расшифровка',
+      transcribed: 'Расшифровка готова',
+      transcription_failed: 'Расшифровку получить не удалось',
+      recording_missing: 'Записи нет',
+      review_required: 'Требует проверки',
+      finalized: 'Результат зафиксирован'
+    };
+    return labels[status] || 'Результат уточняется';
+  }
+  const formatBlockKindLabel=(kind='')=>{
+    const map={
+      permanent:'Постоянное исключение',
+      temporary:'Временная блокировка',
+      campaign_pause:'Приостановка кампании'
+    };
+    return map[String(kind||'').trim()] || '';
+  };
+  const formatBlockKindClass=(kind='')=>{
+    const map={
+      permanent:'block-permanent',
+      temporary:'block-temporary',
+      campaign_pause:'block-campaign-pause'
+    };
+    return map[String(kind||'').trim()] || '';
+  };
+  const formatBlockKindHint=(kind='')=>{
+    const map={
+      permanent:'Контакт в списке исключений — звонок не создаётся, пока запись не снимут.',
+      temporary:'Ограничение временное — после срока или смены окна звонок может быть создан снова.',
+      campaign_pause:'Кампания приостановлена — новые звонки не создаются, пока обзвон не возобновят.'
+    };
+    return map[String(kind||'').trim()] || '';
+  };
+  const formatBlockKindTerm=(decision={})=>{
+    const until=decision.blockUntil || decision.validUntil || decision.expiresAt;
+    if (!until) return '';
+    const date=new Date(until);
+    if (!Number.isFinite(date.getTime())) return '';
+    return `до ${date.toLocaleDateString('ru-RU')}`;
+  };
+  const renderBlockKindBlock=(blockKind='', decision={})=>{
+    const kind=String(blockKind||'').trim();
+    if (!kind) return '';
+    const label=formatBlockKindLabel(kind);
+    const cls=formatBlockKindClass(kind);
+    const hint=formatBlockKindHint(kind);
+    const term=kind==='temporary' ? formatBlockKindTerm(decision) : '';
+    if (!label) return '';
+    return `<div class="block-kind-block"><span class="tag ${cls}">${label}</span>${term ? `<span class="block-kind-term">${term}</span>` : ''}<div class="block-kind-hint">${hint}</div></div>`;
+  };
+  const BLOCK_KIND_ORDER=['permanent','temporary','campaign_pause'];
   const formatReasonCodeLabel=(code='')=>{
     const map={
       ALLOW:'Контакт разрешён',
@@ -317,6 +490,7 @@
     };
     return map[String(action)] || 'Действие зафиксировано';
   };
+  const formatReviewEventType=(type='')=> String(type).trim() || 'Событие';
 	const wizardStepStates={
 	  campaign:{status:'empty',name:'',product:'',segment:'',weekdays:'',weekends:'',reasons:[]},
     base:{status:'empty',total:0,accepted:0,rejected:0,reasons:[]},
@@ -329,14 +503,19 @@
     loading:{label:'В обработке',pill:'state-loading'},
     partial:{label:'Частичный успех',pill:'state-partial'},
 	  error:{label:'Ошибка',pill:'state-error'},
-    needs_check:{label:'Нужна проверка',pill:'state-empty'},
-    autopause:{label:'Автопауза',pill:'state-autopause'},
+    needs_check:{label:'Требует проверки',pill:'state-empty'},
+    autopause:{label:'Приостановлена системой',pill:'state-autopause'},
     awaiting:{label:'Ожидает подтверждения',pill:'state-awaiting'},
     ready:{label:'Готово',pill:'state-ready'},
-	  blocked:{label:'Нужна проверка',pill:'state-blocked'},
+	  blocked:{label:'Требует проверки',pill:'state-blocked'},
 	  blocked_compliance:{label:'Заблокировано ограничениями',pill:'state-review'},
 	  review:{label:'Требуется повторная проверка',pill:'state-review'}
 	};
+  const buildingBlockMeta={
+    ready:{label:'OK',pill:'state-ready'},
+    needs_check:{label:'Требует проверки',pill:'state-empty'},
+    blocked_compliance:{label:'Блокирует',pill:'state-blocked'}
+  };
 
   const wizardBackendSim = {
     import: {
@@ -366,7 +545,7 @@
             acceptedRows: 10000,
             rejectedRows: 0,
             blockingReasons: [],
-            nextActions: ['Перейдите к шагу телефонии и запускайте probe-сценарий.']
+            nextActions: ['Перейдите к шагу телефонии и выполните проверку соединения.']
           };
         }
 
@@ -381,7 +560,7 @@
               'Проверка уникальности phone+productId не пройдена.'
             ],
             nextActions: [
-              'Скачайте validation template из карты импорта.',
+              'Скачайте шаблон проверки из карты импорта.',
               'Замените источник и повторите загрузку.'
             ]
           };
@@ -394,11 +573,11 @@
             acceptedRows: 8740,
             rejectedRows: 1260,
             blockingReasons: [
-              '1260 записей попали в holdout для ручной проверки: высокий риск согласия и спорные контакты.',
+              '1 260 записей отложены для ручной проверки: повышенный риск по согласию и спорные контакты.',
               'Контроль доступа по сегменту требует подтверждения ответственного.'
             ],
             nextActions: [
-              'Откройте список исключений базы и подтвердите источник каждого high-risk контакта.',
+              'Откройте список исключений базы и подтвердите источник каждого контакта с повышенным риском.',
               'После подтверждений повторно запустите валидацию базы.'
             ]
           };
@@ -440,12 +619,12 @@
           return {
             status: 'review',
             blockingReasons: [
-              `Поставщик ${providerName} не подключен в production-контуре.`,
-              'Требуется сохранение credentials и повторная проверка test-звонка.'
+              `Поставщик ${providerName} не подключён в рабочем контуре.`,
+              'Сохраните данные для подключения и повторите тестовый звонок.'
             ],
             nextActions: [
               'Заполните поля подключения в модалке источника.',
-              'Повторно выполните probe-коннект.'
+              'Повторно выполните проверку подключения.'
             ]
           };
         }
@@ -458,7 +637,7 @@
               'Не сформирован ответ проверки исходящего канала.'
             ],
             nextActions: [
-              'Проверьте статусы и retry-policy в интеграционных логах.',
+              'Проверьте статусы и правила повторных попыток в журнале интеграций.',
               'Оставьте поставщик в резерве и используйте активный контур для теста.'
             ]
           };
@@ -480,8 +659,8 @@
           return {
             status: 'partial',
             blockingReasons: [
-              'Предупреждение по обработке возражений: требуется дополнительная проверка tone-guard.',
-              'Рекомендуется включить более строгий policy-каталог.'
+              'Предупреждение по обработке возражений: требуется дополнительная проверка формулировок.',
+              'Рекомендуется включить более строгий каталог правил.'
             ],
             nextActions: ['Откорректируйте wording в блоках возражений.', 'Запустите повторную валидацию сценария.']
           };
@@ -492,7 +671,7 @@
             status: 'review',
             blockingReasons: [
               'Короткий сценарий не содержит перевод оператору по запросу специалиста.',
-              'Нет явной проверки policy для запроса личных данных.'
+              'Нет явной проверки правил для запроса личных данных.'
             ],
             nextActions: [
               'Добавьте маршрутизацию на ручную обработку.',
@@ -504,8 +683,8 @@
         return {
           status: 'ready',
           blockingReasons: [
-            'Сценарий и guard-политики успешно пройдены.',
-            'Условия эскалации сохранены в policy-профиле кампании.'
+            'Сценарий и правила проверки успешно пройдены.',
+            'Условия эскалации сохранены в профиле правил кампании.'
           ],
           nextActions: ['После проверки можно перейти к тестовому обзвону.']
         };
@@ -537,6 +716,70 @@
 	    ready:'ready'
 	  };
 	  return map[sourceState] || 'needs_check';
+  }
+
+  function resolveStepBuildingBlockState(stepStatus='empty') {
+    const mapped = readinessDisplayState(stepStatus);
+    if (mapped === 'ready') {
+      return 'ready';
+    }
+    if (mapped === 'blocked_compliance') {
+      return 'blocked_compliance';
+    }
+    return 'needs_check';
+  }
+
+  function resolveReadinessBuildingBlockState(readinessSummary=null) {
+    if (!readinessSummary) {
+      return 'needs_check';
+    }
+    if (readinessSummary.status === 'ready') {
+      return 'ready';
+    }
+    if (readinessSummary.status === 'blocked_compliance') {
+      return 'blocked_compliance';
+    }
+    return 'needs_check';
+  }
+
+  function resolveModeBuildingBlockState() {
+    const badge = q('#campaignModeBadge');
+    const mode = badge?.dataset.campaignMode || '';
+    if (mode === 'live') {
+      return { state:'ready', reasons:['Режим: live.'] };
+    }
+    if (mode === 'demo') {
+      return { state:'ready', reasons:['Режим: демо.'] };
+    }
+    return { state:'needs_check', reasons:['Режим кампании не задан.'] };
+  }
+
+  function setBuildingBlockItem(statusId, reasonId, state='needs_check', reasonText='') {
+    const pill=q(`#${statusId}`);
+    const reason=q(`#${reasonId}`);
+    if (pill) {
+      const meta=buildingBlockMeta[state]||buildingBlockMeta.needs_check;
+      pill.textContent=meta.label;
+      pill.className=`status-pill ${meta.pill}`;
+    }
+    if (!reason) {
+      return;
+    }
+    const items = Array.isArray(reasonText)
+      ? reasonText.filter(Boolean).map((value)=>String(value).trim()).filter(Boolean)
+      : (reasonText ? [String(reasonText)] : []);
+    if (reason.tagName === 'UL') {
+      reason.textContent='';
+      reason.hidden=!items.length;
+      for (const item of items) {
+        const li=document.createElement('li');
+        li.textContent=item;
+        reason.appendChild(li);
+      }
+      return;
+    }
+    reason.textContent=items.join('; ');
+    reason.hidden=!items.length;
   }
 
 	function parseTimeRange(value='') {
@@ -682,8 +925,77 @@
     {time:'16:35', actor:'compliance_engine', text:'Записано обещание платежа на 8 000 ₽.'},
     {time:'15:58', actor:'operator', text:'Загружены изменения списка исключений.'}
   ];
-  const screenNames={home:'Главная',sources:'Источники',telephony:'Телефония',analytics:'Аналитика',auditLog:'Журнал действий'};
-  const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'http://localhost:3000').replace(/\/$/, '');
+  const screenNames={home:'Главная',telephony:'Телефония',analytics:'Аналитика',auditLog:'Журнал действий'};
+  const formatCampaignProgressLabel=(progressOrNumerator,totalMaybe)=>{
+    let numerator=0;
+    let total=0;
+    if (typeof progressOrNumerator==='object' && progressOrNumerator!==null) {
+      total=Number(progressOrNumerator.totalRecords)||0;
+      const completed=Number(progressOrNumerator.completedCalls);
+      numerator=Number.isFinite(completed)?completed:Number(progressOrNumerator.attemptedCalls)||0;
+    } else {
+      numerator=Number(progressOrNumerator)||0;
+      total=Number(totalMaybe)||0;
+    }
+    if (total<=0) return 'База не загружена';
+    const pct=Math.min(100, Math.round((numerator/total)*100));
+    return `${pct}% обзвонили`;
+  };
+  const formatCampaignListProgressLabel=(progress,formatRuInt)=>{
+    if (!progress || typeof progress!=='object') return null;
+    const total=Number(progress.totalRecords);
+    if (!Number.isFinite(total)) return null;
+    if (total<=0) return 'База не загружена';
+    const completed=Number(progress.completedCalls);
+    if (Number.isFinite(completed)) {
+      return `Завершено ${formatRuInt(completed)} из ${formatRuInt(total)}`;
+    }
+    const attempted=Number(progress.attemptedCalls);
+    if (Number.isFinite(attempted)) {
+      return `Обзвонили ${formatRuInt(attempted)} из ${formatRuInt(total)}`;
+    }
+    return null;
+  };
+  const formatDurationLabel=(seconds)=>{
+    const value=Number(seconds)||0;
+    if (value<=0) return '—';
+    const minutes=Math.floor(value/60);
+    const secs=Math.round(value%60);
+    return minutes>0 ? `${minutes}:${String(secs).padStart(2,'0')}` : `${secs} сек`;
+  };
+  const analyticsDailyDemo={
+    all:[
+      {day:'12 авг',attempts:620,connected:310,promises:14,durationSec:98},
+      {day:'13 авг',attempts:710,connected:352,promises:18,durationSec:102},
+      {day:'14 авг',attempts:840,connected:401,promises:21,durationSec:96},
+      {day:'15 авг',attempts:905,connected:428,promises:19,durationSec:104},
+      {day:'16 авг',attempts:980,connected:462,promises:24,durationSec:101},
+      {day:'17 авг',attempts:1020,connected:489,promises:22,durationSec:99},
+      {day:'18 авг',attempts:1090,connected:510,promises:26,durationSec:105}
+    ],
+    'c-loans':[
+      {day:'12 авг',attempts:420,connected:210,promises:10,durationSec:95},
+      {day:'13 авг',attempts:480,connected:238,promises:12,durationSec:100},
+      {day:'14 авг',attempts:560,connected:271,promises:14,durationSec:94},
+      {day:'15 авг',attempts:610,connected:295,promises:13,durationSec:103},
+      {day:'16 авг',attempts:650,connected:312,promises:16,durationSec:98},
+      {day:'17 авг',attempts:690,connected:331,promises:15,durationSec:97},
+      {day:'18 авг',attempts:720,connected:345,promises:17,durationSec:101}
+    ],
+    'c-installment':[
+      {day:'12 авг',attempts:200,connected:100,promises:4,durationSec:92},
+      {day:'13 авг',attempts:230,connected:114,promises:6,durationSec:96},
+      {day:'14 авг',attempts:280,connected:130,promises:7,durationSec:90},
+      {day:'15 авг',attempts:295,connected:133,promises:6,durationSec:98},
+      {day:'16 авг',attempts:330,connected:150,promises:8,durationSec:95},
+      {day:'17 авг',attempts:330,connected:158,promises:7,durationSec:93},
+      {day:'18 авг',attempts:370,connected:165,promises:9,durationSec:97}
+    ]
+  };
+  let expandedDebtorKey='';
+  let tenantBalanceMinutes=12450;
+  const reportApiBaseUrl=(window.AI_COLLECTOR_API_URL||'').replace(/\/$/, '');
+  const loginPageUrl='login.html';
   const currentAuth={ tenantId:'', role:'', userName:'', tenantName:'', email:'' };
   function apiHeaders(extra){
     return Object.assign({ Accept:'application/json' }, extra || {});
@@ -730,12 +1042,12 @@
   const reportRoleMeta={
     collection_manager:{
       label:'Менеджер кампании',
-      hint:'Фокус на управлении работой: объем базы, прогресс по звонкам, обещания и QA-бэклог для решения «что делать дальше».',
+      hint:'Фокус на управлении работой: объём базы, прогресс по звонкам, обещания и очередь проверки для решения «что делать дальше».',
       sections:'reportPanelOperational,reportPanelBusiness,reportPanelCost'
     },
     supervisor:{
       label:'Руководитель взыскания',
-      hint:'Полный operational и business срез: прогресс, риск-потоки и качество для управленческого решения.',
+      hint:'Полный операционный и управленческий срез: прогресс, риск-потоки и качество для решения руководителя.',
       sections:'reportPanelOperational,reportPanelBusiness,reportPanelCompliance,reportPanelCost'
     },
     compliance_officer:{
@@ -746,9 +1058,125 @@
   };
   let currentReportRole = 'collection_manager';
   let currentCampaignReportSnapshot = null;
-  // Review is server-authoritative. The client starts empty and must never
-  // manufacture compliance or QA work items from prototype data.
-  let reviewQueueItems=[];
+  const reviewQueueItems=[
+    {
+      id:'RQ-1001',
+      status:'open',
+      priority:'critical',
+      source:'compliance_engine',
+      type:'compliance_block',
+      requiredAction:'pause_campaign',
+      createdAt:'16:42',
+      ageMinutes:11,
+      campaign:'Пилот 1–7 дней',
+      campaignId:'11111111-1111-1111-1111-111111111112',
+      debtor:'Иван С. · FL-883104',
+      requiredBy:'collection_manager',
+      requiredByLabel:'Менеджер кампании',
+      requiredUntil:'16:50',
+      nextStep:'Проверьте событие. Возобновление — на вкладке «Запуск» после чеклиста.',
+      callId:'call-883104',
+      callOutcome:'обещание и перевод',
+      complianceDecision:{
+        decision:'block',
+        reasonCode:'TIME_WINDOW_VIOLATION',
+        reasonText:'Поздний контакт после 22:00 по правилу времени звонков.',
+        ruleVersion:'v1'
+      },
+      reason:'Поздний контакт после 22:00 по правилу «круглосуточные коммуникации».',
+      evidence:[
+        'phoneNumber: +7 499…1207',
+        'policy.match: time_window_violation',
+        'campaign timezone: Europe/Moscow'
+      ],
+      technicalEvents:[
+        {time:'16:42:02', type:'Проверка ограничений', details:'Сработало правило: звонок вне разрешённого времени'},
+        {time:'16:42:03', type:'Решение по правилам', details:'Решение: запрет · кампания приостановлена системой'},
+        {time:'16:42:05', type:'Call runtime', details:'Сегмент подтверждения идентичности не завершен'}
+      ],
+      complianceLog:[
+        {time:'16:42:02', actor:'compliance_officer_bot', action:'decision.created', text:'Кампания приостановлена системой по правилу времени звонков. Требуется подтверждение для продолжения.'},
+        {time:'16:43:10', actor:'qa_analyst', action:'review.assigned', text:'Назначен ответственный за разбор перевода оператору.'}
+      ]
+    },
+    {
+      id:'RQ-1002',
+      status:'open',
+      priority:'high',
+      source:'handoff_engine',
+      type:'handoff_transfer',
+      requiredAction:'confirm_identity',
+      createdAt:'16:31',
+      ageMinutes:26,
+      campaign:'Пилот 1–7 дней',
+      campaignId:'11111111-1111-1111-1111-111111111112',
+      debtor:'Мария В. · FL-883090',
+      requiredBy:'qa_analyst',
+      requiredByLabel:'Контроль качества',
+      requiredUntil:'17:10',
+      nextStep:'Подтвердить личность и определить, требуется ли передача оператору.',
+      callId:'call-883090',
+      callOutcome:'перевод оператору',
+      complianceDecision:{
+        decision:'review_required',
+        reasonCode:'CONSENT_LOW_CONFIDENCE',
+        reasonText:'Слабая уверенность по воле согласия.',
+        ruleVersion:'v1'
+      },
+      reason:'Неоднозначный флаг согласия клиента, нужен ручной контроль.',
+      evidence:[
+        'intent_summary: хочет обсудить после выхода на работу',
+        'requested_callback_late=true'
+      ],
+      technicalEvents:[
+        {time:'16:31:10', type:'Проверка ограничений', details:'Уверенность по согласию ниже порога правила'},
+        {time:'16:31:11', type:'Контроль формулировок', details:'Нужен ручной вывод: клиент просит перезвонить позже'},
+        {time:'16:31:12', type:'Перевод оператору', details:'Запрошен перевод специалисту'}
+      ],
+      complianceLog:[
+        {time:'16:31:11', actor:'compliance_engine', action:'decision.created', text:'Требует проверки: клиент просит перезвонить позже.'},
+        {time:'16:32:03', actor:'collection_manager', action:'review.assigned', text:'Передано в очередь ручной проверки.'}
+      ]
+    },
+    {
+      id:'RQ-1003',
+      status:'escalated',
+      priority:'normal',
+      source:'compliance_engine',
+      type:'compliance',
+      requiredAction:'pause_campaign',
+      createdAt:'16:20',
+      ageMinutes:43,
+      campaign:'Пилот 1–7 дней',
+      campaignId:'11111111-1111-1111-1111-111111111112',
+      debtor:'Сергей М. · FL-883061',
+      requiredBy:'compliance_officer',
+      requiredByLabel:'Специалист по ограничениям',
+      requiredUntil:'Не позднее 17:45',
+      nextStep:'Подтвердить законность повторной коммуникации и назначить follow-up.',
+      callId:'call-883061',
+      callOutcome:'нет ответа',
+      complianceDecision:{
+        decision:'review_required',
+        reasonCode:'HISTORICAL_OVERRIDE',
+        reasonText:'Не подтверждено разрешение на повторный контакт.',
+        ruleVersion:'manual'
+      },
+      reason:'Критическая разметка не подтверждена, escalation to legal.',
+      evidence:[
+        'dialed_number_reuse: 3 attempts with consent_note mismatch',
+        'consent note source: import_file'
+      ],
+      technicalEvents:[
+        {time:'16:20:12', type:'Call attempt', details:'Первая попытка: no answer'},
+        {time:'16:20:13', type:'Compliance event', details:'задача передана специалисту по ограничениям'}
+      ],
+      complianceLog:[
+        {time:'16:20:12', actor:'operator', action:'review.opened', text:'Задача передана специалисту по ограничениям.'},
+        {time:'16:21:00', actor:'compliance_officer', action:'decision.created', text:'Нужна юридическая проверка источника контакта.'}
+      ]
+    }
+  ];
   const reviewStateFilters={status:'open',priority:'all',source:'all',type:'all',campaignId:''};
   const reviewPriorityMeta={critical:{label:'Критический',pill:'state-blocked'},high:{label:'Высокий',pill:'state-review'},normal:{label:'Обычный',pill:'state-ready'}};
   const reviewStatusMeta={open:{label:'Ожидает решения',pill:'state-awaiting'},approved:{label:'Подтверждено',pill:'state-ready'},rejected:{label:'Отклонено',pill:'state-blocked'},escalated:{label:'Эскалация',pill:'state-review'},requeued:{label:'На повтор',pill:'state-awaiting'}};
@@ -770,6 +1198,23 @@
     approved:{label:'Принято',pill:'state-ready'},
     flagged:{label:'Требует проверки',pill:'state-review'}
   };
+  const baseEligibilityHolds=[
+    {
+      debtor:'Алексей К. · FL-882011',
+      blockKind:'permanent',
+      complianceDecision:{decision:'block',reasonCode:'SUPPRESSION_BLOCK',reasonText:'Контакт в списке исключений',blockKind:'permanent'}
+    },
+    {
+      debtor:'Ольга П. · FL-882019',
+      blockKind:'temporary',
+      complianceDecision:{decision:'block',reasonCode:'CALL_WINDOW_BLOCK',reasonText:'Вне разрешённого окна звонка',blockKind:'temporary',blockUntil:'2026-08-25T20:00:00.000Z'}
+    },
+    {
+      debtor:'— (вся кампания)',
+      blockKind:'campaign_pause',
+      complianceDecision:{decision:'block',reasonCode:'CAMPAIGN_JOB_BLOCKED',reasonText:'Кампания приостановлена — новые звонки не создаются',blockKind:'campaign_pause'}
+    }
+  ];
   let callCards=[];
   let callsSource='loading';
   let callsErrorNotice='';
@@ -899,6 +1344,21 @@
     const debtorExternalId = item.debtorExternalId ? String(item.debtorExternalId).trim() : '';
     const startedAt = item.startedAt || '';
     const endedAt = item.endedAt || '';
+    const apiDecision = item.complianceDecision && typeof item.complianceDecision === 'object'
+      ? item.complianceDecision
+      : null;
+    const mappedComplianceDecision = apiDecision && apiDecision.decision
+      ? {
+          decision: apiDecision.decision,
+          reasonCode: apiDecision.reasonCode || null,
+          reasonText: apiDecision.reasonText || null,
+          checkedAt: apiDecision.checkedAt || null,
+          blockKind: apiDecision.blockKind || null,
+          blockUntil: apiDecision.blockUntil || apiDecision.validUntil || apiDecision.expiresAt || null
+        }
+      : (complianceStatusDecisionMap[item.complianceStatus]
+        ? { decision: complianceStatusDecisionMap[item.complianceStatus] }
+        : null);
     return {
       id:`api-call-${index}`,
       status:item.status || 'queued',
@@ -914,7 +1374,7 @@
       callAttemptId:item.callAttemptId || item.id || null,
       qaStatus:'not_reviewed',
       complianceEvidence: item.complianceEvidence || item.complianceDecision?.evidence || [],
-      complianceDecision: item.complianceDecision || null,
+      complianceDecision: mappedComplianceDecision,
       recordingUrl:null,
       transcript:'',
       complianceTimeline:[],
@@ -922,15 +1382,47 @@
     };
   }
 
+  function syncCampaignModeBadge(isLive = false) {
+    const badge = q('#campaignModeBadge');
+    if (!badge) {
+      return;
+    }
+    if (isLive) {
+      badge.className = 'tag info';
+      badge.dataset.campaignMode = 'live';
+      badge.textContent = 'бой';
+      return;
+    }
+    badge.className = 'tag warn';
+    badge.dataset.campaignMode = 'demo';
+    badge.textContent = 'демо';
+  }
+
+  function formatCallSourceBadge(item = {}) {
+    const source = item.dataSource || item.sourceBadge || callsSource || '';
+    if (source === 'api' || source === 'live' || item.sourceBadge === 'live') {
+      return { className: 'tag info', label: 'бой' };
+    }
+    if (source === 'local' || source === 'demo' || item.sourceBadge === 'демо' || callsSource === 'local') {
+      return { className: 'tag warn', label: 'демо' };
+    }
+    return null;
+  }
+
   function setCallsDataSourceIndicator(isLive = false) {
     const badge = q('#callsDataSourceBadge');
     const label = q('#callsDataSourceLabel');
+    const state = q('#callsDataSourceState');
+    if (state) {
+      state.style.display = '';
+    }
+    syncCampaignModeBadge(isLive);
     if (!badge || !label) {
       return;
     }
     if (isLive) {
       badge.className = 'tag info';
-      badge.textContent = 'live';
+      badge.textContent = 'бой';
       label.textContent = 'Сырые звонки из API кампании';
       return;
     }
@@ -1038,12 +1530,20 @@
     const metadata = item.metadata || {};
     return {
       id: item.id || `${item.createdAt || 'audit'}-${item.action || 'event'}`,
-      actor: item.actor || 'system',
+      actor: metadata.actorType === 'system'
+        ? 'system'
+        : (metadata.actorRole || item.actor || 'system'),
+      actorType: metadata.actorType,
+      actorRole: metadata.actorRole,
       createdAt: item.createdAt || '',
       action: item.action || 'system',
       entityType: item.entityType || 'unknown',
       entityId: item.entityId || '—',
-      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`
+      description: summarizeAuditMetadata(metadata).join(' · ') || `Событие: ${item.action || 'unknown'}`,
+      metadata,
+      previousValue: metadata.previousValue ?? item.previousValue ?? null,
+      nextValue: metadata.nextValue ?? item.nextValue ?? null,
+      reasonText: metadata.reasonText || metadata.reason || item.reasonText || ''
     };
   }
 
@@ -1079,7 +1579,10 @@
     auditLogErrorNotice='';
     setAuditNotice('Загружаем журнал действий кампании…', true);
     try {
-      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs`, {
+      const kindFilter = q('#auditKindFilter')?.value || 'all';
+      const actionGroup = auditKindFilterToActionGroup(kindFilter);
+      const query = actionGroup ? `?actionGroup=${encodeURIComponent(actionGroup)}` : '';
+      const response=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${context.campaignId}/audit-logs${query}`, {
         headers:{ Accept:'application/json' }
       });
       if (!response.ok) {
@@ -1089,13 +1592,15 @@
       if (!Array.isArray(body) || body.length === 0) {
         auditLogItems = [];
         auditLogSource='live';
-        auditLogErrorNotice='По этой кампании аудит-событий пока нет.';
+        auditLogErrorNotice='По этой кампании записей журнала пока нет.';
         setAuditNotice(auditLogErrorNotice, true);
         return;
       }
-      auditLogItems = body.map((entry, index) => ({
+      auditLogItems = body.map((entry) => ({
         ...mapApiAuditItem(entry),
-        actor: entry.userId ? `user:${entry.userId}` : 'system'
+        actor: entry.metadata?.actorType === 'system'
+          ? 'system'
+          : (entry.metadata?.actorRole || (entry.userId ? `user:${entry.userId}` : 'system'))
       }));
       auditLogSource='live';
       auditLogErrorNotice='';
@@ -1114,10 +1619,41 @@
   const SYSTEM_AUDIT_ACTORS = ['system', 'compliance', 'compliance_engine', 'compliance_officer_bot', 'engine', 'provider', 'usage', 'usage-event'];
 
   function isStaffAuditEvent(item) {
+    const metadata = item.metadata || {};
+    if (metadata.actorType === 'system') return false;
+    if (metadata.actorType === 'user') return true;
     const actor = String(item.actor || item.actorName || '').trim();
     if (!actor) return false;
     if (SYSTEM_AUDIT_ACTORS.includes(actor)) return false;
     return true;
+  }
+
+  function inferAuditKind(item={}) {
+    if (item.kind) return item.kind;
+    const action=String(item.action || '');
+    if (action.includes('auto_paused') || action.includes('block') || action.includes('compliance')) return 'block';
+    if (action.includes('status') || action.includes('launch') || action.includes('created') || action.includes('resume')) return 'campaign_status';
+    if (action.includes('decision') || action.includes('import') || action.includes('review')) return 'decision';
+    return 'decision';
+  }
+
+  function auditKindFilterToActionGroup(kind='all') {
+    if (kind === 'block' || kind === 'campaign_status' || kind === 'decision') {
+      return kind;
+    }
+    return null;
+  }
+
+  function formatAuditTransition(item={}, metadata={}) {
+    const previous=item.previousValue ?? metadata.fromStatus ?? metadata.previousValue ?? '';
+    const next=item.nextValue ?? metadata.toStatus ?? metadata.nextValue ?? '';
+    const prevText=String(previous || '').trim();
+    const nextText=String(next || '').trim();
+    if (prevText && nextText) return `${prevText} → ${nextText}`;
+    if (nextText) return `→ ${nextText}`;
+    if (item.change) return String(item.change);
+    const summary=summarizeAuditMetadata(metadata).join(' · ');
+    return summary || '—';
   }
 
   function renderAuditLog() {
@@ -1129,21 +1665,32 @@
     const period = q('#auditPeriodFilter')?.value || 'all';
     const actorFilter = q('#auditActorFilter')?.value || 'all';
     const campaignFilter = q('#auditCampaignFilter')?.value || 'all';
+    const kindFilter = q('#auditKindFilter')?.value || 'all';
     const pageSize = 20;
     const page = Number(window.__auditPage || 1);
 
-    const prepared = [...auditLogItems].filter(isStaffAuditEvent).map((item) => {
+    const prepared = [...auditLogItems].filter((item)=>{
+      // decision trail: staff + system auto-pause/block events
+      if (isStaffAuditEvent(item)) return true;
+      const kind=inferAuditKind(item);
+      return kind === 'block' || kind === 'decision';
+    }).map((item) => {
       const metadata = item.metadata || {};
+      const technicalId=item.technicalId || metadata.callAttemptId || metadata.entityId || item.entityId || '';
       return {
         time: formatAuditTime(item.createdAt || ''),
-        who: item.actorName || formatActorLabel(item.actor) || 'Сотрудник',
+        who: item.actorName || formatActorLabel(item.actor, item.metadata) || 'Сотрудник',
+        event: item.eventLabel || item.action || 'Событие',
         object: item.entityLabel || item.campaignName || item.entityType || '—',
-        change: item.change || item.description || summarizeAuditMetadata(metadata).join(' · ') || '—',
-        ip: item.ip || metadata.ip || 'не зафиксирован'
+        transition: formatAuditTransition(item, metadata),
+        why: item.reasonText || metadata.reasonText || metadata.reason || '',
+        technicalId: technicalId ? String(technicalId) : '',
+        kind: inferAuditKind(item)
       };
     }).filter((row) => {
       if (actorFilter !== 'all' && row.who !== actorFilter) return false;
       if (campaignFilter !== 'all' && row.object !== campaignFilter) return false;
+      if (auditLogSource !== 'live' && kindFilter !== 'all' && row.kind !== kindFilter) return false;
       return true;
     });
 
@@ -1164,7 +1711,13 @@
 
     for (const row of pageRows) {
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${row.time}</td><td>${row.who}</td><td>${row.object}</td><td>${row.change}</td><td>${row.ip}</td>`;
+      const whyCell=row.why
+        ? row.why
+        : '<span style="color:var(--muted)">—</span>';
+      const tech=row.technicalId
+        ? `<div class="panel-sub" title="${row.technicalId}">код: ${row.technicalId}</div>`
+        : '';
+      tr.innerHTML = `<td>${row.time}</td><td>${row.who}</td><td><div>${row.event}</div>${tech}</td><td>${row.object}</td><td>${row.transition}</td><td>${whyCell}</td>`;
       tbody.appendChild(tr);
     }
   }
@@ -1181,6 +1734,160 @@
       return '—';
     }
     return `${Math.min(100, Math.max(0, (partNum / totalNum) * 100)).toFixed(1)}%`;
+  }
+
+  // UI-only threshold bands for Обзор KPI state color (Kit-style). Not client SLA — ops attention from report/review counts.
+  const overviewMetricThresholds = {
+    blockedSharePct: {
+      // blockedCalls / attemptedCalls; same signal family as compliance.blocking_rate_exceeded (docs/operations/auto-pause.md)
+      attentionMin: 1,
+      riskMin: 10
+    },
+    reviewOpenCount: {
+      // reviewOpen from report API / reviewQueueItems; launch waits while queue is non-empty
+      attentionMin: 1,
+      riskMin: 3
+    },
+    connectSharePct: {
+      // completedCalls / attemptedCalls — low connect rate draws supervisor attention
+      attentionMax: 25,
+      riskMax: 10
+    }
+  };
+
+  function sharePct(part, total) {
+    const partNum = Number(part);
+    const totalNum = Number(total);
+    if (!Number.isFinite(partNum) || !Number.isFinite(totalNum) || totalNum <= 0) {
+      return NaN;
+    }
+    return (partNum / totalNum) * 100;
+  }
+
+  function overviewMetricStateFromBands(value, bands, options = {}) {
+    const mode = options.mode || 'higherIsWorse';
+    if (!Number.isFinite(value)) {
+      return 'neutral';
+    }
+    if (mode === 'lowerIsWorse') {
+      if (value <= bands.riskMax) {
+        return 'risk';
+      }
+      if (value <= bands.attentionMax) {
+        return 'attention';
+      }
+      return 'neutral';
+    }
+    if (value >= bands.riskMin) {
+      return 'risk';
+    }
+    if (value >= bands.attentionMin) {
+      return 'attention';
+    }
+    return 'neutral';
+  }
+
+  function applyOverviewMetricTone(element, state) {
+    if (!element) {
+      return;
+    }
+    element.classList.remove('info', 'ok', 'warn', 'stop');
+    const tone = state === 'attention' ? 'warn' : state === 'risk' ? 'stop' : 'info';
+    element.classList.add(tone);
+  }
+
+  // OP-D-013: compact supervisor monitor (P2 draft). One dense table — no wallboard / gamification UI.
+  const supervisorMonitorOperationalStatuses = ['running', 'manual_paused', 'auto_paused', 'review'];
+
+  function reviewOpenCountsByCampaign() {
+    const counts = new Map();
+    for (const item of reviewQueueItems) {
+      if (item.status !== 'open') {
+        continue;
+      }
+      const bucket = counts.get(item.campaignId) || { open: 0, critical: 0 };
+      bucket.open += 1;
+      if (['critical', 'high'].includes(item.priority)) {
+        bucket.critical += 1;
+      }
+      counts.set(item.campaignId, bucket);
+    }
+    const workspaceCampaignId = q('#campaignWorkspace')?.dataset?.campaignId || '';
+    if (workspaceCampaignId && counts.has(workspaceCampaignId)) {
+      counts.set('c-loans', counts.get(workspaceCampaignId));
+    }
+    return counts;
+  }
+
+  function supervisorMonitorRiskLabel(status, reasonText) {
+    const reason = typeof reasonText === 'string' ? reasonText.trim() : '';
+    if (status === 'auto_paused') {
+      return {
+        text: reason && reason !== 'н/д' ? reason : 'Приостановлена системой',
+        state: 'risk'
+      };
+    }
+    if (status === 'review') {
+      return { text: 'Есть записи на проверке', state: 'risk' };
+    }
+    if (status === 'manual_paused') {
+      return {
+        text: reason && reason !== 'н/д' ? reason : 'Ручная пауза',
+        state: 'attention'
+      };
+    }
+    if (status === 'running' && reason && reason !== 'н/д') {
+      return { text: reason, state: 'attention' };
+    }
+    return { text: 'н/д', state: 'neutral' };
+  }
+
+  function renderSupervisorMonitor() {
+    const tbody = q('#supervisorMonitorBody');
+    const empty = q('#supervisorMonitorEmpty');
+    if (!tbody) {
+      return;
+    }
+    const reviewCounts = reviewOpenCountsByCampaign();
+    const rows = qa('#homeCampaignsBody tr').filter((row) =>
+      supervisorMonitorOperationalStatuses.includes(row.dataset.campaignStatus || '')
+    );
+    tbody.innerHTML = '';
+    for (const row of rows) {
+      const campaignId = row.dataset.campaignId || '';
+      const status = row.dataset.campaignStatus || '';
+      const name = (row.querySelector('.campaign-name-link')?.textContent || 'Кампания').trim();
+      const statusTag = row.querySelector('.tag')?.outerHTML || '—';
+      const progress = row.querySelector('.campaign-progress')?.textContent || 'н/д';
+      const reason = row.querySelector('.campaign-reason')?.textContent || '';
+      const updated = row.querySelector('.campaign-updated')?.textContent || 'н/д';
+      const risk = supervisorMonitorRiskLabel(status, reason);
+      const review = reviewCounts.get(campaignId) || { open: 0, critical: 0 };
+      const tr = document.createElement('tr');
+      if (risk.state === 'risk') {
+        tr.classList.add('supervisor-monitor-row-risk');
+      }
+      const reviewLabel = review.open > 0
+        ? (review.critical > 0 ? `${review.open} · ${review.critical} срочных` : String(review.open))
+        : '0';
+      const reviewClass = review.critical > 0
+        ? 'supervisor-monitor-review-risk'
+        : review.open > 0
+          ? 'supervisor-monitor-review-attention'
+          : '';
+      tr.innerHTML = `
+        <td><button type="button" class="campaign-name-link" data-open-campaign="overview" data-campaign-id="${campaignId}">${name}</button></td>
+        <td>${statusTag}</td>
+        <td class="campaign-progress">${progress}</td>
+        <td class="supervisor-monitor-risk supervisor-monitor-risk-${risk.state}">${risk.text}</td>
+        <td class="num ${reviewClass}">${reviewLabel}</td>
+        <td class="supervisor-monitor-updated">${updated}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    if (empty) {
+      empty.hidden = rows.length > 0;
+    }
   }
 
   function getCampaignContext() {
@@ -1531,20 +2238,17 @@
     const totalRecords = Number(sourceSnapshot.totalRecords) || 0;
     const attemptedCalls = Number(sourceSnapshot.attemptedCalls) || 0;
     const completedCalls = Number(sourceSnapshot.completedCalls) || 0;
-    const ptpCount = Number(sourceSnapshot.ptpCount) || 0;
-    const costPerCall = sourceSnapshot.costPerCall;
-    const sourceLabel = sourceSnapshot.source === 'live' ? 'реальные события кампании' : 'локальный источник';
+    const blockedCalls = Number(sourceSnapshot.blockedCalls) || 0;
+    const reviewOpen = Number(sourceSnapshot.reviewOpen) || 0;
+    const reviewCritical = Number(sourceSnapshot.reviewCritical) || 0;
     const processedElement = q('#campaignOverviewProcessedValue');
     const processedSubElement = q('#campaignOverviewProcessedSub');
     const completedElement = q('#campaignOverviewCompletedValue');
     const completedSubElement = q('#campaignOverviewCompletedSub');
-    const ptpElement = q('#campaignOverviewPtpValue');
-    const ptpSubElement = q('#campaignOverviewPtpSub');
-    const costElement = q('#campaignOverviewCostValue');
-    const costSubElement = q('#campaignOverviewCostSub');
-    const costText = Number.isFinite(Number(costPerCall))
-      ? `${Number(costPerCall).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
-      : 'н/д';
+    const blockedElement = q('#campaignOverviewBlockedValue');
+    const blockedSubElement = q('#campaignOverviewBlockedSub');
+    const reviewOpenElement = q('#campaignOverviewReviewOpenValue');
+    const reviewOpenSubElement = q('#campaignOverviewReviewOpenSub');
 
     if (processedElement) {
       processedElement.textContent = formatMetric(attemptedCalls);
@@ -1560,18 +2264,47 @@
         ? `${formatShare(completedCalls, attemptedCalls)} ответивших`
         : 'нет обработанных вызовов';
     }
-    if (ptpElement) {
-      ptpElement.textContent = formatMetric(ptpCount);
+    if (blockedElement) {
+      blockedElement.textContent = attemptedCalls > 0
+        ? formatShare(blockedCalls, attemptedCalls)
+        : '—';
     }
-    if (ptpSubElement) {
-      ptpSubElement.textContent = `${attemptedCalls > 0 ? formatShare(ptpCount, attemptedCalls) : '—'} обещаний`;
+    if (blockedSubElement) {
+      blockedSubElement.textContent = `${formatMetric(blockedCalls)} из ${formatMetric(attemptedCalls)} попыток`;
     }
-    if (costElement) {
-      costElement.textContent = costText;
+    if (reviewOpenElement) {
+      reviewOpenElement.textContent = formatMetric(reviewOpen);
     }
-    if (costSubElement) {
-      costSubElement.textContent = sourceSnapshot.source === 'live' ? `источник: ${sourceLabel}` : `источник: ${sourceLabel}`;
+    if (reviewOpenSubElement) {
+      reviewOpenSubElement.textContent = reviewCritical > 0
+        ? `${formatMetric(reviewCritical)} с высоким приоритетом`
+        : 'открытых записей';
     }
+
+    applyOverviewMetricTone(q('#campaignOverviewProcessedMetric'), 'neutral');
+    applyOverviewMetricTone(
+      q('#campaignOverviewCompletedMetric'),
+      attemptedCalls > 0
+        ? overviewMetricStateFromBands(
+            sharePct(completedCalls, attemptedCalls),
+            overviewMetricThresholds.connectSharePct,
+            { mode: 'lowerIsWorse' }
+          )
+        : 'neutral'
+    );
+    applyOverviewMetricTone(
+      q('#campaignOverviewBlockedMetric'),
+      attemptedCalls > 0
+        ? overviewMetricStateFromBands(
+            sharePct(blockedCalls, attemptedCalls),
+            overviewMetricThresholds.blockedSharePct
+          )
+        : 'neutral'
+    );
+    applyOverviewMetricTone(
+      q('#campaignOverviewReviewOpenMetric'),
+      overviewMetricStateFromBands(reviewOpen, overviewMetricThresholds.reviewOpenCount)
+    );
   }
 
   function applyReportRoleContext(role = currentReportRole) {
@@ -1841,7 +2574,7 @@
       currentCampaignReportSnapshot=snapshot;
       syncCampaignOverviewMetricsFromReport(snapshot);
       if (progress) {
-        progress.textContent=`Обзвонили ${formatMetric(snapshot.attemptedCalls)} из ${formatMetric(snapshot.totalRecords)}`;
+        progress.textContent=formatCampaignProgressLabel(snapshot);
       }
       if (q('#reportNotice')) {
         renderReportSnapshot(snapshot, 'live');
@@ -2027,8 +2760,8 @@
       <b>Ответственный за решение:</b> ${item.requiredByLabel || item.requiredBy || 'Не назначен'}<br/>
       <b>Следующий шаг:</b> ${item.nextStep || '—'}<br/>
       <b>Исход звонка:</b> ${item.callOutcome}<br/>
-      <b>Compliance:</b> ${compliance.decision || 'нет решения'} (${compliance.reasonCode || 'n/a'})<br/>
-      <b>Основание:</b> ${compliance.reasonText || '—'}<br/>
+      <b>Решение по ограничениям:</b> ${formatDecisionLabel(compliance.decision || 'unknown')}<br/>
+      <b>Основание:</b> ${compliance.reasonText || formatReasonCodeLabel(compliance.reasonCode) || '—'}<br/>
       <b>Открыт:</b> ${item.createdAt} · возраст ${item.ageMinutes || 0} мин
     `;
     q('#reviewDrawerReason').innerHTML=`<b>Комментарий / обоснование</b><p style="margin:8px 0 0;color:var(--muted)">${item.reason || '—'}</p>`;
@@ -2040,7 +2773,7 @@
     for (const event of item.complianceLog || []) {
       const block=document.createElement('div');
       block.className='review-event';
-      block.innerHTML=`<small>${event.time} · ${event.actor}</small><b>${event.action}</b><pre>${event.text}</pre>`;
+      block.innerHTML=`<small>${event.time} · ${formatActorLabel(event.actor)}</small><b>${formatAuditActionLabel(event.action)}</b><pre>${event.text}</pre>`;
       complianceLog.appendChild(block);
     }
 
@@ -2049,7 +2782,7 @@
     for (const event of item.technicalEvents || []) {
       const block=document.createElement('div');
       block.className='review-event';
-      block.innerHTML=`<small>${event.time} · ${event.type}</small><b>${item.callId}</b><pre>${event.details}</pre>`;
+      block.innerHTML=`<small>${event.time} · ${formatReviewEventType(event.type)}</small><b>${item.callId}</b><pre>${event.details}</pre>`;
       technicalLog.appendChild(block);
     }
 
@@ -2076,6 +2809,30 @@
     return callCards.find((item) => item.id === id) || null;
   }
 
+  function renderBlockKindLegendHtml() {
+    return BLOCK_KIND_ORDER.map((kind)=>`<div class="base-block-kind-card ${kind}">${renderBlockKindBlock(kind, {})}</div>`).join('');
+  }
+
+  function renderCampaignBasePanel() {
+    const legend = q('#campaignBaseBlockKindLegend');
+    if (legend) {
+      legend.innerHTML = renderBlockKindLegendHtml();
+    }
+    const tbody = q('#campaignBaseHoldTableBody');
+    if (tbody) {
+      tbody.textContent = '';
+      for (const row of baseEligibilityHolds) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.debtor}</td><td>${renderBlockKindBlock(row.blockKind, row.complianceDecision || row)}</td><td style="font-size:12px;color:var(--muted)">${row.complianceDecision?.reasonText || '—'}</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+    const holdCount = q('#campaignBaseEligibilityHoldCount');
+    if (holdCount) {
+      holdCount.textContent = String(baseEligibilityHolds.length);
+    }
+  }
+
   function syncCallComplianceReasonFilterOptions() {
     const filter = q('#callComplianceReasonFilter');
     if (!filter) {
@@ -2088,13 +2845,34 @@
     for (const reason of options) {
       const option = document.createElement('option');
       option.value = reason;
-      option.textContent = reason === 'all' ? 'Все' : reason;
+      option.textContent = reason === 'all' ? 'Все' : formatReasonCodeLabel(reason);
       filter.appendChild(option);
     }
 
     filter.value = options.includes(selectedValue) ? selectedValue : 'all';
   }
 
+  function formatConversationResult(item){
+    const outcomeMeta=callOutcomeMeta[item.outcome] || {label:item.outcome || '—', pill:'state-empty'};
+    if (item.outcome === 'ptp_created') return { label:'Обещание платежа', pill:outcomeMeta.pill };
+    if (item.outcome === 'handoff') return { label:'Перевод оператору', pill:outcomeMeta.pill };
+    if (item.outcome === 'no_answer') return { label:'Нет ответа', pill:outcomeMeta.pill };
+    if (item.outcome === 'blocked') return { label:'Заблокирован', pill:outcomeMeta.pill };
+    if (item.status === 'completed') return { label:'Разговор завершён', pill:'state-ready' };
+    return { label:outcomeMeta.label || '—', pill:outcomeMeta.pill };
+  }
+  function buildCallExpandHtml(debtorKey){
+    const sameDebtor=callCards.filter((item)=>String(item.debtor)===String(debtorKey));
+    if (!sameDebtor.length) return '<div class="empty"><b>Звонков по этому должнику нет.</b></div>';
+    return sameDebtor.map((item)=>{
+      const result=formatConversationResult(item);
+      const turns=parseTranscriptTurns(item.transcript || '');
+      const transcriptHtml=turns.length
+        ? turns.map((turn)=>`<div class="dialog-turn ${turn.role === 'agent' ? 'ai' : 'person'}"><small>${turn.role === 'agent' ? 'ИИ-агент' : 'Человек'}</small>${turn.text}</div>`).join('')
+        : '<div class="panel-sub">Расшифровки этого разговора нет.</div>';
+      return `<div class="call-expand-block"><div class="call-expand-head"><b>${item.startedAt}</b><span class="tag ${result.pill}">${result.label}</span></div><div class="panel-sub" style="margin-bottom:8px">Расшифровка</div><div style="margin-bottom:10px">${transcriptHtml}</div></div>`;
+    }).join('');
+  }
   function renderCallsTable() {
     const outcomeFilter=q('#callOutcomeFilter');
     const qaFilter=q('#callQaFilter');
@@ -2119,7 +2897,7 @@
 
     tbody.textContent='';
     const reasonedCards = callCards.filter((item) => {
-      const reason = item.complianceDecision?.reasonCode || 'n/a';
+      const reason = item.complianceDecision?.reasonCode || '';
       return complianceReasonValue === 'all' || reason === complianceReasonValue;
     });
 
@@ -2128,18 +2906,27 @@
       && (!needsQaOnly || item.qaStatus !== 'approved'));
 
     for (const item of filtered) {
-      const outcomeMeta=callOutcomeMeta[item.outcome] || {label:item.outcome,pill:'state-empty'};
-      const qaMeta=callQaStatusMeta[item.qaStatus] || {label:item.qaStatus,pill:'state-empty'};
+      const result=formatConversationResult(item);
+      const debtorKey=String(item.debtor);
+      const sourceBadge=formatCallSourceBadge(item);
+      const sourceBadgeHtml=sourceBadge
+        ? `<span class="${sourceBadge.className}" data-call-source-badge="${sourceBadge.label}">${sourceBadge.label}</span>`
+        : '';
       const tr=document.createElement('tr');
       tr.innerHTML=`
-        <td>${item.startedAt}</td>
-        <td><button class="debtor-link" data-call-action="open" data-call-id="${item.id}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
-        <td>${formatCallStatusLabel(item.status)}</td>
-        <td><span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span></td>
-        <td>${item.outcome === 'ptp_created' ? 'Обещание платежа' : (item.outcome === 'handoff' ? 'Перевод оператору' : (item.status === 'completed' ? 'Разговор завершён' : '—'))}</td>
-        <td><span class="tag ${item.complianceDecision?.decision === 'allow' ? 'state-ready' : 'state-blocked'}">${formatDecisionLabel(item.complianceDecision?.decision)}</span><div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
+        <td>${item.startedAt}${sourceBadgeHtml ? `<div style="margin-top:4px">${sourceBadgeHtml}</div>` : ''}</td>
+        <td><button class="debtor-link" data-call-action="toggle" data-debtor-key="${debtorKey.replace(/"/g,'&quot;')}">${item.debtor}</button><div style="font-size:12px;color:var(--muted)">${item.phone || ''}</div></td>
+        <td>${formatDialStatusLabel(item.dialStatus || item.status)}<div style="font-size:12px;color:var(--muted)">${formatConversationStatusLabel(item.conversationStatus)}</div><div style="font-size:12px;color:var(--muted)">${formatEvidenceStatusLabel(item)}</div></td>
+        <td><span class="tag ${result.pill}">${result.label}</span></td>
+        <td><span class="tag ${formatDecisionStateClass(item.complianceDecision?.decision)}">${formatDecisionLabel(item.complianceDecision?.decision)}</span>${renderBlockKindBlock(item.complianceDecision?.blockKind, item.complianceDecision || {})}<div style="font-size:12px;color:var(--muted)">${item.complianceDecision?.reasonText || formatReasonCodeLabel(item.complianceDecision?.reasonCode) || '—'}</div></td>
       `;
       tbody.appendChild(tr);
+      if (expandedDebtorKey === debtorKey) {
+        const expand=document.createElement('tr');
+        expand.className='call-expand-row';
+        expand.innerHTML=`<td colspan="5">${buildCallExpandHtml(debtorKey)}</td>`;
+        tbody.appendChild(expand);
+      }
     }
 
     if (metricTotal) metricTotal.textContent=String(filtered.length);
@@ -2166,7 +2953,8 @@
         const attemptDetail = detailData?.attempt || {};
         const resultDetail = detailData?.result || {};
         const decisions = Array.isArray(detailData?.complianceDecisions) ? detailData.complianceDecisions : [];
-        const complianceDecision = decisions.length ? decisions[0] : item.complianceDecision;
+        const complianceDecision = detailData?.complianceDecision
+          || (decisions.length ? decisions[0] : item.complianceDecision);
         const timelineEvents = Array.isArray(detailData?.usageEvents)
           ? detailData.usageEvents.map(mapUsageEventToTimelineItem)
           : item.complianceTimeline;
@@ -2218,9 +3006,15 @@
     }
     const resultEl=q('#callCardResult');
     if (resultEl) {
+      const decisionLabel = formatDecisionLabel(displayItem.complianceDecision?.decision);
+      const reasonLabel = displayItem.complianceDecision?.reasonText || formatReasonCodeLabel(displayItem.complianceDecision?.reasonCode) || '—';
+      const blockKindHtml = renderBlockKindBlock(displayItem.complianceDecision?.blockKind, displayItem.complianceDecision || {});
       resultEl.innerHTML=`
-      <b>Исход попытки:</b> ${formatCallStatusLabel(displayItem.status)}<br/>
-      <b>Результат разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span>
+      <b>Статус попытки:</b> ${formatDialStatusLabel(displayItem.dialStatus || displayItem.status)}<br/>
+      <b>Исход разговора:</b> <span class="tag ${outcomeMeta.pill}">${outcomeMeta.label}</span><br/>
+      <b>Решение:</b> <span class="tag ${formatDecisionStateClass(displayItem.complianceDecision?.decision)}">${decisionLabel}</span><br/>
+      ${blockKindHtml ? `<div style="margin:8px 0">${blockKindHtml}</div>` : ''}
+      <b>Причина:</b> ${reasonLabel}
     `;
     }
     const turnsRoot=q('#callCardTranscriptTurns');
@@ -2288,10 +3082,13 @@
 
   function getCampaignStateMeta() {
     if (campaignLifecycle.status === 'auto_paused') {
-      return {className:'tag warn', label:'приостановлена системой'};
+      return {className:'tag stop', label:'приостановлена системой'};
     }
     if (campaignLifecycle.status === 'manual_paused') {
       return {className:'tag warn', label:'приостановлена'};
+    }
+    if (campaignLifecycle.status === 'stopping') {
+      return {className:'tag warn', label:'останавливается…'};
     }
     if (campaignLifecycle.status === 'completed') {
       return {className:'tag draft', label:'завершена'};
@@ -2311,6 +3108,128 @@
     return {className:'tag run', label:'работает'};
   }
 
+  const campaignStatusMenuOptions=[
+    {status:'running', label:'работает'},
+    {status:'manual_paused', label:'приостановить — новые звонки не создаются'},
+    {status:'auto_paused', label:'приостановлена системой', systemOnly:true},
+    {status:'ready', label:'готова к запуску'},
+    {status:'draft', label:'черновик'},
+    {status:'completed', label:'остановить кампанию — без прерывания звонков'},
+    {status:'completed_force', label:'остановить немедленно — прервать активные звонки', forceStop:true}
+  ];
+  function isCampaignLiveMode(){
+    return q('#campaignModeBadge')?.dataset.campaignMode === 'live';
+  }
+  function buildForceStopWarningSuffix(){
+    return isCampaignLiveMode()
+      ? ' На live-поставщиках (Exolve, Mango) прерывание активных звонков пока ограничено — кампания завершится, но звонок может дойти до конца.'
+      : ' Активные звонки в демо-контуре будут прерваны.';
+  }
+  function closeCampaignStatusMenu(){
+    q('#campaignStatusMenu')?.classList.remove('open');
+  }
+  function renderCampaignStatusMenu(){
+    const menu=q('#campaignStatusMenu');
+    if (!menu) return;
+    menu.textContent='';
+    const stopping=campaignLifecycle.status === 'stopping';
+    for (const option of campaignStatusMenuOptions) {
+      if (option.systemOnly && campaignLifecycle.status !== 'auto_paused') continue;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.textContent=option.label;
+      btn.dataset.status=option.status;
+      btn.disabled=stopping;
+      if (campaignLifecycle.status === option.status) btn.style.fontWeight='800';
+      menu.appendChild(btn);
+    }
+  }
+  async function applyCampaignStatusFromMenu(nextStatus){
+    closeCampaignStatusMenu();
+    if (!nextStatus || nextStatus === campaignLifecycle.status) return;
+    if (campaignLifecycle.status === 'stopping') return;
+    if (nextStatus === 'auto_paused') {
+      toast('Статус системный','Возобновление возможно только после проверки причины.');
+      return;
+    }
+    if (nextStatus === 'completed') {
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Остановить кампанию?',
+        `«${name}» будет завершена. Новые звонки не начнутся. Активные звонки этим действием не прерываются. Чтобы снова обзванивать, нужен новый запуск.`,
+        'Остановить кампанию',
+        async ()=>{
+          const previousStatus=campaignLifecycle.status;
+          setCampaignState('stopping',{actor:'operator',reason:'остановка кампании',force:true});
+          const result=await patchCampaignStatus('completed','graceful');
+          if (!result.ok) {
+            setCampaignState(previousStatus,{actor:'operator',reason:'остановка не выполнена',force:true});
+            toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
+            return;
+          }
+          setCampaignState('completed',{actor:'operator',reason:'кампания остановлена'});
+          toast('Кампания завершена','Новые звонки не начнутся. Активные звонки не прерывались.');
+        }
+      );
+      return;
+    }
+    if (nextStatus === 'completed_force') {
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Остановить немедленно?',
+        `«${name}» будет завершена. Новые звонки не начнутся.${buildForceStopWarningSuffix()} Чтобы снова обзванивать, нужен новый запуск.`,
+        'Остановить немедленно',
+        async ()=>{
+          const previousStatus=campaignLifecycle.status;
+          setCampaignState('stopping',{actor:'operator',reason:'немедленная остановка кампании',force:true});
+          const result=await patchCampaignStatus('completed','force');
+          if (!result.ok) {
+            setCampaignState(previousStatus,{actor:'operator',reason:'остановка не выполнена',force:true});
+            toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
+            return;
+          }
+          setCampaignState('completed',{actor:'operator',reason:'кампания остановлена немедленно'});
+          toast(
+            'Кампания завершена',
+            isCampaignLiveMode()
+              ? 'Новые звонки не начнутся. Активные live-звонки могли остаться без прерывания.'
+              : 'Активные звонки прерваны. Новые звонки не начнутся.'
+          );
+        }
+      );
+      return;
+    }
+    if (nextStatus === 'running') {
+      if (campaignLifecycle.status === 'auto_paused') {
+        toast('Продолжить нельзя','Сначала разберите причину системной остановки на обзоре.');
+        return;
+      }
+      const result=await patchCampaignStatus('running');
+      if (!result.ok && campaignLifecycle.status !== 'manual_paused' && campaignLifecycle.status !== 'ready' && campaignLifecycle.status !== 'draft') {
+        toast('Статус не изменён', result.message || 'Не удалось изменить статус.');
+        return;
+      }
+      setCampaignState('running',{actor:'operator',reason:'статус изменён'});
+      toast('Статус обновлён','Кампания работает.');
+      return;
+    }
+    if (nextStatus === 'manual_paused') {
+      const name=q('#campaignWorkspace')?.dataset.campaignName || 'кампанию';
+      openConfirm(
+        'Приостановить кампанию?',
+        `«${name}»: новые звонки перестанут создаваться. Потом можно снова продолжить обзвон. Это не завершение кампании.`,
+        'Приостановить кампанию',
+        ()=>{
+          setCampaignState('manual_paused',{actor:'operator',reason:'ручная пауза',pausedBy:'operator'});
+          toast('Кампания приостановлена','Новые звонки не создаются. Можно продолжить позже.');
+        }
+      );
+      return;
+    }
+    setCampaignState(nextStatus,{actor:'operator',reason:'статус изменён',force:true});
+    toast('Статус обновлён','Состояние кампании изменено.');
+  }
+
   function applySafeResumePanel() {
     const safePanel=q('#safeResumePanel');
     const notice=q('#campaignRuntimeNotice');
@@ -2325,7 +3244,7 @@
       safePanel.style.display='block';
       safeEvent.value = campaignLifecycle.autoPauseEvent || 'compliance.blocked.auto_pause';
       reason.value = campaignLifecycle.autoPauseReason || 'Причина не указана';
-      safeImpact.value = campaignLifecycle.autoPauseImpact || 'Без детализации impact';
+      safeImpact.value = campaignLifecycle.autoPauseImpact || 'Без описания последствий';
       notice.className='notice warn';
       notice.textContent=`Кампания приостановлена системой. ${campaignLifecycle.autoPauseImpact || 'Новые звонки не запускаются.'}`;
       return;
@@ -2379,9 +3298,22 @@
     if (autoPauseBanner) {
       autoPauseBanner.hidden = nextStatus !== 'auto_paused';
     }
-    if (stopButton) {
-      stopButton.style.display = nextStatus === 'completed' ? 'none' : 'inline-flex';
-      stopButton.disabled = false;
+    const manualPauseBanner=q('#campaignManualPauseBanner');
+    if (manualPauseBanner) {
+      manualPauseBanner.hidden = nextStatus !== 'manual_paused';
+    }
+    const reviewQueueBanner=q('#campaignReviewQueueBanner');
+    if (reviewQueueBanner) {
+      reviewQueueBanner.hidden = nextStatus !== 'review';
+    }
+    const overviewKpis=q('#campaignOverviewKpis');
+    if (overviewKpis) {
+      const riskVisible = nextStatus !== 'running'
+        || (autoPauseBanner && !autoPauseBanner.hidden)
+        || (manualPauseBanner && !manualPauseBanner.hidden)
+        || (reviewQueueBanner && !reviewQueueBanner.hidden)
+        || (q('#campaignInternalClosed') && !q('#campaignInternalClosed').hidden);
+      overviewKpis.classList.toggle('is-risk', Boolean(riskVisible));
     }
 
     if (nextStatus === 'running' && prevStatus === 'manual_paused') {
@@ -2407,6 +3339,31 @@
     }
 
     applySafeResumePanel();
+    applyPauseBeforeEditLocks();
+  }
+
+  function campaignSettingsLocked() {
+    return campaignLifecycle.status === 'running' || campaignLifecycle.status === 'auto_paused';
+  }
+
+  function applyPauseBeforeEditLocks() {
+    const locked = campaignSettingsLocked();
+    const scenarioNotice = q('#scenarioEditLockNotice');
+    const phoneNotice = q('#phoneEditLockNotice');
+    if (scenarioNotice) scenarioNotice.hidden = !locked;
+    if (phoneNotice) phoneNotice.hidden = !locked;
+    const saveScenario = q('#saveScenario');
+    if (saveScenario) saveScenario.disabled = locked;
+    qa('[data-camp-view="scenario"] select, [data-camp-view="scenario"] textarea, [data-camp-view="scenario"] input').forEach((el)=>{
+      el.disabled = locked;
+    });
+    qa('[data-camp-view="phone"] select, [data-camp-view="phone"] input').forEach((el)=>{
+      if (el.id === 'runTestCall') return;
+      el.disabled = locked;
+    });
+    qa('[data-camp-view="phone"] [data-open-phone]').forEach((el)=>{
+      el.disabled = locked;
+    });
   }
 
   function addCampaignActivity(text, actor='system') {
@@ -2507,7 +3464,7 @@
 		        if (itemReasons.length) {
 		          addByState(blockedCompliance, itemReasons, step.label);
 		        } else {
-		          blockedCompliance.push(`${step.label}: требуется обязательное compliance-решение или донастройка.`);
+		          blockedCompliance.push(`${step.label}: требуется решение по ограничениям или донастройка.`;
 		        }
 		        continue;
 		      }
@@ -2610,9 +3567,9 @@
           : wizardStepStates.telephony.status==='partial'
             ? 'Поставщик выбран. Перед запуском выполните тестовый звонок.'
             : wizardStepStates.telephony.status==='error'
-              ? 'Ошибка валидации соединения. Проверьте параметры и повторите probe.'
+              ? 'Ошибка проверки соединения. Проверьте параметры и повторите тест.'
               : wizardStepStates.telephony.status==='review'
-                ? 'Поставщик не подключен до конца. Сохраните параметры и повторите test connection.'
+                ? 'Поставщик не подключён до конца. Сохраните параметры и повторите проверку соединения.'
                 : wizardStepStates.telephony.status==='blocked'
                   ? 'Проверка телефонии не пройдена. Звонки запускать нельзя.'
                   : 'Требуется подтверждение статуса телеком-контура.',
@@ -2626,7 +3583,7 @@
         : wizardStepStates.script.status==='ready'
           ? 'Сценарий прошёл проверку: ограничения и перевод оператору заданы.'
           : wizardStepStates.script.status==='partial'
-            ? 'Сценарий применим с предупреждениями по обработке возражений. Проверьте tone-guard перед запуском.'
+            ? 'Сценарий применим с предупреждениями по обработке возражений. Проверьте формулировки перед запуском.'
             : wizardStepStates.script.status==='review'
               ? 'Сценарий нужно доработать: добавьте перевод оператору и проверку ограничений.'
               : wizardStepStates.script.status==='error'
@@ -2643,7 +3600,7 @@
 	  setCheckItem('readinessBaseStatus','readinessBaseReason',readinessDisplayState(wizardStepStates.base.status),wizardStepStates.base.status==='ready' ? [`Принято ${wizardStepStates.base.accepted.toLocaleString('ru-RU')} из ${wizardStepStates.base.total.toLocaleString('ru-RU')} записей.`] : (wizardStepStates.base.reasons.length ? wizardStepStates.base.reasons : ['Импорт не завершён или требует ручной корректировки.']));
 	  setCheckItem('readinessPhoneStatus','readinessPhoneReason',readinessDisplayState(wizardStepStates.telephony.status),wizardStepStates.telephony.status==='ready' ? ['Телефония выбрана и подтверждена тестовым звонком.'] : (wizardStepStates.telephony.reasons.length ? wizardStepStates.telephony.reasons : ['Перед запуском выполните тестовый звонок.']));
 	  setCheckItem('readinessScriptStatus','readinessScriptReason',readinessDisplayState(wizardStepStates.script.status),wizardStepStates.script.status==='ready' ? ['Сценарий валиден для текущего запуска.'] : (wizardStepStates.script.reasons.length ? wizardStepStates.script.reasons : ['Проверьте сценарий: ограничения и перевод оператору.']));
-	  setCheckItem('readinessLimitsStatus','readinessLimitsReason', apiReadiness && apiReadiness.status==='ready' ? 'ready' : 'needs_check', apiReadiness && apiReadiness.status==='ready' ? ['Лимиты подтверждены проверкой готовности.'] : ['Нужна проверка: лимиты берутся из ответа готовности.']);
+	  setCheckItem('readinessLimitsStatus','readinessLimitsReason', apiReadiness && apiReadiness.status==='ready' ? 'ready' : 'needs_check', apiReadiness && apiReadiness.status==='ready' ? ['Лимиты подтверждены проверкой готовности.'] : ['Требует проверки: лимиты берутся из ответа готовности.']);
 
 		  const notice=q('#wizardReadinessNotice');
 		  const actions=q('#wizardReadinessActions');
@@ -2716,8 +3673,7 @@
 	}
 
 function syncCampaignLaunchReadinessPanel(launchState='needs_check', launchText='Нужна дополнительная проверка.', reasonItems=[]) {
-  const panelId='campaignLaunchReadinessPanel';
-  const panel=q('#'+panelId);
+  const panel=q('#campaignLaunchReadinessPanel');
   if (!panel) {
     return;
   }
@@ -2732,93 +3688,97 @@ function syncCampaignLaunchReadinessPanel(launchState='needs_check', launchText=
   const summaryText = canRun && !readinessSummary
     ? 'Проверка пройдена. Можно запускать тестовый обзвон.'
     : readinessMetaText || launchText || 'Требуется завершить обязательные проверки.';
-  const effectiveReasons = uniqueList([
+  let panelReasons = uniqueList([
     ...(readinessSummary?.details || []),
     ...(readinessSummary ? [] : reasonItems)
   ]);
 
   if (campaignReadinessSummaryState.status === 'loading') {
-    reasonItems = [
-      'Идёт проверка готовности. Подождите завершения.'
-    ];
+    panelReasons = ['Идёт проверка готовности. Подождите завершения.'];
   } else if (campaignReadinessSummaryState.status === 'error' && campaignReadinessSummaryState.error) {
-    reasonItems = [
-      `Проверка готовности недоступна: ${campaignReadinessSummaryState.error}`
-    ];
+    panelReasons = [`Проверка готовности недоступна: ${campaignReadinessSummaryState.error}`];
   }
 
-	  setPanelStatus(
+  setPanelStatus(
     'campaignLaunchReadinessPanel',
     'campaignLaunchReadinessBadge',
     'campaignLaunchReadinessText',
     'campaignLaunchReadinessReasons',
     effectiveState,
     summaryText,
-    readinessSummary ? effectiveReasons : reasonItems
+    panelReasons
   );
 
-	  setCheckItem(
-	    'campaignLaunchParamsStatus',
-	    'campaignLaunchParamsReason',
-	    readinessDisplayState(wizardStepStates.campaign.status),
-	    wizardStepStates.campaign.status === 'ready'
-	      ? ['Параметры сохранены и валидированы.']
-	      : wizardStepStates.campaign.reasons.length
-	        ? wizardStepStates.campaign.reasons
-	        : ['Требуется шаг кампании.']
-	  );
-	  setCheckItem(
-	    'campaignLaunchBaseStatus',
-	    'campaignLaunchBaseReason',
-	    readinessDisplayState(wizardStepStates.base.status),
-	    wizardStepStates.base.status === 'ready' || wizardStepStates.base.status === 'partial'
-	      ? [`Принято ${wizardStepStates.base.accepted.toLocaleString('ru-RU')} из ${wizardStepStates.base.total.toLocaleString('ru-RU')} записей.`].concat(wizardStepStates.base.rejected ? [`Исключено ${wizardStepStates.base.rejected.toLocaleString('ru-RU')} записей.`] : [])
-	      : wizardStepStates.base.reasons.length
-	        ? wizardStepStates.base.reasons
-	        : ['Запустите импорт и проверьте валидацию базы.']
-	  );
-	  setCheckItem(
-	    'campaignLaunchPhoneStatus',
-	    'campaignLaunchPhoneReason',
-	    readinessDisplayState(wizardStepStates.telephony.status),
-	    wizardStepStates.telephony.status === 'ready'
-	      ? ['Проверка соединения прошла.']
-	      : wizardStepStates.telephony.reasons.length
-	        ? wizardStepStates.telephony.reasons
-	        : ['Нужна проверка соединения с поставщиком.']
-	  );
-	  setCheckItem(
-	    'campaignLaunchScriptStatus',
-	    'campaignLaunchScriptReason',
-	    readinessDisplayState(wizardStepStates.script.status),
-	    wizardStepStates.script.status === 'ready'
-	      ? ['Сценарий готов к тестовому обзвону.']
-	      : wizardStepStates.script.reasons.length
-	        ? wizardStepStates.script.reasons
-	        : ['Запустите проверку сценария.']
-	  );
-	  setCheckItem(
-	    'campaignLaunchLimitsStatus',
-	    'campaignLaunchLimitsReason',
-	    readinessSummary && canRun ? 'ready' : 'needs_check',
-	    readinessSummary && canRun
-	      ? ['Лимиты подтверждены проверкой готовности.']
-	      : ['Нужна проверка: лимиты берутся из ответа готовности.']
-	  );
+  const baseState = resolveStepBuildingBlockState(wizardStepStates.base.status);
+  const baseReasons = wizardStepStates.base.status === 'ready' || wizardStepStates.base.status === 'partial'
+    ? [`Принято ${wizardStepStates.base.accepted.toLocaleString('ru-RU')} из ${wizardStepStates.base.total.toLocaleString('ru-RU')} записей.`].concat(wizardStepStates.base.rejected ? [`Исключено ${wizardStepStates.base.rejected.toLocaleString('ru-RU')} записей.`] : [])
+    : wizardStepStates.base.reasons.length
+      ? wizardStepStates.base.reasons
+      : ['Запустите импорт и проверьте валидацию базы.'];
+  setBuildingBlockItem('campaignLaunchBaseStatus', 'campaignLaunchBaseReason', baseState, baseReasons);
+
+  const scriptState = resolveStepBuildingBlockState(wizardStepStates.script.status);
+  const scriptReasons = wizardStepStates.script.status === 'ready'
+    ? ['Сценарий готов к тестовому обзвону.']
+    : wizardStepStates.script.reasons.length
+      ? wizardStepStates.script.reasons
+      : ['Запустите проверку сценария.'];
+  setBuildingBlockItem('campaignLaunchScriptStatus', 'campaignLaunchScriptReason', scriptState, scriptReasons);
+
+  const phoneState = resolveStepBuildingBlockState(wizardStepStates.telephony.status);
+  const phoneReasons = wizardStepStates.telephony.status === 'ready'
+    ? ['Проверка соединения прошла.']
+    : wizardStepStates.telephony.reasons.length
+      ? wizardStepStates.telephony.reasons
+      : ['Требует проверки: выполните проверку соединения с поставщиком.'];
+  setBuildingBlockItem('campaignLaunchPhoneStatus', 'campaignLaunchPhoneReason', phoneState, phoneReasons);
+
+  const readinessBlockState = resolveReadinessBuildingBlockState(readinessSummary);
+  const readinessBlockReasons = readinessSummary && readinessBlockState === 'ready'
+    ? ['Проверка готовности подтверждена API.']
+    : readinessSummary && readinessBlockState === 'blocked_compliance'
+      ? panelReasons
+      : ['Требует проверки: статус берётся из readiness-summary API.'];
+  setBuildingBlockItem('campaignLaunchLimitsStatus', 'campaignLaunchLimitsReason', readinessBlockState, readinessBlockReasons);
+  setCheckItem('readinessLimitsStatus', 'readinessLimitsReason', readinessBlockState, readinessBlockReasons);
+
+  const modeBlock = resolveModeBuildingBlockState();
+  setBuildingBlockItem('campaignLaunchModeStatus', 'campaignLaunchModeReason', modeBlock.state, modeBlock.reasons);
+
+  const closed=q('#campaignInternalClosed');
+  if (closed) {
+    const speechBlocked = Boolean(readinessSummary?.details?.some((item)=>/реч|ключ|модел/i.test(String(item))));
+    closed.hidden = !speechBlocked;
+  }
 
   if (launchNotice) {
     launchNotice.className=canRun ? 'notice' : 'notice warn';
     launchNotice.textContent=summaryText;
   }
   if (launchButton) {
-    launchButton.disabled=!canRun;
+    const launchOffered = campaignLifecycle.status === 'draft' || campaignLifecycle.status === 'ready';
+    launchButton.disabled = !canRun || (closed && !closed.hidden) || !launchOffered;
   }
+
+  const blockingGroup=q('#campaignLaunchBlockingGroup');
+  const warningGroup=q('#campaignLaunchWarningGroup');
   const blockingList=q('#campaignLaunchBlockingReasons');
   const warningList=q('#campaignLaunchWarningReasons');
-  const reasons=readinessSummary ? (readinessSummary.details || []) : reasonItems;
+  const reasons=readinessSummary ? (readinessSummary.details || []) : panelReasons;
+  const blockingReasons = canRun ? [] : reasons.filter(Boolean);
+  const warningReasons = [];
+  if (!canRun && (effectiveState === 'autopause' || effectiveState === 'needs_check' || effectiveState === 'awaiting')) {
+    warningReasons.push(summaryText);
+  }
+  if (blockingGroup) {
+    blockingGroup.hidden = !blockingReasons.length;
+  }
+  if (warningGroup) {
+    warningGroup.hidden = !warningReasons.length;
+  }
   if (blockingList) {
     blockingList.textContent='';
-    for (const item of (canRun ? [] : reasons)) {
+    for (const item of blockingReasons) {
       const li=document.createElement('li');
       li.textContent=item;
       blockingList.appendChild(li);
@@ -2826,42 +3786,16 @@ function syncCampaignLaunchReadinessPanel(launchState='needs_check', launchText=
   }
   if (warningList) {
     warningList.textContent='';
-    if (effectiveState === 'stale' || effectiveState === 'needs_check') {
+    for (const item of warningReasons) {
       const li=document.createElement('li');
-      li.textContent=summaryText;
+      li.textContent=item;
       warningList.appendChild(li);
     }
   }
 }
 
 function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overviewText='Нужна дополнительная проверка.', reasonItems=[]) {
-  const readinessSummary = buildReadinessSummaryFromApi(campaignReadinessSummaryState.summary);
-  const effectiveState = readinessSummary ? readinessSummary.status : overviewState;
-  const canRun = effectiveState === 'ready';
-  const setRow=(iconId,textId,ready,text)=>{
-    const icon=q('#'+iconId);
-    const textEl=q('#'+textId);
-    if (icon) {
-      icon.textContent = ready ? '✓' : '?';
-      icon.className = ready ? 'ready-icon' : 'ready-icon warn';
-    }
-    if (textEl) textEl.textContent=text;
-  };
-  const baseReady = wizardStepStates.base.status==='ready' || wizardStepStates.base.status==='partial';
-  const scriptReady = wizardStepStates.script.status==='ready';
-  const phoneReady = wizardStepStates.telephony.status==='ready';
-  setRow('overviewReadyBaseIcon','overviewReadyBaseText', baseReady, baseReady ? 'База загружена' : 'База ещё не готова');
-  setRow('overviewReadyScriptIcon','overviewReadyScriptText', scriptReady, scriptReady ? 'Сценарий сохранён' : 'Сценарий ещё не готов');
-  setRow('overviewReadyPhoneIcon','overviewReadyPhoneText', phoneReady, phoneReady ? 'Соединение выбрано' : 'Телефония ещё не готова');
-  const closed=q('#campaignInternalClosed');
-  if (closed) {
-    const speechBlocked = Boolean(readinessSummary?.details?.some((item)=>/реч|ключ|модел/i.test(String(item))));
-    closed.hidden = !speechBlocked;
-  }
-  const launchButton=q('#launchCampaign');
-  if (launchButton && (campaignLifecycle.status==='draft' || campaignLifecycle.status==='ready')) {
-    launchButton.disabled = !canRun || (closed && !closed.hidden);
-  }
+  syncCampaignLaunchReadinessPanel(overviewState, overviewText, reasonItems);
 }
 
   function setWizardStepForScript() {
@@ -2997,6 +3931,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     if (filterEmpty) filterEmpty.hidden = visible>0 || filter==='all';
     if (tableEmpty) tableEmpty.hidden = rows.length>0;
     syncHomeBulkButtons();
+    renderSupervisorMonitor();
   }
 
   async function loadHomeCampaignsFromApi() {
@@ -3036,7 +3971,6 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
         return Number.isFinite(n) ? n.toLocaleString('ru-RU') : '—';
       };
 
-      const rowsByCampaignId=new Map();
       tbody.innerHTML='';
 
       for (const c of campaigns) {
@@ -3067,54 +4001,72 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
         const tdStatus=document.createElement('td');
         const statusSpan=document.createElement('span');
         const statusMeta={
-          running:{ cls:'tag run', text:'работает', progress:`Обзвонили 0 из 0` },
-          manual_paused:{ cls:'tag warn', text:'приостановлена', progress:`Обзвонили 0 из 0` },
-          auto_paused:{ cls:'tag warn', text:'приостановлена системой', progress:`Обзвонили 0 из 0` },
+          running:{ cls:'tag run', text:'работает', progress:'н/д' },
+          manual_paused:{ cls:'tag warn', text:'приостановлена', progress:'н/д' },
+          auto_paused:{ cls:'tag stop', text:'приостановлена системой', progress:'н/д' },
           draft:{ cls:'tag draft', text:'черновик', progress:'База не загружена' },
-          ready:{ cls:'tag info', text:'готова к запуску', progress:`Обзвонили 0 из 0` },
-          completed:{ cls:'tag stop', text:'завершена', progress:`Обзвонили 0 из 0` }
+          ready:{ cls:'tag info', text:'готова к запуску', progress:'н/д' },
+          completed:{ cls:'tag stop', text:'завершена', progress:'н/д' }
         };
-        const meta=statusMeta[status] || { cls:'tag info', text:'—', progress:`Обзвонили 0 из 0` };
+        const meta=statusMeta[status] || { cls:'tag info', text:'—', progress:'н/д' };
         statusSpan.className=meta.cls;
         statusSpan.textContent=meta.text;
         tdStatus.appendChild(statusSpan);
 
+        const tdReason=document.createElement('td');
+        tdReason.className='campaign-reason';
+        const reasonText=typeof c.statusReason==='string' && c.statusReason.trim() ? c.statusReason.trim() : '';
+        tdReason.textContent=reasonText || 'н/д';
+
+        const tdMode=document.createElement('td');
+        tdMode.className='campaign-mode';
+        const modeRaw=typeof c.mode==='string' ? c.mode.trim().toLowerCase() : '';
+        if (modeRaw === 'sandbox' || modeRaw === 'demo' || modeRaw === 'демо') {
+          tdMode.innerHTML='<span class="tag warn">демо</span>';
+        } else if (modeRaw === 'live' || modeRaw === 'production' || modeRaw === 'prod') {
+          tdMode.innerHTML='<span class="tag info">бой</span>';
+        } else {
+          tdMode.textContent='н/д';
+        }
+
         const tdProgress=document.createElement('td');
-        tdProgress.textContent=meta.progress;
+        tdProgress.className='campaign-progress';
+        const progress=c.progress && typeof c.progress==='object' ? c.progress : null;
+        const progressLabel=formatCampaignListProgressLabel(progress, formatRuInt);
+        if (progressLabel) {
+          tdProgress.textContent=progressLabel;
+        } else {
+          tdProgress.textContent=meta.progress;
+        }
+
+        const tdUpdated=document.createElement('td');
+        tdUpdated.className='campaign-updated';
+        const updatedRaw=c.updatedAt || c.createdAt || '';
+        let updatedLabel='н/д';
+        if (updatedRaw) {
+          const d=new Date(updatedRaw);
+          if (!Number.isNaN(d.getTime())) {
+            updatedLabel=d.toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+          }
+        }
+        tdUpdated.textContent=updatedLabel;
 
         tr.appendChild(tdSelect);
         tr.appendChild(tdName);
         tr.appendChild(tdStatus);
+        tr.appendChild(tdReason);
+        tr.appendChild(tdMode);
         tr.appendChild(tdProgress);
+        tr.appendChild(tdUpdated);
         tbody.appendChild(tr);
-
-        rowsByCampaignId.set(campaignId,tdProgress);
       }
-
-      await Promise.all(campaigns.map(async (c)=>{
-        const campaignId=String(c.id || '');
-        const el=rowsByCampaignId.get(campaignId);
-        if (!el) return;
-        try {
-          const r=await apiFetch(`${reportApiBaseUrl}/tenants/${context.tenantId}/campaigns/${campaignId}/report`, {
-            headers: { Accept: 'application/json' }
-          });
-          if (!r.ok) {
-            return;
-          }
-          const report=await r.json();
-          const attempted=report.attemptedCalls ?? 0;
-          const total=report.totalRecords ?? 0;
-          el.textContent=`Обзвонили ${formatRuInt(attempted)} из ${formatRuInt(total)}`;
-        } catch {
-          // Keep placeholder text
-        }
-      }));
+      renderSupervisorMonitor();
     } catch {
       tbody.innerHTML=previousHtml;
       if (homeErrorNotice) {
         homeErrorNotice.hidden=false;
       }
+      renderSupervisorMonitor();
     }
   }
 
@@ -3233,12 +4185,18 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       renderCallsTable();
       return;
     }
+    if (id === 'base') {
+      renderCampaignBasePanel();
+      return;
+    }
   }
   renderCallsTable();
-  renderCampaignActivityLog();
+  renderCampaignBasePanel();
+  renderCampaignStatusMenu();
   setCampaignState(campaignLifecycle.status,{actor:'system',reason:'инициализация экрана кампании',force:true});
+  syncCampaignModeBadge(callsSource === 'live');
   function openCampaign(tab='overview'){q('#globalScreens').style.display='none';q('#campaignWorkspace').classList.add('active');qa('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen==='home'));q('#crumb').textContent='Кампания';showCampaignTab(tab)}
-  q('#homeCampaignsBody')?.addEventListener('click',(event)=>{
+  function openCampaignFromListClick(event) {
     const btn=event.target?.closest?.('[data-open-campaign]');
     if (!btn) return;
     const workspace=q('#campaignWorkspace');
@@ -3247,7 +4205,9 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       workspace.dataset.campaignName=(btn.textContent || '').trim();
     }
     openCampaign(btn.dataset.openCampaign);
-  });
+  }
+  q('#homeCampaignsBody')?.addEventListener('click', openCampaignFromListClick);
+  q('#supervisorMonitorBody')?.addEventListener('click', openCampaignFromListClick);
   qa('[data-camp-tab]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTab)));
   qa('[data-camp-tab-link]').forEach(b=>b.addEventListener('click',()=>showCampaignTab(b.dataset.campTabLink)));
   q('#backCampaigns').addEventListener('click',()=>showScreen('home'));
@@ -3265,6 +4225,13 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
   q('#auditPeriodFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditActorFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
   q('#auditCampaignFilter')?.addEventListener('change',()=>{window.__auditPage=1;renderAuditLog();});
+  q('#auditKindFilter')?.addEventListener('change',async ()=>{
+    window.__auditPage=1;
+    if (auditLogSource === 'live') {
+      await loadAuditLogFromApi();
+    }
+    renderAuditLog();
+  });
   q('#auditPrevPage')?.addEventListener('click',()=>{window.__auditPage=Math.max(1,(window.__auditPage||1)-1);renderAuditLog();});
   q('#auditNextPage')?.addEventListener('click',()=>{window.__auditPage=(window.__auditPage||1)+1;renderAuditLog();});
   q('#reviewQueueStatusFilter')?.addEventListener('change',renderReviewQueue);
@@ -3366,7 +4333,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     setText('campaignBaseLoadedCount', total.toLocaleString('ru-RU'));
     setText('campaignBaseAcceptedCount', accepted.toLocaleString('ru-RU'));
     setText('campaignBaseRejectedCount', rejected.toLocaleString('ru-RU'));
-    setText('campaignBaseEligibilityHoldCount', 'н/д');
+    setText('campaignBaseEligibilityHoldCount', String(baseEligibilityHolds.length));
     if (fileName) {
       setText('campaignBaseFileTitle', fileName);
       setText('uploadTitle', fileName);
@@ -3577,7 +4544,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     b.textContent='Проверка…';
     setWizardTelephonyByProvider();
     wizardStepStates.telephony.status='loading';
-    wizardStepStates.telephony.reasons=['Запрошен live-response от telephony probe API.'];
+    wizardStepStates.telephony.reasons=['Запрошена проверка соединения с поставщиком.'];
     updateWizardReadiness();
     setTimeout(()=>{
       b.disabled=false;
@@ -3604,17 +4571,23 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
       const selected=q('.script-card.selected');
       const check=selected?.dataset.scriptCheck||wizardStepStates.script.scriptCheck||'ready';
       const checkResult=wizardBackendSim.script.validate(check);
-      setWizardScriptState('loading',['Запущена валидация сценария и policy guard']);
+      setWizardScriptState('loading',['Запущена проверка сценария и правил формулировок']);
       setTimeout(()=>{
         setWizardScriptState(checkResult.status || 'error', wizardBackendSim.summarizeBlockingReasons(checkResult));
         openLayer(q('#dialogDrawer'));
         toast('Проверка сценария завершена', (checkResult.status || 'error') === 'ready'
           ? 'Проверка успешно пройдена.'
-          : 'Сценарий требует доработки или review.');
+          : 'Сценарий требует доработки или повторной проверки.');
       },700);
     });
   });
-  q('#saveScenario').addEventListener('click',()=>toast('Версия сценария сохранена','Перед публикацией будут повторно выполнены обязательные проверки.'));
+  q('#saveScenario').addEventListener('click',()=>{
+    if (campaignSettingsLocked()) {
+      toast('Сначала приостановите кампанию','Сценарий нельзя менять, пока кампания работает или приостановлена системой.');
+      return;
+    }
+    toast('Версия сценария сохранена','Перед публикацией будут повторно выполнены обязательные проверки.');
+  });
   let pendingConfirm=null;
   function openConfirm(title,text,okLabel,onOk){
     q('#confirmActionTitle').textContent=title;
@@ -3623,7 +4596,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     pendingConfirm=onOk;
     openLayer(q('#confirmActionModal'));
   }
-  async function patchCampaignStatus(status) {
+  async function patchCampaignStatus(status, stopMode) {
     const context=getCampaignContext();
     if (!context?.tenantId || !context?.campaignId) {
       return { ok:false, message:'Контекст кампании не найден.' };
@@ -3635,7 +4608,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
           Accept:'application/json',
           'Content-Type':'application/json'
         },
-        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed' } : { status })
+        body: JSON.stringify(status === 'running' ? { status: 'running' } : status === 'completed' ? { status: 'completed', stopMode: stopMode || 'graceful' } : { status })
       });
       const body=await response.json().catch(()=>({}));
       if (!response.ok) {
@@ -3822,6 +4795,7 @@ function syncCampaignOverviewReadinessPanel(overviewState='needs_check', overvie
     }
     window.location.href='/login.html';
   });
+  renderSupervisorMonitor();
   bootstrapCabinetAuth().then((ok)=>{
     if (ok) loadHomeCampaignsFromApi();
   });

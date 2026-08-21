@@ -32,25 +32,29 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 3 | OP-T-001 | tech | Поля списка кампаний: причина риска + прогресс |
 | 4 | OP-D-003 | design | Обзор: риск-баннер выше KPI |
 | 5 | OP-D-004 | design | Статусы: переход «останавливается», Stop ≠ Force |
-| 6 | OP-T-002 | tech | Graceful stop vs force stop в API/статусах |
+| 6 | OP-T-002 | tech | Graceful stop vs force stop · `done` (через 002a/b) |
+| 6a | OP-T-002a | tech | Документ: graceful vs force stop (без enum `stopped`) |
+| 6b | OP-T-002b | tech | Реализация stopMode + audit (после 002a) |
 | 7 | OP-D-005 | design | Журнал как decision trail (было → стало) |
 | 8 | OP-T-003 | tech | Audit metadata: previous / next value |
 | 9 | OP-D-006 | design | Журнал звонков: попытка \| исход \| решение+причина |
 | 10 | OP-T-004 | tech | Контракт строки звонка под две оси статуса |
 | 11 | OP-D-007 | design | Бейджи: live / демо; системная vs ручная пауза |
-| 12 | OP-T-005 | tech | Очередь проверок с review-items API |
-| 13 | OP-D-008 | design | Empty state очереди — рабочий, не декоративный |
+| 12 | OP-T-005 | tech | Очередь проверок с review-items API · `blocked` (IA) |
+| 13 | OP-D-008 | design | Empty state очереди · `blocked` (IA / product) |
 | 14 | OP-T-006 | tech | Pause-before-edit сценария/телефонии running |
 | 15 | OP-D-009 | design | Исключения: постоянно / временно / пауза кампании |
-| 16 | OP-T-007 | tech | Типы suppression + reason в ответе/журнале |
+| 16 | OP-T-007 | tech | Типы suppression + reason в ответе/журнале · `done` |
 | 17 | OP-D-010 | design | Пороги метрик (threshold color) на Обзоре |
-| 18 | OP-T-008 | tech | Progress completed/total из реальных событий |
-| 19 | OP-D-011 | design | Microcopy pass по рыночным формулировкам |
-| 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы |
-| 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» |
-| 22 | OP-T-010 | tech | Who changed status в audit (actor type) |
-| 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) |
-| 24 | OP-T-011 | tech | Safe-resume: кто может подтвердить (после confirm) |
+| 18 | OP-T-008 | tech | Progress completed/total из реальных событий · `done` |
+| 19 | OP-D-011 | design | Microcopy pass по рыночным формулировкам · done |
+| 20 | OP-T-009 | tech | Фильтр журнала: блокировки / решения / статусы · `done` |
+| 21 | OP-D-012 | design | Карточка кампании: блоки готовности без «магии» · `done` |
+| 22 | OP-T-010 | tech | Who changed status в audit (actor type) — done |
+| 23 | OP-D-013 | design | Компактный supervisor-вид мониторинга (P2) · `done` (P2 draft) |
+| 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
+| 25 | OP-T-012 | tech | Force stop: sandbox interrupt in-flight (`done`); live Exolve hangup — `T-149` |
+| 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) · `done` |
 
 ---
 
@@ -58,7 +62,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-001: Убрать AI-визуал кабинета
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: anti-patterns бенчмарка §4
 
@@ -84,7 +88,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-002: Плотная таблица кампаний
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Mango список ИО, Five9 Campaign State
 
@@ -110,7 +114,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-003: Обзор кампании — риск выше KPI
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Kit thresholds; UX-аудит критично-1 (частично закрыт на списке)
 
@@ -133,7 +137,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-004: Визуальная машина статусов Stop / Force / переход
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Mango «Останавливается»; Five9 Stop vs Force Stop
 
@@ -151,13 +155,13 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 Критерии готовности:
 
 - Пользователь понимает разницу паузы и остановки по тексту кнопки и модалки.
-- Force-stop не показывать, пока нет `OP-T-002` (иначе `blocked` на эту часть).
+- Force-stop UI не показывать для live, пока нет HTTP hangup (`T-149`). Sandbox interrupt готов (`OP-T-012`); design Force UI — `OP-D-014`.
 
 ---
 
 ### OP-D-005: Журнал действий как decision trail
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Talkdesk Audit before/after; Naumen history; FIS журнал блокировок
 
@@ -180,7 +184,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-006: Журнал звонков — две оси статуса
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Kit Attempt result vs Wrap-up; NICE dispositions
 
@@ -205,7 +209,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-007: Бейджи режима и типа паузы
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`
 
 Что сделать:
@@ -225,9 +229,10 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-008: Empty state очереди проверок
 
-Статус: `todo`  
+Статус: `blocked`  
 Тип: `design`  
-Референс: Collect! work queue; anti-pattern «декоративный empty»
+Референс: Collect! work queue; anti-pattern «декоративный empty»  
+Блокер: тот же product confirm, что у `OP-T-005` (нет клиентской IA «Очередь» / `#reviewQueue`). До confirm — не брать.
 
 Что сделать:
 
@@ -247,7 +252,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-009: Исключения — три разных состояния
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: NICE DNC vs Call Suppression vs filter
 
@@ -270,7 +275,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-010: Пороги метрик на Обзоре
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Voximplant Kit thresholds
 
@@ -293,7 +298,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-011: Microcopy pass — рыночный RU B2B
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`
 
 Что сделать:
@@ -312,11 +317,26 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 - Нет `running`/`wrap-up`/`safe-resume` в видимом UI.
 - Тон спокойный, операторский.
 
+#### Было → стало (видимый UI)
+
+| Было | Стало |
+|---|---|
+| Автопауза / автопаузу | приостановлена системой / системная остановка |
+| Нужна проверка | требует проверки |
+| Compliance: … (n/a) | Решение по ограничениям: … · основание на RU |
+| live (бейдж режима) | бой |
+| Блокировки (фильтр журнала) | Причины блокировок |
+| Пауза кампании (blockKind) | Приостановка кампании |
+| probe / validation template / test connection / tone-guard / policy guard | проверка соединения / шаблон проверки / проверка соединения / формулировки / правила |
+| QA-бэклог / QA-аналитик | очередь проверки / Контроль качества |
+| Controlled launch после… | Запуск после проверки готовности |
+| id: … (тех. код в журнале) | код: … |
+
 ---
 
 ### OP-D-012: Карточка кампании — блоки готовности без «магии»
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `design`  
 Референс: Genesys building blocks; Oktell activate pipeline
 
@@ -339,7 +359,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-013: Компактный supervisor-вид мониторинга (P2)
 
-Статус: `todo`  
+Статус: `done` (P2 draft — не блокирует P1)  
 Тип: `design`  
 Референс: Oktell Resources; Five9; Kit Live; Talkdesk Live campaigns
 
@@ -358,13 +378,20 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 - Есть согласованный макет на 1 экран без KPI-карточного дашборда.
 - Явно помечено P2 — не блокирует P1.
 
+Реализация (20.08.2026):
+
+- На Главной под списком кампаний — панель `#supervisorMonitorP2` с бейджем **P2** и плотной таблицей: кампания · статус · прогресс · риск · очередь проверки · обновлено.
+- HTML-комментарий wireframe для полного экрана супервизора (меню, автообновление, bulk — без TV wallboard).
+- `renderSupervisorMonitor()` собирает строки из `#homeCampaignsBody` + `reviewQueueItems`; без KPI-карточек и геймификации.
+- Тесты: `tests/prototype-supervisor-monitor.test.ts`.
+
 ---
 
 ## Tech
 
 ### OP-T-001: Поля списка кампаний для ops-таблицы
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`
 
 Что сделать:
@@ -389,7 +416,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-002: Graceful stop vs force stop
 
-Статус: `todo`  
+Статус: `done` (через `OP-T-002a` + `OP-T-002b`; interrupt — `OP-T-012`)  
 Тип: `tech`  
 Референс: Five9 Stop / Force Stop
 
@@ -413,9 +440,49 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ---
 
+### OP-T-002a: Документ поведения graceful vs force stop
+
+Статус: `done`  
+Тип: `tech`  
+Родитель: `OP-T-002` (`split`)
+
+Что сделать:
+
+- Описать в `docs/campaigns-api.md` (и при необходимости operations note): graceful stop = не создавать новые попытки, активные дождаться, статус канона `completed`; force = прервать активные **без** обхода compliance / без нового enum `stopped`.
+- Явно: UI Force не показывать, пока нет `OP-T-002b`.
+- Без кода домена в этом SP.
+
+Критерии готовности:
+
+- Документ согласован с каноном `completed` и PRODUCT_LANGUAGE.
+- Раздел: [`docs/campaigns-api.md`](../campaigns-api.md) — «Остановка кампании: graceful vs force (OP-T-002a)».
+
+---
+
+### OP-T-002b: Реализация stopMode + audit
+
+Статус: `done`  
+Тип: `tech`  
+Зависимость: `OP-T-002a`  
+Родитель: `OP-T-002` (`split`)
+
+Что сделать:
+
+- Additive контракт остановки (например `stopMode: graceful|force` на status/completed path) + audit обоих действий.
+- Force не обходит compliance; не вводить `stopped`.
+- Тесты контракта; UI-модалка Force — отдельным design после готовности API.
+
+Критерии готовности:
+
+- Поведение из `OP-T-002a` покрыто тестом (accept + audit flag).
+- Нет обхода compliance при force.
+- Честная дока: force ≠ гарантированное прерывание, пока нет `OP-T-012`.
+
+---
+
 ### OP-T-003: Audit previous/next value
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk Audit Logs Report
 
@@ -441,7 +508,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-004: Контракт строки журнала звонков
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`
 
 Что сделать:
@@ -465,8 +532,9 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-005: Очередь проверок с review-items API
 
-Статус: `todo`  
-Тип: `tech`
+Статус: `blocked`  
+Тип: `tech`  
+Блокер: product confirm — в клиентском кабинете нет пункта «Очередь» (`PRODUCT_LANGUAGE` / IA); в прототипе нет `#reviewQueue`, есть мёртвый JS. Не реализовывать экран «вслепую».
 
 Что сделать:
 
@@ -489,7 +557,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-006: Pause-before-edit для running
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk — нельзя править running без pause
 
@@ -515,7 +583,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-007: Типы suppression и reason в ответах
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: NICE DNC vs suppression
 
@@ -540,7 +608,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-008: Progress completed/total из событий
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Talkdesk record progress
 
@@ -566,7 +634,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-009: Фильтры журнала аудита под ops
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`
 
 Что сделать:
@@ -590,7 +658,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-010: Actor type в смене статуса
 
-Статус: `todo`  
+Статус: `done`  
 Тип: `tech`  
 Референс: Kit — кто сменил статус: agent / supervisor / system
 
@@ -615,7 +683,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-T-011: Safe-resume — кто подтверждает
 
-Статус: `todo`  
+Статус: `blocked`  
 Тип: `tech`  
 Блокер: открытый вопрос UX-аудита §G.1 / `prd-open-questions.md`
 
@@ -636,6 +704,49 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 - Неподтверждённая роль получает `FORBIDDEN`.
 - Пока нет confirm от продукта — статус `blocked` (не угадывать).
+
+---
+
+### OP-T-012: Force stop — прерывание in-flight у worker
+
+Статус: `done` (sandbox path; live Exolve HTTP hangup — follow-up `T-149`)  
+Тип: `tech`  
+Зависимость: `OP-T-002b` (audit-флаг уже есть)
+
+Что сделано:
+
+- При `PATCH .../status` с `stopMode: force` прерываются активные sandbox-попытки через `hangupCall` adapter.
+- Graceful не трогает in-flight.
+- Инвариант: нет обхода compliance; статус `completed`.
+- `docs/campaigns-api.md` обновлён: sandbox force реализован; live Exolve hangup отложен (`T-149`).
+- Тесты: `tests/campaigns.stop-mode.test.ts`.
+
+Отложено:
+
+- Live Exolve/Mango HTTP hangup (`T-149` blocked) — попытки с live provider пропускаются (`skippedActiveAttemptsProvider` в audit).
+
+Критерии готовности:
+
+- Sandbox force в API соответствует доке.
+- Force UI (`OP-D-014`) можно брать для sandbox; live — после `T-149`.
+
+---
+
+### OP-D-014: Force UI «Остановить немедленно»
+
+Статус: `done`  
+Тип: `design`  
+Зависимость: `OP-T-012`
+
+Что сделать:
+
+- Отдельная кнопка/ветка модалки с явным предупреждением о прерывании активных звонков.
+- Не смешивать с graceful «Остановить кампанию».
+- Термины из `PRODUCT_LANGUAGE.md`.
+
+Критерии готовности:
+
+- Пользователь видит Force только когда interrupt реально работает.
 
 ---
 

@@ -2,6 +2,19 @@
 
 Документ фиксирует route-level контракт ручной проверки compliance для записи должника.
 
+## Типы блокировки для UI (OP-T-007)
+
+Additive поле `blockKind` помогает кабинету различать исключения без парсинга сырого `reasonCode`:
+
+| `blockKind` | Когда | Пример `reasonCode` |
+|---|---|---|
+| `permanent` | постоянное исключение (suppression) | `SUPPRESSION_BLOCK` |
+| `temporary` | временная блокировка (окно, частота) | `CALL_WINDOW_BLOCK`, `FREQUENCY_LIMIT_BLOCK` |
+| `campaign_pause` | кампания приостановлена — новые звонки не создаются | не строка suppression; см. `CAMPAIGN_JOB_BLOCKED` |
+| `null` | блок по другим правилам или `allow` | `CONSENT_REVOKED`, `DEBT_STATUS_BLOCK`, … |
+
+`reasonText` для правил suppression/окна/частоты — по-русски, без юридических формулировок сверх rulebook.
+
 ## POST: Проверка compliance для debtor record
 
 `POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/compliance/check`
@@ -33,8 +46,15 @@
 ```json
 {
   "decision": "block",
-  "reasons": ["consent-revoked"],
-  "rules": ["consent-status"]
+  "reasons": [
+    {
+      "decision": "block",
+      "reasonCode": "SUPPRESSION_BLOCK",
+      "reasonText": "Контакт в списке исключений",
+      "blockKind": "permanent"
+    }
+  ],
+  "rules": ["suppression"]
 }
 ```
 
@@ -86,6 +106,7 @@
     "decision": "allow",
     "reasonCode": "RULE_PASSED",
     "reasonText": "Allowed by policy",
+    "blockKind": null,
     "ruleVersion": "v1",
     "checkedAt": "ISO-8601"
   }

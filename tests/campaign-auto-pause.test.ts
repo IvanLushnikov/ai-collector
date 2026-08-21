@@ -62,6 +62,7 @@ describe('CampaignAutoPauseService', () => {
         entityType: 'campaign',
         entityId: 'campaign-1',
         metadata: expect.objectContaining({
+          actorType: 'system',
           reasonCode: 'compliance_violation',
           reasonText: 'Compliance blocking rate exceeded',
           source: 'campaign_auto_pause_service',

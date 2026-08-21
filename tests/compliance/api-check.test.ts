@@ -111,7 +111,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           expect.objectContaining({
             decision: 'block',
             reasonCode: 'CONSENT_REVOKED',
-            reasonText: 'Consent status is revoked'
+            reasonText: 'Consent status is revoked',
+            blockKind: null
           })
         ]),
         rules: ['call-window', 'consent-status', 'debt-status', 'frequency-limit', 'suppression']
@@ -156,7 +157,8 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           expect.objectContaining({
             decision: 'block',
             reasonCode: 'CONSENT_PENDING_BLOCK',
-            reasonText: 'Consent status is pending'
+            reasonText: 'Consent status is pending',
+            blockKind: null
           })
         ]),
         rules: ['call-window', 'consent-status', 'debt-status', 'frequency-limit', 'suppression']

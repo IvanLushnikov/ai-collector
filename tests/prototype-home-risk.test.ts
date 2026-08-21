@@ -5,18 +5,20 @@ const html = readFileSync(new URL('../prototype.html', import.meta.url), 'utf8')
 const home = html.match(/<section class="screen active" id="home">[\s\S]*?<\/section>/)?.[0] ?? '';
 
 describe('prototype home campaign list', () => {
-  it('lists campaigns without risk column, row actions or open-reason CTA', () => {
+  it('lists campaigns in a dense table without open-reason CTA or decorative KPI cards', () => {
     expect(home).toContain('<h1>Кампании</h1>');
     expect(home).not.toContain('<h1>Главная</h1>');
-    expect(home).not.toContain('Риск / причина');
+    expect(home).toContain('>Причина<');
+    expect(home).toContain('>Режим<');
+    expect(home).toContain('>Обновлено<');
     expect(home).not.toContain('Открыть причину');
     expect(home).not.toContain('>Действия<');
     expect(home).not.toContain('data-open-campaign="report"');
     expect(home).not.toContain('>Открыть<');
     expect(home).not.toContain('>Отчёт<');
-    expect(home).not.toContain('3 084');
-    expect(home).not.toContain('1 172');
     expect(home).not.toContain('Успешные диалоги');
+    expect(home).not.toMatch(/class="grid g4"/);
+    expect(home).not.toMatch(/class="metric /);
   });
 
   it('opens a campaign by name and shows progress as dialed N of M', () => {

@@ -14,6 +14,7 @@ describe('prototype campaign header', () => {
     expect(html).not.toContain('id="pauseCampaign">Приостановить кампанию');
     expect(html).not.toContain('id="stopCampaign">Остановить кампанию');
     expect(html).toContain('formatCampaignProgressLabel');
+    expect(html).toContain('formatCampaignProgressLabel(snapshot)');
     expect(html).toContain('68% обзвонили');
   });
 
@@ -22,6 +23,7 @@ describe('prototype campaign header', () => {
     expect(html).toContain("id === 'overview'");
     expect(html).toContain('loadCampaignReport');
     expect(html).toContain('data-analytics-campaign');
-    expect(html).toContain('campaignOverviewAvgDurationValue');
+    expect(html).toContain('campaignOverviewBlockedValue');
+    expect(html).toContain('campaignOverviewReviewOpenValue');
   });
 });

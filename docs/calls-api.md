@@ -152,17 +152,46 @@
 
 ### Успешный ответ `200`
 
+Строка журнала достаточна для трёх колонок UI: **статус попытки** (`dialStatus`), **исход разговора** (`outcome`), **решение + причина** (`complianceDecision`).
+
+`complianceStatus` сохранён как совместимый ярлык (`allowed` / `blocked` / `not_checked`). Для новых клиентов используйте `complianceDecision.decision` (`allow` | `block` | `null` через объект/`null`).
+
+`complianceDecision` — последнее решение по должнику кампании (по `checkedAt` desc). Если проверок не было — `null`.
+
 ```json
 [
   {
+    "callAttemptId": "uuid",
     "status": "completed",
+    "dialStatus": "completed",
+    "conversationStatus": "completed",
+    "outcome": "ptp_created",
+    "complianceStatus": "allowed",
+    "complianceDecision": {
+      "decision": "allow",
+      "reasonCode": "ALLOW",
+      "reasonText": "Согласие подтверждено",
+      "checkedAt": "ISO-8601"
+    },
+    "recordingStatus": "ready",
+    "transcriptStatus": "ready",
+    "reviewRequired": false,
     "debtorExternalId": "ext-001",
     "startedAt": "ISO-8601",
-    "endedAt": "ISO-8601",
-    "outcome": "ptp_created"
+    "endedAt": "ISO-8601"
   }
 ]
 ```
+
+Поля для колонок UI (см. `PRODUCT_LANGUAGE.md`):
+
+| Колонка UI | Поле API | Примечание |
+|---|---|---|
+| Статус попытки | `dialStatus` | telephony/system; не смешивать с `outcome` |
+| Исход разговора | `outcome` | бизнес-enum; без новых значений вне списка фильтра |
+| Решение | `complianceDecision.decision` | `allow` / `block`; при отсутствии проверки — `complianceDecision: null` |
+| Причина | `complianceDecision.reasonText` | человекочитаемый текст; `reasonCode` — вторично |
+| Время решения | `complianceDecision.checkedAt` | ISO-8601 |
 
 ### Ошибки
 
@@ -191,6 +220,7 @@
     "campaignId": "uuid",
     "debtorRecordId": "uuid",
     "status": "completed",
+    "dialStatus": "completed",
     "telephonyConnectionId": "uuid",
     "scriptVersionId": "uuid",
     "identityVerified": false,
@@ -241,6 +271,12 @@
         "occurredAt": "ISO-8601"
       }
     ]
+  },
+  "complianceDecision": {
+    "decision": "allow",
+    "reasonCode": "consent_given",
+    "reasonText": "Consent status is given",
+    "checkedAt": "ISO-8601"
   },
   "complianceDecisions": [
     {

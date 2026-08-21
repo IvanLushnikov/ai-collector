@@ -567,6 +567,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           dialStatus: 'completed',
           conversationStatus: 'review_required',
           complianceStatus: 'not_checked',
+          complianceDecision: null,
           recordingStatus: 'missing',
           transcriptStatus: 'failed',
           reviewRequired: true,
@@ -581,6 +582,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           dialStatus: 'queued',
           conversationStatus: null,
           complianceStatus: 'not_checked',
+          complianceDecision: null,
           recordingStatus: null,
           transcriptStatus: null,
           reviewRequired: false,
@@ -748,6 +750,7 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/debtors/:debtorRecordId/
           dialStatus: 'completed',
           conversationStatus: 'review_required',
           complianceStatus: 'not_checked',
+          complianceDecision: null,
           recordingStatus: 'missing',
           transcriptStatus: 'failed',
           reviewRequired: true,
@@ -1090,6 +1093,12 @@ describe('GET /tenants/:tenantId/campaigns/:campaignId/calls/:callAttemptId', ()
       transcript: null,
       recording: null,
       reconciliationIssues: [],
+      complianceDecision: {
+        decision: 'allow',
+        reasonCode: 'ALLOW',
+        reasonText: 'Allowed',
+        checkedAt: '2026-08-16T09:05:00.000Z'
+      },
       complianceDecisions: [
         {
           id: 'decision-1',

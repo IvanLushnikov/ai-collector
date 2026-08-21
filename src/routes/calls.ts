@@ -43,6 +43,11 @@ import { isLiveCallsEnabled } from '../config/env.js';
 import { assertSpeechCredentialsReady } from '../speech/credentials/assert-ready.js';
 import { shouldAutoPauseForMissingEvidence } from '../calls/evidence-guard.js';
 import { isPilotCapReached } from '../domain/campaign/pilot-cap.js';
+import {
+  CAMPAIGN_PAUSE_REASON_TEXT,
+  enrichBlockedReason,
+  toComplianceDecisionSummary
+} from '../domain/compliance-block-kind/index.js';
 
 type CallDependencies = {
   tenant: {
@@ -556,7 +561,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
       return reply.code(403).send({
         decision: decision.decision,
-        reasons: decision.blockedReasons,
+        reasons: decision.blockedReasons.map(enrichBlockedReason),
         rules: decision.rules,
         allowed: false,
         error: 'COMPLIANCE_BLOCK'
@@ -582,7 +587,11 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
 
     if (shouldEnqueueSandboxCall(deps.sandboxCallsQueueEnabled)) {
       if (!canRunSandboxStartJob(campaign.status ?? 'draft')) {
-        return reply.code(409).send({ error: 'CAMPAIGN_JOB_BLOCKED' });
+        return reply.code(409).send({
+          error: 'CAMPAIGN_JOB_BLOCKED',
+          blockKind: 'campaign_pause',
+          reasonText: CAMPAIGN_PAUSE_REASON_TEXT
+        });
       }
 
       return reply.code(202).send({
@@ -867,18 +876,32 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
           select: {
             debtorRecordId: true,
             decision: true,
+            reasonCode: true,
+            reasonText: true,
             checkedAt: true
           }
         })) as Array<{
           debtorRecordId: string;
           decision: string;
+          reasonCode?: string | null;
+          reasonText?: string | null;
           checkedAt: string | Date;
         }>
       : [];
-    const latestComplianceDecisionByDebtor = new Map<string, string>();
+    const latestComplianceDecisionByDebtor = new Map<string, {
+      decision: string;
+      reasonCode: string | null;
+      reasonText: string | null;
+      checkedAt: string | Date;
+    }>();
     for (const decision of complianceDecisions) {
       if (!latestComplianceDecisionByDebtor.has(decision.debtorRecordId)) {
-        latestComplianceDecisionByDebtor.set(decision.debtorRecordId, decision.decision);
+        latestComplianceDecisionByDebtor.set(decision.debtorRecordId, {
+          decision: decision.decision,
+          reasonCode: decision.reasonCode ?? null,
+          reasonText: decision.reasonText ?? null,
+          checkedAt: decision.checkedAt
+        });
       }
     }
 
@@ -904,11 +927,19 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
             ...lifecycleEvidence
           }),
           outcome: attempt.callResult?.outcome ?? null,
-          complianceStatus: complianceDecision === 'allow'
+          complianceStatus: complianceDecision?.decision === 'allow'
             ? 'allowed'
-            : complianceDecision === 'block'
+            : complianceDecision?.decision === 'block'
               ? 'blocked'
               : 'not_checked',
+          complianceDecision: complianceDecision
+            ? toComplianceDecisionSummary({
+                decision: complianceDecision.decision,
+                reasonCode: complianceDecision.reasonCode,
+                reasonText: complianceDecision.reasonText,
+                checkedAt: complianceDecision.checkedAt
+              })
+            : null,
           recordingStatus: lifecycleEvidence.recordingStatus,
           transcriptStatus: lifecycleEvidence.transcriptStatus,
           reviewRequired: lifecycleEvidence.reviewRequired,
@@ -1114,6 +1145,33 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       recordingStatus: lifecycleEvidence.recordingStatus
     };
 
+    const complianceDecisionSummary = (() => {
+      const decisions = (complianceDecisions ?? []) as Array<{
+        decision?: string | null;
+        reasonCode?: string | null;
+        reasonText?: string | null;
+        checkedAt?: string | Date | null;
+      }>;
+      if (!decisions.length) {
+        return null;
+      }
+      const sorted = [...decisions].sort((left, right) => {
+        const leftTs = left.checkedAt ? new Date(left.checkedAt).getTime() : 0;
+        const rightTs = right.checkedAt ? new Date(right.checkedAt).getTime() : 0;
+        return rightTs - leftTs;
+      });
+      const latest = sorted[0];
+      if (!latest?.decision) {
+        return null;
+      }
+      return toComplianceDecisionSummary({
+        decision: latest.decision,
+        reasonCode: latest.reasonCode,
+        reasonText: latest.reasonText,
+        checkedAt: latest.checkedAt
+      });
+    })();
+
     return reply.code(200).send({
       attempt: {
         id: attempt.id,
@@ -1144,6 +1202,7 @@ export const registerCallRoutes = (app: FastifyInstance, deps: CallDependencies)
       transcript,
       recording,
       reconciliationIssues,
+      complianceDecision: complianceDecisionSummary,
       complianceDecisions,
       usageEvents,
       evidenceBundle: {

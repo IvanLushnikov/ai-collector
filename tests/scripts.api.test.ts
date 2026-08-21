@@ -494,6 +494,50 @@ describe('POST /tenants/:tenantId/campaigns/:campaignId/scripts', () => {
     await app.close();
   });
 
+  it('returns 409 and does not create a script when campaign is auto_paused', async () => {
+    const appStore = makeStore({
+      campaign: {
+        create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+          id: data.campaignId ? (data.campaignId as string) : 'campaign-created',
+          tenantId: data.tenantId as string,
+          status: data.status as string,
+          name: data.name as string
+        })),
+        findUnique: vi.fn(async (query: { where: { id: string } }) => ({
+          id: query.where.id,
+          tenantId: '11111111-1111-1111-1111-111111111111',
+          status: 'auto_paused'
+        })),
+        update: vi.fn(async (query: { where: { id: string }; data: Record<string, unknown> }) => ({
+          id: query.where.id,
+          status: query.data.status as string
+        }))
+      }
+    });
+
+    const app = createApp({
+      campaignStore: appStore
+    });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/tenants/11111111-1111-1111-1111-111111111111/campaigns/22222222-2222-2222-2222-222222222222/scripts',
+      payload: {
+        content: lockedDisclosureContent
+      }
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'SCRIPT_VERSION_LOCKED'
+    });
+    expect(appStore.scriptVersion.create).not.toHaveBeenCalled();
+    expect(appStore.campaign.update).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
   it('creates a script version when campaign is in review', async () => {
     const appStore = makeStore({
       campaign: {
