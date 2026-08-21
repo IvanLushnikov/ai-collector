@@ -55,7 +55,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 | 24 | OP-T-011 | tech | Safe-resume · `blocked` (product confirm) |
 | 25 | OP-T-012 | tech | Force stop: sandbox interrupt in-flight (`done`); live Exolve hangup — `T-149` |
 | 26 | OP-D-014 | design | Force UI «Остановить немедленно» (после OP-T-012) · `done` |
-| 27 | OP-D-015 | design | Визуальный shell: brand tokens + светлый ops chrome · `doing` |
+| 27 | OP-D-015 | design | Визуальный shell: brand tokens + светлый ops chrome · `done` |
 
 ---
 
@@ -753,7 +753,7 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ### OP-D-015: Визуальный shell кабинета — brand-aligned ops craft
 
-Статус: `doing`  
+Статус: `done`  
 Тип: `design`  
 Зависимость: нет (после OP-D-001)
 
@@ -774,6 +774,11 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 - Нет glow/glass/AI-hero (OP-D-001 не откатывать).
 - `prototype.html` и `public/prototype.html` идентичны; существующие prototype-тесты зелёные.
 
+#### Результат (21.08.2026)
+
+- Токены/chrome: Plus Jakarta, `#1b4dff`, светлый sidebar, decision rail, мягкий canvas.
+- Зеркало синхронизировано; `npx vitest run tests/prototype-*.test.ts` — 35 files / 78 tests passed.
+
 ---
 
 ## Что сознательно не входит
@@ -787,5 +792,5 @@ UX-волна аудита `T-205`–`T-228` уже **закрыта** (риск
 
 ## Журнал
 
-- 21.08.2026: OP-D-015 `doing` — визуальный shell кабинета (светлый chrome, Plus Jakarta, accent `#1b4dff`, decision rail); IA/сценарии без изменений.
+- 21.08.2026: OP-D-015 `done` — визуальный shell кабинета (светлый chrome, Plus Jakarta, accent `#1b4dff`, decision rail); IA/сценарии без изменений; 78 prototype-тестов green.
 - 20.08.2026: создан файл по бенчмарку 15 кабинетов; 13 design + 11 tech 1 SP; очередь P1 сверху.
